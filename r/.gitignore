@@ -1,0 +1,5 @@
+data/
+_targets/
+export/
+.Rhistory
+.Rproj.user

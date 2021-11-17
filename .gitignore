@@ -1,0 +1,9 @@
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+
+# dotenv environment variables files (ignore local only)
+.env.local
+.env.*.local
+.Rproj.user

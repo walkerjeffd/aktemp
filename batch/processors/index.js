@@ -1,0 +1,1 @@
+exports.processFile = require('./file')

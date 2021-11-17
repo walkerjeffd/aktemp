@@ -1,0 +1,21 @@
+
+exports.up = knex => knex.schema.createTable('series_values', t => {
+  t.bigIncrements('id').primary().unsigned()
+  t.integer('series_id')
+    .references('series.id')
+    .unsigned()
+    .index()
+    .notNullable()
+    .onDelete('CASCADE')
+  t.timestamp('datetime').notNullable()
+  t.float('value').notNullable()
+  t.float('depth_m')
+  t.text('flag_id')
+    .references('flags.id')
+    .unsigned()
+    .index()
+    .onDelete('SET NULL')
+  t.text('flag_other')
+})
+
+exports.down = knex => knex.schema.dropTable('series_values')

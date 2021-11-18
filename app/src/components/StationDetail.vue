@@ -24,6 +24,7 @@
         <v-tab>Info</v-tab>
         <v-tab>Data</v-tab>
 
+        <!-- INFO -->
         <v-tab-item>
           <v-simple-table dense>
             <tbody>
@@ -84,8 +85,25 @@
             </tbody>
           </v-simple-table>
         </v-tab-item>
+
+        <!-- DATA -->
         <v-tab-item class="pa-4">
-          Data summary
+          <div v-if="loading">
+            <div class="text-h6">Loading...</div>
+          </div>
+          <v-alert type="warning" v-else-if="series.length === 0">
+            No data at this station
+          </v-alert>
+          <div v-else>
+            <highcharts :options="chart"></highcharts>
+            <v-divider class="my-4"></v-divider>
+            <div class="text-right">
+              <v-btn color="info" small disabled>
+                <v-icon small left>mdi-download</v-icon>
+                CSV File
+              </v-btn>
+            </div>
+          </div>
         </v-tab-item>
       </v-tabs>
     </div>
@@ -99,11 +117,93 @@ export default {
   props: ['station'],
   data () {
     return {
+      loading: true,
       collapse: false,
-      tab: 0
+      tab: 0,
+      series: [],
+      chart: {
+        chart: {
+          zoomType: 'x',
+          height: 200,
+          marginLeft: 40,
+          panning: true,
+          panKey: 'shift'
+        },
+        plotOptions: {
+          series: {
+            boostThreshold: 1,
+            turboThreshold: 0
+          }
+        },
+        title: {
+          text: undefined
+        },
+        legend: {
+          enabled: false
+        },
+        tooltip: {
+          // headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
+          pointFormat: 'Temperature: <b>{point.y}</b> degC'
+          // dateTimeLabelFormats: {
+          //   year: '%b %e, %Y',
+          //   month: '%b %e, %Y',
+          //   day: '%b %e, %Y',
+          //   hour: '%b %e, %Y',
+          //   minute: '%b %e, %Y'
+          // }
+        },
+        xAxis: {
+          type: 'datetime'
+          // dateTimeLabelFormats: {
+          //   week: '%b %d'
+          // },
+          // title: {
+          //   text: 'Date'
+          // }
+        },
+        yAxis: {
+          title: {
+            text: undefined
+          }
+        },
+        series: []
+      }
+    }
+  },
+  created () {
+    this.fetchSeries()
+  },
+  watch: {
+    station () {
+      this.fetchSeries()
     }
   },
   methods: {
+    async fetchSeries () {
+      if (!this.station) return
+      this.loading = true
+      const response = await this.$http.public.get(`/stations/${this.station.id}/series`)
+      const series = await Promise.all(response.data.map(d => {
+        return this.$http.public.get(`/series/${d.id}`)
+          .then(response => response.data)
+      }))
+      this.series = Object.freeze(series)
+      this.chart.series = series.map(s => {
+        return {
+          name: s.id,
+          marker: {
+            enabled: false
+          },
+          data: s.values.map(v => {
+            return {
+              x: (new Date(v.datetime)).valueOf(),
+              y: v.value
+            }
+          })
+        }
+      })
+      this.loading = false
+    },
     zoomTo () {
       evt.$emit('map:zoomToStation', this.station)
     }

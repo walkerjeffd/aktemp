@@ -1,1 +1,1 @@
-exports.processFile = require('./file')
+exports.processFiles = require('./files')

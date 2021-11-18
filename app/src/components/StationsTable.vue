@@ -126,7 +126,6 @@ export default {
       this.$emit('filter', filtered)
     },
     select (station) {
-      console.log(station)
       this.$emit('select', station)
     }
   }

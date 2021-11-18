@@ -60,8 +60,7 @@ export_uaa_values <- function (uaa_root, uaa_data) {
     nest_by(station_code, logger_sn) %>%
     mutate(
       filename = file.path(uaa_root, "files", glue("{station_code}-{logger_sn}.csv"))
-    ) %>%
-    head(3)
+    )
 
   filelist_filename <- file.path(uaa_root, "filelist.csv")
   values %>%

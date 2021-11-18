@@ -3,12 +3,13 @@ require('dotenv-flow').config({
   default_node_env: 'development'
 })
 
-const { processFile } = require('./processors')
+const { processFiles } = require('./processors')
 
-program.command('file <id>')
+program.command('files [ids...]')
+  .option('-a, --all', 'all files')
   .option('-d, --dry-run', 'dry run')
-  .description('Process file')
-  .action(processFile)
+  .description('Process files')
+  .action(processFiles)
 
 program.parseAsync(process.argv)
   .then(() => {

@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-require('dotenv-flow').config({
-  default_node_env: 'development'
-})
-
 const app = require('./app')
 const http = require('http')
 
@@ -50,9 +46,11 @@ function onError (error) {
     case 'EACCES':
       console.error(bind + ' requires elevated privileges')
       process.exit(1)
+      break
     case 'EADDRINUSE':
       console.error(bind + ' is already in use')
       process.exit(1)
+      break
     default:
       throw error
   }

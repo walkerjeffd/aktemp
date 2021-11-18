@@ -1,6 +1,7 @@
 const path = require('path')
 require('dotenv-flow').config({
   default_node_env: 'development',
+  path: __dirname,
   silent: true
 })
 

@@ -1,0 +1,224 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Lambda function for cognito triggers",
+  "Parameters": {
+    "appName": {
+      "Description": "Application name",
+      "Type": "String"
+    },
+    "env": {
+      "Description": "Environment",
+      "Type": "String"
+    },
+    "permissionsBoundaryName": {
+      "Description": "Permissions boundary",
+      "Type": "String",
+      "Default": "NONE"
+    },
+    "vpcId": {
+      "Description": "VPC ID",
+      "Type": "String"
+    },
+    "subnetIds": {
+      "Description": "Subnet IDs (private)",
+      "Type": "CommaDelimitedList"
+    },
+    "notifyTopicArn": {
+      "Description": "Arn of notification topic",
+      "Type": "String"
+    },
+    "userPoolId": {
+      "Description": "User pool ID",
+      "Type": "String"
+    }
+  },
+  "Conditions": {
+    "PermissionsBoundaryExists": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            { "Ref": "permissionsBoundaryName" },
+            "NONE"
+          ]
+        }
+      ]
+    }
+  },
+  "Resources": {
+    "SecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allow lambda access to vpc",
+        "VpcId": {
+          "Ref": "vpcId"
+        }
+      }
+    },
+    "LambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": "LambdaExecutionRole",
+      "Properties": {
+        "FunctionName": {
+          "Fn::Join": [
+            "-",
+            [
+              { "Ref": "appName" },
+              { "Ref": "env" },
+              "lambda-trigger"
+            ]
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": { "Ref": "appName" }
+          },
+          {
+            "Key": "env",
+            "Value": { "Ref": "env" }
+          }
+        ],
+        "Handler": "lambda.handler",
+        "Environment": {
+          "Variables": {
+            "ENV": { "Ref": "env" },
+            "REGION": { "Ref": "AWS::Region" },
+            "NOTIFY_TOPIC": { "Ref": "notifyTopicArn" }
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs14.x",
+        "Timeout": "15",
+        "Code": "../../trigger/",
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            { "Ref": "SecurityGroup" }
+          ],
+          "SubnetIds": { "Ref": "subnetIds" }
+        }
+      }
+    },
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              { "Ref": "appName" },
+              { "Ref": "env" },
+              "lambda-trigger-role"
+            ]
+          ]
+        },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        ],
+        "PermissionsBoundary": {
+          "Fn::If": [
+            "PermissionsBoundaryExists",
+            {
+              "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:policy/${permissionsBoundaryName}"
+            },
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        }
+      }
+    },
+    "LambdaExecutionPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "DependsOn": "LambdaExecutionRole",
+      "Properties": {
+        "PolicyName": {
+          "Fn::Join": [
+            "-",
+            [
+              { "Ref": "appName" },
+              { "Ref": "env" },
+              "lambda-trigger-policy"
+            ]
+          ]
+        },
+        "Roles": [
+          { "Ref": "LambdaExecutionRole" }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ],
+              "Resource": {
+                "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaFunction}:log-stream:*"
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "sns:Publish"
+              ],
+              "Resource": {
+                "Ref": "notifyTopicArn"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "TriggerLambdaPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "Principal": "cognito-sync.amazonaws.com",
+        "FunctionName": { "Ref": "LambdaFunction" },
+        "SourceArn": {
+          "Fn::Sub": "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${userPoolId}"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "LambdaName": {
+      "Description": "Name of lambda function",
+      "Value": {
+        "Ref": "LambdaFunction"
+      }
+    },
+    "LambdaArn": {
+      "Description": "Arn of lambda function",
+      "Value": {
+        "Fn::GetAtt": [
+          "LambdaFunction",
+          "Arn"
+        ]
+      }
+    }
+  }
+}

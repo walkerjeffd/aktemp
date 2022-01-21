@@ -1,0 +1,1 @@
+module.exports = ['CREATED', 'UPLOADING', 'UPLOADED', 'QUEUED', 'PROCESSING', 'DONE', 'FAILED']

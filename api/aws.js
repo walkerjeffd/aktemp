@@ -43,10 +43,6 @@ exports.batch = new AWS.Batch({
   region: process.env.AWS_REGION
 })
 
-// exports.secretsmanager = new AWS.SecretsManager({
-//   region: process.env.AWS_REGION
-// })
-
 exports.createPresignedPostPromise = (params) => {
   return new Promise((resolve, reject) => {
     exports.s3.createPresignedPost(params, (err, data) => {

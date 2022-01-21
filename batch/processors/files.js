@@ -67,7 +67,7 @@ async function processFile (id) {
       message: `file not found in database (id=${id})`
     })
 
-  // stop if series exist
+  // delete existing series
   await file.$relatedQuery('series').delete()
 
   // update file status
@@ -158,20 +158,15 @@ async function processFiles (ids, options) {
 module.exports = async function (id, options) {
   try {
     const { success, failed } = await processFiles(id, options)
-    if (success.length > 0) {
-      console.log(`success (n=${success.length})`)
-      success.forEach(d => {
-        console.log(`  ${d.filename} (id=${d.id})`)
-      })
-    }
-    if (failed.length > 0) {
-      console.log(`failed (n=${failed.length})`)
-      failed.forEach(d => {
-        console.log(`  ${d.file.filename} (id=${d.file.id}): ${d.error.message || d.error.toString()}`)
-      })
-    }
+    console.log(`finished: success=${success.length} failed=${failed.length}`)
+    success.forEach(d => {
+      console.log(`success: ${d.filename} (id=${d.id})`)
+    })
+    failed.forEach(d => {
+      console.log(`failed: ${d.file.filename} (id=${d.file.id},error=${d.error.message || d.error.toString()})`)
+    })
   } catch (e) {
-    console.log(`failed to process files: ${e.message || e.toString()}`)
+    console.log(`failed: ${e.message || e.toString()}`)
     throw e
   }
 }

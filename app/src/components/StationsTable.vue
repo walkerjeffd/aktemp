@@ -1,5 +1,5 @@
 <template>
-  <div style="position:absolute;left:20px;bottom:20px;z-index:3000;width:800px;background-color:white;pointer-events:autocomplete" class="elevation-20">
+  <div style="position:absolute;transform:translate(-50%, 0);left:50%;bottom:20px;z-index:3000;width:800px;background-color:white;pointer-events:autocomplete" class="elevation-20">
     <v-toolbar color="grey darken-2" dark flat dense>
       <div class="text-h6">Stations Table</div>
       <v-spacer></v-spacer>

@@ -1,0 +1,28 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "S3 bucket for cloudformation and lambda deployments",
+  "Parameters": {
+    "bucketName": {
+      "Description": "Bucket name",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "DeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Ref": "bucketName"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "deploymentBucketName": {
+      "Description": "Deployment bucket name for storing templates and lambda function code",
+      "Value": {
+        "Ref": "DeploymentBucket"
+      }
+    }
+  }
+}

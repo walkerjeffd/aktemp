@@ -1,0 +1,171 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Root of nested stack",
+  "Parameters": {
+    "appName": {
+      "Description": "Application name",
+      "Type": "String",
+      "Default": "myapp"
+    },
+    "env": {
+      "Description": "Environment",
+      "Type": "String",
+      "Default": "dev"
+    },
+    "storageBucketName": {
+      "Description": "Storage bucket name",
+      "Type": "String"
+    },
+    "permissionsBoundaryName": {
+      "Description": "Permissions boundary",
+      "Type": "String",
+      "Default": "NONE"
+    },
+    "vpcId": {
+      "Description": "VPC ID",
+      "Type": "String"
+    },
+    "publicSubnetIds": {
+      "Description": "Public subnet IDs",
+      "Type": "String"
+    },
+    "privateSubnetIds": {
+      "Description": "Private subnet IDs",
+      "Type": "String"
+    },
+    "dbSecretArn": {
+      "Description": "Arn of secret for database credentials",
+      "Type": "String"
+    },
+    "dbSecretName": {
+      "Description": "Name of secret for database credentials",
+      "Type": "String"
+    },
+    "userPoolId": {
+      "Description": "User pool ID",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "NotifyStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "./notify.json",
+        "Parameters": {
+          "appName": { "Ref": "appName" },
+          "env": { "Ref": "env" }
+        }
+      }
+    },
+    "LambdaApiStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "./lambda-api.local.json",
+        "Parameters": {
+          "appName": { "Ref": "appName" },
+          "env": { "Ref": "env" },
+          "permissionsBoundaryName": { "Ref": "permissionsBoundaryName" },
+          "vpcId": { "Ref": "vpcId" },
+          "subnetIds": { "Ref": "privateSubnetIds" },
+          "dbSecretArn": { "Ref": "dbSecretArn" },
+          "dbSecretName": { "Ref": "dbSecretName" },
+          "storageBucketName": { "Ref": "storageBucketName" },
+          "lambdaWorkerName": {
+            "Fn::GetAtt": [ "LambdaWorkerStack", "Outputs.LambdaName" ]
+          },
+          "batchJobDefinitionName": {
+            "Fn::GetAtt": [ "BatchStack", "Outputs.JobDefinitionName" ]
+          },
+          "batchJobQueueName": {
+            "Fn::GetAtt": [ "BatchStack", "Outputs.JobQueueName" ]
+          },
+          "userPoolId": { "Ref": "userPoolId" },
+          "notifyTopicArn": {
+            "Fn::GetAtt": [ "NotifyStack", "Outputs.TopicArn" ]
+          }
+        }
+      }
+    },
+    "ApiStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "./api.json",
+        "Parameters": {
+          "appName": { "Ref": "appName" },
+          "env": { "Ref": "env" },
+          "userPoolId": { "Ref": "userPoolId" },
+          "lambdaName": {
+            "Fn::GetAtt": [ "LambdaApiStack", "Outputs.LambdaName" ]
+          }
+        }
+      }
+    },
+    "BatchStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "./batch.json",
+        "Parameters": {
+          "appName": { "Ref": "appName" },
+          "env": { "Ref": "env" },
+          "vpcId": { "Ref": "vpcId" },
+          "subnetIds": { "Ref": "publicSubnetIds" },
+          "permissionsBoundaryName": { "Ref": "permissionsBoundaryName" },
+          "dbSecretName": { "Ref": "dbSecretName" },
+          "notifyTopicArn": {
+            "Fn::GetAtt": [ "NotifyStack", "Outputs.TopicArn" ]
+          }
+        }
+      }
+    },
+    "LambdaTriggerStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "./lambda-trigger.local.json",
+        "Parameters": {
+          "appName": { "Ref": "appName" },
+          "env": { "Ref": "env" },
+          "permissionsBoundaryName": { "Ref": "permissionsBoundaryName" },
+          "vpcId": { "Ref": "vpcId" },
+          "subnetIds": { "Ref": "privateSubnetIds" },
+          "notifyTopicArn": {
+            "Fn::GetAtt": [ "NotifyStack", "Outputs.TopicArn" ]
+          },
+          "userPoolId": { "Ref": "userPoolId" }
+        }
+      }
+    },
+    "LambdaWorkerStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "./lambda-worker.local.json",
+        "Parameters": {
+          "appName": { "Ref": "appName" },
+          "env": { "Ref": "env" },
+          "permissionsBoundaryName": { "Ref": "permissionsBoundaryName" },
+          "vpcId": { "Ref": "vpcId" },
+          "subnetIds": { "Ref": "privateSubnetIds" },
+          "storageBucketName": { "Ref": "storageBucketName" },
+          "userPoolId": { "Ref": "userPoolId" }
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "Region": {
+      "Description": "Stack region",
+      "Value": {
+        "Ref": "AWS::Region"
+      }
+    },
+    "ApiRootUrl": {
+      "Description": "Root URL for REST API",
+      "Value": {
+        "Fn::GetAtt": [ "ApiStack", "Outputs.ApiRootUrl" ]
+      }
+    },
+    "StorageBucket": {
+      "Description": "Storage bucket name",
+      "Value": { "Ref": "storageBucketName" }
+    }
+  }
+}

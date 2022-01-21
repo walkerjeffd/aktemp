@@ -78,6 +78,7 @@ const processFile = async (req, res, next) => {
       command: [
         'node',
         'process.js',
+        'files',
         res.locals.file.id.toString()
       ]
     }

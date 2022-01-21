@@ -1,0 +1,42 @@
+[
+  {
+    "ParameterKey": "appName",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "env",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "storageBucketName",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "permissionsBoundaryName",
+    "ParameterValue": "NONE"
+  },
+  {
+    "ParameterKey": "vpcId",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "privateSubnetIds",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "publicSubnetIds",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "dbSecretArn",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "dbSecretName",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "userPoolId",
+    "ParameterValue": ""
+  }
+]

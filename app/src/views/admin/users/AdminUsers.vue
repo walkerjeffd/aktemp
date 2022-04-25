@@ -92,19 +92,20 @@
       </template>
     </v-data-table>
 
-    <CreateUserDialog ref="createUserForm"></CreateUserDialog>
-    <EditUserDialog ref="editUserForm"></EditUserDialog>
+    <AdminUserCreateDialog ref="createUserForm"></AdminUserCreateDialog>
+    <AdminUserEditDialog ref="editUserForm"></AdminUserEditDialog>
   </div>
 </template>
 
 <script>
-import CreateUserDialog from '@/views/admin/CreateUserDialog'
-import EditUserDialog from '@/views/admin/EditUserDialog'
+import AdminUserCreateDialog from '@/views/admin/users/AdminUserCreateDialog'
+import AdminUserEditDialog from '@/views/admin/users/AdminUserEditDialog'
+
 export default {
   name: 'Users',
   components: {
-    CreateUserDialog,
-    EditUserDialog
+    AdminUserCreateDialog,
+    AdminUserEditDialog
   },
   data: () => ({
     loading: false,

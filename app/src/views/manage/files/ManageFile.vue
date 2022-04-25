@@ -6,11 +6,11 @@
           <v-card elevation="4">
             <v-toolbar flat dense color="grey lighten-3">
               <v-toolbar-title v-if="!$vuetify.breakpoint.mobile">
-                <span class="text-h6">Manage Station</span>
+                <span class="text-h6">Manage Data File</span>
               </v-toolbar-title>
               <v-spacer></v-spacer>
-              <v-btn text @click="$router.push({ name: 'manage' })">
-                <v-icon left>mdi-chevron-left</v-icon> <span v-if="!$vuetify.breakpoint.mobile">Back to Stations</span><span v-else>Back</span>
+              <v-btn text @click="$router.push({ name: 'manageFiles' })">
+                <v-icon left>mdi-chevron-left</v-icon> <span v-if="!$vuetify.breakpoint.mobile">Back to Files</span><span v-else>Back</span>
               </v-btn>
             </v-toolbar>
             <!-- <v-tabs class="elevation-2 mb-4" height="60" grow :vertical="$vuetify.breakpoint.mobile">
@@ -25,7 +25,7 @@
               </v-tab>
             </v-tabs>
             <router-view></router-view> -->
-            <ManageStationInfo></ManageStationInfo>
+            <ManageFileInfo></ManageFileInfo>
           </v-card>
         </v-col>
       </v-row>
@@ -34,12 +34,12 @@
 </template>
 
 <script>
-import ManageStationInfo from '@/views/manage/station/Info'
+import ManageFileInfo from '@/views/manage/files/ManageFileInfo'
 
 export default {
-  name: 'ManageStation',
+  name: 'ManageFile',
   components: {
-    ManageStationInfo
+    ManageFileInfo
   }
 }
 </script>

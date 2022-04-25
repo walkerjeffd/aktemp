@@ -105,7 +105,7 @@ export default {
       this.loading = true
       this.error = null
       try {
-        const response = await this.$http.admin.get('/account-requests')
+        const response = await this.$http.admin.get('/requests')
         const accounts = response.data
         accounts.forEach(d => {
           d.created_at = new Date(d.created_at)

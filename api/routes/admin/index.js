@@ -1,13 +1,17 @@
 const express = require('express')
+// const { requireAdmin } = require('../../middleware/auth')
 
 const router = express.Router()
 
+// router.use(attachUser)
+// router.use(requireAdmin)
+
 router.get('/', function (req, res, next) {
-  res.status(200).json({ api: 'public' })
+  res.status(200).json({ api: 'admin' })
 })
 
 router.use('/organizations', require('./organizations'))
-router.use('/series', require('./series'))
+router.use('/requests', require('./requests'))
 router.use('/stations', require('./stations'))
 router.use('/users', require('./users'))
 

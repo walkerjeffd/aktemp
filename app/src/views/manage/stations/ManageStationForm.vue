@@ -14,7 +14,7 @@
       </v-toolbar>
 
       <!-- need to move <v-form> inside <v-card-text> for scrollable dialog to work -->
-      <v-form ref="stationForm" @submit.prevent="submit">
+      <v-form ref="form" @submit.prevent="submit">
         <v-card-text class="body-2 py-8 px-4">
           <v-select
             v-model="organizationId.value"
@@ -271,7 +271,7 @@ export default {
     async submit () {
       this.error = null
 
-      if (!this.$refs.stationForm.validate()) return
+      if (!this.$refs.form.validate()) return
 
       this.loading = true
       const organizationId = this.organizationId.value
@@ -310,8 +310,8 @@ export default {
       }
     },
     reset () {
-      if (!this.$refs.stationForm) return
-      this.$refs.stationForm.resetValidation()
+      if (!this.$refs.form) return
+      this.$refs.form.resetValidation()
       this.loading = false
       this.error = null
 

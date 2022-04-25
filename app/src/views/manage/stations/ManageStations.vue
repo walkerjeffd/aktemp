@@ -9,10 +9,13 @@
       class="row-cursor-pointer">
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title class="text-h5"><v-icon>mdi-map-marker-multiple</v-icon> Stations</v-toolbar-title>
+          <v-toolbar-title class="text-h5">Stations</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn color="success" @click="create">
+          <v-btn color="success" @click="create" class="mr-2">
             <v-icon left>mdi-plus</v-icon> New Station
+          </v-btn>
+          <v-btn color="success" :to="{name: 'manageStationsImport'}" class="ml-2">
+            <v-icon left>mdi-table-plus</v-icon> Batch Import
           </v-btn>
         </v-toolbar>
         <div class="body-2 text--secondary mx-4 mb-2">
@@ -31,18 +34,18 @@
         <v-icon v-else>mdi-circle-outline</v-icon>
       </template>
     </v-data-table>
-    <StationForm ref="stationForm"></StationForm>
+    <ManageStationForm ref="form"></ManageStationForm>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 
-import StationForm from '@/components/forms/StationForm'
+import ManageStationForm from '@/views/manage/stations/ManageStationForm'
 
 export default {
   name: 'ManageStations',
-  components: { StationForm },
+  components: { ManageStationForm },
   data () {
     return {
       loading: true,
@@ -119,7 +122,7 @@ export default {
       }
     },
     async create () {
-      const station = await this.$refs.stationForm.open()
+      const station = await this.$refs.form.open()
       if (station) {
         await this.fetch()
       }

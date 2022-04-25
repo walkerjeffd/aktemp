@@ -173,7 +173,7 @@
       </v-col>
     </v-row>
 
-    <StationForm ref="stationForm"></StationForm>
+    <ManageStationForm ref="form"></ManageStationForm>
 
     <ConfirmDialog ref="confirmDelete">
       <v-alert
@@ -194,12 +194,12 @@
 
 <script>
 import ConfirmDialog from '@/components/ConfirmDialog'
-import StationForm from '@/components/forms/StationForm'
 import StationsMap from '@/components/StationsMap'
+import ManageStationForm from '@/views/manage/stations/ManageStationForm'
 
 export default {
   name: 'ManageMetadata',
-  components: { StationsMap, ConfirmDialog, StationForm },
+  components: { StationsMap, ConfirmDialog, ManageStationForm },
   data () {
     return {
       loading: true,
@@ -229,7 +229,7 @@ export default {
       this.loading = false
     },
     async edit () {
-      const station = await this.$refs.stationForm.open(this.station)
+      const station = await this.$refs.form.open(this.station)
       if (station) {
         await this.fetch()
       }
@@ -248,7 +248,7 @@ export default {
       this.deleter.error = null
       try {
         await this.$http.restricted.delete(`/organizations/${this.station.organization_id}/stations/${this.station.id}`)
-        this.$router.push({ name: 'manage' })
+        this.$router.push({ name: 'manageStations' })
       } catch (err) {
         console.log(err)
         this.deleter.error = err.message || err.toString()

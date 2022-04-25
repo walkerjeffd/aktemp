@@ -9,9 +9,9 @@
       class="row-cursor-pointer">
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title class="text-h5"><v-icon>mdi-file-multiple-outline</v-icon> Files</v-toolbar-title>
+          <v-toolbar-title class="text-h5">Data Files</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn color="success" @click="upload" disabled>
+          <v-btn color="success" :to="{ name: 'manageFileUpload' }">
             <v-icon left>mdi-upload</v-icon> Upload File
           </v-btn>
         </v-toolbar>
@@ -84,13 +84,6 @@ export default {
       } finally {
         this.loading = false
       }
-    },
-    async upload () {
-      console.log('files')
-      // const station = await this.$refs.stationForm.open()
-      // if (station) {
-      //   await this.fetch()
-      // }
     },
     clickRow (file) {
       this.$router.push({ name: 'manageFile', params: { fileId: file.id } })

@@ -10,6 +10,16 @@
               </v-toolbar-title>
             </v-toolbar>
 
+            <v-tabs class="elevation-2 mb-4" height="60" grow :vertical="$vuetify.breakpoint.mobile">
+              <v-tab :to="{ name: 'manageStations' }">
+                <v-icon left>mdi-map-marker-multiple</v-icon> Stations
+              </v-tab>
+              <v-tab :to="{ name: 'manageFiles' }">
+                <v-icon left>mdi-file-multiple-outline</v-icon> Files
+              </v-tab>
+            </v-tabs>
+            <router-view></router-view>
+
             <v-card-text class="pt-2">
               <!-- <v-container class="black--text body-1 px-0">
                 <v-row align="stretch">
@@ -38,13 +48,13 @@
                 </v-row>
               </v-container> -->
 
-              <v-sheet elevation="2">
+              <!-- <v-sheet elevation="2">
                 <ManageStations></ManageStations>
               </v-sheet>
 
               <v-sheet elevation="2" class="mt-4">
                 <ManageFiles></ManageFiles>
-              </v-sheet>
+              </v-sheet> -->
             </v-card-text>
           </v-card>
         </v-col>
@@ -54,14 +64,14 @@
 </template>
 
 <script>
-import ManageStations from '@/views/manage/Stations.vue'
-import ManageFiles from '@/views/manage/Files.vue'
+// import ManageStations from '@/views/manage/Stations.vue'
+// import ManageFiles from '@/views/manage/Files.vue'
 
 export default {
   name: 'Manage',
   components: {
-    ManageStations,
-    ManageFiles
+    // ManageStations,
+    // ManageFiles
   }
 }
 </script>

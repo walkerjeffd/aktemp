@@ -113,7 +113,7 @@
 import { email } from '@/lib/validators'
 
 export default {
-  name: 'RequestAccount',
+  name: 'Request',
   data () {
     return {
       loading: false,

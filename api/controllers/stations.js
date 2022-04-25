@@ -6,6 +6,8 @@ const getStations = async (req, res, next) => {
   let stations = []
   if (res.locals.organization) {
     stations = await res.locals.organization.$relatedQuery('stations')
+  } else if (res.locals.user) {
+    stations = await res.locals.user.$relatedQuery('organizations.[stations]')
   } else {
     stations = await Station.query()
   }

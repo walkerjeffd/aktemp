@@ -1,5 +1,4 @@
 const createError = require('http-errors')
-const { User } = require('../db/models')
 
 const cognitoAuth = async (req, res, next) => {
   const claims = req.apiGateway &&
@@ -12,12 +11,10 @@ const cognitoAuth = async (req, res, next) => {
     const claims = req.apiGateway.event.requestContext.authorizer.claims
     const groups = claims['cognito:groups'] ? claims['cognito:groups'].split(',') : []
     const isAdmin = groups.includes('admins')
-    const dbUser = await User.query().findById(claims.sub)
     req.auth = {
+      id: claims.sub,
       type: 'cognito',
-      user: claims.sub,
-      isAdmin,
-      organizationId: dbUser && dbUser.organization_id
+      isAdmin
     }
   } else {
     return next(createError(401, 'Unauthorized'))
@@ -32,10 +29,10 @@ function requireAdmin (req, res, next) {
   next()
 }
 
-const requireOrganizationOrAdmin = (req, res, next) => {
-  // no organization
-  if (!res.locals.organization) {
-    return next(createError(404, 'Organization not found'))
+const requireUserOrAdmin = (req, res, next) => {
+  // no user
+  if (!res.locals.user) {
+    return next(createError(404, 'User not found'))
   }
 
   // no auth
@@ -48,8 +45,56 @@ const requireOrganizationOrAdmin = (req, res, next) => {
     return next()
   }
 
-  // user does not belong to requested organization
-  if (res.locals.organization.id !== req.auth.organizationId) {
+  // auth user does not match req user
+  if (res.locals.user.id !== req.auth.userId) {
+    return next(createError(401, 'Unauthorized'))
+  }
+
+  next()
+}
+
+const requireStationAccessOrAdmin = (req, res, next) => {
+  // no auth
+  if (!req.auth) {
+    return next(createError(401, 'Unauthorized'))
+  }
+
+  // no user
+  if (!res.locals.user) {
+    return next(createError(404, 'User not found'))
+  }
+
+  // admin override
+  if (req.auth.isAdmin) {
+    return next()
+  }
+
+  // auth user does not have access to requested organization
+  if (res.locals.user.organizations.map(d => d.id).includes(res.locals.station.organization_id)) {
+    return next(createError(401, 'Unauthorized'))
+  }
+
+  next()
+}
+
+const requireOrganizationAccessOrAdmin = (req, res, next) => {
+  // no auth
+  if (!req.auth) {
+    return next(createError(401, 'Unauthorized'))
+  }
+
+  // no user
+  if (!res.locals.user) {
+    return next(createError(404, 'User not found'))
+  }
+
+  // admin override
+  if (req.auth.isAdmin) {
+    return next()
+  }
+
+  // auth user does not have access to requested organization
+  if (res.locals.user.organizations.map(d => d.id).includes(req.params.organizationId)) {
     return next(createError(401, 'Unauthorized'))
   }
 
@@ -59,5 +104,7 @@ const requireOrganizationOrAdmin = (req, res, next) => {
 module.exports = {
   cognitoAuth,
   requireAdmin,
-  requireOrganizationOrAdmin
+  requireUserOrAdmin,
+  requireStationAccessOrAdmin,
+  requireOrganizationAccessOrAdmin
 }

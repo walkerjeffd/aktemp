@@ -1,51 +1,106 @@
 const express = require('express')
 const asyncHandler = require('express-async-handler')
-const basicAuth = require('express-basic-auth')
+// const basicAuth = require('express-basic-auth')
+const createError = require('http-errors')
 
 const { cognitoAuth } = require('../../middleware/auth')
-const { attachOrganization } = require('../../controllers/organizations')
+// const { attachOrganization } = require('../../controllers/organizations')
+// const { attachUser } = require('../../controllers/users')
+const { User, Station, Organization } = require('../../db/models')
 
 const router = express.Router()
 
-const { isLambda } = require('../../utils')
+// const { isLambda } = require('../../utils')
 
-const users = {
-  admin: {
-    password: 'admin',
-    organizationId: 1,
-    isAdmin: true
-  },
-  user: {
-    password: 'user',
-    organizationId: 1,
-    isAdmin: false
-  }
+// const users = {
+//   admin: {
+//     password: 'admin',
+//     isAdmin: true
+//   },
+//   user: {
+//     password: 'user',
+//     isAdmin: false
+//   }
+// }
+
+// if (!isLambda()) {
+//   router.use(basicAuth({
+//     authorizer: (username, password) => {
+//       const user = users[username]
+//       return user && basicAuth.safeCompare(password, user.password)
+//     },
+//     unauthorizedResponse: (req) => {
+//       return {
+//         message: 'Unauthorized'
+//       }
+//     }
+//   }))
+//   router.use((req, res, next) => {
+//     req.auth = {
+//       userId: req.headers['x-aktemp-user-id'],
+//       isAdmin: users[req.auth.user].isAdmin,
+//       type: 'basic'
+//     }
+//     next()
+//   })
+// } else {
+//   router.use(asyncHandler(cognitoAuth))
+// }
+router.use(asyncHandler(cognitoAuth))
+
+router.use(asyncHandler(async (req, res, next) => {
+  const user = await User.query()
+    .withGraphFetched('organizations')
+    .findById(req.auth.id)
+
+  if (!user) throw createError(404, `User (id=${req.auth.id}) not found`)
+
+  res.locals.user = user
+
+  next()
+}))
+
+const attachStation = async (req, res, next) => {
+  const row = await Station.query()
+    .findById(req.params.stationId)
+
+  if (!row) throw createError(404, `Station (id=${req.params.stationId}) not found`)
+
+  res.locals.station = row
+  return next()
 }
 
-if (!isLambda()) {
-  router.use(basicAuth({
-    authorizer: (username, password) => {
-      const user = users[username]
-      return user && basicAuth.safeCompare(password, user.password)
-    },
-    unauthorizedResponse: (req) => {
-      return {
-        message: 'Unauthorized'
-      }
-    }
+const attachOrganization = async (req, res, next) => {
+  const row = await Organization.query()
+    .findById(req.params.organizationId)
+
+  if (!row) throw createError(404, `Organization (id=${req.params.organizationId}) not found`)
+
+  res.locals.organization = row
+  return next()
+}
+
+router.route('/')
+  .get((req, res, next) => res.status(200).json(res.locals.user))
+
+router.route('/organizations')
+  .get((req, res, next) => res.status(200).json(res.locals.user.organizations))
+
+router.route('/stations')
+  .get(asyncHandler(async (req, res, next) => {
+    const stations = await Organization.relatedQuery('stations')
+      .for(res.locals.user.organizations.map(d => d.id))
+    return res.status(200).json(stations)
   }))
-  router.use((req, res, next) => {
-    req.auth = Object.assign({ ...req.auth, type: 'basic' }, users[req.auth.user])
-    delete req.auth.password
-    next()
-  })
-} else {
-  router.use(asyncHandler(cognitoAuth))
-}
 
-router.get('/', function (req, res, next) {
-  res.status(200).json({ message: 'Welcome to the AKTEMP API (restricted)', user: res.locals.user })
-})
+router.route('/files')
+  .get(asyncHandler(async (req, res, next) => {
+    const files = await Organization.relatedQuery('files')
+      .for(res.locals.user.organizations.map(d => d.id))
+    return res.status(200).json(files)
+  }))
+
+router.use('/stations/:stationId', asyncHandler(attachStation), require('./station'))
 
 router.use('/organizations/:organizationId', asyncHandler(attachOrganization), require('./organization'))
 

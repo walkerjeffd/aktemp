@@ -6,6 +6,7 @@ import store from './store'
 
 import vuetify from './plugins/vuetify'
 
+import './plugins/amplify'
 import './plugins/axios'
 import './plugins/dayjs'
 import './plugins/highcharts'

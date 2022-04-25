@@ -4,6 +4,7 @@ const { Organization } = require('../db/models')
 
 const attachOrganization = async (req, res, next) => {
   const row = await Organization.query()
+    .withGraphFetched('users')
     .findById(req.params.organizationId)
 
   if (!row) throw createError(404, `Organization (id=${req.params.organizationId}) not found`)
@@ -12,6 +13,13 @@ const attachOrganization = async (req, res, next) => {
   return next()
 }
 
+const getOrganizations = async (req, res, next) => {
+  const organizations = await Organization.query()
+    .withGraphFetched('users')
+  return res.status(200).json(organizations)
+}
+
 module.exports = {
-  attachOrganization
+  attachOrganization,
+  getOrganizations
 }

@@ -2,7 +2,7 @@ const Base = require('./Base')
 
 class Profile extends Base {
   static get tableName () {
-    return 'series'
+    return 'profiles'
   }
 
   static get relationMappings () {

@@ -52,9 +52,9 @@ POST   /organizations/:id/stations/:id/files/:id/process # trigger batch process
 ## File Upload Process
 
 ```
-app   -> POST /organizations/:id/stations/:id/files
-         with body={ filename, config } -> api
-api   -> insert { filename, config, uuid: uuid(), status: 'CREATED' } into db://files
+app   -> POST /organizations/:id/files
+           body = { filename, config } -> api
+api   -> insert { filename, config, status: 'CREATED' } into db://files (db adds uuid)
          create presignedUrl (s3://files/uuid)
          return { ...row, presignedUrl } -> app
 app   -> upload file to presignedUrl (s3://files/uuid)

@@ -25,7 +25,7 @@ const attachStation = async (req, res, next) => {
   }
 
   if (!station) {
-    throw createError(404, `Station (id=${req.params.stationId}) not found${res.locals.organization ? ' for organization (id=' + res.locals.organization.id + ')' : ''}`)
+    throw createError(404, `Station (id=${req.params.stationId}) not found`)
   }
 
   res.locals.station = station
@@ -33,13 +33,13 @@ const attachStation = async (req, res, next) => {
 }
 
 const postStations = async (req, res, next) => {
-  const row = await Station.query().insert(req.body).returning('*')
+  const row = await res.locals.organization.$relatedQuery('stations')
+    .insert(req.body)
+    .returning('*')
   return res.status(201).json(row)
 }
 
-const getStation = async (req, res, next) => {
-  return res.status(200).json(res.locals.station)
-}
+const getStation = (req, res, next) => res.status(200).json(res.locals.station)
 
 const getStationSeries = async (req, res, next) => {
   const series = await res.locals.station.$relatedQuery('series')
@@ -61,7 +61,7 @@ const deleteStation = async (req, res, next) => {
   const deletedCount = await res.locals.station.$query()
     .delete()
   if (deletedCount === 0) {
-    throw createError(500, `Failed to delete station (id = ${res.locals.station.id})`)
+    throw createError(500, `Failed to delete station (id=${res.locals.station.id})`)
   }
 
   return res.status(204).json()

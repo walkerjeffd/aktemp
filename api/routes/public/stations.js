@@ -16,7 +16,7 @@ router.route('/')
 
 router.route('/:stationId')
   .all(asyncHandler(attachStation))
-  .get(asyncHandler(getStation))
+  .get(getStation)
 
 router.route('/:stationId/series')
   .all(asyncHandler(attachStation))

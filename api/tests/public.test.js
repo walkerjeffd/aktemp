@@ -20,17 +20,25 @@ describe('public api', () => {
     expect(response.statusCode).toBe(200)
   })
 
+  test('GET /organizations', async () => {
+    const response = await request(app).get('/public/organizations')
+    expect(response.statusCode).toBe(200)
+    expect(Array.isArray(response.body)).toBeTruthy()
+    expect(response.body).toHaveLength(2)
+  })
+
   test('GET /stations', async () => {
     const response = await request(app).get('/public/stations')
     expect(response.statusCode).toBe(200)
     expect(Array.isArray(response.body)).toBeTruthy()
+    expect(response.body).toHaveLength(1)
   })
 
   test('GET /stations/:id', async () => {
     const response = await request(app).get('/public/stations/1')
     expect(response.statusCode).toBe(200)
     expect(response.body).toBeTruthy()
-    expect(response.body.code).toBeDefined()
+    expect(response.body.code).toBe('UAA_001')
   })
 
   test('GET /stations/:id (404)', async () => {
@@ -43,11 +51,33 @@ describe('public api', () => {
     const response = await request(app).get('/public/stations/1/series')
     expect(response.statusCode).toBe(200)
     expect(Array.isArray(response.body)).toBeTruthy()
+    expect(response.body).toHaveLength(1)
+  })
+
+  test('GET /stations/:id/series/:id (404)', async () => {
+    const response = await request(app).get('/public/stations/1/series/100')
+    expect(response.statusCode).toBe(404)
+    expect(response.body.id).toBeUndefined()
   })
 
   test('GET /stations/:id/profiles', async () => {
     const response = await request(app).get('/public/stations/1/profiles')
     expect(response.statusCode).toBe(200)
     expect(Array.isArray(response.body)).toBeTruthy()
+    expect(response.body).toHaveLength(0)
+  })
+
+  test('GET /stations/:id/profiles/:id (404)', async () => {
+    const response = await request(app).get('/public/stations/1/profiles/1')
+    expect(response.statusCode).toBe(404)
+    expect(response.body.id).toBeUndefined()
+  })
+
+  test('GET /series/:id', async () => {
+    const response = await request(app).get('/public/series/1')
+    expect(response.statusCode).toBe(200)
+    expect(response.body).toBeTruthy()
+    expect(Array.isArray(response.body.values)).toBeTruthy()
+    expect(response.body.values).toHaveLength(3)
   })
 })

@@ -6,6 +6,36 @@ export const variableOptions = [
   }
 ]
 
+export const temperatureUnitsOptions = [
+  {
+    value: 'degC',
+    label: 'Celsius'
+  },
+  {
+    value: 'degF',
+    label: 'Fahrenheit'
+  }
+]
+
+export const sensorAccuracyOptions = [
+  {
+    value: '1',
+    label: 'Level 1: < ±0.25 degC (best; e.g., Hobo Pro v2, Tidbit)'
+  },
+  {
+    value: '2',
+    label: 'Level 2: < ±0.5 degC'
+  },
+  {
+    value: '3',
+    label: 'Level 3: > ±0.5 degC (worst)'
+  },
+  {
+    value: 'na',
+    label: 'Unknown'
+  }
+]
+
 export const timezoneOptions = [
   {
     id: 'US/Alaska',
@@ -17,7 +47,7 @@ export const timezoneOptions = [
   }
 ]
 
-export const utcOffsets = [
+export const utcOffsetOptions = [
   {
     id: 'UTC-09',
     label: 'UTC-09 (AKST)',
@@ -32,6 +62,11 @@ export const utcOffsets = [
     id: 'UTC-07',
     label: 'UTC-07 (PDT)',
     value: -7
+  },
+  {
+    id: 'UTC',
+    label: 'UTC',
+    value: 0
   }
 ]
 

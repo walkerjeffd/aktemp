@@ -11,8 +11,12 @@ import './plugins/axios'
 import './plugins/dayjs'
 import './plugins/highcharts'
 import './plugins/leaflet'
+import './plugins/pretty-bytes'
 
 import '@/assets/styles.css'
+
+import AlertError from '@/components/AlertError'
+Vue.component('AlertError', AlertError)
 
 Vue.config.productionTip = false
 

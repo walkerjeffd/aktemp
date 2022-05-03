@@ -38,7 +38,7 @@ const deleteOrganization = async (req, res, next) => {
   const deletedCount = await res.locals.organization.$query()
     .delete()
   if (deletedCount === 0) {
-    throw createError(500, `Failed to delete organization (id = ${res.locals.organization.id})`)
+    throw createError(500, `Failed to delete organization (id=${res.locals.organization.id})`)
   }
 
   return res.status(204).json()

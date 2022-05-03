@@ -1,5 +1,5 @@
 const env = process.env.NODE_ENV || 'test'
-const config = require('../db/knexfile.js')[env]
+const config = require('../knexfile.js')[env]
 
 // override database for creating and dropping test database
 config.connection.testDatabase = config.connection.database

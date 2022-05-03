@@ -1,27 +1,30 @@
 const express = require('express')
 const asyncHandler = require('express-async-handler')
-// const basicAuth = require('express-basic-auth')
+const basicAuth = require('express-basic-auth')
 const createError = require('http-errors')
 
 const { cognitoAuth } = require('../../middleware/auth')
 // const { attachOrganization } = require('../../controllers/organizations')
 // const { attachUser } = require('../../controllers/users')
-const { User, Station, Organization } = require('../../db/models')
+const { User, Organization } = require('../../db/models')
 
 const router = express.Router()
 
-// const { isLambda } = require('../../utils')
+const { isLambda } = require('../../utils')
+// const { user } = require('pg/lib/defaults')
 
-// const users = {
-//   admin: {
-//     password: 'admin',
-//     isAdmin: true
-//   },
-//   user: {
-//     password: 'user',
-//     isAdmin: false
-//   }
-// }
+const users = {
+  admin: {
+    password: 'admin',
+    isAdmin: true
+  },
+  user: {
+    id: 'abc-123',
+    username: 'user',
+    password: 'user',
+    isAdmin: false
+  }
+}
 
 // if (!isLambda()) {
 //   router.use(basicAuth({
@@ -46,7 +49,34 @@ const router = express.Router()
 // } else {
 //   router.use(asyncHandler(cognitoAuth))
 // }
-router.use(asyncHandler(cognitoAuth))
+
+if (isLambda()) {
+  console.log('auth: cognito')
+  router.use(asyncHandler(cognitoAuth))
+} else {
+  console.log('auth: basic')
+  router.use(basicAuth({
+    authorizer: (username, password) => {
+      const user = users[username]
+      return user && basicAuth.safeCompare(password, user.password)
+    },
+    unauthorizedResponse: (req) => {
+      return {
+        message: 'Unauthorized'
+      }
+    }
+  }))
+  router.use((req, res, next) => {
+    // convert basic auth ({user, password}) to auth object
+    const user = users[req.auth.user]
+    req.auth = {
+      id: req.headers['x-aktemp-user-id'] || user.id,
+      isAdmin: !!user.isAdmin,
+      type: 'basic'
+    }
+    next()
+  })
+}
 
 router.use(asyncHandler(async (req, res, next) => {
   const user = await User.query()
@@ -60,15 +90,15 @@ router.use(asyncHandler(async (req, res, next) => {
   next()
 }))
 
-const attachStation = async (req, res, next) => {
-  const row = await Station.query()
-    .findById(req.params.stationId)
+// const attachStation = async (req, res, next) => {
+//   const row = await Station.query()
+//     .findById(req.params.stationId)
 
-  if (!row) throw createError(404, `Station (id=${req.params.stationId}) not found`)
+//   if (!row) throw createError(404, `Station (id=${req.params.stationId}) not found`)
 
-  res.locals.station = row
-  return next()
-}
+//   res.locals.station = row
+//   return next()
+// }
 
 const attachOrganization = async (req, res, next) => {
   const row = await Organization.query()
@@ -85,6 +115,7 @@ router.route('/')
 
 router.route('/organizations')
   .get((req, res, next) => res.status(200).json(res.locals.user.organizations))
+router.use('/organizations/:organizationId', asyncHandler(attachOrganization), require('./organization'))
 
 router.route('/stations')
   .get(asyncHandler(async (req, res, next) => {
@@ -93,15 +124,14 @@ router.route('/stations')
     return res.status(200).json(stations)
   }))
 
-router.route('/files')
-  .get(asyncHandler(async (req, res, next) => {
-    const files = await Organization.relatedQuery('files')
-      .for(res.locals.user.organizations.map(d => d.id))
-    return res.status(200).json(files)
-  }))
+// router.route('/files')
+//   .get(asyncHandler(async (req, res, next) => {
+//     const files = await Organization.relatedQuery('files')
+//       .for(res.locals.user.organizations.map(d => d.id))
+//     return res.status(200).json(files)
+//   }))
+router.use('/files', require('./files'))
 
-router.use('/stations/:stationId', asyncHandler(attachStation), require('./station'))
-
-router.use('/organizations/:organizationId', asyncHandler(attachOrganization), require('./organization'))
+// router.use('/stations/:stationId', asyncHandler(attachStation), require('./station'))
 
 module.exports = router

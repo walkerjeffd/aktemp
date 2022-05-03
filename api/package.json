@@ -6,7 +6,7 @@
   "scripts": {
     "start": "NODE_ENV=development nodemon local.js",
     "test": "NODE_ENV=test jest --runInBand",
-    "test:coverage": "npm run test -- --coverage"
+    "test:coverage": "npm test -- --coverage"
   },
   "author": "Jeff Walker <jeff@walkerenvres.com> (https://walkerenvres.com)",
   "license": "MIT",

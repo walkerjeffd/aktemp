@@ -3,7 +3,8 @@ const asyncHandler = require('express-async-handler')
 
 const {
   attachFile,
-  postFiles,
+  getUserFiles,
+  getFile,
   putFile,
   deleteFile
 } = require('../../controllers/files')
@@ -11,10 +12,11 @@ const {
 const router = express.Router()
 
 router.route('/')
-  .post(asyncHandler(postFiles))
+  .get(asyncHandler(getUserFiles))
 
 router.route('/:fileId')
   .all(asyncHandler(attachFile))
+  .get(asyncHandler(getFile))
   .put(asyncHandler(putFile))
   .delete(asyncHandler(deleteFile))
 

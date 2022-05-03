@@ -16,41 +16,43 @@ app.use(bodyParser.json())
 app.use(cors())
 
 if (isLambda()) {
-  console.log('mode: lambda')
+  console.log('runtime: lambda')
   app.use(serverlessExpressMiddleware.eventContext())
-} else if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    if (req.query.dev === 'true') {
-      req.apiGateway = {
-        event: {
-          requestContext: {
-            authorizer: {
-              claims: {
-                sub: '123abc'
-              }
-            }
-          }
-        }
-      }
-    }
-    if (req.headers.authorization) {
-      const decoded = jwt.decode(req.headers.authorization)
-      if (decoded['cognito:groups']) {
-        decoded['cognito:groups'] = decoded['cognito:groups'].join(',')
-      }
-      req.apiGateway = {
-        event: {
-          requestContext: {
-            authorizer: {
-              claims: decoded
-            }
-          }
-        }
-      }
-    }
-    res.locals.isLocalDev = true
-    next()
-  })
+} else {
+  console.log('runtime: local')
+  // app.use((req, res, next) => {
+  //   if (req.query.dev === 'true') {
+  //     req.apiGateway = {
+  //       event: {
+  //         requestContext: {
+  //           authorizer: {
+  //             claims: {
+  //               sub: '123abc'
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //   if (req.headers.authorization) {
+  //     const decoded = jwt.decode(req.headers.authorization)
+  //     console.log(req.auth)
+  //     if (decoded['cognito:groups']) {
+  //       decoded['cognito:groups'] = decoded['cognito:groups'].join(',')
+  //     }
+  //     req.apiGateway = {
+  //       event: {
+  //         requestContext: {
+  //           authorizer: {
+  //             claims: decoded
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //   res.locals.isLocalDev = true
+  //   next()
+  // })
 }
 
 app.use('/', require('./routes'))

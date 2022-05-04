@@ -15,8 +15,8 @@ import './plugins/pretty-bytes'
 
 import '@/assets/styles.css'
 
-import AlertError from '@/components/AlertError'
-Vue.component('AlertError', AlertError)
+import Alert from '@/components/Alert'
+Vue.component('Alert', Alert)
 
 Vue.config.productionTip = false
 

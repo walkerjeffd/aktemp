@@ -17,7 +17,7 @@
             <v-stepper v-model="step">
               <v-stepper-header>
                 <v-stepper-step step="1" :complete="step > 1">
-                  Instructions
+                  Organization
                 </v-stepper-step>
 
                 <v-divider></v-divider>
@@ -58,27 +58,43 @@
               </v-stepper-header>
 
               <v-stepper-items class="body-1">
-                <!-- INSTRUCTIONS -->
+                <!-- ORGANIZATION -->
                 <v-stepper-content step="1">
                   <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4" class="body-1">
-                      <div class="text-h6">Instructions</div>
-                      <p>Use this form to upload a new file of continuous or discrete stream temperature data.</p>
+                    <v-col cols="12" md="8" lg="6" xl="4">
+                      <v-form ref="organizationForm">
+                        <div class="text-h6">Select Organization for File Upload</div>
+                        <p>All data in this file will belong to the selected organization</p>
 
-                      <v-row class="mt-8 mb-4 px-3">
-                        <v-btn text class="mr-4 px-4" :disabled="true">
-                          <v-icon left>mdi-chevron-left</v-icon> Previous
-                        </v-btn>
-                        <v-btn color="primary" class="mr-4 px-4" @click="step += 1">
-                          Continue <v-icon right>mdi-chevron-right</v-icon>
-                        </v-btn>
+                        <v-select
+                          v-model="organization.selected"
+                          :items="organizations"
+                          :rules="organization.rules"
+                          item-text="name"
+                          item-value="id"
+                          outlined
+                        ></v-select>
+                        <pre v-if="debug">organization: {{ organization.selected || 'none' }}</pre>
 
-                        <v-spacer></v-spacer>
+                        <Alert type="error" title="Form Error" v-if="organization.status === 'ERROR'">
+                          {{ organization.error || 'Unknown error' }}
+                        </Alert>
 
-                        <v-btn text @click="$router.push({ name: 'manageFiles' })">
-                          Cancel
-                        </v-btn>
-                      </v-row>
+                        <v-row class="mt-8 mb-4 px-3">
+                          <v-btn text class="mr-4 px-4" :disabled="true">
+                            <v-icon left>mdi-chevron-left</v-icon> Previous
+                          </v-btn>
+                          <v-btn color="primary" class="mr-4 px-4" @click="nextOrganization">
+                            Continue <v-icon right>mdi-chevron-right</v-icon>
+                          </v-btn>
+
+                          <v-spacer></v-spacer>
+
+                          <v-btn text @click="$router.push({ name: 'manageFiles' })">
+                            Cancel
+                          </v-btn>
+                        </v-row>
+                      </v-form>
                     </v-col>
                   </v-row>
                 </v-stepper-content>
@@ -104,11 +120,11 @@
                         >
                         </v-file-input>
 
-                        <pre v-if="debug">file: {{ file.selected || 'none' }}</pre>
+                        <pre v-if="debug">file: {{ file.selected && file.selected.name || 'none' }}</pre>
 
-                        <AlertError title="Error Loading File" v-if="file.status === 'ERROR'">
+                        <Alert type="error" title="Error Loading File" v-if="file.status === 'ERROR'">
                           {{ file.error || 'Unknown error' }}
-                        </AlertError>
+                        </Alert>
 
                         <v-alert
                           type="success"
@@ -328,9 +344,9 @@
                           </div>
                         </div>
 
-                        <AlertError title="Station Error" v-if="station.status === 'ERROR'">
+                        <Alert type="error" title="Station Error" v-if="station.status === 'ERROR'">
                           {{ station.error || 'Unknown error' }}
-                        </AlertError>
+                        </Alert>
 
                         <v-row class="mt-8 mb-4 px-3">
                           <v-btn text class="mr-4 px-4" @click="step -= 1">
@@ -484,9 +500,9 @@
                           </div>
                         </div>
 
-                        <AlertError title="Timestamp Error" v-if="timestamp.status === 'ERROR'">
+                        <Alert type="error" title="Timestamp Error" v-if="timestamp.status === 'ERROR'">
                           {{ timestamp.error || 'Unknown error' }}
-                        </AlertError>
+                        </Alert>
 
                         <v-row class="mt-8 mb-4 px-3">
                           <v-btn text class="mr-4 px-4" @click="step -= 1">
@@ -585,9 +601,9 @@
                           </div>
                         </div>
 
-                        <AlertError title="Temperature Values Error" v-if="value.status === 'ERROR'">
+                        <Alert type="error" title="Temperature Values Error" v-if="value.status === 'ERROR'">
                           {{ value.error || 'Unknown error' }}
-                        </AlertError>
+                        </Alert>
 
                         <v-row class="mt-8 mb-4 px-3">
                           <v-btn text class="mr-4 px-4" @click="step -= 1">
@@ -734,9 +750,9 @@
                           </div>
                         </div>
 
-                        <AlertError title="Metadata Error" v-if="meta.status === 'ERROR'">
+                        <Alert type="error" title="Metadata Error" v-if="meta.status === 'ERROR'">
                           {{ meta.error || 'Unknown error' }}
-                        </AlertError>
+                        </Alert>
 
                         <v-row class="mt-8 mb-4 px-3">
                           <v-btn text class="mr-4 px-4" @click="step -= 1">
@@ -764,19 +780,17 @@
                       <v-form ref="uploadForm">
                         <div class="text-h6">Ready to Upload</div>
 
+                        <p>The file is ready to upload. Do not close this browser tab until uploading is complete.</p>
+
                         <!-- <ul class="mt-2 body-2">
                           <li>Instructions...</li>
                         </ul> -->
-
-                        <AlertError title="Upload Error" v-if="upload.status === 'ERROR'">
-                          {{ upload.error || 'Unknown error' }}
-                        </AlertError>
 
                         <v-row class="mt-8 mb-4 px-3">
                           <v-btn text class="mr-4 px-4" @click="step -= 1">
                             <v-icon left>mdi-chevron-left</v-icon> Previous
                           </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="submit" :loading="upload.loading">
+                          <v-btn color="primary" class="mr-4 px-4" @click="submit" :loading="upload.status === 'PENDING'">
                             Submit <v-icon right>mdi-upload</v-icon>
                           </v-btn>
 
@@ -786,6 +800,45 @@
                             Cancel
                           </v-btn>
                         </v-row>
+
+                        <v-divider class="my-8" v-if="upload.status !== 'READY'"></v-divider>
+
+                        <div v-if="upload.status === 'PENDING'" ref="pending">
+                          <div class="mb-4 font-weight-bold">
+                            {{upload.message}}
+                          </div>
+                          <v-progress-linear
+                            :active="true"
+                            color="primary"
+                            height="8"
+                            :value="upload.progress"
+                          ></v-progress-linear>
+
+                          <Alert type="warning" title="Upload in Progress">
+                            <div>
+                              Please leave this browser tab open until uploading is complete.
+                            </div>
+                          </Alert>
+                        </div>
+                        <Alert type="error" title="Failed to Upload File" v-else-if="upload.status === 'FAILED'">
+                          <div v-html="upload.error || 'Unknown error'"></div>
+                        </Alert>
+                        <Alert type="success" title="Upload Complete!" v-else-if="upload.status === 'DONE'">
+                          <div>
+                            The dataset has been uploaded and will now be queued for processing on the server.
+                          </div>
+                          <div class="mt-2">
+                            Redirecting you back to the station files table in 5 seconds, or <router-link :to="{name: 'manageFiles'}">click here</router-link>.
+                          </div>
+                        </Alert>
+                        <Alert type="error" title="Upload Cancelled" v-else-if="upload.status === 'CANCELLED'">
+                          <div>
+                            File upload has been cancelled. The file has been deleted from the server.
+                          </div>
+                          <div class="mt-2">
+                            <router-link :to="{name: 'manageFiles'}">Click here</router-link> to go back to your existing files.
+                          </div>
+                        </Alert>
                       </v-form>
                     </v-col>
                   </v-row>
@@ -802,7 +855,8 @@
 <script>
 import Papa from 'papaparse'
 
-import { utcOffsetOptions, temperatureUnitsOptions, sensorAccuracyOptions } from '@/lib/constants'
+import { utcOffsetOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions } from '@/lib/constants'
+import { mapGetters } from 'vuex'
 
 const parseFile = (file) => new Promise((resolve, reject) => {
   return Papa.parse(file, {
@@ -816,28 +870,21 @@ const parseFile = (file) => new Promise((resolve, reject) => {
   })
 })
 
-const depthUnitsOptions = [
-  {
-    value: 'cm',
-    label: 'Centimeters (cm)'
-  }, {
-    value: 'm',
-    label: 'Meters (m)'
-  }, {
-    value: 'in',
-    label: 'Inches (in)'
-  }, {
-    value: 'ft',
-    label: 'Feet (ft)'
-  }
-]
-
 export default {
   name: 'ManageFileUpload',
   data () {
     return {
-      degug: false,
+      debug: true,
       step: 1,
+      organization: {
+        status: 'READY',
+        error: null,
+        selected: null,
+        // selected: (this.organizations.length === 1 ? this.organizations[0].id : null),
+        rules: [
+          v => !!v || 'Organization is required'
+        ]
+      },
       file: {
         status: 'READY',
         loading: false,
@@ -1056,18 +1103,46 @@ export default {
           }
         }
       },
-      upload: {}
+      upload: {
+        status: 'READY',
+        loading: null,
+        error: null,
+        message: null,
+        progress: 0,
+        file: null,
+        timeout: null
+      }
     }
   },
   computed: {
+    ...mapGetters(['organizations']),
     fileColumns () {
       return this.file.parsed && this.file.parsed.meta ? this.file.parsed.meta.fields : []
     }
   },
   mounted () {
     this.fetchStations()
+    if (this.organizations.length === 1) {
+      this.organization.selected = this.organizations[0].id
+    }
+  },
+  beforeDestroy () {
+    if (this.upload.timeout) {
+      clearTimeout(this.upload.timeout)
+    }
   },
   methods: {
+    nextOrganization () {
+      this.organization.error = null
+      this.organization.status = 'PENDING'
+
+      if (!this.$refs.organizationForm.validate()) {
+        this.organization.status = 'ERROR'
+        this.organization.error = 'Form is incomplete or contains an error'
+        return
+      }
+      this.step += 1
+    },
     async fetchStations () {
       // this.loading = true
       // this.error = null
@@ -1225,8 +1300,153 @@ export default {
       }
       this.step += 1
     },
-    submit () {
+    async submit () {
       console.log('uploading...')
+      this.upload.status = 'PENDING'
+      this.upload.message = 'Starting upload...'
+      this.upload.error = null
+      this.upload.loading = true
+
+      this.$nextTick(() => this.$vuetify.goTo(this.$refs.pending))
+
+      try {
+        this.upload.file = await this.createFile()
+      } catch (err) {
+        console.error(err)
+        this.upload.status = 'FAILED'
+        this.upload.message = 'Failed to save file to database'
+        this.upload.error = (err.response && err.response.data.message) || err.toString()
+        return
+      }
+
+      const file = this.file.selected
+
+      if (!file) {
+        this.upload.status = 'FAILED'
+        this.upload.message = 'Failed to upload file.'
+        this.upload.error = 'Selected file could not be found. Return to step 2 and select a file.'
+      }
+
+      this.upload.message = `Uploading ${file.name}...`
+      this.upload.progress = 0.25
+
+      try {
+        await this.uploadFile(this.upload.file, file)
+      } catch (err) {
+        console.log(err.response || err)
+
+        if (this.upload.status === 'CANCELLED') return
+
+        this.upload.status = 'FAILED'
+        this.upload.message = `Failed to upload file: ${file.name}.`
+        this.upload.error = (err.response && err.response.data.message) || err.toString()
+
+        this.deleteFile(this.upload.file)
+        return
+      }
+
+      this.upload.progress = 0.75
+
+      try {
+        await this.processFile(this.upload.file)
+      } catch (err) {
+        console.log(err.response || err)
+
+        if (this.upload.status === 'CANCELLED') return
+
+        this.upload.status = 'FAILED'
+        this.upload.error = 'Failed to start processing file. The file has been saved to the server, but will need to be manually processed. Please contact us for help, or delete it and try uploading again.<br><br>'
+        this.upload.error += (err.response && err.response.data.message) || err.toString()
+
+        this.deleteFile(this.upload.file)
+        return
+      }
+
+      this.upload.progress = 1
+
+      this.upload.status = 'DONE'
+      this.upload.message = 'Upload complete'
+
+      this.upload.timeout = setTimeout(() => {
+        this.$router.push({ name: 'manageFiles' })
+        // this.$router.push({
+        //   name: 'manageFile',
+        //   params: {
+        //     fileId: this.upload.file.id
+        //   }
+        // })
+      }, 5000)
+
+      // const { presignedUrl } = file
+    },
+    async createFile () {
+      const organizationId = this.organization.selected
+      const filename = 'test.csv'
+      const config = { mode: 'single' }
+
+      const response = await this.$http.restricted.post(`/organizations/${organizationId}/files`, {
+        filename,
+        config
+      })
+
+      return response.data
+    },
+    async updateFile (file, payload) {
+      return await this.$http.restricted.put(
+        `/files/${file.id}`,
+        payload
+      )
+    },
+    async processFile (file) {
+      return await this.$http.restricted.post(
+        `/files/${file.id}/process`,
+        null
+      )
+    },
+    async deleteFile (file) {
+      try {
+        await this.$http.restricted.delete(`/files/${file.id}`)
+      } catch (err) {
+        console.log(`Failed to delete dataset (id=${file.id})`)
+        console.error(err)
+      }
+    },
+    async uploadFile (file) {
+      await this.updateFile(file, { status: 'UPLOADING' })
+
+      const formData = new FormData()
+      Object.keys(file.presignedUrl.fields).forEach((key) => {
+        formData.append(key, file.presignedUrl.fields[key])
+      })
+      formData.append('file', this.file.selected)
+
+      const response = await this.$http.external.post(file.presignedUrl.url, formData)
+
+      const payload = {
+        url: `https://${file.s3.Bucket}.s3.amazonaws.com/${file.s3.Key}`,
+        s3: response.data.s3
+      }
+
+      await this.updateFile(file, payload)
+    },
+    cancelUpload () {
+      if (this.upload.status === 'READY') {
+        return this.$router.push({
+          name: 'manageFiles'
+        })
+      } else if (this.upload.status === 'DONE') {
+        return this.$router.push({
+          name: 'manageFiles'
+          // params: {
+          //   datasetId: this.upload.dataset.id
+          // }
+        })
+      }
+      this.upload.status = 'CANCELLED'
+
+      if (this.upload.file) {
+        this.deleteFile(this.upload.file)
+      }
     }
   }
 }

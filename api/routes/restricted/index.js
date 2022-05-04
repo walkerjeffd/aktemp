@@ -10,7 +10,7 @@ const { User, Organization } = require('../../db/models')
 
 const router = express.Router()
 
-const { isLambda } = require('../../utils')
+// const { isLambda } = require('../../utils')
 // const { user } = require('pg/lib/defaults')
 
 const users = {
@@ -26,35 +26,9 @@ const users = {
   }
 }
 
-// if (!isLambda()) {
-//   router.use(basicAuth({
-//     authorizer: (username, password) => {
-//       const user = users[username]
-//       return user && basicAuth.safeCompare(password, user.password)
-//     },
-//     unauthorizedResponse: (req) => {
-//       return {
-//         message: 'Unauthorized'
-//       }
-//     }
-//   }))
-//   router.use((req, res, next) => {
-//     req.auth = {
-//       userId: req.headers['x-aktemp-user-id'],
-//       isAdmin: users[req.auth.user].isAdmin,
-//       type: 'basic'
-//     }
-//     next()
-//   })
-// } else {
-//   router.use(asyncHandler(cognitoAuth))
-// }
-
-if (isLambda()) {
-  console.log('auth: cognito')
+if (process.env.NODE_ENV !== 'test') {
   router.use(asyncHandler(cognitoAuth))
 } else {
-  console.log('auth: basic')
   router.use(basicAuth({
     authorizer: (username, password) => {
       const user = users[username]

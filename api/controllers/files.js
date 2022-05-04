@@ -102,8 +102,8 @@ const processFile = async (req, res, next) => {
   // console.log(`process dataset (id=${res.locals.dataset.id})`)
   await batch.submitJob({
     jobName: `process-file-${res.locals.file.id}`,
-    jobDefinition: process.env.JOB_DEFINITION,
-    jobQueue: process.env.JOB_QUEUE,
+    jobDefinition: process.env.AWS_BATCH_JOB_DEFINITION,
+    jobQueue: process.env.AWS_BATCH_JOB_QUEUE,
     containerOverrides: {
       command: [
         'node',

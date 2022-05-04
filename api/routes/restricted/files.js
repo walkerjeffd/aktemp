@@ -6,7 +6,8 @@ const {
   getUserFiles,
   getFile,
   putFile,
-  deleteFile
+  deleteFile,
+  processFile
 } = require('../../controllers/files')
 
 const router = express.Router()
@@ -19,5 +20,9 @@ router.route('/:fileId')
   .get(asyncHandler(getFile))
   .put(asyncHandler(putFile))
   .delete(asyncHandler(deleteFile))
+
+router.route('/:fileId/process')
+  .all(asyncHandler(attachFile))
+  .post(asyncHandler(processFile))
 
 module.exports = router

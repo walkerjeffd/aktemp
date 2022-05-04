@@ -16,43 +16,44 @@ app.use(bodyParser.json())
 app.use(cors())
 
 if (isLambda()) {
-  console.log('runtime: lambda')
   app.use(serverlessExpressMiddleware.eventContext())
+  app.use((req, res, next) => {
+    res.locals.runtime = 'lambda'
+    next()
+  })
 } else {
-  console.log('runtime: local')
-  // app.use((req, res, next) => {
-  //   if (req.query.dev === 'true') {
-  //     req.apiGateway = {
-  //       event: {
-  //         requestContext: {
-  //           authorizer: {
-  //             claims: {
-  //               sub: '123abc'
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  //   if (req.headers.authorization) {
-  //     const decoded = jwt.decode(req.headers.authorization)
-  //     console.log(req.auth)
-  //     if (decoded['cognito:groups']) {
-  //       decoded['cognito:groups'] = decoded['cognito:groups'].join(',')
-  //     }
-  //     req.apiGateway = {
-  //       event: {
-  //         requestContext: {
-  //           authorizer: {
-  //             claims: decoded
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  //   res.locals.isLocalDev = true
-  //   next()
-  // })
+  app.use((req, res, next) => {
+    // if (req.query.dev === 'true') {
+    //   req.apiGateway = {
+    //     event: {
+    //       requestContext: {
+    //         authorizer: {
+    //           claims: {
+    //             sub: '123abc'
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    if (req.headers.authorization) {
+      const decoded = jwt.decode(req.headers.authorization)
+      if (decoded['cognito:groups']) {
+        decoded['cognito:groups'] = decoded['cognito:groups'].join(',')
+      }
+      req.apiGateway = {
+        event: {
+          requestContext: {
+            authorizer: {
+              claims: decoded
+            }
+          }
+        }
+      }
+    }
+    res.locals.runtime = 'local'
+    next()
+  })
 }
 
 app.use('/', require('./routes'))

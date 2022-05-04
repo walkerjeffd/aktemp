@@ -1,6 +1,6 @@
 <template>
   <v-alert
-    type="error"
+    :type="type"
     text
     colored-border
     border="left"
@@ -14,7 +14,7 @@
 
 <script>
 export default {
-  name: 'AlertError',
-  props: ['title']
+  name: 'Alert',
+  props: ['type', 'title']
 }
 </script>

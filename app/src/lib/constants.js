@@ -113,3 +113,19 @@ export const mixedOptions = [
     label: 'Unknown'
   }
 ]
+
+export const depthUnitsOptions = [
+  {
+    value: 'cm',
+    label: 'Centimeters (cm)'
+  }, {
+    value: 'm',
+    label: 'Meters (m)'
+  }, {
+    value: 'in',
+    label: 'Inches (in)'
+  }, {
+    value: 'ft',
+    label: 'Feet (ft)'
+  }
+]

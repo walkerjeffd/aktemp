@@ -6,7 +6,6 @@ const cognitoAuth = async (req, res, next) => {
     req.apiGateway.event.requestContext &&
     req.apiGateway.event.requestContext.authorizer &&
     req.apiGateway.event.requestContext.authorizer.claims
-
   if (claims) {
     const claims = req.apiGateway.event.requestContext.authorizer.claims
     const groups = claims['cognito:groups'] ? claims['cognito:groups'].split(',') : []

@@ -199,11 +199,11 @@
 
                           <div class="text-center">
                             <v-btn-toggle v-model="station.mode" @change="resetStation()">
-                              <v-btn value="single">
+                              <v-btn value="station">
                                 <v-icon left>mdi-map-marker</v-icon>
                                 One Station
                               </v-btn>
-                              <v-btn value="multiple">
+                              <v-btn value="column">
                                 <v-icon left>mdi-map-marker-multiple</v-icon>
                                 Multiple Stations
                               </v-btn>
@@ -212,135 +212,118 @@
                           <pre v-if="debug">mode: {{ station.mode }}</pre>
                         </div>
 
-                        <div v-if="station.mode === 'single'">
+                        <div v-if="station.mode === 'station'">
                           <div>
                             <p>Which station does this file contain data for?</p>
                             <v-select
-                              v-model="station.single.station.selected"
-                              :items="station.single.station.options"
-                              :rules="station.single.station.rules"
+                              v-model="station.station.selected"
+                              :items="station.station.options"
+                              :rules="station.station.rules"
                               item-text="code"
                               item-value="id"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">station.id: {{ station.single.station.selected }}</pre>
+                            <pre v-if="debug">station.id: {{ station.station.selected }}</pre>
                           </div>
                         </div>
-                        <div v-else-if="station.mode === 'multiple'">
+                        <div v-else-if="station.mode === 'column'">
                           <p>Which column contains the station codes? Values must match codes <em>exactly</em> (case-sensitive).</p>
                           <v-select
-                            v-model="station.multiple.column.selected"
+                            v-model="station.column.selected"
                             :items="fileColumns"
-                            :rules="station.multiple.column.rules"
+                            :rules="station.column.rules"
                             outlined
                           ></v-select>
-                          <pre v-if="debug">column: {{ station.multiple.column.selected }}</pre>
+                          <pre v-if="debug">column: {{ station.column.selected }}</pre>
                         </div>
 
-                        <div v-if="(station.mode === 'single' && !!station.single.station.selected) ||
-                                   (station.mode === 'multiple' && !!station.multiple.column.selected)">
-                          <p>Does the file contain a column with measured depths?</p>
+                        <div v-if="(station.mode === 'station' && !!station.station.selected) ||
+                                   (station.mode === 'column' && !!station.column.selected)">
+                          <p>What kind of depth information is available?</p>
 
                           <div class="text-center">
-                            <v-btn-toggle v-model="station.depth.mode" @change="resetStation()">
-                              <v-btn value="varying">
-                                <v-icon left>mdi-check</v-icon>
-                                Yes
+                            <v-btn-toggle v-model="depth.mode" @change="resetStation()">
+                              <v-btn value="column">
+                                <v-icon left>mdi-chart-line-variant</v-icon>
+                                Time-varying
                               </v-btn>
-                              <v-btn value="fixed">
+                              <v-btn value="value">
+                                <v-icon left>mdi-numeric</v-icon>
+                                Numeric
+                              </v-btn><br>
+                              <v-btn value="category">
+                                <v-icon left>mdi-format-list-bulleted-square</v-icon>
+                                Categorical
+                              </v-btn>
+                              <v-btn value="unknown">
                                 <v-icon left>mdi-close</v-icon>
-                                No
+                                None
                               </v-btn>
                             </v-btn-toggle>
                           </div>
-                          <pre v-if="debug">depth.mode: {{ station.depth.mode }}</pre>
-                        </div>
+                          <pre v-if="debug">depth.mode: {{ depth.mode }}</pre>
 
-                        <div v-if="station.depth.mode === 'varying'">
-                          <div>
-                            <p>Which column contains the measured depths?</p>
-                            <v-select
-                              v-model="station.depth.varying.column.selected"
-                              :items="fileColumns"
-                              :rules="station.depth.varying.column.rules"
-                              outlined
-                            ></v-select>
-                            <pre v-if="debug">depth.varying.column: {{ station.depth.varying.column.selected }}</pre>
-                          </div>
-
-                          <div v-if="!!station.depth.varying.column.selected">
-                            <p>What are the depth units?</p>
-                            <v-select
-                              v-model="station.depth.varying.units.selected"
-                              :items="station.depth.varying.units.options"
-                              :rules="station.depth.varying.units.rules"
-                              item-text="label"
-                              item-value="value"
-                              outlined
-                            ></v-select>
-                            <pre v-if="debug">depth.varying.units: {{ station.depth.varying.units.selected }}</pre>
-                          </div>
-                        </div>
-                        <div v-else-if="station.depth.mode === 'fixed'">
-                          <div>
-                            <p>What kind of approximate depth is available? Assumes all measurements were collected at similar depths (or unknown).</p>
-
-                            <div class="text-center">
-                              <v-btn-toggle v-model="station.depth.fixed.mode" @change="resetStation()">
-                                <v-btn value="numeric">
-                                  <v-icon left>mdi-numeric</v-icon>
-                                  Numeric
-                                </v-btn>
-                                <v-btn value="categorical">
-                                  <v-icon left>mdi-format-list-bulleted-square</v-icon>
-                                  Categorical
-                                </v-btn>
-                                <v-btn value="unknown">
-                                  <v-icon left>mdi-close</v-icon>
-                                  None (Unknown)
-                                </v-btn>
-                              </v-btn-toggle>
+                          <div v-if="depth.mode === 'column'">
+                            <div>
+                              <p>Which column contains the measured depths?</p>
+                              <v-select
+                                v-model="depth.column.selected"
+                                :items="fileColumns"
+                                :rules="depth.column.rules"
+                                outlined
+                              ></v-select>
+                              <pre v-if="debug">depth.column: {{ depth.column.selected }}</pre>
                             </div>
-                            <pre v-if="debug">depth.fixed.mode: {{ station.depth.fixed.mode }}</pre>
+                            <div>
+                              <p>What are the units of these depths?</p>
+                              <v-select
+                                v-model="depth.units.selected"
+                                :items="depth.units.options"
+                                :rules="depth.units.rules"
+                                item-text="label"
+                                item-value="value"
+                                outlined
+                              ></v-select>
+                              <pre v-if="debug">depth.units: {{ depth.units.selected }}</pre>
+                            </div>
                           </div>
-
-                          <div v-if="station.depth.fixed.mode === 'numeric'">
+                          <div v-else-if="depth.mode === 'value'">
                             <div>
                               <p>What was the approximate depth? Should represent depth at <u>start</u> of deployment.</p>
 
                               <v-text-field
-                                v-model="station.depth.fixed.numeric.value.value"
-                                :rules="station.depth.fixed.numeric.value.rules"
+                                v-model="depth.value.selected"
+                                :rules="depth.value.rules"
                                 type="number"
                                 outlined
                               ></v-text-field>
-                              <pre v-if="debug">depth.fixed.numeric.value: {{ station.depth.fixed.numeric.value.value }}</pre>
+                              <pre v-if="debug">depth.value: {{ depth.value.selected }}</pre>
                             </div>
 
                             <div>
                               <p>What are the units of this depth?</p>
                               <v-select
-                                v-model="station.depth.fixed.numeric.units.selected"
-                                :items="station.depth.fixed.numeric.units.options"
-                                :rules="station.depth.fixed.numeric.units.rules"
+                                v-model="depth.units.selected"
+                                :items="depth.units.options"
+                                :rules="depth.units.rules"
                                 item-text="label"
                                 item-value="value"
                                 outlined
                               ></v-select>
-                              <pre v-if="debug">depth.fixed.numeric.units: {{ station.depth.fixed.numeric.units.selected }}</pre>
+                              <pre v-if="debug">depth.units: {{ depth.units.selected }}</pre>
                             </div>
                           </div>
-                          <div v-else-if="station.depth.fixed.mode === 'categorical'">
+                          <div v-else-if="depth.mode === 'category'">
                             <p>What was the approximate depth?</p>
                             <v-select
-                              v-model="station.depth.fixed.categorical.selected"
-                              :items="station.depth.fixed.categorical.options"
-                              :rules="station.depth.fixed.categorical.rules"
+                              v-model="depth.category.selected"
+                              :items="depth.category.options"
+                              :rules="depth.category.rules"
                               item-text="label"
                               item-value="value"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">depth.fixed.categorical: {{ station.depth.fixed.categorical.selected }}</pre>
+                            <pre v-if="debug">depth.category: {{ depth.category.selected }}</pre>
                           </div>
                         </div>
 
@@ -414,11 +397,11 @@
                             </p>
                             <div class="text-center">
                               <v-btn-toggle v-model="timestamp.combined.includesTimezone.value" @change="resetTimestamp()">
-                                <v-btn value="yes">
+                                <v-btn :value="true">
                                   <v-icon left>mdi-check</v-icon>
                                   Yes
                                 </v-btn>
-                                <v-btn value="no">
+                                <v-btn :value="false">
                                   <v-icon left>mdi-close</v-icon>
                                   No
                                 </v-btn>
@@ -453,7 +436,7 @@
                         <div v-if="(
                                     timestamp.mode === 'combined' &&
                                     !!timestamp.combined.column.selected &&
-                                    timestamp.combined.includesTimezone.value === 'no'
+                                    timestamp.combined.includesTimezone.value === false
                                    ) || (
                                     timestamp.mode === 'separate' &&
                                     !!timestamp.separate.date.column.selected &&
@@ -546,58 +529,37 @@
                         </div>
 
                         <div v-if="!!value.column.selected">
-                          <div>
-                            <p>What are the units?</p>
-                            <v-select
-                              v-model="value.units.selected"
-                              :items="value.units.options"
-                              :rules="value.units.rules"
-                              item-text="label"
-                              item-value="value"
-                              outlined
-                            ></v-select>
-                            <pre v-if="debug">value.units: {{ value.units.selected }}</pre>
-                          </div>
+                          <p>What are the units?</p>
+                          <v-select
+                            v-model="value.units.selected"
+                            :items="value.units.options"
+                            :rules="value.units.rules"
+                            item-text="label"
+                            item-value="value"
+                            outlined
+                          ></v-select>
+                          <pre v-if="debug">value.units: {{ value.units.selected }}</pre>
                         </div>
 
                         <div v-if="!!value.column.selected && !!value.units.selected">
                           <div>
                             <p>
-                              Are there any special missing value indicators (e.g., '-99', 'N/A')?
-                            </p>
-                            <div class="text-center">
-                              <v-btn-toggle v-model="value.missing.mode" @change="resetValue()">
-                                <v-btn value="yes">
-                                  <v-icon left>mdi-check</v-icon>
-                                  Yes
-                                </v-btn>
-                                <v-btn value="no">
-                                  <v-icon left>mdi-close</v-icon>
-                                  No
-                                </v-btn>
-                              </v-btn-toggle>
-                            </div>
-                            <pre v-if="debug">value.missing.mode: {{ value.missing.mode }}</pre>
-                          </div>
-                          <div v-if="value.missing.mode === 'yes'">
-                            <p>
-                              What are the missing value indicators?<br>
+                              What are the missing value indicators (e.g., 'N/A')? (Optional, leave blank if none)<br>
                               <span class="text--secondary"></span>
                             </p>
                             <div class="text-center">
                               <v-combobox
-                                v-model="value.missing.values"
+                                v-model="value.missing.selected"
                                 :items="value.missing.options"
                                 label="Select or enter missing value indicators"
                                 hint="Select from the list, or type and press enter to add a custom value. Use backspace to delete."
                                 multiple
                                 outlined
-                                dense
                                 small-chips
                                 clearable
                               ></v-combobox>
                             </div>
-                            <pre v-if="debug">value.missing.values: {{ value.missing.values }}</pre>
+                            <pre v-if="debug">value.missing.selected: {{ value.missing.selected }}</pre>
                           </div>
                         </div>
 
@@ -638,40 +600,25 @@
                         <div>
                           <p>Were the data collected at continuous (logger) or discrete (grab) intervals?</p>
                           <div class="text-center">
-                            <v-btn-toggle v-model="meta.interval.value" @change="resetMeta()">
+                            <v-btn-toggle v-model="meta.interval" @change="resetMeta()">
                               <v-btn value="continuous">
                                 <v-icon left>mdi-chart-line-variant</v-icon>
                                 Continuous
                               </v-btn>
                               <v-btn value="discrete">
-                                <v-icon left>mdi-scatter-plot</v-icon>
+                                <v-icon left>mdi-chart-bubble</v-icon>
                                 Discrete
                               </v-btn>
                             </v-btn-toggle>
                           </div>
-                          <pre v-if="debug">meta.interval: {{ meta.interval.value }}</pre>
+                          <pre v-if="debug">meta.interval: {{ meta.interval }}</pre>
                         </div>
 
-                        <div v-if="meta.interval.value === 'continuous'">
-                          <div>
-                            <p>
-                              What was the approx. measurement frequency (minutes)? Assumes same frequency for all data in this file.
-                            </p>
-                            <v-text-field
-                              v-model="meta.frequency.value"
-                              :rules="meta.frequency.rules"
-                              type="number"
-                              hint="e.g., '60' = hourly, '15' = every 15 minutes"
-                              persistent-hint
-                              outlined
-                            ></v-text-field>
-                            <pre v-if="debug">meta.frequency: {{ meta.frequency.value }}</pre>
-                          </div>
-
+                        <div v-if="meta.interval === 'continuous'">
                           <div>
                             <p>Was the sensor checked using pre/post water baths?</p>
                             <div class="text-center">
-                              <v-btn-toggle v-model="meta.sop.value" @change="resetMeta()">
+                              <v-btn-toggle v-model="meta.sop" @change="resetMeta()">
                                 <v-btn value="yes">
                                   <v-icon left>mdi-check</v-icon>
                                   Yes
@@ -686,14 +633,11 @@
                                 </v-btn>
                               </v-btn-toggle>
                             </div>
-                            <pre v-if="debug">meta.sop: {{ meta.sop.value }}</pre>
+                            <pre v-if="debug">meta.sop: {{ meta.sop }}</pre>
                           </div>
                         </div>
 
-                        <div v-if="(meta.interval.value === 'continuous' &&
-                                      !!meta.frequency.value &&
-                                      !!meta.sop.value) ||
-                                    meta.interval.value === 'discrete'">
+                        <div v-if="(meta.interval === 'continuous' && !!meta.sop) || meta.interval == 'discrete'">
                           <div>
                             <p>
                               What was the sensor accuracy level?
@@ -715,7 +659,7 @@
                                 Have these data already undergone a QAQC review?
                               </p>
                               <div class="text-center">
-                                <v-btn-toggle v-model="meta.qaqc.reviewed" @change="resetMeta()">
+                                <v-btn-toggle v-model="meta.reviewed" @change="resetMeta()">
                                   <v-btn value="yes">
                                     <v-icon left>mdi-check</v-icon>
                                     Yes
@@ -730,22 +674,22 @@
                                   </v-btn>
                                 </v-btn-toggle>
                               </div>
-                              <pre v-if="debug">meta.qaqc.reviewed: {{ meta.qaqc.reviewed }}</pre>
+                              <pre v-if="debug">meta.reviewed: {{ meta.reviewed }}</pre>
                             </div>
-                            <div v-if="meta.qaqc.reviewed === 'yes' || meta.qaqc.reviewed === 'unknown'">
+                            <div v-if="!!meta.reviewed && meta.reviewed !== 'no'">
                               <p>
-                                Which column (if any) contain QAQC flags? Optional, leave blank of file does not contain flags.
+                                Which column contain QAQC flags? (Optional, leave blank if none)
                               </p>
                               <div class="text-center">
                                 <v-select
-                                  v-model="meta.qaqc.column.selected"
+                                  v-model="meta.flagColumn.selected"
                                   :items="fileColumns"
-                                  :rules="meta.qaqc.column.rules"
+                                  :rules="meta.flagColumn.rules"
                                   outlined
                                   clearable
                                 ></v-select>
                               </div>
-                              <pre v-if="debug">meta.qaqc.column: {{ meta.qaqc.column.selected }}</pre>
+                              <pre v-if="debug">meta.flagColumn: {{ meta.flagColumn.selected }}</pre>
                             </div>
                           </div>
                         </div>
@@ -844,6 +788,9 @@
                   </v-row>
                 </v-stepper-content>
               </v-stepper-items>
+              <v-sheet class="ma-4 pa-4 elevation-4" v-if="debug">
+                <pre>config: {{ fileConfig }}</pre>
+              </v-sheet>
             </v-stepper>
           </v-card>
         </v-col>
@@ -904,90 +851,71 @@ export default {
       station: {
         status: 'READY',
         loading: false,
-        mode: null,
-        single: {
-          station: {
-            selected: null,
-            options: [],
-            rules: [
-              v => !!v ||
-                this.station.mode !== 'single' ||
-                'Station is required'
-            ]
-          }
+        mode: null, // station, column
+        station: {
+          selected: null,
+          options: [],
+          rules: [
+            v => !!v ||
+              this.station.mode !== 'station' ||
+              'Station is required'
+          ]
         },
-        multiple: {
-          column: {
-            selected: null,
-            rules: [
-              v => !!v ||
-                this.station.mode !== 'multiple' ||
-                'Station column is required'
-            ]
-          }
+        column: {
+          selected: null,
+          rules: [
+            v => !!v ||
+              this.station.mode !== 'column' ||
+              'Station column is required'
+          ]
+        }
+      },
+      depth: {
+        mode: null, // column, value, category, unknown
+        column: {
+          selected: null,
+          rules: [
+            v => !!v ||
+              this.depth.mode !== 'column' ||
+              'Depth column is required'
+          ]
         },
-        depth: {
-          mode: null,
-          varying: {
-            column: {
-              selected: null,
-              rules: [
-                v => !!v ||
-                  this.station.depth.mode !== 'varying' ||
-                  'Depth column is required'
-              ]
-            },
-            units: {
-              selected: null,
-              options: depthUnitsOptions,
-              rules: [
-                v => !!v ||
-                  this.station.depth.mode !== 'varying' ||
-                  'Depth units are required'
-              ]
-            }
-          },
-          fixed: {
-            mode: null,
-            numeric: {
-              value: {
-                value: null,
-                rules: [
-                  v => !!v || 'Depth is required'
-                ]
-              },
-              units: {
-                selected: null,
-                options: depthUnitsOptions,
-                rules: [
-                  v => !!v ||
-                    this.station.depth.mode !== 'fixed' ||
-                    this.station.depth.fixed.mode !== 'numeric' ||
-                    'Depth units are required'
-                ]
-              }
-            },
-            categorical: {
-              selected: null,
-              options: [
-                { value: 'surface', label: 'Surface' },
-                { value: 'middle', label: 'Mid-Depth' },
-                { value: 'bottom', label: 'Bottom' }
-              ],
-              rules: [
-                v => !!v ||
-                  this.station.depth.mode !== 'fixed' ||
-                  this.station.depth.fixed.mode !== 'categorical' ||
-                  'Categorical depth is required'
-              ]
-            }
-          }
+        units: {
+          selected: null,
+          options: depthUnitsOptions,
+          rules: [
+            v => !!v ||
+              this.depth.mode === 'category' ||
+              this.depth.mode === 'unknown' ||
+              'Units are required'
+          ]
+        },
+        value: {
+          selected: null,
+          rules: [
+            v => !!v ||
+              this.depth.mode !== 'value' ||
+              'Depth is required'
+          ]
+        },
+        category: {
+          selected: null,
+          options: [
+            { value: 'surface', label: 'Surface' },
+            { value: 'middle', label: 'Mid-Depth' },
+            { value: 'bottom', label: 'Bottom' }
+          ],
+          rules: [
+            v => !!v ||
+              this.depth.mode !== 'category' ||
+              'Categorical depth is required'
+          ]
         }
       },
       timestamp: {
         status: 'READY',
         loading: false,
-        mode: null,
+        mode: null, // combined, separate
         combined: {
           column: {
             selected: null,
@@ -1029,7 +957,7 @@ export default {
           }
         },
         timezone: {
-          mode: null,
+          mode: null, // column, utcOffset
           column: {
             selected: null,
             rules: [
@@ -1060,7 +988,7 @@ export default {
           ]
         },
         units: {
-          selected: 'degC',
+          selected: null,
           options: temperatureUnitsOptions,
           rules: [
             v => !!v ||
@@ -1068,39 +996,25 @@ export default {
           ]
         },
         missing: {
-          mode: 'no',
-          values: [],
+          mode: null,
+          selected: [],
           options: ['N/A', '#N/A', 'NA', 'missing', '-99', '-99.99']
         }
       },
       meta: {
         status: 'READY',
         loading: false,
-        interval: {
-          value: null
-        },
-        frequency: {
-          value: null,
-          rules: [
-            v => !!v || 'Frequency is required'
-          ]
-        },
-        sop: {
-          value: null
-        },
+        interval: null,
+        sop: null,
         accuracy: {
           selected: null,
           options: sensorAccuracyOptions,
-          rules: [
-            v => !!v || 'Accuracy is required'
-          ]
+          rules: []
         },
-        qaqc: {
-          reviewed: null,
-          column: {
-            selected: null,
-            rules: []
-          }
+        reviewed: null,
+        flagColumn: {
+          selected: null,
+          rules: []
         }
       },
       upload: {
@@ -1118,6 +1032,9 @@ export default {
     ...mapGetters(['organizations']),
     fileColumns () {
       return this.file.parsed && this.file.parsed.meta ? this.file.parsed.meta.fields : []
+    },
+    fileConfig () {
+      return this.createFileConfig()
     }
   },
   mounted () {
@@ -1149,7 +1066,7 @@ export default {
 
       try {
         const response = await this.$http.restricted.get('/stations')
-        this.station.single.station.options = response.data
+        this.station.station.options = response.data
       } catch (err) {
         alert('Failed to load stations, see console log')
         console.error(err)
@@ -1233,9 +1150,7 @@ export default {
       this.station.error = null
 
       if (!this.station.mode ||
-          !this.station.depth.mode ||
-          (this.station.depth.mode === 'fixed' &&
-            !this.station.depth.fixed.mode) ||
+          !this.depth.mode ||
           !this.$refs.stationForm.validate()) {
         this.station.status = 'ERROR'
         this.station.error = 'Form is incomplete or contains an error'
@@ -1255,10 +1170,10 @@ export default {
       if (!this.timestamp.mode ||
           !this.$refs.timestampForm.validate() ||
           (this.timestamp.mode === 'combined' &&
-            !this.timestamp.combined.includesTimezone.value) ||
+            this.timestamp.combined.includesTimezone.value === null) ||
           (!this.timestamp.timezone.mode &&
             !(this.timestamp.mode === 'combined' &&
-              this.timestamp.combined.includesTimezone.value === 'yes')
+              this.timestamp.combined.includesTimezone.value === true)
           )) {
         this.timestamp.status = 'ERROR'
         this.timestamp.error = 'Form is incomplete or contains an error'
@@ -1274,8 +1189,7 @@ export default {
     nextValue () {
       this.value.error = null
 
-      if (!this.$refs.valueForm.validate() ||
-          !this.value.missing.mode) {
+      if (!this.$refs.valueForm.validate()) {
         this.value.status = 'ERROR'
         this.value.error = 'Form is incomplete or contains an error'
         return
@@ -1291,8 +1205,9 @@ export default {
       this.meta.error = null
 
       if (!this.meta.interval ||
-          (!this.meta.interval === 'continuous' && !this.meta.sop.value) ||
-          !this.meta.qaqc.reviewed ||
+          (this.meta.interval === 'continuous' && !this.meta.sop) ||
+          !this.meta.accuracy ||
+          !this.meta.reviewed ||
           !this.$refs.metaForm.validate()) {
         this.meta.status = 'ERROR'
         this.meta.error = 'Form is incomplete or contains an error'
@@ -1379,10 +1294,86 @@ export default {
 
       // const { presignedUrl } = file
     },
+    createFileConfig () {
+      const config = {
+        station: {
+          mode: this.station.mode
+        },
+        depth: {
+          mode: this.depth.mode
+        },
+        timestamp: {
+          timezone: {}
+        },
+        value: {
+          column: this.value.column.selected,
+          units: this.value.units.selected,
+          missing: this.value.missing.selected
+        },
+        meta: {
+          interval: this.meta.interval
+        }
+      }
+
+      if (this.station.mode === 'station') {
+        config.station.stationId = this.station.station.selected
+      } else if (this.station.mode === 'column') {
+        config.station.column = this.station.column.selected
+      }
+
+      if (this.depth.mode === 'column') {
+        config.depth.column = this.depth.column.selected
+        config.depth.units = this.depth.units.selected
+      } else if (this.depth.mode === 'value') {
+        config.depth.value = this.depth.value.selected
+        config.depth.units = this.depth.units.selected
+      } else if (this.depth.mode === 'category') {
+        config.depth.category = this.depth.category.selected
+      }
+
+      if (this.timestamp.mode === 'combined') {
+        config.timestamp.columns = [
+          this.timestamp.combined.column.selected
+        ]
+      } else if (this.timestamp.mode === 'separate') {
+        config.timestamp.columns = [
+          this.timestamp.separate.date.column.selected,
+          this.timestamp.separate.time.column.selected
+        ]
+      }
+
+      if (this.timestamp.mode === 'combined' &&
+          this.timestamp.combined.includesTimezone.value) {
+        config.timestamp.timezone.mode = 'timestamp'
+      } else {
+        config.timestamp.timezone.mode = this.timestamp.timezone.mode
+        if (this.timestamp.timezone.mode === 'column') {
+          config.timestamp.timezone.column = this.timestamp.timezone.column.selected
+        } else if (this.timestamp.timezone.mode === 'utcOffset') {
+          config.timestamp.timezone.utcOffset = this.timestamp.timezone.utcOffset.selected
+        }
+      }
+
+      if (this.meta.sop !== 'unknown') {
+        config.meta.sop = this.meta.sop === 'yes'
+      }
+      if (this.meta.accuracy.selected !== 'unknown') {
+        config.meta.accuracy = this.meta.accuracy.selected
+      }
+      if (this.meta.reviewed !== 'unknown') {
+        config.meta.reviewed = this.meta.reviewed === 'yes'
+      }
+      if (this.meta.flagColumn.selected) {
+        config.meta.flagColumn = this.meta.flagColumn.selected
+      }
+
+      return config
+    },
     async createFile () {
       const organizationId = this.organization.selected
       const filename = 'test.csv'
-      const config = { mode: 'single' }
+      const config = this.createFileConfig()
+      console.log(config)
 
       const response = await this.$http.restricted.post(`/organizations/${organizationId}/files`, {
         filename,

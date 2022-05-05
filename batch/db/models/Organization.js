@@ -11,11 +11,15 @@ class Organization extends Base {
     const User = require('./User')
     return {
       users: {
-        relation: Base.HasManyRelation,
+        relation: Base.ManyToManyRelation,
         modelClass: User,
         join: {
           from: 'organizations.id',
-          to: 'users.organization_id'
+          through: {
+            from: 'users_organizations.organization_id',
+            to: 'users_organizations.user_id'
+          },
+          to: 'users.id'
         }
       },
       files: {

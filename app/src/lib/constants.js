@@ -2,17 +2,17 @@ export const variableOptions = [
   {
     id: 'TEMP_C',
     label: 'Temperature',
-    units: 'degC'
+    units: 'C'
   }
 ]
 
 export const temperatureUnitsOptions = [
   {
-    value: 'degC',
+    value: 'C',
     label: 'Celsius'
   },
   {
-    value: 'degF',
+    value: 'F',
     label: 'Fahrenheit'
   }
 ]
@@ -31,7 +31,7 @@ export const sensorAccuracyOptions = [
     label: 'Level 3: > ±0.5 degC (worst)'
   },
   {
-    value: 'na',
+    value: 'unknown',
     label: 'Unknown'
   }
 ]
@@ -55,7 +55,7 @@ export const utcOffsetOptions = [
   },
   {
     id: 'UTC-08',
-    label: 'UTC-08 (PST or AKDT)',
+    label: 'UTC-08 (AKDT/PST)',
     value: -8
   },
   {

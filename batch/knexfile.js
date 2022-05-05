@@ -19,28 +19,29 @@ async function getCreds () {
   return JSON.parse(secret.SecretString)
 }
 
+async function asyncConnection () {
+  // https://github.com/knex/knex/pull/3364
+  const creds = await getCreds()
+  return {
+    host: creds.host,
+    port: creds.port,
+    database: creds.dbname || 'postgres',
+    user: creds.username,
+    password: creds.password
+  }
+}
+
+const envConnection = {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_DATABASE || 'postgres',
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD
+}
+
 const config = {
   client: 'postgresql',
-  connection: async function () {
-    if (process.env.DB_SECRET_NAME) {
-      // https://github.com/knex/knex/pull/3364
-      const creds = await getCreds()
-      return {
-        host: creds.host,
-        port: creds.port,
-        database: creds.dbname || 'postgres',
-        user: creds.username,
-        password: creds.password
-      }
-    }
-    return {
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      database: process.env.DB_DATABASE || 'postgres',
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD
-    }
-  },
+  connection: !!process.env.DB_SECRET_NAME && process.env.NODE_ENV !== 'test' ? asyncConnection : envConnection,
   migrations: {
     tableName: 'knex_migrations',
     directory: path.join(__dirname, 'db', 'migrations')
@@ -64,6 +65,12 @@ module.exports = {
     ...config,
     seeds: {
       directory: path.join(__dirname, 'db', 'seeds', 'production')
+    }
+  },
+  test: {
+    ...config,
+    seeds: {
+      directory: path.join(__dirname, 'db', 'seeds', 'test')
     }
   }
 }

@@ -3,7 +3,7 @@ require('dotenv-flow').config({
   default_node_env: 'development'
 })
 
-const { processFiles } = require('./processors')
+const processFiles = require('./lib/processors')
 
 program.command('files [ids...]')
   .option('-a, --all', 'all files')
@@ -15,7 +15,7 @@ program.parseAsync(process.argv)
   .then(() => {
     process.exit(0)
   })
-  .catch((e) => {
-    // console.error(e.toString())
+  .catch((err) => {
+    console.error(err.toString())
     process.exit(1)
   })

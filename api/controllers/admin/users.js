@@ -4,14 +4,20 @@ const createError = require('http-errors')
 const { User } = require('../../db/models')
 
 const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({
-  region: process.env.REGION
+  region: process.env.AWS_REGION
 })
-const userPoolId = process.env.USERPOOL_ID
+const userPoolId = process.env.AWS_COGNITO_USER_POOL_ID
+
+async function listOrganizationsForUser (id) {
+  return await User.relatedQuery('organizations')
+    .for(id)
+}
 
 async function attachAdminUser (req, res, next) {
   const user = await fetchUser(req.params.userId)
   if (!user) throw createError(404, `User (${req.params.userId}) not found`)
   const groups = await listGroupsForUser(user.Username)
+  const organizations = await listOrganizationsForUser(user.Username)
   res.locals.adminUser = {
     id: user.Username,
     attributes: transformUserAttributes(user.UserAttributes),
@@ -19,7 +25,8 @@ async function attachAdminUser (req, res, next) {
     updated_at: user.UserLastModifiedDate,
     enabled: user.Enabled,
     status: user.UserStatus,
-    is_admin: groups.includes('admins')
+    admin: groups.includes('admins'),
+    organizations
   }
   return next()
 }
@@ -52,24 +59,6 @@ async function createDatabaseUser (user) {
   return await User.query().insert(user).returning('*')
 }
 
-async function setAffiliation (id, affiliation) {
-  console.log(`setAffiliation(id=${id})`)
-  const existing = await User.query().findById(id)
-  if (existing) {
-    return await User.query()
-      .patchAndFetchById(id, {
-        affiliation_name: affiliation.name,
-        affiliation_code: affiliation.code
-      })
-  } else {
-    return await User.query().insert({
-      id,
-      affiliation_name: affiliation.name,
-      affiliation_code: affiliation.code
-    }).returning('*')
-  }
-}
-
 async function deleteCognitoUser (id) {
   console.log(`deleteUser (${id})`)
   const params = {
@@ -89,7 +78,7 @@ async function deleteUser (req, res, next) {
 }
 
 async function postUsers (req, res, next) {
-  const { email, name, affiliation, admin } = req.body // eslint-disable-line
+  const { email, name, admin } = req.body // eslint-disable-line
 
   const cognitoUser = await createCognitoUser(email, name)
   if (admin) {
@@ -97,9 +86,7 @@ async function postUsers (req, res, next) {
   }
 
   await createDatabaseUser({
-    id: cognitoUser.Username,
-    affiliation_name: affiliation.name,
-    affiliation_code: affiliation.code
+    id: cognitoUser.Username
   })
 
   return res.status(201).json(cognitoUser)
@@ -193,7 +180,7 @@ async function listUsers (users, token, iter) {
     updated_at: d.UserLastModifiedDate,
     enabled: d.Enabled,
     status: d.UserStatus,
-    is_admin: adminUserIds.includes(d.Username)
+    admin: adminUserIds.includes(d.Username)
   }))
 }
 
@@ -230,14 +217,13 @@ async function listGroupsForUser (id) {
 }
 
 async function getUsers (req, res, next) {
-  // let users = []
-  // try {
-  //   users = await listUsers()
-  // } catch (err) {
-  //   console.log(err)
-  //   return next(createError(500, 'Failed to list users'))
-  // }
-  const users = []
+  let users = []
+  try {
+    users = await listUsers()
+  } catch (err) {
+    console.log(err)
+    return next(createError(500, 'Failed to list users'))
+  }
 
   res.status(200).json(users)
 }
@@ -261,9 +247,7 @@ async function fetchUser (id) {
 }
 
 async function getUser (req, res, next) {
-  const affiliation = await User.query().findById(res.locals.adminUser.id)
-  console.log(affiliation)
-  res.status(200).json({ affiliation, ...res.locals.adminUser })
+  res.status(200).json(res.locals.adminUser)
 }
 
 async function putUser (req, res, next) {
@@ -276,8 +260,6 @@ async function putUser (req, res, next) {
     response = await addUserToGroup(res.locals.adminUser.id, 'admins')
   } else if (req.body.action === 'removeFromAdmin') {
     response = await removeUserFromGroup(res.locals.adminUser.id, 'admins')
-  } else if (req.body.action === 'setAffiliation') {
-    response = await setAffiliation(res.locals.adminUser.id, req.body.payload.affiliation)
   } else if (req.body.action === 'signOut') {
     response = await signOutUser(res.locals.adminUser.id)
   } else {

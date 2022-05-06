@@ -29,16 +29,6 @@
         <template v-slot:top>
           <v-toolbar flat dense>
             <v-row justify="space-between">
-              <!-- <v-col cols="2" v-if="!$vuetify.breakpoint.mobile">
-                <v-select
-                  :items="affiliations"
-                  v-model="filters.affiliation"
-                  label="Affiliation"
-                  clearable
-                  hide-details
-                  @change="filter"
-                ></v-select>
-              </v-col> -->
               <v-col cols="12" md="3">
                 <v-text-field
                   v-model="filters.search"
@@ -74,7 +64,6 @@ export default {
     return {
       collapse: false,
       filters: {
-        affiliation: null,
         search: '',
         hasImages: false,
         hasData: false,
@@ -105,11 +94,6 @@ export default {
     }
   },
   computed: {
-    // ...mapGetters(['user']),
-    // affiliations () {
-    //   if (!this.stations) return []
-    //   return this.stations.map(d => d.affiliation_code).sort()
-    // },
     selectedArray () {
       // wrap in array for v-data-table in StationTable
       return this.selected ? [this.selected] : []
@@ -118,11 +102,7 @@ export default {
   methods: {
     filter () {
       const filtered = this.stations
-        // .filter(d => (!this.filters.affiliation || d.affiliation_code === this.filters.affiliation))
         .filter(d => (!this.filters.search || d.code.toLowerCase().includes(this.filters.search.toLowerCase())))
-        // .filter(d => (!this.filters.hasImages || (d.summary && d.summary.images && d.summary.images.n_images > 0)))
-        // .filter(d => (!this.filters.hasData || (d.summary && d.summary.values && d.summary.values.n_days > 0)))
-        // .filter(d => (!this.filters.userOnly || (this.user && d.user_id === this.user.username)))
       this.$emit('filter', filtered)
     },
     select (station) {

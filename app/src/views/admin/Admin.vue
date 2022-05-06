@@ -3,7 +3,7 @@
     <v-container class="black--text">
       <v-row justify="space-around">
         <v-col cols="12">
-          <v-card elevation="4">
+          <v-card elevation="4" class="pb-4">
             <v-toolbar flat dense color="grey lighten-3">
               <v-toolbar-title class="text-h5">
                 Database Administration

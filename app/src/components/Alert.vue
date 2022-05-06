@@ -4,7 +4,7 @@
     text
     colored-border
     border="left"
-    class="body-2 mb-0 mt-4"
+    class="body-2"
     :value="true"
   >
     <div class="font-weight-bold body-1">{{ title }}</div>

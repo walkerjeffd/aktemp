@@ -36,7 +36,7 @@ const createAndUploadFile = async function (filepath, config, { organizationId, 
   // upload to s3
   const stream = createReadStream(filepath)
   const s3Response = await s3.upload({
-    Bucket: process.env.AWS_S3_DATA_BUCKET,
+    Bucket: process.env.AWS_S3_STORAGE_BUCKET,
     Key: `files/${file.uuid}/${file.filename}`,
     Body: stream
   }).promise()

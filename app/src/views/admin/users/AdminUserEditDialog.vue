@@ -2,232 +2,186 @@
   <v-dialog
     v-model="dialog"
     scrollable
-    :max-width="options.width"
-    :style="{ zIndex: options.zIndex }"
     @keydown.esc="close"
   >
-    <v-card>
-      <v-toolbar flat :color="options.color">
+    <v-card style="width:600px">
+      <v-toolbar flat color="grey lighten-2">
         <v-toolbar-title class="text-h5">
           Edit User
         </v-toolbar-title>
       </v-toolbar>
-      <v-tabs
-        v-model="tab"
-        color="primary"
-        grow
-      >
-        <v-tab>
-          Account
-        </v-tab>
-        <v-tab>
-          Affiliation
-        </v-tab>
 
-        <v-tab-item>
-          <div v-if="loading.init" class="text-h5 text-center py-8">
-            Loading...
-          </div>
-          <v-card v-else-if="user">
-            <v-simple-table>
-              <tbody>
-                <tr>
-                  <td
-                    class="text-right"
-                    style="width:140px">
-                    ID
-                  </td>
-                  <td class="font-weight-bold">{{ user.id }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="text-right"
-                    style="width:140px">
-                    Created
-                  </td>
-                  <td class="font-weight-bold">{{ this.$date(user.created_at).format('lll z') }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="text-right"
-                    style="width:140px">
-                    Updated
-                  </td>
-                  <td class="font-weight-bold">{{ this.$date(user.updated_at).format('lll z') }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="text-right"
-                    style="width:140px">
-                    Name
-                  </td>
-                  <td class="font-weight-bold">{{ user.attributes.name }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="text-right"
-                    style="width:140px">
-                    Email
-                  </td>
-                  <td class="font-weight-bold">
-                    {{ user.attributes.email }}
-                  </td>
-                </tr>
-                <tr>
-                  <td
-                    class="text-right"
-                    style="width:140px">
-                    Enabled
-                  </td>
-                  <td class="font-weight-bold">
-                    <v-icon v-if="user.enabled" color="primary">mdi-check-circle</v-icon>
-                    <v-icon v-else color="gray">mdi-close-circle</v-icon>
-                  </td>
-                </tr>
-                <tr>
-                  <td
-                    class="text-right"
-                    style="width:140px">
-                    Admin
-                  </td>
-                  <td class="font-weight-bold">
-                    <v-icon v-if="user.is_admin" color="primary">mdi-check-circle</v-icon>
-                    <v-icon v-else color="gray">mdi-close-circle</v-icon>
-                  </td>
-                <tr>
-                  <td
-                    class="text-right"
-                    style="width:140px">
-                    Status
-                  </td>
-                  <td class="font-weight-bold">
-                    <div class="d-flex align-center">
-                      <v-chip
-                        v-if="user.status==='CONFIRMED'"
-                        small
-                        label
-                        color="gray"
-                      >
-                        {{ user.status }}
-                      </v-chip>
-                      <v-chip
-                        v-else
-                        small
-                        label
-                        color="warning"
-                      >
-                        {{ user.status }}
-                      </v-chip>
-                      <v-spacer></v-spacer>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </v-simple-table>
+      <div v-if="loading" class="text-center pb-12 pt-4">
+        <div class="text-h5 mt-4 mb-8">Loading...</div>
+        <v-progress-circular
+          :size="50"
+          :width="5"
+          color="primary"
+          indeterminate
+        ></v-progress-circular>
+      </div>
+      <v-form ref="form" @submit.prevent="submit" v-else-if="user">
+        <v-simple-table>
+          <tbody>
+            <tr>
+              <td
+                class="text-right"
+                style="width:140px">
+                ID
+              </td>
+              <td class="font-weight-bold">{{ user.id }}</td>
+            </tr>
+            <tr>
+              <td
+                class="text-right"
+                style="width:140px">
+                Created
+              </td>
+              <td class="font-weight-bold">{{ user.created_at | timestampFormat('lll') }}</td>
+            </tr>
+            <tr>
+              <td
+                class="text-right"
+                style="width:140px">
+                Updated
+              </td>
+              <td class="font-weight-bold">{{ user.updated_at | timestampFormat('lll') }}</td>
+            </tr>
+            <tr>
+              <td
+                class="text-right"
+                style="width:140px">
+                Name
+              </td>
+              <td class="font-weight-bold">
+                {{ user.attributes.name }}
+              </td>
+            </tr>
+            <tr>
+              <td
+                class="text-right"
+                style="width:140px">
+                Email
+              </td>
+              <td class="font-weight-bold">
+                {{ user.attributes.email }}
+              </td>
+            </tr>
+            <tr>
+              <td
+                class="text-right"
+                style="width:140px">
+                Enabled
+              </td>
+              <td class="font-weight-bold">
+                <v-icon v-if="user.enabled" color="primary">mdi-check-circle</v-icon>
+                <v-icon v-else color="gray">mdi-close-circle</v-icon>
+              </td>
+            </tr>
+            <!-- <tr>
+              <td
+                class="text-right"
+                style="width:140px">
+                Admin
+              </td>
+              <td class="font-weight-bold">
+                <v-icon v-if="user.admin" color="primary">mdi-check-circle</v-icon>
+                <v-icon v-else color="gray">mdi-close-circle</v-icon>
+              </td>
+            </tr> -->
+            <tr>
+              <td
+                class="text-right"
+                style="width:140px">
+                Status
+              </td>
+              <td class="font-weight-bold">
+                <div class="d-flex align-center">
+                  <v-chip
+                    v-if="user.status==='CONFIRMED'"
+                    small
+                    label
+                    color="gray"
+                  >
+                    {{ user.status }}
+                  </v-chip>
+                  <v-chip
+                    v-else
+                    small
+                    label
+                    color="warning"
+                  >
+                    {{ user.status }}
+                  </v-chip>
+                  <v-spacer></v-spacer>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </v-simple-table>
 
-            <v-divider class="mb-0"></v-divider>
+        <v-divider class="mb-4"></v-divider>
 
-            <v-card-text>
-              <v-btn
-                v-if="!user.enabled"
-                color="success"
-                block
-                outlined
-                :loading="loading.enabled"
-                @click="setEnabled(true)"
-              >
-                <v-icon left>mdi-check</v-icon> Enable User
-              </v-btn>
-              <v-btn
-                v-else
-                color="warning"
-                block
-                outlined
-                :loading="loading.enabled"
-                @click="setEnabled(false)"
-              >
-                <v-icon left>mdi-close</v-icon> Disable User
-              </v-btn>
+        <v-card-text class="">
+          <v-select
+            v-model="edit.organizations"
+            :items="organizationsOptions"
+            label="Select organization(s)"
+            multiple
+            chips
+            deletable-chips
+            item-text="name"
+            item-value="id"
+            outlined
+            required
+            :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
+          ></v-select>
+          <v-switch
+            v-model="edit.admin"
+            label="Administrator"
+          ></v-switch>
+        </v-card-text>
 
-              <div class="my-4"></div>
+        <v-divider class="mb-0"></v-divider>
 
-              <v-btn
-                v-if="!user.is_admin"
-                color="success"
-                block
-                outlined
-                :loading="loading.admin"
-                @click="setAdminGroup(true)"
-              >
-                <v-icon left>mdi-check</v-icon> Add to Admins
-              </v-btn>
-              <v-btn
-                v-else
-                color="warning"
-                block
-                outlined
-                :loading="loading.admin"
-                @click="setAdminGroup(false)"
-              >
-                <v-icon left>mdi-close</v-icon> Remove from Admins
-              </v-btn>
+        <v-card-text>
+          <v-btn
+            v-if="!user.enabled"
+            color="success"
+            block
+            outlined
+            :loading="loading.enabled"
+            @click="setEnabled(true)"
+          >
+            <v-icon left>mdi-check</v-icon> Enable User
+          </v-btn>
+          <v-btn
+            v-else
+            color="warning"
+            block
+            outlined
+            :loading="loading.enabled"
+            @click="setEnabled(false)"
+          >
+            <v-icon left>mdi-close</v-icon> Disable User
+          </v-btn>
 
-              <div class="my-4"></div>
+          <div class="my-4"></div>
 
-              <v-btn
-                color="error"
-                outlined
-                block
-                @click="confirmDelete"
-                :loading="loading.delete"
-              >
-                <v-icon left>mdi-delete</v-icon>
-                Delete User
-              </v-btn>
-            </v-card-text>
-          </v-card>
-        </v-tab-item>
-        <v-tab-item>
-          <div v-if="loading.init" class="text-h5 text-center py-8">
-            Loading...
-          </div>
-          <v-card v-else-if="affiliation">
-            <v-card-text>
-              <v-form :disabled="loading.affiliation">
-                <v-text-field
-                  v-model="affiliation.code.value"
-                  label="Abbreviation"
-                  counter
-                  maxlength="16"
-                  hint="e.g. MADEP"
-                  outlined
-                  dense
-                  validate-on-blur
-                  class="mb-4"
-                ></v-text-field>
-                <v-text-field
-                  v-model="affiliation.name.value"
-                  label="Full Name"
-                  counter
-                  outlined
-                  maxlength="128"
-                  hint="e.g. MA Dept of Environmental Protection"
-                  dense
-                  validate-on-blur
-                  class="mb-4"
-                ></v-text-field>
-                <v-btn
-                  color="primary"
-                  outlined
-                  :loading="loading.affiliation"
-                  :disabled="loading.affiliation"
-                  @click="changeAffiliation"
-                >Update</v-btn>
-              </v-form>
-            </v-card-text>
-          </v-card>
-        </v-tab-item>
-      </v-tabs>
+          <v-btn
+            color="error"
+            outlined
+            block
+            @click="confirmDelete"
+            :loading="loading.delete"
+          >
+            <v-icon left>mdi-delete</v-icon>
+            Delete User
+          </v-btn>
+        </v-card-text>
+
+      </v-form>
+
       <v-divider></v-divider>
 
       <v-card-actions class="px-4 py-4">
@@ -240,66 +194,57 @@
     </v-card>
 
     <ConfirmDialog ref="confirmDelete">
-      <v-alert
-        type="error"
-        text
-        colored-border
-        border="left"
-        class="body-2 mb-0"
-      >
-        <div class="font-weight-bold body-1">Are you sure?</div>
-        <div>
-          This user will be permanently deleted. This action cannot be undone.
-        </div>
-      </v-alert>
+      <Alert type="error" title="Are you sure?">
+        This user will be permanently deleted. This action cannot be undone.
+      </Alert>
     </ConfirmDialog>
   </v-dialog>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import ConfirmDialog from '@/components/ConfirmDialog'
 export default {
   name: 'EditUserDialog',
   components: { ConfirmDialog },
   data () {
     return {
-      tab: 0,
       dialog: false,
       resolve: null,
       reject: null,
-      options: {
-        color: 'grey lighten-2',
-        width: 600,
-        zIndex: 5000
-      },
+
       id: null,
       user: null,
-      groups: [],
-      loading: {
-        init: false,
-        // confirm: false,
-        enabled: false,
+      edit: {
         admin: false,
-        delete: false,
-        affiliation: false
+        enabled: true,
+        organizations: []
       },
-      affiliation: {
-        name: {
-          value: ''
-        },
-        code: {
-          value: ''
-        }
-      },
+
+      // loading: {
+      //   init: false,
+      //   // confirm: false,
+      //   enabled: false,
+      //   admin: false,
+      //   delete: false
+      // },
       modified: false,
+      loading: true,
       error: null
     }
   },
+  computed: {
+    ...mapGetters({ organizationsOptions: 'admin/organizations' })
+  },
   methods: {
-    async open (id) {
+    open (id) {
       this.dialog = true
       this.id = id
       this.modified = false
+      this.user = null
+      this.edit.admin = false
+      this.edit.enabled = true
+      this.edit.organizations = []
 
       this.init()
 
@@ -313,43 +258,40 @@ export default {
       this.dialog = false
     },
     async init () {
-      this.loading.init = true
+      this.loading = true
 
       try {
         await this.refresh()
       } catch (err) {
         console.log(err)
-        this.error = err
+        this.error = err.toString() || 'Unknown error'
       } finally {
-        this.loading.init = false
+        this.loading = false
       }
     },
     async refresh () {
       this.error = null
 
       if (!this.id) {
-        this.error = 'Missing User ID'
+        this.error = 'Missing user ID'
         return
       }
 
       this.user = await this.getUser(this.id)
-      if (this.user.affiliation) {
-        this.affiliation.name.value = this.user.affiliation.affiliation_name
-        this.affiliation.code.value = this.user.affiliation.affiliation_code
-      } else {
-        this.affiliation.name.value = ''
-        this.affiliation.name.value = ''
-      }
 
       // this.loading.confirm = false
-      this.loading.enabled = false
-      this.loading.admin = false
+      // this.loading.enabled = false
+      // this.loading.admin = false
     },
     async getUser (id) {
       const response = await this.$http.admin.get(`/users/${id}`)
       const user = response.data
 
       user.attributes.email_verified = user.attributes.email_verified === 'true'
+
+      this.edit.admin = user.admin
+      this.edit.enabled = user.enabled
+      this.edit.organizations = user.organizations
 
       return user
     },
@@ -377,27 +319,6 @@ export default {
         console.error(err)
         this.loading.enabled = false
         this.error = err
-      }
-    },
-    async changeAffiliation () {
-      this.loading.affiliation = true
-      this.modified = true
-      const action = 'setAffiliation'
-      const payload = {
-        id: this.id,
-        affiliation: {
-          name: this.affiliation.name.value,
-          code: this.affiliation.code.value
-        }
-      }
-      try {
-        await this.$http.admin.put(`/users/${this.id}`, { action, payload })
-        this.refresh()
-      } catch (err) {
-        console.error(err)
-        this.error = err
-      } finally {
-        this.loading.affiliation = false
       }
     },
     async confirmDelete () {

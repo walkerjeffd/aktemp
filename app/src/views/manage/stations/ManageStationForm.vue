@@ -3,7 +3,7 @@
     v-model="dialog"
     :max-width="1000"
     style="z-index:5001"
-    @keydown.esc="cancel"
+    @keydown.esc="close"
   >
     <v-card>
       <v-toolbar color="grey lighten-2">
@@ -150,7 +150,7 @@
             :loading="loading">submit</v-btn>
           <v-btn text @click="reset">reset</v-btn>
           <v-spacer></v-spacer>
-          <v-btn text @click="cancel">cancel</v-btn>
+          <v-btn text @click="close">cancel</v-btn>
         </v-card-actions>
       </v-form>
     </v-card>
@@ -345,7 +345,7 @@ export default {
         this.private_.value = false
       }
     },
-    cancel () {
+    close () {
       this.resolve(false)
       this.dialog = false
     }

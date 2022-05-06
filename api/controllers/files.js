@@ -62,7 +62,7 @@ const postFiles = async (req, res, next) => {
     }
   } else {
     const presignedUrl = await createPresignedPostPromise({
-      Bucket: process.env.AWS_S3_DATA_BUCKET,
+      Bucket: process.env.AWS_S3_STORAGE_BUCKET,
       Fields: {
         key: `files/${row.uuid}/${row.filename}`
       },

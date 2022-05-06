@@ -8,7 +8,7 @@ import router from '@/router'
 evt.$on('authState', async ({ state, redirect }) => {
   if (state === 'signedOut') {
     store.dispatch('setUser', null)
-    router.push(redirect || { name: 'logout' })
+    // router.push(redirect || { name: 'home' })
   } else if (state === 'signIn') {
     await getUser()
     if (redirect) router.push(redirect)
@@ -48,8 +48,10 @@ export async function getUser (force) {
   } catch (err) {
     if (err.code && err.code === 'UserNotConfirmedException') {
       evt.$emit('authState', { state: 'confirmSignUp' })
+    } else {
+      await Auth.signOut()
+      evt.$emit('authState', { state: 'signedOut' })
     }
-    store.dispatch('setUser', null)
     return null
   }
 }

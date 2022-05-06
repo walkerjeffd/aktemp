@@ -3,7 +3,7 @@
     v-model="dialog"
     :max-width="options.width"
     :style="{ zIndex: options.zIndex }"
-    @keydown.esc="cancel"
+    @keydown.esc="close"
   >
     <v-card>
       <v-toolbar :color="options.color">
@@ -26,7 +26,7 @@
         <v-btn
           v-if="!options.noconfirm"
           text
-          @click.native="cancel"
+          @click.native="close"
         >
           Cancel
         </v-btn>
@@ -68,7 +68,7 @@ export default {
       this.resolve(true)
       this.dialog = false
     },
-    cancel () {
+    close () {
       this.resolve(false)
       this.dialog = false
     }

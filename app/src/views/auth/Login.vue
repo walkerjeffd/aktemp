@@ -84,7 +84,7 @@
 
         <div>
           <router-link :to="{ name: 'resetPassword' }">Forgot your password?</router-link><br>
-          <router-link :to="{ name: 'requestAccount' }">Don't have an account?</router-link>
+          <router-link :to="{ name: 'request' }">Don't have an account?</router-link>
         </div>
 
         <v-alert

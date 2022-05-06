@@ -10,10 +10,10 @@
           Request an account to upload your streamflow photos and data.
         </p>
         <p>
-          An account is <strong>not required</strong> to view photos and data through the Photo Explorer. It is only required to upload.
+          An account is <strong>not required</strong> to view or download temperature data. It is only required to upload data.
         </p>
         <p>
-          Your name and email will be kept private, and will not be publicly displayed. Your affiliation will be publicly displayed as the owner of your stations.
+          Your name and email will be kept private, and will not be publicly displayed. However, your organization will be publicly displayed as the owner of your data.
         </p>
         <p>
           We may use your email to contact you if we have questions about your photos or data, but we will not share it with any third party.
@@ -38,9 +38,9 @@
           validate-on-blur
         ></v-text-field>
         <v-text-field
-          v-model="affiliationName.value"
-          :rules="affiliationName.rules"
-          label="Affiliation (Full Name)"
+          v-model="organizationName.value"
+          :rules="organizationName.rules"
+          label="Organization (Full Name)"
           counter
           outlined
           maxlength="128"
@@ -48,9 +48,9 @@
           validate-on-blur
         ></v-text-field>
         <v-text-field
-          v-model="affiliationCode.value"
-          :rules="affiliationCode.rules"
-          label="Affiliation (Abbreviation)"
+          v-model="organizationCode.value"
+          :rules="organizationCode.rules"
+          label="Organization (Abbreviation)"
           counter
           outlined
           maxlength="16"
@@ -133,20 +133,20 @@ export default {
           v => (!!v && email(v)) || 'Must be a valid email address'
         ]
       },
-      affiliationName: {
+      organizationName: {
         value: '',
         rules: [
-          v => !!v || 'Full affiliation name is required',
-          v => (!!v && v.trim().length >= 4) || 'Full affiliation name must be at least 4 characters',
-          v => (!!v && v.length <= 128) || 'Full affiliation name cannot exceed 128 characters'
+          v => !!v || 'Full organization name is required',
+          v => (!!v && v.trim().length >= 4) || 'Full organization name must be at least 4 characters',
+          v => (!!v && v.length <= 128) || 'Full organization name cannot exceed 128 characters'
         ]
       },
-      affiliationCode: {
+      organizationCode: {
         value: '',
         rules: [
-          v => !!v || 'Abbreviated affiliation is required',
-          v => (!!v && v.trim().length >= 2) || 'Abbreviated affiliation must be at least 2 characters',
-          v => (!!v && v.length <= 16) || 'Abbreviated affiliation cannot exceed 16 characters'
+          v => !!v || 'Abbreviated organization is required',
+          v => (!!v && v.trim().length >= 2) || 'Abbreviated organization must be at least 2 characters',
+          v => (!!v && v.length <= 16) || 'Abbreviated organization cannot exceed 16 characters'
         ]
       }
     }
@@ -162,8 +162,8 @@ export default {
       const payload = {
         name: this.name.value,
         email: this.email.value,
-        affiliation_name: this.affiliationName.value,
-        affiliation_code: this.affiliationCode.value
+        organization_name: this.organizationName.value,
+        organization_code: this.organizationCode.value
       }
 
       try {
@@ -183,8 +183,8 @@ export default {
 
       this.name.value = ''
       this.email.value = ''
-      this.affiliationName.value = ''
-      this.affiliationCode.value = ''
+      this.organizationName.value = ''
+      this.organizationCode.value = ''
     }
   }
 }

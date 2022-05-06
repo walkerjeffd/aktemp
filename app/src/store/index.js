@@ -1,16 +1,20 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 
+import adminModule from './admin'
+
 Vue.use(Vuex)
 
 export default new Vuex.Store({
+  modules: {
+    admin: adminModule
+  },
   state: {
     user: null
   },
   getters: {
     user: state => state.user,
-    userId: state => state.user ? state.user.username : null,
-    organizations: state => state.user ? state.user.organizations : []
+    userId: state => state.user ? state.user.username : null
   },
   mutations: {
     SET_USER (state, user) {

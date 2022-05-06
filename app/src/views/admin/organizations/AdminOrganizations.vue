@@ -1,50 +1,23 @@
 <template>
+  <!-- eslint-disable vue/valid-v-slot -->
   <div>
-    <v-alert
-      type="error"
-      text
-      colored-border
-      border="left"
-      class="body-2 mb-0"
-      v-if="error"
-    >
-      <div class="body-1 font-weight-bold">Error Occurred</div>
-      <div>{{ error }}</div>
-    </v-alert>
+    <Alert type="error" title="Error Occurred" v-if="status.error" class="ma-4">{{status.error}}</Alert>
 
     <v-data-table
       ref="table"
       :headers="headers"
-      :items="data"
-      :loading="loading"
-      :sort-by="['updated_at']"
-      :sort-desc="[true]"
+      :items="organizations"
+      :loading="status.loading"
+      :sort-by="['id']"
       loading-text="Loading... Please wait"
       @click:row="select"
       single-select
       class="row-cursor-pointer"
-      v-else>
+    >
       <template v-slot:top>
         <v-toolbar flat>
           <div class="text-h5">Organizations</div>
-          <v-btn
-            color="primary"
-            outlined
-            @click="fetch"
-            class="ml-4"
-            small
-            rounded
-          >
-            <v-icon small left v-if="!loading">mdi-refresh</v-icon>
-            <v-progress-circular
-              indeterminate
-              size="14"
-              width="2"
-              class="mr-2"
-              v-else
-            ></v-progress-circular>
-            Refresh
-          </v-btn>
+          <RefreshButton :loading="status.loading" @click="fetchOrganizations"></RefreshButton>
           <v-spacer></v-spacer>
           <v-btn color="success" @click="create">
             <v-icon left>mdi-plus</v-icon> New Organization
@@ -53,42 +26,14 @@
         <v-divider></v-divider>
       </template>
 
-      <!-- eslint-disable-next-line vue/valid-v-slot -->
-      <template v-slot:item.created_at="{ item }">
-        {{ item.created_at }}
-      </template>
-      <!-- eslint-disable-next-line vue/valid-v-slot -->
       <template v-slot:item.id="{ item }">
-        {{ item.id.substr(1, 7) }}...
+        {{ item.id | truncate(10) }}
       </template>
-      <!-- eslint-disable-next-line vue/valid-v-slot -->
-      <template v-slot:item.is_admin="{ item }">
-        <v-icon v-if="item.is_admin" color="primary">mdi-check-circle</v-icon>
-        <v-icon v-else color="gray">mdi-close-circle</v-icon>
+      <template v-slot:item.name="{ item }">
+        {{ item.name | truncate(40) }}
       </template>
-      <!-- eslint-disable-next-line vue/valid-v-slot -->
-      <template v-slot:item.enabled="{ item }">
-        <v-icon v-if="item.enabled" color="primary">mdi-check-circle</v-icon>
-        <v-icon v-else color="gray">mdi-close-circle</v-icon>
-      </template>
-      <!-- eslint-disable-next-line vue/valid-v-slot -->
-      <template v-slot:item.status="{ item }">
-        <v-chip
-          v-if="item.status==='CONFIRMED'"
-          small
-          label
-          color="gray"
-        >
-          {{ item.status }}
-        </v-chip>
-        <v-chip
-          v-else
-          small
-          label
-          color="warning"
-        >
-          {{ item.status }}
-        </v-chip>
+      <template v-slot:item.updated_at="{ item }">
+        {{ item.updated_at | timestampFormat('lll') }}
       </template>
     </v-data-table>
 
@@ -98,8 +43,9 @@
 </template>
 
 <script>
-import AdminOrganizationCreateDialog from '@/views/admin/organizations/AdminOrganizationCreateDialog'
+import { mapActions, mapGetters } from 'vuex'
 import AdminOrganizationEditDialog from '@/views/admin/organizations/AdminOrganizationEditDialog'
+import AdminOrganizationCreateDialog from '@/views/admin/organizations/AdminOrganizationCreateDialog'
 
 export default {
   name: 'AdminOrganizations',
@@ -108,63 +54,47 @@ export default {
     AdminOrganizationEditDialog
   },
   data: () => ({
-    loading: false,
-    error: null,
-    data: [],
     headers: [
       {
         text: 'ID',
         value: 'id',
-        align: 'left'
-      },
-      {
-        text: 'Created',
-        value: 'created_at',
-        align: 'left'
+        align: 'right',
+        width: '150px'
       },
       {
         text: 'Name',
         value: 'name',
         align: 'left'
+      },
+      {
+        text: 'Last Updated',
+        value: 'updated_at',
+        align: 'left',
+        width: '300px'
       }
     ]
   }),
+  computed: {
+    ...mapGetters({
+      organizations: 'admin/organizations',
+      status: 'admin/organizationsStatus'
+    })
+  },
   mounted () {
-    this.fetch()
+    this.fetchOrganizations()
   },
   methods: {
-    async fetch () {
-      this.loading = true
-      this.error = null
-      try {
-        const response = await this.$http.admin.get('/organizations')
-        const data = response.data
-        data.forEach(d => {
-          d.created_at = new Date(d.created_at)
-          d.updated_at = new Date(d.updated_at)
-        })
-        this.data = data
-      } catch (err) {
-        console.error(err)
-        if (err.response && err.response.data) {
-          this.error = err.response.data.message || err.toString()
-        } else {
-          this.error = err.message || err.toString()
-        }
-      } finally {
-        this.loading = false
-      }
-    },
-    async select (item, row) {
+    ...mapActions({ fetchOrganizations: 'admin/fetchOrganizations' }),
+    async select (item) {
       const saved = await this.$refs.editForm.open(item.id)
       if (saved) {
-        return await this.fetch()
+        return await this.fetchOrganizations()
       }
     },
     async create () {
-      const itemCreated = await this.$refs.createForm.open()
-      if (itemCreated) {
-        await this.fetch()
+      const created = await this.$refs.createForm.open()
+      if (created) {
+        await this.fetchOrganizations()
       }
     }
   }

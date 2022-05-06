@@ -77,7 +77,7 @@
 
         <!-- NOT LOGGED IN -->
         <v-list v-else>
-          <v-list-item :to="{ name: 'requestAccount' }" class="pr-12">
+          <v-list-item :to="{ name: 'request' }" class="pr-12">
             <v-list-item-icon>
               <v-icon>mdi-account-plus</v-icon>
             </v-list-item-icon>
@@ -118,7 +118,7 @@ export default {
     logout () {
       this.$Amplify.Auth.signOut()
         .then(() => {
-          return evt.$emit('authState', { state: 'signedOut' })
+          return evt.$emit('authState', { state: 'signedOut', redirect: { name: 'logout' } })
         })
         .catch((err) => {
           console.log(err)

@@ -3,9 +3,9 @@
     v-model="dialog"
     :max-width="options.width"
     :style="{ zIndex: options.zIndex }"
-    @keydown.esc="cancel"
+    @keydown.esc="close"
   >
-    <v-card>
+    <v-card style="width:600px">
       <v-toolbar flat :color="options.color">
         <v-toolbar-title class="text-h5">
           Create Organization
@@ -15,25 +15,30 @@
       <v-form ref="form" @submit.prevent="submit" :disabled="loading">
         <v-card-text class="mt-4 mb-0">
           <v-text-field
-            v-model="name.value"
-            :rules="name.rules"
-            label="Name"
+            v-model="id.value"
+            :rules="id.rules"
+            label="ID (Abbreviation)"
+            hint="Capital letters and underscores only (NPS_DNP)"
+            persistent-hint
             required
             outlined
             validate-on-blur
           ></v-text-field>
 
-          <v-alert
-            type="error"
-            text
-            colored-border
-            border="left"
-            class="body-2 mb-0"
-            v-if="error"
-          >
-            <div class="body-1 font-weight-bold">Server Error</div>
-            <div>{{ error }}</div>
-          </v-alert>
+          <v-text-field
+            v-model="name.value"
+            :rules="name.rules"
+            label="Name"
+            hint="Descriptive name (National Park Service, Denali National Park)"
+            persistent-hint
+            required
+            outlined
+            validate-on-blur
+          ></v-text-field>
+
+          <Alert type="error" title="Server Error" v-if="error">
+            {{ error }}
+          </Alert>
         </v-card-text>
 
         <v-divider></v-divider>
@@ -74,11 +79,17 @@ export default {
       reject: null,
       options: {
         color: 'grey lighten-2',
-        width: 600,
+        width: 800,
         zIndex: 5000
       },
       loading: false,
       error: null,
+      id: {
+        value: '',
+        rules: [
+          v => required(v) || 'ID is required'
+        ]
+      },
       name: {
         value: '',
         rules: [
@@ -103,6 +114,7 @@ export default {
 
       this.loading = true
       const payload = {
+        id: this.id.value,
         name: this.name.value
       }
 
@@ -114,7 +126,7 @@ export default {
         this.dialog = false
       } catch (err) {
         console.error(err)
-        this.err = err.toString() || 'Unknown error occurred'
+        this.error = err.toString() || 'Unknown error occurred'
       } finally {
         this.loading = false
       }
@@ -122,6 +134,7 @@ export default {
     clear () {
       this.error = null
       this.$refs.form.resetValidation()
+      this.id.value = ''
       this.name.value = ''
     },
     close () {

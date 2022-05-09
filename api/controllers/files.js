@@ -3,13 +3,14 @@ const createError = require('http-errors')
 const { batch, createPresignedPostPromise } = require('../aws')
 const { File, Organization } = require('../db/models')
 
-const attachFile = async (req, res, next) => {
+async function attachFile (req, res, next) {
   let file = null
   if (res.locals.organization) {
     file = await res.locals.organization.$relatedQuery('files')
       .findById(req.params.fileId)
   } else {
     file = await File.query()
+      .withGraphFetched('series(stationOrganizationCodes)')
       .findById(req.params.fileId)
   }
 
@@ -21,23 +22,23 @@ const attachFile = async (req, res, next) => {
   return next()
 }
 
-const getUserFiles = async (req, res, next) => {
+async function getUserFiles (req, res, next) {
   const files = await Organization.relatedQuery('files')
     .for(res.locals.user.organizations.map(d => d.id))
   return res.status(200).json(files)
 }
 
-const getOrganizationFiles = async (req, res, next) => {
+async function getOrganizationFiles (req, res, next) {
   const rows = await res.locals.organization.$relatedQuery('files')
   return res.status(200).json(rows)
 }
 
-const getAllFiles = async (req, res, next) => {
+async function getAllFiles (req, res, next) {
   const files = await File.query()
   return res.status(200).json(files)
 }
 
-const postFiles = async (req, res, next) => {
+async function postFiles (req, res, next) {
   const { filename, config } = req.body
   const props = {
     user_id: req.auth.id,
@@ -80,15 +81,17 @@ const postFiles = async (req, res, next) => {
   return res.status(201).json(row)
 }
 
-const getFile = (req, res, next) => res.status(200).json(res.locals.file)
+function getFile (req, res, next) {
+  return res.status(200).json(res.locals.file)
+}
 
-const putFile = async (req, res, next) => {
+async function putFile (req, res, next) {
   const row = await res.locals.file.$query()
     .patchAndFetch(req.body)
   return res.status(200).json(row)
 }
 
-const deleteFile = async (req, res, next) => {
+async function deleteFile (req, res, next) {
   const deletedCount = await res.locals.file.$query()
     .delete()
   if (deletedCount === 0) {
@@ -98,7 +101,7 @@ const deleteFile = async (req, res, next) => {
   return res.status(204).json()
 }
 
-const processFile = async (req, res, next) => {
+async function processFile (req, res, next) {
   // console.log(`process dataset (id=${res.locals.dataset.id})`)
   await batch.submitJob({
     jobName: `process-file-${res.locals.file.id}`,
@@ -121,11 +124,11 @@ const processFile = async (req, res, next) => {
 }
 
 module.exports = {
-  getAllFiles,
+  attachFile,
   getUserFiles,
   getOrganizationFiles,
+  getAllFiles,
   postFiles,
-  attachFile,
   getFile,
   putFile,
   deleteFile,

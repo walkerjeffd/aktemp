@@ -19,6 +19,7 @@ const {
   deleteFile,
   processFile
 } = require('../../controllers/files')
+const { getOrganizationSeries } = require('../../controllers/series')
 
 const router = express.Router()
 
@@ -50,5 +51,8 @@ router.route('/files/:fileId')
 router.route('/files/:fileId/process')
   .all(asyncHandler(attachFile))
   .post(asyncHandler(processFile))
+
+router.route('/series')
+  .get(asyncHandler(getOrganizationSeries))
 
 module.exports = router

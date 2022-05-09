@@ -4,9 +4,7 @@ const basicAuth = require('express-basic-auth')
 const createError = require('http-errors')
 
 const { cognitoAuth } = require('../../middleware/auth')
-// const { attachOrganization } = require('../../controllers/organizations')
-// const { attachUser } = require('../../controllers/users')
-const { User, Organization } = require('../../db/models')
+const { User, Organization } = require('../../db/models/index')
 
 const router = express.Router()
 
@@ -89,23 +87,10 @@ router.route('/')
 
 router.route('/organizations')
   .get((req, res, next) => res.status(200).json(res.locals.user.organizations))
+
 router.use('/organizations/:organizationId', asyncHandler(attachOrganization), require('./organization'))
-
-router.route('/stations')
-  .get(asyncHandler(async (req, res, next) => {
-    const stations = await Organization.relatedQuery('stations')
-      .for(res.locals.user.organizations.map(d => d.id))
-    return res.status(200).json(stations)
-  }))
-
-// router.route('/files')
-//   .get(asyncHandler(async (req, res, next) => {
-//     const files = await Organization.relatedQuery('files')
-//       .for(res.locals.user.organizations.map(d => d.id))
-//     return res.status(200).json(files)
-//   }))
 router.use('/files', require('./files'))
-
-// router.use('/stations/:stationId', asyncHandler(attachStation), require('./station'))
+router.use('/series', require('./series'))
+router.use('/stations', require('./stations'))
 
 module.exports = router

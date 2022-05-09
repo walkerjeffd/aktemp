@@ -11,7 +11,9 @@ const { databaseErrorHandler } = require('./middleware/dbError')
 
 const app = express()
 
-app.use(logger('tiny'))
+if (process.env.NODE_ENV !== 'test') {
+  app.use(logger('tiny'))
+}
 app.use(bodyParser.json())
 app.use(cors())
 
@@ -36,7 +38,7 @@ if (isLambda()) {
     //     }
     //   }
     // }
-    if (req.headers.authorization) {
+    if (req.headers.authorization && process.env.NODE_ENV !== 'test') {
       const decoded = jwt.decode(req.headers.authorization)
       if (decoded['cognito:groups']) {
         decoded['cognito:groups'] = decoded['cognito:groups'].join(',')

@@ -21,4 +21,4 @@ router.route('/:stationId/series')
   .all(asyncHandler(attachStation))
   .get(asyncHandler(getStationSeries))
 
-export default router
+module.exports = router

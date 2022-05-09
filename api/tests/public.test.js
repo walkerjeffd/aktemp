@@ -77,7 +77,15 @@ describe('public api', () => {
     const response = await request(app).get('/public/series/1')
     expect(response.statusCode).toBe(200)
     expect(response.body).toBeTruthy()
-    expect(Array.isArray(response.body.values)).toBeTruthy()
-    expect(response.body.values).toHaveLength(3)
+    expect(response.body.station_code).toBeTruthy()
+    expect(response.body.organization_code).toBeTruthy()
+    expect(response.body.values).toBeUndefined()
+  })
+
+  test('GET /series/:id/values', async () => {
+    const response = await request(app).get('/public/series/1/values')
+    expect(response.statusCode).toBe(200)
+    expect(response.body).toBeTruthy()
+    expect(Array.isArray(response.body)).toBeTruthy()
   })
 })

@@ -23,12 +23,8 @@ node process.js files <id>
 ### Development
 
 ```bash
-export APP_NAME=aktemp
-export ENV=dev
-export NAME=${APP_NAME}-${ENV}-batch
-export AWS_ACCOUNT=
-export AWS_REGION=
-export AWS_REPO=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/${NAME}
+# config
+source .env.development.local
 
 # log in
 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_REPO}

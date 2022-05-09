@@ -1,17 +1,19 @@
 const AWS = require('aws-sdk')
 const Papa = require('papaparse')
 const stripBom = require('strip-bom')
-const d3 = import('d3')
+// const d3 = require('d3')
 const dayjs = require('dayjs')
-const timezone = require('dayjs/plugin/timezone')
-const utc = require('dayjs/plugin/utc')
+const timezone = require('dayjs/plugin/timezone.js')
+const utc = require('dayjs/plugin/utc.js')
+
+const { validateFileConfig } = require('./validators.js')
+const { parseTimestamp, parseValue, parseFlag, parseDepth } = require('./parsers.js')
+const { convertDepthUnits } = require('./utils.js')
+const { File } = require('../db/models/index.js')
+
 dayjs.extend(timezone)
 dayjs.extend(utc)
 dayjs.tz.setDefault('UTC')
-
-const { validateFileConfig } = require('./validators')
-const { parseTimestamp, parseValue, parseFlag, parseDepth } = require('./parsers')
-const { File } = require('../db/models')
 
 const s3 = new AWS.S3({
   apiVersion: '2006-03-01',
@@ -42,6 +44,8 @@ async function processFile (id) {
       message: `file not found in database (id=${id})`
     })
 
+  console.log(file)
+
   // let results
   // if (file.type === 'series') {
   //   results = processSeriesFile(file)
@@ -67,6 +71,7 @@ function parseSeriesValues (values, config) {
 }
 
 async function processSeriesFile (file) {
+  if (!file) throw new Error('missing file')
   console.log(`processing series file: id=${file.id}`)
 
   // delete existing series
@@ -124,11 +129,23 @@ async function processSeriesFile (file) {
       })
   }
 
+  // series depth
+  const seriesDepth = {}
+  if (file.config.depth.mode === 'category') {
+    seriesDepth.depth_category = file.config.depth.category
+  } else if (file.config.depth.mode === 'value') {
+    seriesDepth.depth_m = convertDepthUnits(file.config.depth.value, file.config.depth.units)
+  }
+
   // save each series
   for (let i = 0; i < stationData.length; i++) {
+    console.log(d3.group)
+    const seriesDateRange = d3.extent(stationData[i].values, d => d.datetime)
+    console.log(seriesDateRange)
     stationData[i].series = await stationData[i].station.$relatedQuery('series').insertGraph({
       file_id: file.id,
-      values: stationData[i].values
+      values: stationData[i].values,
+      ...seriesDepth
     })
   }
 

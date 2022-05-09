@@ -5,6 +5,8 @@ dayjs.extend(timezone)
 dayjs.extend(utc)
 dayjs.tz.setDefault('UTC')
 
+const { convertDepthUnits } = require('./utils')
+
 function parseTimestamp (d, config) {
   let value = d[config.timestamp.columns[0]]
   if (config.timestamp.columns.length === 2) {
@@ -61,25 +63,13 @@ function parseDepth (d, config) {
   if (config.depth.mode !== 'column') return null
   const value = d[config.depth.column]
 
-  let numericValue = Number(value)
+  const numericValue = Number(value)
 
   if (!isFinite(numericValue)) {
     throw new Error(`Invalid depth value at row ${d.$row} ('${value}')`)
   }
 
-  // convert to meters
-  const units = config.depth.units
-  if (units === 'ft') {
-    numericValue = numericValue * 0.3048
-  } else if (units === 'in') {
-    numericValue = numericValue * 0.3048 / 12
-  } else if (units === 'cm') {
-    numericValue = numericValue / 100
-  } else if (units !== 'm') {
-    throw new Error(`Invalid depth units ('${units}')`)
-  }
-
-  return numericValue
+  return convertDepthUnits(numericValue, config.depth.units)
 }
 
 module.exports = {

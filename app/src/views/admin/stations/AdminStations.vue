@@ -128,10 +128,7 @@ export default {
         const userMap = new Map(users.map(d => [d.id, d]))
         const response = await this.$http.admin.get('/stations')
         const stations = response.data
-
         stations.forEach(d => {
-          d.created_at = new Date(d.created_at)
-          d.updated_at = new Date(d.updated_at)
           d.user = userMap.get(d.user_id)
         })
         this.stations = stations

@@ -11,13 +11,17 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn text exact :to="{ name: 'home' }">Home</v-btn>
-      <v-btn text exact :to="{ name: 'explorer' }">Data Explorer</v-btn>
+      <v-btn text exact :to="{ name: 'home' }">
+        <v-icon small left>mdi-home</v-icon>Home
+      </v-btn>
+      <v-btn text exact :to="{ name: 'explorer' }">
+        <v-icon small left>mdi-earth</v-icon>Data Explorer
+      </v-btn>
 
       <v-divider vertical class="mx-4"></v-divider>
 
       <v-btn text class="mx-2" v-if="user" :to="{ name: 'manage' }">
-        <!-- <v-icon small left>mdi-cogs</v-icon> -->Manage Data
+        <v-icon small left>mdi-cogs</v-icon>Manage Data
       </v-btn>
       <v-menu
         left
@@ -101,6 +105,15 @@
     <!-- <v-main> -->
     <router-view/>
     <!-- </v-main> -->
+
+    <v-snackbar v-model="snackbar.show" :timeout="snackbar.timeout" :color="snackbar.color" :top="true" elevation="12" style="margin-top:70px" :light="true" outlined text>
+      <span class="font-weight-bold">{{ snackbar.text }}</span>
+      <template v-slot:action="{ attrs }">
+        <v-btn :color="snackbar.color" icon text v-bind="attrs" @click="snackbar.show = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
@@ -111,19 +124,40 @@ import evt from '@/events'
 
 export default {
   name: 'App',
+  data () {
+    return {
+      snackbar: {
+        show: false,
+        color: 'primary',
+        text: null,
+        timeout: 5000
+      }
+    }
+  },
   computed: {
     ...mapGetters(['user'])
   },
+  mounted () {
+    evt.$on('notify', this.notify)
+  },
+  beforeDestroy () {
+    evt.$off('notify', this.notify)
+  },
   methods: {
-    logout () {
-      this.$Amplify.Auth.signOut()
-        .then(() => {
-          return evt.$emit('authState', { state: 'signedOut', redirect: { name: 'logout' } })
-        })
-        .catch((err) => {
-          console.log(err)
-          alert('Error occurred trying to log out')
-        })
+    notify (text, color) {
+      this.snackbar.color = color
+      this.snackbar.text = text
+      this.snackbar.show = true
+    },
+    async logout () {
+      try {
+        await this.$Amplify.Auth.signOut()
+        evt.$emit('notify', 'You have been logged out', 'success')
+        evt.$emit('authState', { state: 'signedOut', redirect: { name: 'home' } })
+      } catch (err) {
+        console.log(err)
+        evt.$emit('notify', 'Failed to log out', 'error')
+      }
     }
   }
 }

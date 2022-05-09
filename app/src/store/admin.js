@@ -40,10 +40,6 @@ export default {
       try {
         const response = await adminApi.get('/organizations')
         const data = response.data
-        data.forEach(d => {
-          d.created_at = new Date(d.created_at)
-          d.updated_at = new Date(d.updated_at)
-        })
         commit('SET_ORGANIZATIONS', data)
         commit('SET_STATUS', ['organizations', false, null])
         return data
@@ -56,10 +52,6 @@ export default {
       try {
         const response = await adminApi.get('/users')
         const data = response.data
-        data.forEach(d => {
-          d.created_at = new Date(d.created_at)
-          d.updated_at = new Date(d.updated_at)
-        })
         commit('SET_USERS', data)
         commit('SET_STATUS', ['users', false, null])
         return data

@@ -98,21 +98,6 @@
           <div class="body-1 font-weight-bold">Server Error</div>
           <div>{{error}}</div>
         </v-alert>
-        <v-alert
-          type="success"
-          text
-          colored-border
-          border="left"
-          class="body-2 mb-0 mt-4"
-          :value="success"
-        >
-          <div class="font-weight-bold body-1">
-            <span v-if="newPasswordRequired">Account Registration Complete</span><span v-else>Log In Successful</span>
-          </div>
-          <div>
-            <!-- Redirecting to <router-link :to="{ name: 'manage'}">Upload Photos and Data</router-link>. -->
-          </div>
-        </v-alert>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -191,38 +176,38 @@ export default {
       this.error = null
       if (!this.$refs.form.validate()) return
 
-      this.loading = true
-      this.$Amplify.Auth.signIn(this.email.value, this.password.value)
-        .then(user => {
-          if (user.challengeName === 'NEW_PASSWORD_REQUIRED') {
-            this.newPasswordRequired = true
-            if (user.challengeParam.requiredAttributes.includes('name')) {
-              this.newNameRequired = true
-            }
-            this.user = user
-          } else {
-            const redirect = this.$route.query.redirect
-              ? { path: this.$route.query.redirect }
-              : { name: 'manage' }
-            this.success = true
-            return evt.$emit('authState', {
-              state: 'signIn',
-              redirect
-            })
-          }
+      let user
+      try {
+        this.loading = true
+        await this.$Amplify.Auth.signIn(this.email.value, this.password.value)
+        user = await this.$Amplify.Auth.currentAuthenticatedUser()
+      } catch (err) {
+        console.error(err)
+        if (err.code && err.code === 'UserNotConfirmedException') {
+          evt.$emit('localUser', { username: this.email.value })
+          evt.$emit('authState', { state: 'confirmSignUp' })
+        } else throw err
+      } finally {
+        this.loading = false
+      }
+
+      if (user.challengeName === 'NEW_PASSWORD_REQUIRED') {
+        this.newPasswordRequired = true
+        if (user.challengeParam.requiredAttributes.includes('name')) {
+          this.newNameRequired = true
+        }
+        this.user = user
+      } else {
+        const redirect = this.$route.query.redirect
+          ? { path: this.$route.query.redirect }
+          : { name: 'manage' }
+        this.success = true
+        evt.$emit('notify', `Welcome back, ${user.attributes.name}!`, 'success')
+        return evt.$emit('authState', {
+          state: 'signIn',
+          redirect
         })
-        .catch((err) => {
-          console.error(err)
-          if (err.code && err.code === 'UserNotConfirmedException') {
-            evt.$emit('localUser', { username: this.email.value })
-            evt.$emit('authState', { state: 'confirmSignUp' })
-          } else {
-            this.error = err.message || err.toString()
-          }
-        })
-        .finally(() => {
-          this.loading = false
-        })
+      }
     },
     async submitNewPassword () {
       this.error = null

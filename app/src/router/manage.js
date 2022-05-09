@@ -1,10 +1,19 @@
 import Manage from '@/views/manage/Manage.vue'
+
 import ManageStations from '@/views/manage/stations/ManageStations.vue'
 import ManageStationsImport from '@/views/manage/stations/ManageStationsImport.vue'
 import ManageStation from '@/views/manage/stations/ManageStation.vue'
+
 import ManageFiles from '@/views/manage/files/ManageFiles.vue'
 import ManageFileUpload from '@/views/manage/files/ManageFileUpload.vue'
 import ManageFile from '@/views/manage/files/ManageFile.vue'
+
+import ManageSeries from '@/views/manage/series/ManageSeries.vue'
+import ManageSeriesOne from '@/views/manage/series/ManageSeriesOne.vue'
+
+import ManageProfiles from '@/views/manage/profiles/ManageProfiles.vue'
+
+import ManageQaqc from '@/views/manage/qaqc/ManageQaqc.vue'
 
 export default [
   {
@@ -25,6 +34,21 @@ export default [
         path: 'files',
         name: 'manageFiles',
         component: ManageFiles
+      },
+      {
+        path: 'series',
+        name: 'manageSeries',
+        component: ManageSeries
+      },
+      {
+        path: 'profiles',
+        name: 'manageProfiles',
+        component: ManageProfiles
+      },
+      {
+        path: 'qaqc',
+        name: 'manageQaqc',
+        component: ManageQaqc
       }
     ]
   },
@@ -56,6 +80,14 @@ export default [
     path: '/manage/files/:fileId',
     name: 'manageFile',
     component: ManageFile,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/manage/series/:seriesId',
+    name: 'manageSeriesOne',
+    component: ManageSeriesOne,
     meta: {
       requiresAuth: true
     }

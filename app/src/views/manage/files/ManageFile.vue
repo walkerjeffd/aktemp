@@ -13,19 +13,31 @@
                 <v-icon left>mdi-chevron-left</v-icon> <span v-if="!$vuetify.breakpoint.mobile">Back to Files</span><span v-else>Back</span>
               </v-btn>
             </v-toolbar>
-            <!-- <v-tabs class="elevation-2 mb-4" height="60" grow :vertical="$vuetify.breakpoint.mobile">
-              <v-tab :to="{ name: 'manageStation' }" exact>
-                <v-icon left>mdi-map-marker</v-icon> Information
-              </v-tab>
-              <v-tab :to="{ name: 'manageImagesets' }" exact>
-                <v-icon left>mdi-image-multiple-outline</v-icon> Photos
-              </v-tab>
-              <v-tab :to="{ name: 'manageDatasets' }" exact>
-                <v-icon left>mdi-chart-line</v-icon> Data
-              </v-tab>
-            </v-tabs>
-            <router-view></router-view> -->
-            <ManageFileInfo></ManageFileInfo>
+
+            <v-card-text>
+              <Alert type="error" title="Failed to Load File" class="ma-4" v-if="error">{{ error }}</Alert>
+              <v-row v-else>
+                <v-col cols="12" lg="4">
+                  <ManageFileInfo :file="file" :loading="loading" :refreshing="refreshing" @refresh="fetch(true)"></ManageFileInfo>
+                </v-col>
+                <v-col cols="12" lg="8">
+                  <Loading v-if="loading" class="pb-8"></Loading>
+                  <Alert type="error" title="File Not Found" class="ma-4" v-else-if="!file">File was not found on server</Alert>
+                  <div v-else>
+                    <Alert type="error" title="File Created But Not Uploaded" v-if="file.status == 'CREATED'">File has been created in the database, but was not actually uploaded. This indicates a problem occurred with the upload form. Please delete this file and try again.</Alert>
+                    <Alert type="warning" title="File Is Being Uploaded" v-else-if="file.status === 'UPLOADING'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
+                    <Alert type="info" title="File Has Been Uploaded" v-else-if="file.status === 'UPLOADED'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
+                    <Alert type="info" title="File Is Queued for Processing" v-else-if="file.status === 'QUEUED'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
+                    <Alert type="warning" title="File Is Being Processed" v-else-if="file.status === 'PROCESSING'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
+                    <Alert type="error" title="Failed To Process File" v-else-if="file.status === 'FAILED'">
+                      <p>File was successfully uploaded, but failed to be processed. Please review the error below, fix the file, and try uploading again.</p>
+                      <div class="font-weight-bold">{{ file.error || 'Unknown error'}}</div>
+                    </Alert>
+                    <SeriesTable :series="file.series" :selected="selectedSeries" @select="selectSeries" v-else></SeriesTable>
+                  </div>
+                </v-col>
+              </v-row>
+            </v-card-text>
           </v-card>
         </v-col>
       </v-row>
@@ -35,11 +47,57 @@
 
 <script>
 import ManageFileInfo from '@/views/manage/files/ManageFileInfo'
+import SeriesTable from '@/components/SeriesTable'
 
 export default {
   name: 'ManageFile',
   components: {
-    ManageFileInfo
+    ManageFileInfo,
+    SeriesTable
+  },
+  data () {
+    return {
+      loading: true,
+      refreshing: false,
+      error: null,
+      file: null,
+      selectedSeries: null,
+      timeout: null
+    }
+  },
+  mounted () {
+    this.fetch()
+  },
+  beforeDestroy () {
+    this.clearTimeout()
+  },
+  methods: {
+    clearTimeout () {
+      this.timeout && clearTimeout(this.timeout)
+    },
+    async fetch (refresh) {
+      this.clearTimeout()
+      this.loading = !refresh
+      this.refreshing = !!refresh
+      this.error = null
+      try {
+        const response = await this.$http.restricted(`/files/${this.$route.params.fileId}`)
+        this.file = response.data
+        if (this.file && !['DONE', 'FAILED'].includes(this.file.status)) {
+          this.timeout = setTimeout(() => {
+            this.fetch(true)
+          }, 3000)
+        }
+      } catch (err) {
+        this.error = err.toString() || 'Unknown error'
+      } finally {
+        this.loading = false
+        this.refreshing = false
+      }
+    },
+    selectSeries (series) {
+      this.$router.push({ name: 'manageSeriesOne', params: { seriesId: series.id, from: 'file' } })
+    }
   }
 }
 </script>

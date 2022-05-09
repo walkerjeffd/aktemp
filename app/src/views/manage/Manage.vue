@@ -4,58 +4,47 @@
       <v-row justify="space-around">
         <v-col cols="12">
           <v-card elevation="4">
-            <v-toolbar dense flat color="grey lighten-3">
+            <v-toolbar dense flat color="grey lighten-3" height="60px">
               <v-toolbar-title class="text-h6">
                 Manage Data
               </v-toolbar-title>
+              <v-spacer></v-spacer>
+              <div style="width:300px">
+                <v-select
+                  :items="organizations"
+                  v-model="organization"
+                  label="Organization"
+                  item-text="id"
+                  dense
+                  required
+                  outlined
+                  return-object
+                  hide-details
+                ></v-select>
+              </div>
             </v-toolbar>
 
-            <v-tabs class="elevation-2 mb-4" height="60" grow :vertical="$vuetify.breakpoint.mobile">
+            <v-tabs class="elevation-2" grow :vertical="$vuetify.breakpoint.mobile">
               <v-tab :to="{ name: 'manageStations' }">
                 <v-icon left>mdi-map-marker-multiple</v-icon> Stations
               </v-tab>
               <v-tab :to="{ name: 'manageFiles' }">
                 <v-icon left>mdi-file-multiple-outline</v-icon> Files
               </v-tab>
+              <v-tab :to="{ name: 'manageSeries' }">
+                <v-icon left>mdi-chart-line</v-icon> Timeseries
+              </v-tab>
+              <v-tab :to="{ name: 'manageProfiles' }">
+                <v-icon left>mdi-arrow-expand-down</v-icon> Profiles
+              </v-tab>
+              <v-tab :to="{ name: 'manageQaqc' }">
+                <v-icon left>mdi-tools</v-icon> QAQC
+              </v-tab>
             </v-tabs>
-            <router-view></router-view>
 
-            <v-card-text class="pt-2">
-              <!-- <v-container class="black--text body-1 px-0">
-                <v-row align="stretch">
-                  <v-col cols="12" md="6">
-                    <v-card elevation="2" height="100%">
-                      <v-card-title class="text-h5 py-2">
-                        Instructions
-                      </v-card-title>
-                      <v-divider></v-divider>
-                      <v-card-text class="black--text body-1">
-                        Lorem ipsum dolor, sit amet consectetur adipisicing elit. Deserunt quod tempore reprehenderit consequatur impedit ipsum. Voluptate, harum reprehenderit autem iure quaerat facilis sequi eveniet neque? Praesentium expedita doloremque enim laborum.
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                  <v-col cols="12" md="6">
-                    <v-card elevation="2">
-                      <v-card-title class="text-h5 py-2">
-                        Frequently Asked Questions
-                      </v-card-title>
-                      <v-divider></v-divider>
-                      <v-card-text class="black--text body-1" style="overflow-y:auto;max-height:290px">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Modi delectus incidunt labore voluptatem vitae! Doloribus sint facilis accusantium, impedit consequuntur voluptatem numquam repellendus, illum sunt officiis hic et nam iure!
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                </v-row>
-              </v-container> -->
-
-              <!-- <v-sheet elevation="2">
-                <ManageStations></ManageStations>
-              </v-sheet>
-
-              <v-sheet elevation="2" class="mt-4">
-                <ManageFiles></ManageFiles>
-              </v-sheet> -->
-            </v-card-text>
+            <div class="mt-1 pa-4">
+              <router-view></router-view>
+            </div>
           </v-card>
         </v-col>
       </v-row>
@@ -64,14 +53,25 @@
 </template>
 
 <script>
-// import ManageStations from '@/views/manage/Stations.vue'
-// import ManageFiles from '@/views/manage/Files.vue'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'Manage',
-  components: {
-    // ManageStations,
-    // ManageFiles
+  computed: {
+    ...mapGetters({
+      organizations: 'manage/organizations'
+    }),
+    organization: {
+      get () {
+        return this.$store.state.manage.organization
+      },
+      set (value) {
+        this.$store.dispatch('manage/setOrganization', value)
+      }
+    }
+  },
+  mounted () {
+    this.$store.dispatch('manage/fetchOrganizations')
   }
 }
 </script>

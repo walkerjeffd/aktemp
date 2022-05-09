@@ -1,11 +1,10 @@
 <template>
   <v-dialog
     v-model="dialog"
-    :max-width="1000"
     style="z-index:5001"
     @keydown.esc="close"
   >
-    <v-card>
+    <v-card style="width:800px">
       <v-toolbar color="grey lighten-2">
         <v-toolbar-title class="text-h5">
           <span v-if="!station">Create Station</span>
@@ -14,11 +13,11 @@
       </v-toolbar>
 
       <!-- need to move <v-form> inside <v-card-text> for scrollable dialog to work -->
-      <v-form ref="form" @submit.prevent="submit">
+      <v-form ref="form" @submit.prevent="submit" :disabled="loading">
         <v-card-text class="body-2 py-8 px-4">
           <v-select
             v-model="organizationId.value"
-            :items="organizationId.options"
+            :items="organizations"
             :rules="organizationId.rules"
             item-text="id"
             item-value="id"
@@ -100,29 +99,29 @@
             label="Waterbody Type"
             validate-on-blur
             outlined
-            hide-details
           ></v-select>
-          <v-checkbox
-            v-model="active.value"
-            label="Active"
-            validate-on-blur
-            outlined
-          ></v-checkbox>
           <v-select
             v-model="mixed.value"
             :items="mixed.options"
             :rules="mixed.rules"
             item-text="label"
             item-value="id"
-            label="Mixed"
+            label="Is position considered well-mixed?"
+            validate-on-blur
+            outlined
+          ></v-select>
+          <v-checkbox
+            v-model="active.value"
+            label="Active Station"
             validate-on-blur
             outlined
             hide-details
-          ></v-select>
+            class="mt-0"
+          ></v-checkbox>
           <v-checkbox
             v-model="private_.value"
             label="Private"
-            hint="If checked, station will not be shown on data explorer"
+            hint="If checked, station will not be shown on the public data explorer"
             persistent-hint
             validate-on-blur
             outlined
@@ -159,7 +158,9 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { yesNoToBooleanOrNull, booleanOrNullToYesNo } from '@/lib/utils'
 import { timezoneOptions, placementOptions, waterbodyTypeOptions, mixedOptions } from '@/lib/constants'
+import evt from '@/events'
 
 export default {
   name: 'StationForm',
@@ -176,8 +177,6 @@ export default {
 
       organizationId: {
         value: null,
-        options: [],
-        // options: this.user.organizations,
         rules: [
           v => !!v || 'Organization is required'
         ]
@@ -241,7 +240,9 @@ export default {
       mixed: {
         value: null,
         options: mixedOptions,
-        rules: []
+        rules: [
+          v => !!v || 'Well-mixed conditions is required'
+        ]
       },
       reference: {
         value: null,
@@ -254,7 +255,10 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['user', 'organizations'])
+    ...mapGetters({
+      organizations: 'manage/organizations',
+      defaultOrganization: 'manage/organization'
+    })
   },
   methods: {
     open (station) {
@@ -283,9 +287,9 @@ export default {
         timezone: this.timezone.value,
         waterbody_name: this.waterbodyName.value,
         waterbody_type: this.waterbodyType.value,
-        active: !!this.active.value,
-        mixed: this.mixed.value,
+        mixed: yesNoToBooleanOrNull(this.mixed.value),
         reference: this.reference.value,
+        active: !!this.active.value,
         private: !!this.private_.value
       }
 
@@ -293,8 +297,10 @@ export default {
         let response
         if (this.station) {
           response = await this.$http.restricted.put(`/organizations/${organizationId}/stations/${this.station.id}`, payload)
+          evt.$emit('notify', 'Station has been updated', 'success')
         } else {
           response = await this.$http.restricted.post(`/organizations/${organizationId}/stations`, payload)
+          evt.$emit('notify', 'Station has been saved', 'success')
         }
 
         this.dialog = false
@@ -315,9 +321,8 @@ export default {
       this.loading = false
       this.error = null
 
-      this.organizationId.options = this.organizations
-
       if (this.station) {
+        console.log(this.station.mixed)
         this.organizationId.value = this.station.organization_id
         this.code.value = this.station.code
         this.latitude.value = this.station.latitude
@@ -327,11 +332,11 @@ export default {
         this.waterbodyName.value = this.station.waterbody_name
         this.waterbodyType.value = this.station.waterbody_type
         this.active.value = this.station.active
-        this.mixed.value = this.station.mixed
+        this.mixed.value = booleanOrNullToYesNo(this.station.mixed)
         this.reference.value = this.station.reference
         this.private_.value = this.station.private
       } else {
-        this.organizationId.value = this.organizationId.options[0].id
+        this.organizationId.value = this.defaultOrganization ? this.defaultOrganization.id : null
         this.code.value = null
         this.latitude.value = null
         this.longitude.value = null

@@ -2,12 +2,14 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 
 import adminModule from './admin'
+import manageModule from './manage'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   modules: {
-    admin: adminModule
+    admin: adminModule,
+    manage: manageModule
   },
   state: {
     user: null

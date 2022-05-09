@@ -10,7 +10,8 @@ boost(Highcharts)
 Highcharts.setOptions({
   lang: {
     thousandsSep: ','
-  }
+  },
+  colors: ['#004895']
 })
 
 Vue.use(HighchartsVue)

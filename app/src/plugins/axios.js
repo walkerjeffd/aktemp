@@ -9,7 +9,7 @@ const publicApi = axios.create({
   baseURL: `${process.env.VUE_APP_API_URL}/public`
 })
 
-const restrictedApi = axios.create({
+export const restrictedApi = axios.create({
   baseURL: `${process.env.VUE_APP_API_URL}/restricted`
 })
 restrictedApi.interceptors.request.use(async function (config) {

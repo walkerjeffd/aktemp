@@ -90,7 +90,7 @@
 
                           <v-spacer></v-spacer>
 
-                          <v-btn text @click="$router.push({ name: 'manageFiles' })">
+                          <v-btn text @click="cancel">
                             Cancel
                           </v-btn>
                         </v-row>
@@ -174,7 +174,7 @@
 
                           <v-spacer></v-spacer>
 
-                          <v-btn text @click="$router.push({ name: 'manageDatasets' })">
+                          <v-btn text @click="cancel">
                             Cancel
                           </v-btn>
                         </v-row>
@@ -341,7 +341,7 @@
 
                           <v-spacer></v-spacer>
 
-                          <v-btn text @click="$router.push({ name: 'manageDatasets' })">
+                          <v-btn text @click="cancel">
                             Cancel
                           </v-btn>
                         </v-row>
@@ -497,7 +497,7 @@
 
                           <v-spacer></v-spacer>
 
-                          <v-btn text @click="$router.push({ name: 'manageDatasets' })">
+                          <v-btn text @click="cancel">
                             Cancel
                           </v-btn>
                         </v-row>
@@ -577,7 +577,7 @@
 
                           <v-spacer></v-spacer>
 
-                          <v-btn text @click="$router.push({ name: 'manageDatasets' })">
+                          <v-btn text @click="cancel">
                             Cancel
                           </v-btn>
                         </v-row>
@@ -708,7 +708,7 @@
 
                           <v-spacer></v-spacer>
 
-                          <v-btn text @click="$router.push({ name: 'manageDatasets' })">
+                          <v-btn text @click="cancel">
                             Cancel
                           </v-btn>
                         </v-row>
@@ -740,7 +740,7 @@
 
                           <v-spacer></v-spacer>
 
-                          <v-btn text @click="$router.push({ name: 'manageDatasets' })">
+                          <v-btn text @click="cancel">
                             Cancel
                           </v-btn>
                         </v-row>
@@ -756,6 +756,7 @@
                             color="primary"
                             height="8"
                             :value="upload.progress"
+                            class="mb-8"
                           ></v-progress-linear>
 
                           <Alert type="warning" title="Upload in Progress">
@@ -800,10 +801,11 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import Papa from 'papaparse'
 
 import { utcOffsetOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions } from '@/lib/constants'
-import { mapGetters } from 'vuex'
+import evt from '@/events'
 
 const parseFile = (file) => new Promise((resolve, reject) => {
   return Papa.parse(file, {
@@ -971,6 +973,7 @@ export default {
             options: utcOffsetOptions,
             rules: [
               v => !!v ||
+                v === 0 ||
                 this.timestamp.timezone.mode !== 'utcOffset' ||
                 'UTC offset is required'
             ]
@@ -988,7 +991,7 @@ export default {
           ]
         },
         units: {
-          selected: null,
+          selected: 'C',
           options: temperatureUnitsOptions,
           rules: [
             v => !!v ||
@@ -1023,13 +1026,15 @@ export default {
         error: null,
         message: null,
         progress: 0,
-        file: null,
-        timeout: null
+        file: null
       }
     }
   },
   computed: {
-    ...mapGetters(['organizations']),
+    ...mapGetters({
+      organizations: 'manage/organizations',
+      defaultOrganization: 'manage/organization'
+    }),
     fileColumns () {
       return this.file.parsed && this.file.parsed.meta ? this.file.parsed.meta.fields : []
     },
@@ -1037,16 +1042,16 @@ export default {
       return this.createFileConfig()
     }
   },
-  mounted () {
-    this.fetchStations()
-    if (this.organizations.length === 1) {
-      this.organization.selected = this.organizations[0].id
+  watch: {
+    async 'organization.selected' () {
+      this.station.station.selected = null
+      this.resetStation()
+      await this.fetchStations()
     }
   },
-  beforeDestroy () {
-    if (this.upload.timeout) {
-      clearTimeout(this.upload.timeout)
-    }
+  async mounted () {
+    await this.$store.dispatch('manage/fetchOrganizations')
+    this.organization.selected = this.defaultOrganization ? this.defaultOrganization.id : null
   },
   methods: {
     nextOrganization () {
@@ -1061,11 +1066,12 @@ export default {
       this.step += 1
     },
     async fetchStations () {
+      if (!this.organization.selected) return
       // this.loading = true
       // this.error = null
 
       try {
-        const response = await this.$http.restricted.get('/stations')
+        const response = await this.$http.restricted.get(`/organizations/${this.organization.selected}/stations`)
         this.station.station.options = response.data
       } catch (err) {
         alert('Failed to load stations, see console log')
@@ -1216,7 +1222,6 @@ export default {
       this.step += 1
     },
     async submit () {
-      console.log('uploading...')
       this.upload.status = 'PENDING'
       this.upload.message = 'Starting upload...'
       this.upload.error = null
@@ -1282,17 +1287,14 @@ export default {
       this.upload.status = 'DONE'
       this.upload.message = 'Upload complete'
 
-      this.upload.timeout = setTimeout(() => {
-        this.$router.push({ name: 'manageFiles' })
-        // this.$router.push({
-        //   name: 'manageFile',
-        //   params: {
-        //     fileId: this.upload.file.id
-        //   }
-        // })
-      }, 5000)
-
-      // const { presignedUrl } = file
+      evt.$emit('notify', `File ${this.upload.file.filename} has been uploaded`, 'success')
+      this.$store.dispatch('manage/setOrganizationById', this.upload.file.organization_id)
+      this.$router.push({
+        name: 'manageFile',
+        params: {
+          fileId: this.upload.file.id
+        }
+      })
     },
     createFileConfig () {
       const config = {
@@ -1373,7 +1375,6 @@ export default {
       const organizationId = this.organization.selected
       const filename = 'test.csv'
       const config = this.createFileConfig()
-      console.log(config)
 
       const response = await this.$http.restricted.post(`/organizations/${organizationId}/files`, {
         filename,
@@ -1438,6 +1439,9 @@ export default {
       if (this.upload.file) {
         this.deleteFile(this.upload.file)
       }
+    },
+    cancel () {
+      this.$router.push({ name: 'manageFiles' })
     }
   }
 }

@@ -85,6 +85,10 @@ export const placementOptions = [
   {
     id: 'SIDE',
     label: 'Side Channel'
+  },
+  {
+    id: 'UNKNOWN',
+    label: 'Unknown'
   }
 ]
 
@@ -96,6 +100,10 @@ export const waterbodyTypeOptions = [
   {
     id: 'LAKE',
     label: 'Lake'
+  },
+  {
+    id: 'UNKNOWN',
+    label: 'Unknown'
   }
 ]
 

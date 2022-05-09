@@ -80,10 +80,6 @@ export default {
       try {
         const response = await this.$http.admin.get('/requests')
         const accounts = response.data
-        accounts.forEach(d => {
-          d.created_at = new Date(d.created_at)
-          d.updated_at = new Date(d.updated_at)
-        })
         this.accounts = accounts
       } catch (err) {
         console.error(err)

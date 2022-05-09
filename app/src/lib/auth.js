@@ -8,7 +8,7 @@ import router from '@/router'
 evt.$on('authState', async ({ state, redirect }) => {
   if (state === 'signedOut') {
     store.dispatch('setUser', null)
-    // router.push(redirect || { name: 'home' })
+    if (redirect) router.push(redirect)
   } else if (state === 'signIn') {
     await getUser()
     if (redirect) router.push(redirect)

@@ -1,12 +1,13 @@
 
 exports.up = knex => knex.schema.createTable('stations', t => {
   t.increments('id').primary().unsigned()
-  t.text('organization_id')
+  t.integer('organization_id')
     .references('organizations.id')
     .index()
     .notNullable()
     .onDelete('CASCADE')
   t.text('code').notNullable()
+  t.text('description')
   t.float('latitude').notNullable()
   t.float('longitude').notNullable()
   t.text('placement')
@@ -16,6 +17,7 @@ exports.up = knex => knex.schema.createTable('stations', t => {
   t.boolean('active')
   t.boolean('mixed')
   t.text('reference')
+  t.boolean('private').default(false)
 
   t.unique(['organization_id', 'code'])
   t.timestamps(true, true)

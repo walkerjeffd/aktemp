@@ -13,6 +13,14 @@ async function listOrganizationsForUser (id) {
     .for(id)
 }
 
+async function setOrganizations (id, organizationIds) {
+  const user = User.relatedQuery('organizations')
+    .for(id)
+    .relate(organizationIds)
+    .returning('*')
+  return user
+}
+
 async function attachAdminUser (req, res, next) {
   const user = await fetchUser(req.params.userId)
   if (!user) throw createError(404, `User (${req.params.userId}) not found`)
@@ -261,7 +269,9 @@ async function putUser (req, res, next) {
   } else if (req.body.action === 'removeFromAdmin') {
     response = await removeUserFromGroup(res.locals.adminUser.id, 'admins')
   } else if (req.body.action === 'signOut') {
-    response = await signOutUser(res.locals.adminUser.id)
+    response = await signOutUser(res.locals.adminUser)
+  } else if (req.body.action === 'setOrganizations') {
+    response = await setOrganizations(res.locals.adminUser.id, req.body.organizationIds)
   } else {
     throw createError(400, 'Invalid user action')
   }

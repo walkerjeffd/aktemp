@@ -5,6 +5,14 @@ class Station extends Base {
     return 'stations'
   }
 
+  static get modifiers () {
+    return {
+      organization (builder) {
+        builder.select('stations.*', 'organization.code as organization_code').joinRelated('organization')
+      }
+    }
+  }
+
   static get relationMappings () {
     const Organization = require('./Organization')
     const Series = require('./Series')

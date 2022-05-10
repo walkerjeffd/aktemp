@@ -1,6 +1,7 @@
 
 exports.up = knex => knex.schema.createTable('organizations', t => {
-  t.text('id').primary()
+  t.increments('id').primary().unsigned()
+  t.text('code').notNullable()
   t.text('name').notNullable()
   t.text('poc_name')
   t.text('poc_tel')

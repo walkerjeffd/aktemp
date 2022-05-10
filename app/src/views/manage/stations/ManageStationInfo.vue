@@ -20,7 +20,7 @@
             style="width:140px">
             Organization
           </td>
-          <td class="font-weight-bold">{{ station.organization_id }}</td>
+          <td class="font-weight-bold">{{ station.organization_code }}</td>
         </tr>
         <tr>
           <td
@@ -29,6 +29,14 @@
             Station Code
           </td>
           <td class="font-weight-bold">{{ station.code }}</td>
+        </tr>
+        <tr>
+          <td
+            class="text-right grey--text text--darken-2"
+            style="width:140px">
+            Description
+          </td>
+          <td class="font-weight-bold">{{ station.description | truncate(40) }}</td>
         </tr>
         <tr>
           <td
@@ -100,7 +108,7 @@
             style="width:140px">
             Reference
           </td>
-          <td class="font-weight-bold">{{ station.reference }}</td>
+          <td class="font-weight-bold">{{ station.reference | truncate(40) }}</td>
         </tr>
         <tr>
           <td

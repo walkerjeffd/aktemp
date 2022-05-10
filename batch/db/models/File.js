@@ -9,6 +9,9 @@ class File extends Base {
     return {
       done (builder) {
         builder.where('status', 'DONE')
+      },
+      organizationCode (builder) {
+        builder.select('files.*', 'organization.code as organization_code').joinRelated('organization')
       }
     }
   }

@@ -4,15 +4,17 @@ const { batch, createPresignedPostPromise } = require('../aws')
 const { File, Organization } = require('../db/models')
 
 async function attachFile (req, res, next) {
-  let file = null
+  let query = null
   if (res.locals.organization) {
-    file = await res.locals.organization.$relatedQuery('files')
+    query = res.locals.organization.$relatedQuery('files')
       .findById(req.params.fileId)
+
   } else {
-    file = await File.query()
-      .withGraphFetched('series(stationOrganizationCodes)')
+    query = File.query()
+      .withGraphFetched('series(stationOrganization)')
       .findById(req.params.fileId)
   }
+  const file = await query.modify('organizationCode')
 
   if (!file) {
     throw createError(404, `File (id=${req.params.fileId}) not found`)

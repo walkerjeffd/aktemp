@@ -30,6 +30,14 @@
               <td
                 class="text-right"
                 style="width:140px">
+                Code
+              </td>
+              <td class="font-weight-bold">{{ organization.code }}</td>
+            </tr>
+            <tr>
+              <td
+                class="text-right"
+                style="width:140px">
                 Name
               </td>
               <td class="font-weight-bold">{{ organization.name }}</td>

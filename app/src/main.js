@@ -15,7 +15,7 @@ import './plugins/highcharts'
 import './plugins/leaflet'
 import './plugins/pretty-bytes'
 
-// import '@/assets/styles.css'
+import '@/assets/styles.css'
 
 import Alert from '@/components/Alert'
 import ConfirmDialog from '@/components/ConfirmDialog'

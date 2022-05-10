@@ -6,7 +6,6 @@ const { findOrganizationById } = require('./organizations')
 const { s3 } = require('./lib/aws')
 const { File } = require('../db/models')
 const { printTable } = require('./lib/utils')
-const { NotFoundError } = require('./lib/errors')
 
 function printFiles (rows) {
   printTable(rows, ['id', 'organization_id', 'uuid', 'filename', 'status'])
@@ -20,7 +19,7 @@ exports.listFiles = async function (options) {
 const createAndUploadFile = async function (filepath, config, { organizationId, ...options }) {
   // check data file exists
   if (!existsSync(filepath)) {
-    throw new NotFoundError(`file not found (${filepath})`)
+    throw new Error(`file not found (${filepath})`)
   }
 
   // fetch organization

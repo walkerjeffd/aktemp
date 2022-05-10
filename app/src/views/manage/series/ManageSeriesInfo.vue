@@ -32,6 +32,24 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
+            Start
+          </td>
+          <td class="font-weight-bold">{{ series.start_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z') }}</td>
+        </tr>
+        <tr>
+          <td class="text-right grey--text text--darken-2">
+            End
+          </td>
+          <td class="font-weight-bold">{{ series.end_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z') }}</td>
+        </tr>
+        <tr>
+          <td class="text-right grey--text text--darken-2">
+            Depth
+          </td>
+          <td class="font-weight-bold">{{ series.depth_category || (isFinite(series.depth_m) && series.depth_m !== null ? `${series.depth_m} m` : '') }}</td>
+        </tr>
+        <tr>
+          <td class="text-right grey--text text--darken-2">
             Interval
           </td>
           <td class="font-weight-bold">{{ series.interval }}</td>
@@ -44,27 +62,15 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Depth
-          </td>
-          <td class="font-weight-bold">{{ isFinite(series.depth_m) && series.depth_m !== null ? `${series.depth_m} m` : '' }}</td>
-        </tr>
-        <tr>
-          <td class="text-right grey--text text--darken-2">
-            Depth Category
-          </td>
-          <td class="font-weight-bold">{{ series.depth_category }}</td>
-        </tr>
-        <tr>
-          <td class="text-right grey--text text--darken-2">
             Accuracy
           </td>
           <td class="font-weight-bold">{{ series.accuracy }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            QAQC
+            SOP Bath
           </td>
-          <td class="font-weight-bold">{{ series.qaqc }}</td>
+          <td class="font-weight-bold">{{ series.sop_bath }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -79,9 +85,19 @@
 
     <div class="mx-4 pb-2">
       <div class="my-4">
-        <!-- <v-btn color="primary" outlined block :disabled="!file.url" :href="file.url" download>
+        <v-btn color="primary" outlined block download disabled>
           <v-icon left>mdi-download</v-icon>Download CSV
-        </v-btn> -->
+        </v-btn>
+        <v-btn
+          color="error"
+          outlined
+          block
+          class="mt-4"
+          disabled
+        >
+          <v-icon left>mdi-delete</v-icon>
+          Edit Series
+        </v-btn>
         <v-btn
           color="error"
           outlined

@@ -19,7 +19,7 @@
             <td class="text-right grey--text text--darken-2">
               Organization
             </td>
-            <td class="font-weight-bold">{{ file.organization_id }}</td>
+            <td class="font-weight-bold">{{ file.organization_code }}</td>
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">

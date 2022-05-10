@@ -22,7 +22,7 @@ exports.up = knex => knex.schema.createTable('series', t => {
   t.float('frequency')
   t.boolean('reviewed').default(false).notNullable()
   t.integer('accuracy')
-  t.boolean('qaqc')
+  t.boolean('sop_bath')
 
   t.timestamps(true, true)
 })

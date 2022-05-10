@@ -42,7 +42,7 @@
       >
         <l-tooltip>
           <div class="text-subtitle-1">{{s.code}}</div>
-          <div class="text-subheading">{{s.organization_id}}</div>
+          <div class="text-subheading">{{s.organization_code}}</div>
         </l-tooltip>
       </l-circle-marker>
       <l-circle-marker
@@ -54,7 +54,7 @@
       >
         <l-tooltip>
           <div class="text-subtitle-1">{{station.code}}</div>
-          <div class="text-subheading">{{station.organization_id}}</div>
+          <div class="text-subheading">{{station.organization_code}}</div>
         </l-tooltip>
       </l-circle-marker>
     </l-map>
@@ -163,7 +163,7 @@ export default {
   },
   watch: {
     stations (val, old) {
-      if (!old || old.length === 0) this.fitToStations()
+      if (val !== old) this.fitToStations()
     }
   },
   methods: {

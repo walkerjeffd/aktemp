@@ -1,7 +1,6 @@
 const AWS = require('aws-sdk')
 const Papa = require('papaparse')
 const stripBom = require('strip-bom')
-// const d3 = require('d3')
 const dayjs = require('dayjs')
 const timezone = require('dayjs/plugin/timezone.js')
 const utc = require('dayjs/plugin/utc.js')
@@ -108,6 +107,7 @@ async function processSeriesFile (file) {
     }]
   } else if (config.station.mode === 'column') {
     const stationColumn = config.station.column
+    const d3 = await import('d3')
     stationData = Array.from(
       d3.group(data, d => d[stationColumn]),
       ([key, value]) => ({ stationCode: key, values: value })
@@ -137,14 +137,20 @@ async function processSeriesFile (file) {
     seriesDepth.depth_m = convertDepthUnits(file.config.depth.value, file.config.depth.units)
   }
 
+  // series meta
+  const seriesMeta = {
+    ...file.config.meta
+  }
+
   // save each series
   for (let i = 0; i < stationData.length; i++) {
-    console.log(d3.group)
+    const d3 = await import('d3')
     const seriesDateRange = d3.extent(stationData[i].values, d => d.datetime)
-    console.log(seriesDateRange)
     stationData[i].series = await stationData[i].station.$relatedQuery('series').insertGraph({
       file_id: file.id,
       values: stationData[i].values,
+      start_datetime: seriesDateRange[0],
+      end_datetime: seriesDateRange[1],
       ...seriesDepth
     })
   }

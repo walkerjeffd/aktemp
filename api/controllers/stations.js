@@ -1,28 +1,29 @@
 const createError = require('http-errors')
-
 const { Station } = require('../db/models')
 
 const getStations = async (req, res, next) => {
-  let stations = []
+  let query
   if (res.locals.organization) {
-    stations = await res.locals.organization.$relatedQuery('stations')
+    query = res.locals.organization.$relatedQuery('stations')
   } else if (res.locals.user) {
-    stations = await res.locals.user.$relatedQuery('organizations.[stations]')
+    query = res.locals.user.$relatedQuery('organizations.[stations]')
   } else {
-    stations = await Station.query()
+    query = Station.query()
   }
+  const stations = await query
   return res.status(200).json(stations)
 }
 
 const attachStation = async (req, res, next) => {
-  let station = null
+  let query
   if (res.locals.organization) {
-    station = await res.locals.organization.$relatedQuery('stations')
+    query = res.locals.organization.$relatedQuery('stations')
       .findById(req.params.stationId)
   } else {
-    station = await Station.query()
+    query = Station.query()
       .findById(req.params.stationId)
   }
+  const station = await query.modify('organization')
 
   if (!station) {
     throw createError(404, `Station (id=${req.params.stationId}) not found`)
@@ -34,8 +35,8 @@ const attachStation = async (req, res, next) => {
 
 const postStations = async (req, res, next) => {
   const row = await res.locals.organization.$relatedQuery('stations')
-    .insert(req.body)
-    .returning('*')
+  .insert(req.body)
+  .returning('*')
   return res.status(201).json(row)
 }
 

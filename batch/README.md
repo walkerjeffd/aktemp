@@ -5,7 +5,7 @@ Set environmental variables
 ```sh
 source .env.<NODE_ENV>.local
 # or (manually)
-export REGION=
+export AWS_REGION=
 export DB_SECRET_NAME=
 export NOTIFY_TOPIC=
 ```

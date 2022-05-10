@@ -72,7 +72,7 @@ export default {
       headers: [
         {
           text: 'Organization',
-          value: 'organization_id',
+          value: 'organization_code',
           align: 'left'
         },
         {

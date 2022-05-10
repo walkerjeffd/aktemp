@@ -14,7 +14,7 @@
                   :items="organizations"
                   v-model="organization"
                   label="Organization"
-                  item-text="id"
+                  item-text="code"
                   dense
                   required
                   outlined

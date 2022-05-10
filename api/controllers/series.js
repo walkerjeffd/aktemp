@@ -5,7 +5,7 @@ const { Series, Station } = require('../db/models')
 async function attachSeries (req, res, next) {
   const series = await Series.query()
     .findById(req.params.seriesId)
-    .modify('stationOrganizationCodes')
+    .modify('stationOrganization')
     .modify('filename')
 
   if (!series) {
@@ -31,7 +31,7 @@ async function getSeriesValues (req, res, next) {
 async function getOrganizationSeries (req, res, next) {
   const stations = await res.locals.organization.$relatedQuery('stations')
   const rows = await Station.relatedQuery('series')
-    .for(stations).modify('stationOrganizationCodes')
+    .for(stations).modify('stationOrganization')
   return res.status(200).json(rows)
 }
 

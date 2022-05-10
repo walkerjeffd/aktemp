@@ -8,9 +8,6 @@ const { User, Organization } = require('../../db/models/index')
 
 const router = express.Router()
 
-// const { isLambda } = require('../../utils')
-// const { user } = require('pg/lib/defaults')
-
 const users = {
   admin: {
     password: 'admin',
@@ -61,16 +58,6 @@ router.use(asyncHandler(async (req, res, next) => {
 
   next()
 }))
-
-// const attachStation = async (req, res, next) => {
-//   const row = await Station.query()
-//     .findById(req.params.stationId)
-
-//   if (!row) throw createError(404, `Station (id=${req.params.stationId}) not found`)
-
-//   res.locals.station = row
-//   return next()
-// }
 
 const attachOrganization = async (req, res, next) => {
   const row = await Organization.query()

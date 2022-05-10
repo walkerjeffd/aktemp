@@ -5,7 +5,7 @@ exports.up = knex => knex.schema.createTable('users_organizations', t => {
     .index()
     .notNullable()
     .onDelete('CASCADE')
-  t.text('organization_id')
+  t.integer('organization_id')
     .references('organizations.id')
     .index()
     .notNullable()

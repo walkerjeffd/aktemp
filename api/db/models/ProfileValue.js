@@ -1,15 +1,12 @@
 const Base = require('./Base')
 
-class SeriesValue extends Base {
+class ProfileValue extends Base {
   static get tableName () {
-    return 'series_values'
+    return 'profile_values'
   }
 
   static get modifiers () {
     return {
-      select (builder) {
-        builder.select('datetime', 'value')
-      },
       defaultOrderBy (builder) {
         builder.orderBy('datetime')
       }
@@ -17,14 +14,14 @@ class SeriesValue extends Base {
   }
 
   static get relationMappings () {
-    const Series = require('./Series')
+    const Profile = require('./Profile')
     return {
       series: {
         relation: Base.BelongsToOneRelation,
-        modelClass: Series,
+        modelClass: Profile,
         join: {
-          from: 'series_values.series_id',
-          to: 'series.id'
+          from: 'profile_values.profile_id',
+          to: 'profiles.id'
         }
       }
     }
@@ -37,4 +34,4 @@ class SeriesValue extends Base {
   }
 }
 
-module.exports = SeriesValue
+module.exports = ProfileValue

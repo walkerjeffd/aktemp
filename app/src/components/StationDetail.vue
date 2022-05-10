@@ -32,7 +32,7 @@
                 <td class="text-right grey--text text--darken-2" style="width:140px">
                   Organization
                 </td>
-                <td class="font-weight-bold">{{ station.organization_id }}</td>
+                <td class="font-weight-bold">{{ station.organization_code }}</td>
               </tr>
               <tr>
                 <td class="text-right grey--text text--darken-2" style="width:0px">

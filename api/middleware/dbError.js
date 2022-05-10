@@ -55,15 +55,27 @@ function databaseErrorHandler (err, req, res, next) {
       data: {}
     })
   } else if (err instanceof UniqueViolationError) {
-    res.status(409).send({
-      message: err.message,
-      type: 'UniqueViolation',
-      data: {
-        columns: err.columns,
-        table: err.table,
-        constraint: err.constraint
-      }
-    })
+    if (err.constraint === 'stations_organization_id_code_unique') {
+      res.status(409).send({
+        message: 'Station code already exists for this organization, must be unique.',
+        type: 'UniqueViolation',
+        data: {
+          columns: err.columns,
+          table: err.table,
+          constraint: err.constraint
+        }
+      })
+    } else {
+      res.status(409).send({
+        message: err.message,
+        type: 'UniqueViolation',
+        data: {
+          columns: err.columns,
+          table: err.table,
+          constraint: err.constraint
+        }
+      })
+    }
   } else if (err instanceof NotNullViolationError) {
     res.status(400).send({
       message: err.message,

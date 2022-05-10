@@ -47,15 +47,16 @@ describe('restricted api', () => {
   describe('organizations', () => {
     test('GET /organizations/:id', async () => {
       const response = await request(app)
-        .get('/restricted/organizations/UAA')
+        .get('/restricted/organizations/1')
         .auth('user', 'user')
       expect(response.statusCode).toBe(200)
-      expect(response.body).toHaveProperty('id', 'UAA')
+      expect(response.body).toHaveProperty('id', 1)
+      expect(response.body).toHaveProperty('code', 'UAA')
     })
 
     test('GET /organizations/:id/stations', async () => {
       const response = await request(app)
-        .get('/restricted/organizations/UAA/stations')
+        .get('/restricted/organizations/1/stations')
         .auth('user', 'user')
       expect(response.statusCode).toBe(200)
       expect(response.body).toHaveLength(1)
@@ -63,7 +64,7 @@ describe('restricted api', () => {
 
     test('GET /organizations/:id/stations/:id', async () => {
       const response = await request(app)
-        .get('/restricted/organizations/UAA/stations/1')
+        .get('/restricted/organizations/1/stations/1')
         .auth('user', 'user')
       expect(response.statusCode).toBe(200)
       expect(response.body).toHaveProperty('code')
@@ -71,7 +72,7 @@ describe('restricted api', () => {
 
     test('GET /organizations/:id/stations/100 (404)', async () => {
       const response = await request(app)
-        .get('/restricted/organizations/UAA/stations/100')
+        .get('/restricted/organizations/1/stations/100')
         .auth('user', 'user')
       expect(response.statusCode).toBe(404)
     })
@@ -104,23 +105,31 @@ describe('restricted api', () => {
     let stationId
     test('POST /organizations/:id/stations', async () => {
       const response = await request(app)
-        .post('/restricted/organizations/UAA/stations')
+        .post('/restricted/organizations/1/stations')
         .auth('user', 'user')
         .send(station)
       expect(response.statusCode).toBe(201)
       expect(response.body).toHaveProperty('id')
-      expect(response.body).toHaveProperty('organization_id', 'UAA')
+      expect(response.body).toHaveProperty('organization_id', 1)
       expect(response.body).toHaveProperty('code', station.code)
       stationId = response.body.id
     })
+    test('POST /organizations/:id/stations (conflict 409)', async () => {
+      const response = await request(app)
+        .post('/restricted/organizations/1/stations')
+        .auth('user', 'user')
+        .send(station)
+      expect(response.statusCode).toBe(409)
+      expect(response.body.message).toBe('Station code already exists for this organization, must be unique.')
+    })
     test('GET /organizations/:id/stations (unauthorized 401)', async () => {
       const response = await request(app)
-        .get('/restricted/organizations/UAA/stations')
+        .get('/restricted/organizations/1/stations')
       expect(response.statusCode).toBe(401)
     })
     test('GET /organizations/:id/stations/:id', async () => {
       const response = await request(app)
-        .get(`/restricted/organizations/UAA/stations/${stationId}`)
+        .get(`/restricted/organizations/1/stations/${stationId}`)
         .auth('user', 'user')
       expect(response.statusCode).toBe(200)
       expect(response.body).toHaveProperty('id', stationId)
@@ -128,12 +137,12 @@ describe('restricted api', () => {
     })
     test('GET /organizations/:id/stations/:id (unauthorized 401)', async () => {
       const response = await request(app)
-        .get(`/restricted/organizations/UAA/stations/${stationId}`)
+        .get(`/restricted/organizations/1/stations/${stationId}`)
       expect(response.statusCode).toBe(401)
     })
     test('PUT /organizations/:id/stations/:id', async () => {
       const response = await request(app)
-        .put(`/restricted/organizations/UAA/stations/${stationId}`)
+        .put(`/restricted/organizations/1/stations/${stationId}`)
         .auth('user', 'user')
         .send({
           code: 'Test Station (updated)'
@@ -144,7 +153,7 @@ describe('restricted api', () => {
     })
     test('GET /organizations/:id/stations/:id (post-update)', async () => {
       const response = await request(app)
-        .get(`/restricted/organizations/UAA/stations/${stationId}`)
+        .get(`/restricted/organizations/1/stations/${stationId}`)
         .auth('user', 'user')
       expect(response.statusCode).toBe(200)
       expect(response.body).toHaveProperty('id', stationId)
@@ -152,13 +161,13 @@ describe('restricted api', () => {
     })
     test('DELETE /organizations/:id/stations/:id', async () => {
       const response = await request(app)
-        .delete(`/restricted/organizations/UAA/stations/${stationId}`)
+        .delete(`/restricted/organizations/1/stations/${stationId}`)
         .auth('user', 'user')
       expect(response.statusCode).toBe(204)
     })
     test('GET /organizations/:id/stations/:id (post-delete, 404)', async () => {
       const response = await request(app)
-        .get('/restricted/organizations/UAA/stations/100')
+        .get('/restricted/organizations/1/stations/100')
         .auth('user', 'user')
       expect(response.statusCode).toBe(404)
     })
@@ -172,7 +181,7 @@ describe('restricted api', () => {
     let fileId
     test('POST /organizations/:id/files', async () => {
       const response = await request(app)
-        .post('/restricted/organizations/UAA/files')
+        .post('/restricted/organizations/1/files')
         .auth('user', 'user')
         .send(file)
       expect(response.statusCode).toBe(201)
@@ -181,7 +190,7 @@ describe('restricted api', () => {
       expect(response.body).toHaveProperty('uuid')
       expect(response.body.uuid).toBeTruthy()
       expect(response.body).toHaveProperty('user_id', 'abc-123')
-      expect(response.body).toHaveProperty('organization_id', 'UAA')
+      expect(response.body).toHaveProperty('organization_id', 1)
       expect(response.body).toHaveProperty('s3.Bucket', 'test-bucket')
       expect(response.body).toHaveProperty('s3.Key')
       expect(response.body.error).toBeNull()
@@ -189,20 +198,20 @@ describe('restricted api', () => {
     })
     test('POST /organizations/:id/files (unauthorized, 401)', async () => {
       const response = await request(app)
-        .post('/restricted/organizations/UAA/files')
+        .post('/restricted/organizations/1/files')
         .send(file)
       expect(response.statusCode).toBe(401)
     })
     test('GET /organizations/:id/files/', async () => {
       const response = await request(app)
-        .get('/restricted/organizations/UAA/files/')
+        .get('/restricted/organizations/1/files/')
         .auth('user', 'user')
       expect(response.statusCode).toBe(200)
       expect(response.body).toHaveLength(2)
     })
     test('GET /organizations/:id/files/:id', async () => {
       const response = await request(app)
-        .get(`/restricted/organizations/UAA/files/${fileId}`)
+        .get(`/restricted/organizations/1/files/${fileId}`)
         .auth('user', 'user')
       expect(response.statusCode).toBe(200)
       expect(response.body).toHaveProperty('filename', file.filename)

@@ -10,7 +10,7 @@
           Edit User
         </v-toolbar-title>
       </v-toolbar>
-
+<!--
       <div v-if="loading" class="text-center pb-12 pt-4">
         <div class="text-h5 mt-4 mb-8">Loading...</div>
         <v-progress-circular
@@ -19,7 +19,8 @@
           color="primary"
           indeterminate
         ></v-progress-circular>
-      </div>
+      </div> -->
+      <Loading v-if="loading.user" class="pb-8"></Loading>
       <v-form ref="form" @submit.prevent="submit" v-else-if="user">
         <v-simple-table>
           <tbody>
@@ -135,11 +136,14 @@
             outlined
             required
             :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
+            @input="modified = true"
           ></v-select>
           <v-switch
             v-model="edit.admin"
             label="Administrator"
+            @change="modified = true"
           ></v-switch>
+          {{modified}}
         </v-card-text>
 
         <v-divider class="mb-0"></v-divider>
@@ -180,17 +184,22 @@
           </v-btn>
         </v-card-text>
 
+        <v-divider></v-divider>
+
+        <v-card-actions class="px-4 py-4">
+          <v-btn
+            color="primary"
+            :disabled="!modified || this.loading.update"
+            @click.native="submit"
+          >save</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            text
+            @click.native="close"
+          >close</v-btn>
+        </v-card-actions>
       </v-form>
 
-      <v-divider></v-divider>
-
-      <v-card-actions class="px-4 py-4">
-        <v-spacer></v-spacer>
-        <v-btn
-          text
-          @click.native="close"
-        >close</v-btn>
-      </v-card-actions>
     </v-card>
 
     <ConfirmDialog ref="confirmDelete">
@@ -204,8 +213,10 @@
 <script>
 import { mapGetters } from 'vuex'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import evt from '@/events'
+
 export default {
-  name: 'EditUserDialog',
+  name: 'AdminUserEditDialog',
   components: { ConfirmDialog },
   data () {
     return {
@@ -217,20 +228,18 @@ export default {
       user: null,
       edit: {
         admin: false,
-        enabled: true,
         organizations: []
       },
 
-      // loading: {
-      //   init: false,
-      //   // confirm: false,
-      //   enabled: false,
-      //   admin: false,
-      //   delete: false
-      // },
       modified: false,
-      loading: true,
-      error: null
+      error: false,
+      loading: {
+        user: false,
+        enabled: false,
+        admin: false,
+        delete: false,
+        update: false
+      }
     }
   },
   computed: {
@@ -243,7 +252,6 @@ export default {
       this.modified = false
       this.user = null
       this.edit.admin = false
-      this.edit.enabled = true
       this.edit.organizations = []
 
       this.init()
@@ -258,7 +266,7 @@ export default {
       this.dialog = false
     },
     async init () {
-      this.loading = true
+      this.loading.user = true
 
       try {
         await this.refresh()
@@ -266,7 +274,7 @@ export default {
         console.log(err)
         this.error = err.toString() || 'Unknown error'
       } finally {
-        this.loading = false
+        this.loading.user = false
       }
     },
     async refresh () {
@@ -279,9 +287,9 @@ export default {
 
       this.user = await this.getUser(this.id)
 
-      // this.loading.confirm = false
-      // this.loading.enabled = false
-      // this.loading.admin = false
+      this.loading.delete = false
+      this.loading.enabled = false
+      this.loading.admin = false
     },
     async getUser (id) {
       const response = await this.$http.admin.get(`/users/${id}`)
@@ -290,31 +298,22 @@ export default {
       user.attributes.email_verified = user.attributes.email_verified === 'true'
 
       this.edit.admin = user.admin
-      this.edit.enabled = user.enabled
       this.edit.organizations = user.organizations
 
       return user
     },
     async setAdminGroup (value) {
-      this.loading.admin = true
-      this.modified = true
+      this.loading.update = true
       const action = value ? 'addToAdmin' : 'removeFromAdmin'
-      try {
-        await this.$http.admin.put(`/users/${this.id}`, { action })
-        this.refresh()
-      } catch (err) {
-        console.error(err)
-        this.loading.admin = false
-        this.error = err
-      }
+      await this.$http.admin.put(`/users/${this.id}`, { action })
     },
     async setEnabled (value) {
       this.loading.enabled = true
-      this.modified = true
       const action = value ? 'enable' : 'disable'
       try {
         await this.$http.admin.put(`/users/${this.id}`, { action })
         this.refresh()
+        evt.$emit('notify', `User has been ${action}d`, 'success')
       } catch (err) {
         console.error(err)
         this.loading.enabled = false
@@ -334,6 +333,7 @@ export default {
       this.loading.delete = true
       try {
         await this.$http.admin.delete(`/users/${this.id}`)
+        evt.$emit('notify', 'User has been deleted', 'success')
         this.resolve(true)
         this.dialog = false
       } catch (err) {
@@ -341,6 +341,30 @@ export default {
         this.error = err
       } finally {
         this.loading.delete = false
+      }
+    },
+    async submit () {
+      this.loading.update = true
+
+      try {
+        if (this.edit.admin !== this.user.admin) {
+          await this.setAdminGroup(this.edit.admin)
+        }
+
+        await this.$http.admin.put(`/users/${this.id}`, {
+          action: 'setOrganizations',
+          organizationIds: this.edit.organizations
+        })
+
+        evt.$emit('notify', 'User has been updated', 'success')
+        this.resolve(true)
+        this.dialog = false
+      } catch (err) {
+        console.error(err)
+        this.loading.update = false
+        this.error = err
+      } finally {
+        this.loading.update = false
       }
     }
   }

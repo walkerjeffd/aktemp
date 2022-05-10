@@ -17,7 +17,7 @@ exports.up = knex => knex.schema.createTable('profiles', t => {
   t.date('date')
   t.boolean('reviewed').default(false).notNullable()
   t.integer('accuracy')
-  t.boolean('qaqc')
+  t.boolean('sop_bath')
 
   t.timestamps(true, true)
 })

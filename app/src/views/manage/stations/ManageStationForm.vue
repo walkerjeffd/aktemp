@@ -2,6 +2,7 @@
   <v-dialog
     v-model="dialog"
     style="z-index:5001"
+    scrollable
     @keydown.esc="close"
   >
     <v-card style="width:800px">
@@ -13,15 +14,15 @@
       </v-toolbar>
 
       <!-- need to move <v-form> inside <v-card-text> for scrollable dialog to work -->
-      <v-form ref="form" @submit.prevent="submit" :disabled="loading">
-        <v-card-text class="body-2 py-8 px-4">
+      <v-card-text class="body-2 py-8 px-4">
+        <v-form ref="form" @submit.prevent="submit" :disabled="loading">
           <v-select
             v-model="organizationId.value"
             :items="organizations"
             :rules="organizationId.rules"
-            item-text="id"
+            item-text="code"
             item-value="id"
-            label="Organization ID"
+            label="Organization"
             validate-on-blur
             outlined
           ></v-select>
@@ -31,7 +32,18 @@
             label="Station Code"
             counter
             maxlength="50"
-            hint="A short name or site code for this station (e.g. Brown's Brook or BB001)"
+            hint="A short name or site code for this station (e.g. Browns Brook or BB001)"
+            persistent-hint
+            validate-on-blur
+            outlined
+          ></v-text-field>
+          <v-text-field
+            v-model="description.value"
+            :rules="description.rules"
+            label="Station Description"
+            counter
+            maxlength="250"
+            hint="Description of station (e.g., Browns Brook Downstream of Rt 1 Bridge)"
             persistent-hint
             validate-on-blur
             outlined
@@ -110,6 +122,15 @@
             validate-on-blur
             outlined
           ></v-select>
+          <v-text-field
+            v-model="reference.value"
+            :rules="reference.rules"
+            label="Reference URL"
+            hint="URL to External Data Source (e.g., Inletkeeper, USGS NWIS)"
+            persistent-hint
+            validate-on-blur
+            outlined
+          ></v-text-field>
           <v-checkbox
             v-model="active.value"
             label="Active Station"
@@ -126,32 +147,24 @@
             validate-on-blur
             outlined
           ></v-checkbox>
+        </v-form>
+      </v-card-text>
 
-          <v-alert
-            type="error"
-            text
-            colored-border
-            border="left"
-            class="body-2 mb-0 mt-8"
-            v-if="error">
-            <div class="body-1 font-weight-bold">Failed to Create Station</div>
-            <div>{{ error }}</div>
-          </v-alert>
-        </v-card-text>
+      <v-divider></v-divider>
 
-        <v-divider></v-divider>
+      <Alert type="error" title="Failed to Save Station" v-if="error" class="ma-4">{{error}}</Alert>
 
-        <v-card-actions class="pa-4">
-          <v-btn
-            type="submit"
-            color="primary"
-            class="mr-4"
-            :loading="loading">submit</v-btn>
-          <v-btn text @click="reset">reset</v-btn>
-          <v-spacer></v-spacer>
-          <v-btn text @click="close">cancel</v-btn>
-        </v-card-actions>
-      </v-form>
+      <v-card-actions class="pa-4">
+        <v-btn
+          color="primary"
+          class="mr-4"
+          :loading="loading"
+          @click="submit"
+        >submit</v-btn>
+        <v-btn text @click="reset" :disabled="loading">reset</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn text @click="close">cancel</v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
@@ -187,6 +200,12 @@ export default {
           v => !!v || 'Name is required',
           v => (!!v && v.trim().length >= 4) || 'Name must be at least 4 characters',
           v => (!!v && v.trim().length <= 50) || 'Name cannot exceed 50 characters'
+        ]
+      },
+      description: {
+        value: '',
+        rules: [
+          v => !v || (!!v && v.trim().length <= 250) || 'Description cannot exceed 250 characters'
         ]
       },
       latitude: {
@@ -275,12 +294,16 @@ export default {
     async submit () {
       this.error = null
 
-      if (!this.$refs.form.validate()) return
+      if (!this.$refs.form.validate()) {
+        this.error = 'Check form validation errors above'
+        return
+      }
 
       this.loading = true
-      const organizationId = this.organizationId.value
       const payload = {
+        organization_id: this.organizationId.value,
         code: this.code.value,
+        description: this.description.value,
         latitude: this.latitude.value,
         longitude: this.longitude.value,
         placement: this.placement.value,
@@ -296,11 +319,11 @@ export default {
       try {
         let response
         if (this.station) {
-          response = await this.$http.restricted.put(`/organizations/${organizationId}/stations/${this.station.id}`, payload)
-          evt.$emit('notify', 'Station has been updated', 'success')
+          response = await this.$http.restricted.put(`/organizations/${this.station.organization_id}/stations/${this.station.id}`, payload)
+          evt.$emit('notify', `Station (${payload.code}) has been updated`, 'success')
         } else {
-          response = await this.$http.restricted.post(`/organizations/${organizationId}/stations`, payload)
-          evt.$emit('notify', 'Station has been saved', 'success')
+          response = await this.$http.restricted.post(`/organizations/${payload.organization_id}/stations`, payload)
+          evt.$emit('notify', `Station (${payload.code}) has been saved`, 'success')
         }
 
         this.dialog = false
@@ -316,15 +339,15 @@ export default {
       }
     },
     reset () {
-      if (!this.$refs.form) return
+      if (this.loading || !this.$refs.form) return
       this.$refs.form.resetValidation()
       this.loading = false
       this.error = null
 
       if (this.station) {
-        console.log(this.station.mixed)
         this.organizationId.value = this.station.organization_id
         this.code.value = this.station.code
+        this.description.value = this.station.description
         this.latitude.value = this.station.latitude
         this.longitude.value = this.station.longitude
         this.placement.value = this.station.placement
@@ -338,6 +361,7 @@ export default {
       } else {
         this.organizationId.value = this.defaultOrganization ? this.defaultOrganization.id : null
         this.code.value = null
+        this.description.value = null
         this.latitude.value = null
         this.longitude.value = null
         this.placement.value = null

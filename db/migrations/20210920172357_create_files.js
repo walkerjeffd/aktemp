@@ -2,7 +2,7 @@ const statusTypes = require('../types/status')
 
 exports.up = knex => knex.schema.createTable('files', t => {
   t.increments('id').primary().unsigned()
-  t.text('organization_id')
+  t.integer('organization_id')
     .references('organizations.id')
     .index()
     .notNullable()
@@ -16,6 +16,7 @@ exports.up = knex => knex.schema.createTable('files', t => {
   t.json('config').notNullable()
 
   t.json('s3')
+  t.text('url')
   t.uuid('uuid').defaultTo(knex.raw('uuid_generate_v4()'))
   t.enu('status', statusTypes, { useNative: true, enumName: 'status_type' })
   t.text('error')

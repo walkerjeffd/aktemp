@@ -1372,8 +1372,9 @@ export default {
       return config
     },
     async createFile () {
+      if (!this.file.selected) throw new Error('File not found')
       const organizationId = this.organization.selected
-      const filename = 'test.csv'
+      const filename = this.file.selected.name
       const config = this.createFileConfig()
 
       const response = await this.$http.restricted.post(`/organizations/${organizationId}/files`, {

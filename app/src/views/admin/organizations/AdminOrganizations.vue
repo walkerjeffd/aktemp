@@ -8,7 +8,7 @@
       :headers="headers"
       :items="organizations"
       :loading="status.loading"
-      :sort-by="['id']"
+      :sort-by="['code']"
       loading-text="Loading... Please wait"
       @click:row="select"
       single-select
@@ -26,8 +26,8 @@
         <v-divider></v-divider>
       </template>
 
-      <template v-slot:item.id="{ item }">
-        {{ item.id | truncate(10) }}
+      <template v-slot:item.code="{ item }">
+        {{ item.code | truncate(10) }}
       </template>
       <template v-slot:item.name="{ item }">
         {{ item.name | truncate(40) }}
@@ -58,6 +58,12 @@ export default {
       {
         text: 'ID',
         value: 'id',
+        align: 'right',
+        width: '100px'
+      },
+      {
+        text: 'Code',
+        value: 'code',
         align: 'right',
         width: '150px'
       },

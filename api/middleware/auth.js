@@ -1,13 +1,38 @@
 const createError = require('http-errors')
+// const { getCurrentInvoke } = require('@vendia/serverless-express')
+const jwt = require('jsonwebtoken')
+const { isLambda } = require('../utils')
+
+function getCurrentInvokeHeader (token) {
+  if (!token) throw createError(401, 'Unauthorized')
+  const decoded = jwt.decode(token)
+  if (decoded['cognito:groups']) {
+    decoded['cognito:groups'] = decoded['cognito:groups'].join(',')
+  }
+  return {
+    requestContext: {
+      authorizer: {
+        claims: decoded
+      }
+    }
+  }
+}
 
 const cognitoAuth = async (req, res, next) => {
-  const claims = req.apiGateway &&
-    req.apiGateway.event &&
-    req.apiGateway.event.requestContext &&
-    req.apiGateway.event.requestContext.authorizer &&
-    req.apiGateway.event.requestContext.authorizer.claims
+  let event
+  if (isLambda()) {
+    ({ event } = req.apiGateway)
+    console.log('apiGateway.event', event)
+  } else {
+    event = getCurrentInvokeHeader(req.headers.authorization)
+  }
+
+  const claims = event &&
+    event.requestContext &&
+    event.requestContext.authorizer &&
+    event.requestContext.authorizer.claims
+  console.log('claims', claims)
   if (claims) {
-    const claims = req.apiGateway.event.requestContext.authorizer.claims
     const groups = claims['cognito:groups'] ? claims['cognito:groups'].split(',') : []
     const isAdmin = groups.includes('admins')
     req.auth = {
@@ -15,10 +40,10 @@ const cognitoAuth = async (req, res, next) => {
       type: 'cognito',
       isAdmin
     }
+    return next()
   } else {
     return next(createError(401, 'Unauthorized'))
   }
-  next()
 }
 
 function requireAdmin (req, res, next) {

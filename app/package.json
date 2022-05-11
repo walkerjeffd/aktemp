@@ -5,7 +5,9 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "stage": "vue-cli-service build --mode staging",
+    "deploy": "npm run stage && aws s3 sync dist/ s3://walkerenvres-aktemp-dev-website/"
   },
   "dependencies": {
     "aws-amplify": "^4.3.12",

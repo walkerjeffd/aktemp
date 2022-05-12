@@ -53,7 +53,7 @@ const depthSchema = (fields) => {
       }),
     category: Joi.when('mode', {
       is: 'category',
-      then: Joi.string().valid('bottom', 'middle', 'surface').required()
+      then: Joi.string().valid('BOTTOM', 'MIDDLE', 'SURFACE').required()
     })
   })
 }
@@ -93,10 +93,10 @@ const valueSchema = (fields) => {
 const metaSchema = (fields) => {
   const validFields = Joi.string().valid(...fields)
   return Joi.object({
-    interval: Joi.string().valid('continuous', 'discrete').required(),
+    interval: Joi.string().valid('CONTINUOUS', 'DISCRETE').required(),
     accuracy: Joi.string().valid('1', '2', '3'),
-    sop: Joi.boolean(),
-    reviewed: Joi.boolean(),
+    sop_bath: Joi.boolean().allow('', null),
+    reviewed: Joi.boolean().allow('', null),
     flagColumn: validFields
   })
 }

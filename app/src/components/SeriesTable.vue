@@ -25,10 +25,10 @@
       {{ item.station_code | truncate(20) }}
     </template>
     <template v-slot:item.start_datetime="{ item }">
-      {{ item.start_datetime | timestampTimezoneFormat(item.station_timezone, 'lll z') }}
+      {{ item.start_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
     </template>
     <template v-slot:item.end_datetime="{ item }">
-      {{ item.end_datetime | timestampTimezoneFormat(item.station_timezone, 'lll z') }}
+      {{ item.end_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
     </template>
   </v-data-table>
 </template>
@@ -56,19 +56,19 @@ const allHeaders = [
     text: 'End',
     value: 'end_datetime',
     align: 'left'
-  },
-  {
-    text: 'Depth (m)',
-    value: 'depth_m',
-    align: 'left',
-    width: '200px'
-  },
-  {
-    text: 'Depth Cat.',
-    value: 'depth_category',
-    align: 'left',
-    width: '200px'
   }
+  // {
+  //   text: 'Depth (m)',
+  //   value: 'depth_m',
+  //   align: 'left',
+  //   width: '200px'
+  // },
+  // {
+  //   text: 'Depth Cat.',
+  //   value: 'depth_category',
+  //   align: 'left',
+  //   width: '200px'
+  // }
 ]
 
 export default {

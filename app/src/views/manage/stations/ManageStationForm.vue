@@ -171,7 +171,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { yesNoToBooleanOrNull, booleanOrNullToYesNo } from '@/lib/utils'
+import { parseBooleanOption, formatBooleanOption } from '@/lib/utils'
 import { timezoneOptions, placementOptions, waterbodyTypeOptions, mixedOptions } from '@/lib/constants'
 import evt from '@/events'
 
@@ -310,10 +310,10 @@ export default {
         timezone: this.timezone.value,
         waterbody_name: this.waterbodyName.value,
         waterbody_type: this.waterbodyType.value,
-        mixed: yesNoToBooleanOrNull(this.mixed.value),
+        mixed: parseBooleanOption(this.mixed.value),
         reference: this.reference.value,
-        active: !!this.active.value,
-        private: !!this.private_.value
+        active: this.active.value,
+        private: this.private_.value
       }
 
       try {
@@ -355,7 +355,7 @@ export default {
         this.waterbodyName.value = this.station.waterbody_name
         this.waterbodyType.value = this.station.waterbody_type
         this.active.value = this.station.active
-        this.mixed.value = booleanOrNullToYesNo(this.station.mixed)
+        this.mixed.value = formatBooleanOption(this.station.mixed)
         this.reference.value = this.station.reference
         this.private_.value = this.station.private
       } else {

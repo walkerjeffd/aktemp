@@ -35,15 +35,15 @@ const attachStation = async (req, res, next) => {
 
 const postStations = async (req, res, next) => {
   const row = await res.locals.organization.$relatedQuery('stations')
-  .insert(req.body)
-  .returning('*')
+    .insert(req.body)
+    .returning('*')
   return res.status(201).json(row)
 }
 
 const getStation = (req, res, next) => res.status(200).json(res.locals.station)
 
 const getStationSeries = async (req, res, next) => {
-  const series = await res.locals.station.$relatedQuery('series')
+  const series = await res.locals.station.$relatedQuery('series').modify('stationOrganization')
   return res.status(200).json(series)
 }
 

@@ -58,25 +58,25 @@
           <td class="text-right grey--text text--darken-2">
             Frequency
           </td>
-          <td class="font-weight-bold">{{ series.frequency }}</td>
+          <td class="font-weight-bold">{{ series.frequency | formatBooleanOption }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             Accuracy
           </td>
-          <td class="font-weight-bold">{{ series.accuracy }}</td>
+          <td class="font-weight-bold">{{ series.accuracy | formatBooleanOption }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             SOP Bath
           </td>
-          <td class="font-weight-bold">{{ series.sop_bath }}</td>
+          <td class="font-weight-bold">{{ series.sop_bath | formatBooleanOption }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             Reviewed
           </td>
-          <td class="font-weight-bold">{{ series.reviewed }}</td>
+          <td class="font-weight-bold">{{ series.reviewed | formatBooleanOption }}</td>
         </tr>
       </tbody>
     </v-simple-table>

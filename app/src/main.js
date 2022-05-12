@@ -12,6 +12,7 @@ import './plugins/amplify'
 import './plugins/axios'
 import './plugins/dayjs'
 import './plugins/highcharts'
+import './plugins/handsontable'
 import './plugins/leaflet'
 import './plugins/pretty-bytes'
 

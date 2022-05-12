@@ -21,7 +21,7 @@
               <v-btn color="success" @click="create" class="mr-2">
                 <v-icon left>mdi-plus</v-icon> New Station
               </v-btn>
-              <v-btn color="success" :to="{name: 'manageStationsImport'}" class="ml-2" disabled>
+              <v-btn color="success" :to="{name: 'manageStationsImport'}" class="ml-2">
                 <v-icon left>mdi-table-plus</v-icon> Batch Import
               </v-btn>
             </v-toolbar>

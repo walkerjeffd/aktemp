@@ -23,6 +23,12 @@
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">
+              Uploaded
+            </td>
+            <td class="font-weight-bold">{{ file.created_at | timestampFormat('lll') }}</td>
+          </tr>
+          <tr>
+            <td class="text-right grey--text text--darken-2">
               Filename
             </td>
             <td class="font-weight-bold">{{ file.filename | truncate(30) }}</td>
@@ -32,12 +38,6 @@
               Type
             </td>
             <td class="font-weight-bold">Series</td>
-          </tr>
-          <tr>
-            <td class="text-right grey--text text--darken-2">
-              Uploaded
-            </td>
-            <td class="font-weight-bold">{{ file.created_at | timestampFormat('lll') }}</td>
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">
@@ -55,7 +55,14 @@
           <v-btn color="primary" outlined block :disabled="!file.url" :href="file.url" download>
             <v-icon left>mdi-download</v-icon>Download File
           </v-btn>
-          <v-btn color="primary" outlined block @click="processFile" class="my-4">
+          <v-btn
+            color="primary"
+            outlined
+            block
+            class="my-4"
+            @click="processFile"
+            :loading="statusLoading.process"
+          >
             <v-icon left>mdi-refresh</v-icon>Process File
           </v-btn>
           <v-btn
@@ -64,13 +71,13 @@
             block
             class="mt-4"
             @click="confirmDelete"
-            :loading="deleteStatus.loading"
+            :loading="statusLoading.delete"
           >
             <v-icon left>mdi-delete</v-icon>
             Delete File
           </v-btn>
         </div>
-        <Alert type="error" title="Error Occurred" v-if="deleteStatus.error">{{ deleteStatus.error }}</Alert>
+        <Alert type="error" title="Error Occurred" v-if="error">{{ error }}</Alert>
       </div>
     </div>
 
@@ -99,9 +106,10 @@ export default {
   props: ['loading', 'refreshing', 'file'],
   data () {
     return {
-      deleteStatus: {
-        loading: false,
-        error: null
+      error: null,
+      statusLoading: {
+        delete: false,
+        process: false
       }
     }
   },
@@ -116,24 +124,31 @@ export default {
       }
     },
     async processFile (file) {
-      await this.$http.restricted.post(
-        `/files/${this.file.id}/process`,
-        null
-      )
-      this.$emit('refresh')
+      this.statusLoading.process = true
+      this.error = null
+      try {
+        await this.$http.restricted.post(`/files/${this.file.id}/process`, null)
+        evt.$emit('notify', `File (${this.file.filename}) has been queued for processing`, 'success')
+        this.$emit('refresh')
+      } catch (err) {
+        console.error(err)
+        this.error = err.toString() || 'Unknown error'
+      } finally {
+        this.statusLoading.process = false
+      }
     },
     async deleteFile () {
-      this.deleteStatus.loading = true
-      this.deleteStatus.error = null
+      this.statusLoading.delete = true
+      this.error = null
       try {
         await this.$http.restricted.delete(`/files/${this.file.id}`)
         evt.$emit('notify', 'File has been deleted', 'success')
         this.$router.push({ name: 'manageFiles' })
       } catch (err) {
         console.error(err)
-        this.deleteStatus.error = err.toString() || 'Unknown error'
+        this.error = err.toString() || 'Unknown error'
       } finally {
-        this.deleteStatus.loading = false
+        this.statusLoading.delete = false
       }
     }
   }

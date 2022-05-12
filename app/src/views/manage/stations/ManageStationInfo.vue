@@ -92,7 +92,7 @@
             style="width:140px">
             Active
           </td>
-          <td class="font-weight-bold">{{ station.active | yesOrNo }}</td>
+          <td class="font-weight-bold">{{ station.active | formatBooleanOption }}</td>
         </tr>
         <tr>
           <td
@@ -100,7 +100,7 @@
             style="width:140px">
             Mixed
           </td>
-          <td class="font-weight-bold">{{ station.mixed | yesOrNo }}</td>
+          <td class="font-weight-bold">{{ station.mixed | formatBooleanOption }}</td>
         </tr>
         <tr>
           <td
@@ -116,7 +116,7 @@
             style="width:140px">
             Private
           </td>
-          <td class="font-weight-bold">{{ station.private | yesOrNo }}</td>
+          <td class="font-weight-bold">{{ station.private | formatBooleanOption }}</td>
         </tr>
       </tbody>
     </v-simple-table>
@@ -205,7 +205,7 @@ export default {
       this.deleteStatus.error = null
       try {
         await this.$http.restricted.delete(`/organizations/${this.station.organization_id}/stations/${this.station.id}`)
-        evt.$emit('notify', 'Station has been deleted', 'error')
+        evt.$emit('notify', `Station (${this.station.code}) has been deleted`, 'success')
         this.$router.push({ name: 'manageStations' })
       } catch (err) {
         console.log(err)

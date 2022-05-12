@@ -71,7 +71,7 @@ export default {
     }
   },
   mounted () {
-    this.$store.dispatch('manage/fetchOrganizations')
+    // this.$store.dispatch('manage/fetchOrganizations')
   }
 }
 </script>

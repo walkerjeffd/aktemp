@@ -78,7 +78,8 @@ async function processSeriesFile (file) {
 
   // update file status
   await file.$query().patch({
-    status: 'PROCESSING'
+    status: 'PROCESSING',
+    error: null
   })
 
   // read file
@@ -151,7 +152,8 @@ async function processSeriesFile (file) {
       values: stationData[i].values,
       start_datetime: seriesDateRange[0],
       end_datetime: seriesDateRange[1],
-      ...seriesDepth
+      ...seriesDepth,
+      ...seriesMeta
     })
   }
 

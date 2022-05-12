@@ -42,6 +42,7 @@ export async function getUser (force) {
       user.UserGroups = user.signInUserSession.accessToken.payload['cognito:groups'] || []
       user.isAdmin = user.UserGroups.includes('admins')
       store.dispatch('setUser', user)
+      store.dispatch('manage/fetchOrganizations')
       return user
     }
     return null

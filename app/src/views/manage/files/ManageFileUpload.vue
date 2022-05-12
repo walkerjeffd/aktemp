@@ -601,11 +601,11 @@
                           <p>Were the data collected at continuous (logger) or discrete (grab) intervals?</p>
                           <div class="text-center">
                             <v-btn-toggle v-model="meta.interval" @change="resetMeta()">
-                              <v-btn value="continuous">
+                              <v-btn value="CONTINUOUS">
                                 <v-icon left>mdi-chart-line-variant</v-icon>
                                 Continuous
                               </v-btn>
-                              <v-btn value="discrete">
+                              <v-btn value="DISCRETE">
                                 <v-icon left>mdi-chart-bubble</v-icon>
                                 Discrete
                               </v-btn>
@@ -614,30 +614,30 @@
                           <pre v-if="debug">meta.interval: {{ meta.interval }}</pre>
                         </div>
 
-                        <div v-if="meta.interval === 'continuous'">
+                        <div v-if="meta.interval === 'CONTINUOUS'">
                           <div>
                             <p>Was the sensor checked using pre/post water baths?</p>
                             <div class="text-center">
-                              <v-btn-toggle v-model="meta.sop" @change="resetMeta()">
-                                <v-btn value="yes">
+                              <v-btn-toggle v-model="meta.sop_bath" @change="resetMeta()">
+                                <v-btn value="TRUE">
                                   <v-icon left>mdi-check</v-icon>
                                   Yes
                                 </v-btn>
-                                <v-btn value="no">
+                                <v-btn value="FALSE">
                                   <v-icon left>mdi-close</v-icon>
                                   No
                                 </v-btn>
-                                <v-btn value="unknown">
+                                <v-btn value="UNKNOWN">
                                   <v-icon left small>mdi-help</v-icon>
                                   Unknown
                                 </v-btn>
                               </v-btn-toggle>
                             </div>
-                            <pre v-if="debug">meta.sop: {{ meta.sop }}</pre>
+                            <pre v-if="debug">meta.sop_bath: {{ meta.sop_bath }}</pre>
                           </div>
                         </div>
 
-                        <div v-if="(meta.interval === 'continuous' && !!meta.sop) || meta.interval == 'discrete'">
+                        <div v-if="(meta.interval === 'CONTINUOUS' && !!meta.sop_bath) || meta.interval == 'DISCRETE'">
                           <div>
                             <p>
                               What was the sensor accuracy level?
@@ -660,15 +660,15 @@
                               </p>
                               <div class="text-center">
                                 <v-btn-toggle v-model="meta.reviewed" @change="resetMeta()">
-                                  <v-btn value="yes">
+                                  <v-btn value="TRUE">
                                     <v-icon left>mdi-check</v-icon>
                                     Yes
                                   </v-btn>
-                                  <v-btn value="no">
+                                  <v-btn value="FALSE">
                                     <v-icon left>mdi-close</v-icon>
                                     No
                                   </v-btn>
-                                  <v-btn value="unknown">
+                                  <v-btn value="UNKNOWN">
                                     <v-icon left small>mdi-help</v-icon>
                                     Unknown
                                   </v-btn>
@@ -804,8 +804,9 @@
 import { mapGetters } from 'vuex'
 import Papa from 'papaparse'
 
-import { utcOffsetOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions } from '@/lib/constants'
+import { utcOffsetOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions, depthCategoryOptions } from '@/lib/constants'
 import evt from '@/events'
+import { parseBooleanOption } from '@/lib/utils'
 
 const parseFile = (file) => new Promise((resolve, reject) => {
   return Papa.parse(file, {
@@ -902,11 +903,7 @@ export default {
         },
         category: {
           selected: null,
-          options: [
-            { value: 'surface', label: 'Surface' },
-            { value: 'middle', label: 'Mid-Depth' },
-            { value: 'bottom', label: 'Bottom' }
-          ],
+          options: depthCategoryOptions,
           rules: [
             v => !!v ||
               this.depth.mode !== 'category' ||
@@ -1008,7 +1005,7 @@ export default {
         status: 'READY',
         loading: false,
         interval: null,
-        sop: null,
+        sop_bath: null,
         accuracy: {
           selected: null,
           options: sensorAccuracyOptions,
@@ -1047,13 +1044,18 @@ export default {
       this.station.station.selected = null
       this.resetStation()
       await this.fetchStations()
+    },
+    defaultOrganization () {
+      this.setDefaultOrganization()
     }
   },
   async mounted () {
-    await this.$store.dispatch('manage/fetchOrganizations')
-    this.organization.selected = this.defaultOrganization ? this.defaultOrganization.id : null
+    this.setDefaultOrganization()
   },
   methods: {
+    setDefaultOrganization () {
+      this.organization.selected = this.defaultOrganization ? this.defaultOrganization.id : null
+    },
     nextOrganization () {
       this.organization.error = null
       this.organization.status = 'PENDING'
@@ -1211,7 +1213,7 @@ export default {
       this.meta.error = null
 
       if (!this.meta.interval ||
-          (this.meta.interval === 'continuous' && !this.meta.sop) ||
+          (this.meta.interval === 'CONTINUOUS' && !this.meta.sop_bath) ||
           !this.meta.accuracy ||
           !this.meta.reviewed ||
           !this.$refs.metaForm.validate()) {
@@ -1326,6 +1328,7 @@ export default {
       if (this.depth.mode === 'column') {
         config.depth.column = this.depth.column.selected
         config.depth.units = this.depth.units.selected
+        config.depth.category = 'varying'
       } else if (this.depth.mode === 'value') {
         config.depth.value = this.depth.value.selected
         config.depth.units = this.depth.units.selected
@@ -1356,15 +1359,11 @@ export default {
         }
       }
 
-      if (this.meta.sop !== 'unknown') {
-        config.meta.sop = this.meta.sop === 'yes'
-      }
-      if (this.meta.accuracy.selected !== 'unknown') {
+      config.meta.sop_bath = parseBooleanOption(this.meta.sop_bath)
+      if (this.meta.accuracy.selected !== 'UNKNOWN') {
         config.meta.accuracy = this.meta.accuracy.selected
       }
-      if (this.meta.reviewed !== 'unknown') {
-        config.meta.reviewed = this.meta.reviewed === 'yes'
-      }
+      config.meta.reviewed = parseBooleanOption(this.meta.reviewed)
       if (this.meta.flagColumn.selected) {
         config.meta.flagColumn = this.meta.flagColumn.selected
       }

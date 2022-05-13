@@ -4,4 +4,4 @@
 
 set -eu
 
-aws cloudformation deploy --stack-name ${STACK_NAME}-auth --template-file templates/auth.json
+aws cloudformation deploy --stack-name ${STACK_NAME}-auth --template-file templates/auth.json --capabilities CAPABILITY_NAMED_IAM

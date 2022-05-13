@@ -4,7 +4,7 @@ const createError = require('http-errors')
 const { User } = require('../../db/models')
 
 const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({
-  region: process.env.AWS_REGION
+  region: process.env.AWS_REGION_
 })
 const userPoolId = process.env.AWS_COGNITO_USER_POOL_ID
 
@@ -66,8 +66,11 @@ async function createCognitoUser (email, name) {
   return response.User
 }
 
-async function createDatabaseUser (user) {
-  return await User.query().insert(user).returning('*')
+async function createDatabaseUser ({ id, organizationIds }) {
+  const user = await User.query().insert({ id })
+  return await user.$relatedQuery('organizations')
+    .relate(organizationIds)
+    .returning('*')
 }
 
 async function deleteCognitoUser (id) {
@@ -89,7 +92,7 @@ async function deleteUser (req, res, next) {
 }
 
 async function postUsers (req, res, next) {
-  const { email, name, admin } = req.body // eslint-disable-line
+  const { email, name, admin, organizationIds } = req.body // eslint-disable-line
 
   const cognitoUser = await createCognitoUser(email, name)
   if (admin) {
@@ -97,7 +100,8 @@ async function postUsers (req, res, next) {
   }
 
   await createDatabaseUser({
-    id: cognitoUser.Username
+    id: cognitoUser.Username,
+    organizationIds
   })
 
   return res.status(201).json(cognitoUser)

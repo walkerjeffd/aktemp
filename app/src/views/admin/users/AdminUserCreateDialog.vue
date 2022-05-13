@@ -147,7 +147,7 @@ export default {
         name: this.name.value,
         email: this.email.value,
         admin: this.admin.value,
-        organizationIds: this.admin.value ? [] : this.organizations.selected
+        organizationIds: this.organizations.selected
       }
 
       try {
@@ -158,7 +158,7 @@ export default {
         this.dialog = false
       } catch (err) {
         console.error(err)
-        this.err = err.toString() || 'Unknown error occurred'
+        this.error = err.toString() || 'Unknown error occurred'
       } finally {
         this.loading = false
       }

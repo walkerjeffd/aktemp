@@ -132,14 +132,16 @@ export default {
       success: false,
       error: null,
       email: {
-        value: 'jeff@walkerenvres.com',
+        // value: 'jeff@walkerenvres.com',
+        value: null,
         rules: [
           v => required(v) || 'Email is required',
           v => email(v) || 'Email must be a valid email address'
         ]
       },
       password: {
-        value: 'Aktemp123',
+        // value: 'Aktemp123',
+        value: null,
         rules: [
           v => required(v) || 'Password is required'
         ]
@@ -179,10 +181,14 @@ export default {
       let user
       try {
         this.loading = true
-        await this.$Amplify.Auth.signIn(this.email.value, this.password.value)
-        user = await this.$Amplify.Auth.currentAuthenticatedUser()
+        user = await this.$Amplify.Auth.signIn(this.email.value, this.password.value)
+        // if (user.challengeName === '')
+        // console.log('user', user)
+        // user = await this.$Amplify.Auth.currentAuthenticatedUser()
       } catch (err) {
-        console.error(err)
+        console.error(JSON.stringify(err, null, 2))
+
+        console.error(err.code)
         if (err.code && err.code === 'UserNotConfirmedException') {
           evt.$emit('localUser', { username: this.email.value })
           evt.$emit('authState', { state: 'confirmSignUp' })

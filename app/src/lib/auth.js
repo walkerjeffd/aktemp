@@ -6,6 +6,7 @@ import store from '@/store'
 import router from '@/router'
 
 evt.$on('authState', async ({ state, redirect }) => {
+  console.log('authState', state)
   if (state === 'signedOut') {
     store.dispatch('setUser', null)
     if (redirect) router.push(redirect)
@@ -35,6 +36,7 @@ export async function getOrganizations (userId) {
 }
 
 export async function getUser (force) {
+  console.log('getUser')
   try {
     const user = await Auth.currentAuthenticatedUser({ bypassCache: !!force })
     if (user && user.signInUserSession) {
@@ -47,6 +49,7 @@ export async function getUser (force) {
     }
     return null
   } catch (err) {
+    console.log('getUser', err, err.code)
     if (err.code && err.code === 'UserNotConfirmedException') {
       evt.$emit('authState', { state: 'confirmSignUp' })
     } else {

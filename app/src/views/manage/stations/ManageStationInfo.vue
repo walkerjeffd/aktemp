@@ -108,7 +108,7 @@
             style="width:140px">
             Reference
           </td>
-          <td class="font-weight-bold">{{ station.reference | truncate(40) }}</td>
+          <td class="font-weight-bold">{{ (station.reference || 'N/A') | truncate(40) }}</td>
         </tr>
         <tr>
           <td

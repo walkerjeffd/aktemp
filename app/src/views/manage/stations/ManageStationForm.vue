@@ -87,7 +87,7 @@
             :items="timezone.options"
             :rules="timezone.rules"
             item-text="label"
-            item-value="id"
+            item-value="value"
             label="Time Zone"
             validate-on-blur
             outlined

@@ -34,6 +34,7 @@
     </v-navigation-drawer>
     <v-main class="fill-height">
       <div class="d-flex flex-row fill-height">
+        <!-- FILTER -->
         <v-navigation-drawer color="grey darken-2" v-if="pane === 'filters'" width="350">
           <v-toolbar color="grey darken-2" dark flat dense>
             <div class="text-h6">Filter Stations</div>
@@ -44,6 +45,7 @@
           </v-toolbar>
           <v-divider></v-divider>
         </v-navigation-drawer>
+        <!-- SETTINGS -->
         <v-navigation-drawer color="grey darken-2" v-else-if="pane === 'map'" width="350">
           <v-toolbar color="grey darken-2" dark flat dense>
             <div class="text-h6">Map Settings</div>
@@ -54,7 +56,7 @@
           </v-toolbar>
           <v-divider></v-divider>
         </v-navigation-drawer>
-        <!-- map -->
+        <!-- MAP -->
         <div style="background-color:red;position:relative" class="flex-grow-1">
           <StationsMap
             :loading="loading"

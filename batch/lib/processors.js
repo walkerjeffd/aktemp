@@ -16,7 +16,7 @@ dayjs.tz.setDefault('UTC')
 
 const s3 = new AWS.S3({
   apiVersion: '2006-03-01',
-  region: process.env.AWS_REGION
+  region: process.env.AWS_REGION_
 })
 
 async function readFile (file) {

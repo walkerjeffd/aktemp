@@ -69,7 +69,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item @click="logout" class="pr-12">
+          <v-list-item @click="logout" to="" class="pr-12">
             <v-list-item-icon>
               <v-icon>mdi-logout</v-icon>
             </v-list-item-icon>
@@ -150,6 +150,7 @@ export default {
       this.snackbar.show = true
     },
     async logout () {
+      console.log('App:logout')
       try {
         await this.$Amplify.Auth.signOut()
         evt.$emit('notify', 'You have been logged out', 'success')

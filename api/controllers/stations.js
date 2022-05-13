@@ -10,7 +10,7 @@ const getStations = async (req, res, next) => {
   } else {
     query = Station.query()
   }
-  const stations = await query
+  const stations = await query.modify('organizationCode')
   return res.status(200).json(stations)
 }
 

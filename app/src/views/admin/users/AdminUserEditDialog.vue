@@ -214,6 +214,7 @@
 import { mapGetters } from 'vuex'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import evt from '@/events'
+import { getUser } from '@/lib/auth'
 
 export default {
   name: 'AdminUserEditDialog',
@@ -357,6 +358,7 @@ export default {
         })
 
         evt.$emit('notify', 'User has been updated', 'success')
+        getUser()
         this.resolve(true)
         this.dialog = false
       } catch (err) {

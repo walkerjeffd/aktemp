@@ -14,11 +14,14 @@ async function listOrganizationsForUser (id) {
 }
 
 async function setOrganizations (id, organizationIds) {
-  const user = User.relatedQuery('organizations')
+  // clear existing organizations first
+  await User.relatedQuery('organizations')
+    .for(id)
+    .unrelate()
+  return await User.relatedQuery('organizations')
     .for(id)
     .relate(organizationIds)
     .returning('*')
-  return user
 }
 
 async function attachAdminUser (req, res, next) {

@@ -74,8 +74,16 @@ export default {
         const data = response.data
         commit('SET_ORGANIZATIONS', data)
         commit('SET_STATUS', ['organizations', false, null])
-        if (!state.organization && data.length > 0) {
-          commit('SET_ORGANIZATION', data[0])
+        if (data.length > 0) {
+          // set default if
+          //   1. not already set
+          //   2. already set, but no longer available
+          if (!state.organization || (state.organization && !data.map(d => d.id).includes(state.organization.id))) {
+            commit('SET_ORGANIZATION', data[0])
+          }
+        } else if (state.organization) {
+          // no organizations, set selected to null
+          commit('SET_ORGANIZATION')
         }
         return data
       } catch (err) {

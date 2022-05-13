@@ -9,7 +9,7 @@ class Series extends Base {
   static get modifiers () {
     return {
       stationOrganization (builder) {
-        builder.select('series.*', 'station.code as station_code', 'station.timezone as station_timezone', 'station.organization_code as organization_code').joinRelated('station(organization)')
+        builder.select('series.*', 'station.code as station_code', 'station.timezone as station_timezone', 'station.organization_code as organization_code').joinRelated('station(organizationCode)')
       },
       filename (builder) {
         builder.select('series.*', 'file.filename as file_filename').joinRelated('file')

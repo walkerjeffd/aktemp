@@ -1494,7 +1494,7 @@ export default {
       try {
         await this.$http.restricted.delete(`/files/${file.id}`)
       } catch (err) {
-        console.log(`Failed to delete dataset (id=${file.id})`)
+        console.log(`Failed to delete file (id=${file.id})`)
         console.error(err)
       }
     },

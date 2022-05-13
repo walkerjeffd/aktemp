@@ -23,7 +23,7 @@ const attachStation = async (req, res, next) => {
     query = Station.query()
       .findById(req.params.stationId)
   }
-  const station = await query.modify('organization')
+  const station = await query.modify('organizationCode')
 
   if (!station) {
     throw createError(404, `Station (id=${req.params.stationId}) not found`)

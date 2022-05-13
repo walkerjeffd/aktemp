@@ -5,7 +5,7 @@ const { Organization } = require('../db/models')
 const { printTable } = require('./lib/utils')
 
 function printOrganizations (rows) {
-  printTable(rows, ['id', 'name'])
+  printTable(rows, ['id', 'code', 'name'])
 }
 
 exports.findOrganizationById = async function (id) {
@@ -13,6 +13,15 @@ exports.findOrganizationById = async function (id) {
     .findById(id)
     .throwIfNotFound({
       message: `organization not found (id=${id})`
+    })
+}
+
+exports.findOrganizationByCode = async function (code) {
+  return await Organization.query()
+    .where('code', code)
+    .first()
+    .throwIfNotFound({
+      message: `organization not found (code=${code})`
     })
 }
 

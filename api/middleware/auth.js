@@ -31,7 +31,6 @@ const cognitoAuth = async (req, res, next) => {
     event.requestContext &&
     event.requestContext.authorizer &&
     event.requestContext.authorizer.claims
-  console.log('claims', claims)
   if (claims) {
     const groups = claims['cognito:groups'] ? claims['cognito:groups'].split(',') : []
     const isAdmin = groups.includes('admins')

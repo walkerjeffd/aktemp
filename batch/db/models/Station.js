@@ -7,7 +7,7 @@ class Station extends Base {
 
   static get modifiers () {
     return {
-      organization (builder) {
+      organizationCode (builder) {
         builder.select('stations.*', 'organization.code as organization_code').joinRelated('organization')
       }
     }

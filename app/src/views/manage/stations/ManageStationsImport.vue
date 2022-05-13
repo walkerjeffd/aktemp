@@ -123,7 +123,7 @@
 import Handsontable from 'handsontable'
 import { mapGetters } from 'vuex'
 import { timezoneOptions, placementOptions, waterbodyTypeOptions, booleanOptions, booleanOrNullOptions } from '@/lib/constants'
-import { parseBooleanOption, sleep } from '@/lib/utils'
+import { parseBooleanOption } from '@/lib/utils'
 import evt from '@/events'
 
 export default {
@@ -215,22 +215,22 @@ export default {
           label: 'Timezone',
           required: true,
           validator: function (value, callback) {
-            callback(timezoneOptions.map(d => d.id).includes(value))
+            callback(timezoneOptions.map(d => d.value).includes(value))
           },
-          rule: `Timezone must be one of: [${timezoneOptions.map(d => `'${d.id}'`).join(', ')}]`,
+          rule: `Timezone must be one of: [${timezoneOptions.map(d => `'${d.value}'`).join(', ')}]`,
           editor: 'select',
-          options: timezoneOptions.map(d => d.id)
+          options: timezoneOptions.map(d => d.value)
         },
         {
           prop: 'placement',
           label: 'Placement',
           required: true,
           validator: function (value, callback) {
-            callback(placementOptions.map(d => d.id).includes(value))
+            callback(placementOptions.map(d => d.value).includes(value))
           },
           rule: `Placement must be one of: [${placementOptions.map(d => `'${d.id}'`).join(', ')}]`,
           editor: 'select',
-          options: placementOptions.map(d => d.id)
+          options: placementOptions.map(d => d.value)
         },
         {
           prop: 'waterbody_name',
@@ -241,11 +241,11 @@ export default {
           label: 'Waterbody Type',
           required: true,
           validator: function (value, callback) {
-            callback(waterbodyTypeOptions.map(d => d.id).includes(value))
+            callback(waterbodyTypeOptions.map(d => d.value).includes(value))
           },
           rule: `Waterbody Type must be one of: [${waterbodyTypeOptions.map(d => `'${d.id}'`).join(', ')}]`,
           editor: 'select',
-          options: waterbodyTypeOptions.map(d => d.id)
+          options: waterbodyTypeOptions.map(d => d.value)
         },
         {
           prop: 'active',
@@ -353,6 +353,7 @@ export default {
     },
     clearTable () {
       this.invalidCells = []
+      this.error = null
       this.stations.splice(0, this.stations.length)
       this.renderHot()
     },
@@ -384,7 +385,6 @@ export default {
       this.renderHot()
 
       for (let i = 0; i < this.stations.length; i++) {
-        await sleep(500)
         if (this.$refs.hot.hotInstance.isEmptyRow(i)) {
           continue
         }

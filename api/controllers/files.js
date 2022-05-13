@@ -13,7 +13,7 @@ async function attachFile (req, res, next) {
       .withGraphFetched('series(stationOrganization)')
       .findById(req.params.fileId)
   }
-  const file = await query.modify('organizationCode').modify('seriesProfilesSummary')
+  const file = await query.modify('organizationCode')
 
   if (!file) {
     throw createError(404, `File (id=${req.params.fileId}) not found`)

@@ -37,7 +37,7 @@
             <td class="text-right grey--text text--darken-2">
               Type
             </td>
-            <td class="font-weight-bold">Series</td>
+            <td class="font-weight-bold">{{ file.type }}</td>
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">

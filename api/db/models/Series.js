@@ -1,3 +1,4 @@
+const { raw } = require('objection')
 const Base = require('./Base')
 
 class Series extends Base {
@@ -12,6 +13,13 @@ class Series extends Base {
       },
       filename (builder) {
         builder.select('series.*', 'file.filename as file_filename').joinRelated('file')
+      },
+      summaryByFile (builder) {
+        builder
+          .select('file_id', raw('count(*)::integer as series_n'))
+          .min('start_datetime as start_datetime')
+          .max('end_datetime as end_datetime')
+          .groupBy('file_id')
       }
     }
   }

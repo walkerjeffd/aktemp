@@ -27,10 +27,13 @@
         {{ item.station_code | truncate(20) }}
       </template>
       <template v-slot:item.start_datetime="{ item }">
-        {{ item.start_datetime | timestampTimezoneFormat(item.station_timezone, 'lll z') }}
+        {{ item.start_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
       </template>
       <template v-slot:item.end_datetime="{ item }">
-        {{ item.end_datetime | timestampTimezoneFormat(item.station_timezone, 'lll z') }}
+        {{ item.end_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
+      </template>
+      <template v-slot:item.depth="{ item }">
+        {{ item | seriesDepth }}
       </template>
     </v-data-table>
   </div>
@@ -67,14 +70,20 @@ export default {
           align: 'left'
         },
         {
-          text: 'Depth (m)',
-          value: 'depth_m',
+          text: 'Depth',
+          value: 'depth',
           align: 'left',
           width: '200px'
         },
+        // {
+        //   text: 'Depth Category',
+        //   value: 'depth_category',
+        //   align: 'left',
+        //   width: '200px'
+        // },
         {
-          text: 'Depth Cat.',
-          value: 'depth_category',
+          text: 'Frequency (min)',
+          value: 'frequency',
           align: 'left',
           width: '200px'
         }

@@ -12,6 +12,12 @@ class File extends Base {
       },
       organizationCode (builder) {
         builder.select('files.*', 'organization.code as organization_code').joinRelated('organization')
+      },
+      seriesProfilesSummary (builder) {
+        builder.select(
+          'files.*',
+          File.relatedQuery('series').count().as('n_series')
+        )
       }
     }
   }

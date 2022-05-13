@@ -8,13 +8,12 @@ async function attachFile (req, res, next) {
   if (res.locals.organization) {
     query = res.locals.organization.$relatedQuery('files')
       .findById(req.params.fileId)
-
   } else {
     query = File.query()
       .withGraphFetched('series(stationOrganization)')
       .findById(req.params.fileId)
   }
-  const file = await query.modify('organizationCode')
+  const file = await query.modify('organizationCode').modify('seriesProfilesSummary')
 
   if (!file) {
     throw createError(404, `File (id=${req.params.fileId}) not found`)
@@ -41,10 +40,11 @@ async function getAllFiles (req, res, next) {
 }
 
 async function postFiles (req, res, next) {
-  const { filename, config } = req.body
+  const { filename, type, config } = req.body
   const props = {
     user_id: req.auth.id,
     filename,
+    type,
     config,
     status: 'CREATED'
   }

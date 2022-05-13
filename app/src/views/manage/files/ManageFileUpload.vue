@@ -35,24 +35,30 @@
                 <v-divider></v-divider>
 
                 <v-stepper-step step="4" :complete="step > 4">
-                  Timestamps
+                  Depth
                 </v-stepper-step>
 
                 <v-divider></v-divider>
 
                 <v-stepper-step step="5" :complete="step > 5">
-                  Temperatures
+                  Timestamps
                 </v-stepper-step>
 
                 <v-divider></v-divider>
 
                 <v-stepper-step step="6" :complete="step > 6">
+                  Temperatures
+                </v-stepper-step>
+
+                <v-divider></v-divider>
+
+                <v-stepper-step step="7" :complete="step > 7">
                   Metadata
                 </v-stepper-step>
 
                 <v-divider></v-divider>
 
-                <v-stepper-step step="7">
+                <v-stepper-step step="8">
                   Finish
                 </v-stepper-step>
               </v-stepper-header>
@@ -104,23 +110,42 @@
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
                       <v-form ref="fileForm">
-                        <div class="text-h6">Select Data File</div>
+                        <div class="text-h6">File Type</div>
 
-                        <!-- <ul class="mt-2 body-2">
-                          <li>Instructions...</li>
-                        </ul> -->
+                        <div>
+                          <p>What kind of data does this file contain?</p>
+                          <div class="text-center">
+                            <v-btn-toggle v-model="file.type" @change="resetFile()">
+                              <v-btn value="SERIES_CONTINUOUS">
+                                <v-icon left>mdi-chart-line-variant</v-icon>
+                                Continuous
+                              </v-btn>
+                              <v-btn value="SERIES_DISCRETE">
+                                <v-icon left>mdi-chart-bubble</v-icon>
+                                Discrete
+                              </v-btn>
+                              <v-btn value="PROFILES">
+                                <v-icon left>mdi-arrow-expand-down</v-icon>
+                                Profiles
+                              </v-btn>
+                            </v-btn-toggle>
+                          </div>
+                          <pre v-if="debug">file.type: {{ file.type }}</pre>
+                        </div>
 
-                        <v-file-input
-                          v-model="file.selected"
-                          label="Select a CSV file"
-                          :rules="file.rules"
-                          truncate-length="200"
-                          @change="selectFile"
-                          ref="fileInput"
-                        >
-                        </v-file-input>
-
-                        <pre v-if="debug">file: {{ file.selected && file.selected.name || 'none' }}</pre>
+                        <div v-if="file.type">
+                          <div class="text-h6">Select Data File</div>
+                          <v-file-input
+                            v-model="file.selected"
+                            label="Select a CSV file"
+                            :rules="file.rules"
+                            truncate-length="200"
+                            @change="selectFile"
+                            ref="fileInput"
+                          >
+                          </v-file-input>
+                          <pre v-if="debug">file: {{ file.selected && file.selected.name || 'none' }}</pre>
+                        </div>
 
                         <Alert type="error" title="Error Loading File" v-if="file.status === 'ERROR'">
                           {{ file.error || 'Unknown error' }}
@@ -199,11 +224,11 @@
 
                           <div class="text-center">
                             <v-btn-toggle v-model="station.mode" @change="resetStation()">
-                              <v-btn value="station">
+                              <v-btn value="STATION">
                                 <v-icon left>mdi-map-marker</v-icon>
                                 One Station
                               </v-btn>
-                              <v-btn value="column">
+                              <v-btn value="COLUMN">
                                 <v-icon left>mdi-map-marker-multiple</v-icon>
                                 Multiple Stations
                               </v-btn>
@@ -212,7 +237,7 @@
                           <pre v-if="debug">mode: {{ station.mode }}</pre>
                         </div>
 
-                        <div v-if="station.mode === 'station'">
+                        <div v-if="station.mode === 'STATION'">
                           <div>
                             <p>Which station does this file contain data for?</p>
                             <v-select
@@ -226,7 +251,7 @@
                             <pre v-if="debug">station.id: {{ station.station.selected }}</pre>
                           </div>
                         </div>
-                        <div v-else-if="station.mode === 'column'">
+                        <div v-else-if="station.mode === 'COLUMN'">
                           <p>Which column contains the station codes? Values must match codes <em>exactly</em> (case-sensitive).</p>
                           <v-select
                             v-model="station.column.selected"
@@ -235,96 +260,6 @@
                             outlined
                           ></v-select>
                           <pre v-if="debug">column: {{ station.column.selected }}</pre>
-                        </div>
-
-                        <div v-if="(station.mode === 'station' && !!station.station.selected) ||
-                                   (station.mode === 'column' && !!station.column.selected)">
-                          <p>What kind of depth information is available?</p>
-
-                          <div class="text-center">
-                            <v-btn-toggle v-model="depth.mode" @change="resetStation()">
-                              <v-btn value="column">
-                                <v-icon left>mdi-chart-line-variant</v-icon>
-                                Time-varying
-                              </v-btn>
-                              <v-btn value="value">
-                                <v-icon left>mdi-numeric</v-icon>
-                                Numeric
-                              </v-btn><br>
-                              <v-btn value="category">
-                                <v-icon left>mdi-format-list-bulleted-square</v-icon>
-                                Categorical
-                              </v-btn>
-                              <v-btn value="unknown">
-                                <v-icon left>mdi-close</v-icon>
-                                None
-                              </v-btn>
-                            </v-btn-toggle>
-                          </div>
-                          <pre v-if="debug">depth.mode: {{ depth.mode }}</pre>
-
-                          <div v-if="depth.mode === 'column'">
-                            <div>
-                              <p>Which column contains the measured depths?</p>
-                              <v-select
-                                v-model="depth.column.selected"
-                                :items="fileColumns"
-                                :rules="depth.column.rules"
-                                outlined
-                              ></v-select>
-                              <pre v-if="debug">depth.column: {{ depth.column.selected }}</pre>
-                            </div>
-                            <div>
-                              <p>What are the units of these depths?</p>
-                              <v-select
-                                v-model="depth.units.selected"
-                                :items="depth.units.options"
-                                :rules="depth.units.rules"
-                                item-text="label"
-                                item-value="value"
-                                outlined
-                              ></v-select>
-                              <pre v-if="debug">depth.units: {{ depth.units.selected }}</pre>
-                            </div>
-                          </div>
-                          <div v-else-if="depth.mode === 'value'">
-                            <div>
-                              <p>What was the approximate depth? Should represent depth at <u>start</u> of deployment.</p>
-
-                              <v-text-field
-                                v-model="depth.value.selected"
-                                :rules="depth.value.rules"
-                                type="number"
-                                outlined
-                              ></v-text-field>
-                              <pre v-if="debug">depth.value: {{ depth.value.selected }}</pre>
-                            </div>
-
-                            <div>
-                              <p>What are the units of this depth?</p>
-                              <v-select
-                                v-model="depth.units.selected"
-                                :items="depth.units.options"
-                                :rules="depth.units.rules"
-                                item-text="label"
-                                item-value="value"
-                                outlined
-                              ></v-select>
-                              <pre v-if="debug">depth.units: {{ depth.units.selected }}</pre>
-                            </div>
-                          </div>
-                          <div v-else-if="depth.mode === 'category'">
-                            <p>What was the approximate depth?</p>
-                            <v-select
-                              v-model="depth.category.selected"
-                              :items="depth.category.options"
-                              :rules="depth.category.rules"
-                              item-text="label"
-                              item-value="value"
-                              outlined
-                            ></v-select>
-                            <pre v-if="debug">depth.category: {{ depth.category.selected }}</pre>
-                          </div>
                         </div>
 
                         <Alert type="error" title="Station Error" v-if="station.status === 'ERROR'">
@@ -350,8 +285,125 @@
                   </v-row>
                 </v-stepper-content>
 
-                <!-- TIMESTAMP -->
+                <!-- DEPTH -->
                 <v-stepper-content step="4">
+                  <v-row justify="space-around">
+                    <v-col cols="12" md="8" lg="6" xl="4">
+                      <v-form ref="depthForm" @input="resetDepth()">
+                        <div class="text-h6">Depth</div>
+
+                        <p>What kind of depth information is available?</p>
+
+                        <div class="text-center">
+                          <v-btn-toggle v-model="depth.mode" @change="resetDepth()">
+                            <v-btn value="COLUMN">
+                              <v-icon left>mdi-chart-line-variant</v-icon>
+                              Time-varying
+                            </v-btn>
+                            <v-btn value="VALUE">
+                              <v-icon left>mdi-numeric</v-icon>
+                              Numeric
+                            </v-btn><br>
+                            <v-btn value="CATEGORY">
+                              <v-icon left>mdi-format-list-bulleted-square</v-icon>
+                              Categorical
+                            </v-btn>
+                            <v-btn value="UNKNOWN">
+                              <v-icon left>mdi-close</v-icon>
+                              None
+                            </v-btn>
+                          </v-btn-toggle>
+                        </div>
+                        <pre v-if="debug">depth.mode: {{ depth.mode }}</pre>
+
+                        <div v-if="depth.mode === 'COLUMN'">
+                          <div>
+                            <p>Which column contains the measured depths?</p>
+                            <v-select
+                              v-model="depth.column.selected"
+                              :items="fileColumns"
+                              :rules="depth.column.rules"
+                              outlined
+                            ></v-select>
+                            <pre v-if="debug">depth.column: {{ depth.column.selected }}</pre>
+                          </div>
+                          <div>
+                            <p>What are the units of these depths?</p>
+                            <v-select
+                              v-model="depth.units.selected"
+                              :items="depth.units.options"
+                              :rules="depth.units.rules"
+                              item-text="label"
+                              item-value="value"
+                              outlined
+                            ></v-select>
+                            <pre v-if="debug">depth.units: {{ depth.units.selected }}</pre>
+                          </div>
+                        </div>
+                        <div v-else-if="depth.mode === 'VALUE'">
+                          <div>
+                            <p>What was the approximate depth? Should represent depth at <u>start</u> of deployment.</p>
+
+                            <v-text-field
+                              v-model="depth.value.selected"
+                              :rules="depth.value.rules"
+                              type="number"
+                              outlined
+                            ></v-text-field>
+                            <pre v-if="debug">depth.value: {{ depth.value.selected }}</pre>
+                          </div>
+
+                          <div>
+                            <p>What are the units of this depth?</p>
+                            <v-select
+                              v-model="depth.units.selected"
+                              :items="depth.units.options"
+                              :rules="depth.units.rules"
+                              item-text="label"
+                              item-value="value"
+                              outlined
+                            ></v-select>
+                            <pre v-if="debug">depth.units: {{ depth.units.selected }}</pre>
+                          </div>
+                        </div>
+                        <div v-else-if="depth.mode === 'CATEGORY'">
+                          <p>What was the approximate depth?</p>
+                          <v-select
+                            v-model="depth.category.selected"
+                            :items="depth.category.options"
+                            :rules="depth.category.rules"
+                            item-text="label"
+                            item-value="value"
+                            outlined
+                          ></v-select>
+                          <pre v-if="debug">depth.category: {{ depth.category.selected }}</pre>
+                        </div>
+
+                        <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
+                          {{ depth.error || 'Unknown error' }}
+                        </Alert>
+
+                        <v-row class="mt-8 mb-4 px-3">
+                          <v-btn text class="mr-4 px-4" @click="step -= 1">
+                            <v-icon left>mdi-chevron-left</v-icon> Previous
+                          </v-btn>
+                          <v-btn color="primary" class="mr-4 px-4" @click="nextDepth" :loading="depth.loading">
+                            Continue <v-icon right>mdi-chevron-right</v-icon>
+                          </v-btn>
+
+                          <v-spacer></v-spacer>
+
+                          <v-btn text @click="cancel">
+                            Cancel
+                          </v-btn>
+                        </v-row>
+                      </v-form>
+                    </v-col>
+                  </v-row>
+                </v-stepper-content>
+
+                <!-- TIMESTAMP -->
+                <v-stepper-content step="5">
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
                       <v-form ref="timestampForm" @input="resetTimestamp()">
@@ -366,11 +418,11 @@
 
                           <div class="text-center">
                             <v-btn-toggle v-model="timestamp.mode" @change="resetTimestamp()">
-                              <v-btn value="combined">
+                              <v-btn value="COMBINED">
                                 <v-icon left>mdi-format-align-justify</v-icon>
                                 One Column (Datetime)
                               </v-btn>
-                              <v-btn value="separate">
+                              <v-btn value="SEPARATE">
                                 <v-icon left>mdi-format-columns</v-icon>
                                 Two Columns (Date, Time)
                               </v-btn>
@@ -379,7 +431,7 @@
                           <pre v-if="debug">mode: {{ timestamp.mode }}</pre>
                         </div>
 
-                        <div v-if="timestamp.mode === 'combined'">
+                        <div v-if="timestamp.mode === 'COMBINED'">
                           <div>
                             <p>Which column contains the timestamps (datetime)?</p>
                             <v-select
@@ -410,7 +462,7 @@
                             <pre v-if="debug">timestamp.combined.includesTimezone: {{ timestamp.combined.includesTimezone.value }}</pre>
                           </div>
                         </div>
-                        <div v-else-if="timestamp.mode === 'separate'">
+                        <div v-else-if="timestamp.mode === 'SEPARATE'">
                           <div>
                             <p>Which column contains the dates?</p>
                             <v-select
@@ -434,11 +486,11 @@
                         </div>
 
                         <div v-if="(
-                                    timestamp.mode === 'combined' &&
+                                    timestamp.mode === 'COMBINED' &&
                                     !!timestamp.combined.column.selected &&
                                     timestamp.combined.includesTimezone.value === false
                                    ) || (
-                                    timestamp.mode === 'separate' &&
+                                    timestamp.mode === 'SEPARATE' &&
                                     !!timestamp.separate.date.column.selected &&
                                     !!timestamp.separate.time.column.selected
                                    )">
@@ -446,11 +498,11 @@
                             <p>Is there a column containing the UTC offset for each timestamp?</p>
                             <div class="text-center">
                               <v-btn-toggle v-model="timestamp.timezone.mode" @change="resetTimestamp()">
-                                <v-btn value="column">
+                                <v-btn value="COLUMN">
                                   <v-icon left>mdi-check</v-icon>
                                   Yes
                                 </v-btn>
-                                <v-btn value="utcOffset">
+                                <v-btn value="UTCOFFSET">
                                   <v-icon left>mdi-close</v-icon>
                                   No
                                 </v-btn>
@@ -459,7 +511,7 @@
                             <pre v-if="debug">timezone.mode: {{ timestamp.timezone.mode }}</pre>
                           </div>
 
-                          <div v-if="timestamp.timezone.mode === 'column'">
+                          <div v-if="timestamp.timezone.mode === 'COLUMN'">
                             <p>Which column contains the UTC offset? Column must contain negative integers (e.g. -9 for AKST) </p>
                             <v-select
                               v-model="timestamp.timezone.column.selected"
@@ -469,7 +521,7 @@
                             ></v-select>
                             <pre v-if="debug">timezone.column: {{ timestamp.timezone.column.selected }}</pre>
                           </div>
-                          <div v-else-if="timestamp.timezone.mode === 'utcOffset'">
+                          <div v-else-if="timestamp.timezone.mode === 'UTCOFFSET'">
                             <p>What is the UTC offset (timezone) of the timestamps? Assumes all timestamps have the same UTC offset.</p>
                             <v-select
                               v-model="timestamp.timezone.utcOffset.selected"
@@ -507,7 +559,7 @@
                 </v-stepper-content>
 
                 <!-- VALUE -->
-                <v-stepper-content step="5">
+                <v-stepper-content step="6">
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
                       <v-form ref="valueForm" @input="resetValue()">
@@ -553,6 +605,7 @@
                                 :items="value.missing.options"
                                 label="Select or enter missing value indicators"
                                 hint="Select from the list, or type and press enter to add a custom value. Use backspace to delete."
+                                persistent-hint
                                 multiple
                                 outlined
                                 small-chips
@@ -587,111 +640,85 @@
                 </v-stepper-content>
 
                 <!-- METADATA -->
-                <v-stepper-content step="6">
+                <v-stepper-content step="7">
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
                       <v-form ref="metaForm" @input="resetMeta()">
                         <div class="text-h6">Metadata</div>
 
-                        <!-- <ul class="mt-2 body-2">
-                          <li>Instructions...</li>
-                        </ul> -->
-
-                        <div>
-                          <p>Were the data collected at continuous (logger) or discrete (grab) intervals?</p>
+                        <div v-if="file.type === 'SERIES_CONTINUOUS'">
+                          <p>Was the sensor checked using pre/post water baths?</p>
                           <div class="text-center">
-                            <v-btn-toggle v-model="meta.interval" @change="resetMeta()">
-                              <v-btn value="CONTINUOUS">
-                                <v-icon left>mdi-chart-line-variant</v-icon>
-                                Continuous
+                            <v-btn-toggle v-model="meta.sop_bath" @change="resetMeta()">
+                              <v-btn value="TRUE">
+                                <v-icon left>mdi-check</v-icon>
+                                Yes
                               </v-btn>
-                              <v-btn value="DISCRETE">
-                                <v-icon left>mdi-chart-bubble</v-icon>
-                                Discrete
+                              <v-btn value="FALSE">
+                                <v-icon left>mdi-close</v-icon>
+                                No
+                              </v-btn>
+                              <v-btn value="UNKNOWN">
+                                <v-icon left small>mdi-help</v-icon>
+                                Unknown
                               </v-btn>
                             </v-btn-toggle>
                           </div>
-                          <pre v-if="debug">meta.interval: {{ meta.interval }}</pre>
+                          <pre v-if="debug">meta.sop_bath: {{ meta.sop_bath }}</pre>
                         </div>
 
-                        <div v-if="meta.interval === 'CONTINUOUS'">
-                          <div>
-                            <p>Was the sensor checked using pre/post water baths?</p>
-                            <div class="text-center">
-                              <v-btn-toggle v-model="meta.sop_bath" @change="resetMeta()">
-                                <v-btn value="TRUE">
-                                  <v-icon left>mdi-check</v-icon>
-                                  Yes
-                                </v-btn>
-                                <v-btn value="FALSE">
-                                  <v-icon left>mdi-close</v-icon>
-                                  No
-                                </v-btn>
-                                <v-btn value="UNKNOWN">
-                                  <v-icon left small>mdi-help</v-icon>
-                                  Unknown
-                                </v-btn>
-                              </v-btn-toggle>
-                            </div>
-                            <pre v-if="debug">meta.sop_bath: {{ meta.sop_bath }}</pre>
+                        <div v-if="(file.type === 'SERIES_CONTINUOUS' && !!meta.sop_bath) || file.type == 'SERIES_DISCRETE'">
+                          <p>
+                            What was the sensor accuracy level?
+                          </p>
+                          <v-select
+                            v-model="meta.accuracy.selected"
+                            :items="meta.accuracy.options"
+                            :rules="meta.accuracy.rules"
+                            item-value="value"
+                            item-text="label"
+                            outlined
+                          ></v-select>
+                          <pre v-if="debug">meta.accuracy: {{ meta.accuracy.selected }}</pre>
+                        </div>
+
+                        <div v-if="!!meta.accuracy.selected">
+                          <p>
+                            Have these data already undergone a QAQC review?
+                          </p>
+                          <div class="text-center">
+                            <v-btn-toggle v-model="meta.reviewed" @change="resetMeta()">
+                              <v-btn value="TRUE">
+                                <v-icon left>mdi-check</v-icon>
+                                Yes
+                              </v-btn>
+                              <v-btn value="FALSE">
+                                <v-icon left>mdi-close</v-icon>
+                                No
+                              </v-btn>
+                              <v-btn value="UNKNOWN">
+                                <v-icon left small>mdi-help</v-icon>
+                                Unknown
+                              </v-btn>
+                            </v-btn-toggle>
                           </div>
+                          <pre v-if="debug">meta.reviewed: {{ meta.reviewed }}</pre>
                         </div>
 
-                        <div v-if="(meta.interval === 'CONTINUOUS' && !!meta.sop_bath) || meta.interval == 'DISCRETE'">
-                          <div>
-                            <p>
-                              What was the sensor accuracy level?
-                            </p>
+                        <div v-if="!!meta.reviewed">
+                          <p>
+                            Which column (if any) contain QAQC flags? (Optional)
+                          </p>
+                          <div class="text-center">
                             <v-select
-                              v-model="meta.accuracy.selected"
-                              :items="meta.accuracy.options"
-                              :rules="meta.accuracy.rules"
-                              item-value="value"
-                              item-text="label"
+                              v-model="meta.flagColumn.selected"
+                              :items="fileColumns"
+                              :rules="meta.flagColumn.rules"
                               outlined
+                              clearable
                             ></v-select>
-                            <pre v-if="debug">meta.accuracy: {{ meta.accuracy.selected }}</pre>
                           </div>
-
-                          <div v-if="!!meta.accuracy.selected">
-                            <div>
-                              <p>
-                                Have these data already undergone a QAQC review?
-                              </p>
-                              <div class="text-center">
-                                <v-btn-toggle v-model="meta.reviewed" @change="resetMeta()">
-                                  <v-btn value="TRUE">
-                                    <v-icon left>mdi-check</v-icon>
-                                    Yes
-                                  </v-btn>
-                                  <v-btn value="FALSE">
-                                    <v-icon left>mdi-close</v-icon>
-                                    No
-                                  </v-btn>
-                                  <v-btn value="UNKNOWN">
-                                    <v-icon left small>mdi-help</v-icon>
-                                    Unknown
-                                  </v-btn>
-                                </v-btn-toggle>
-                              </div>
-                              <pre v-if="debug">meta.reviewed: {{ meta.reviewed }}</pre>
-                            </div>
-                            <div v-if="!!meta.reviewed && meta.reviewed !== 'no'">
-                              <p>
-                                Which column contain QAQC flags? (Optional, leave blank if none)
-                              </p>
-                              <div class="text-center">
-                                <v-select
-                                  v-model="meta.flagColumn.selected"
-                                  :items="fileColumns"
-                                  :rules="meta.flagColumn.rules"
-                                  outlined
-                                  clearable
-                                ></v-select>
-                              </div>
-                              <pre v-if="debug">meta.flagColumn: {{ meta.flagColumn.selected }}</pre>
-                            </div>
-                          </div>
+                          <pre v-if="debug">meta.flagColumn: {{ meta.flagColumn.selected }}</pre>
                         </div>
 
                         <Alert type="error" title="Metadata Error" v-if="meta.status === 'ERROR'">
@@ -718,7 +745,7 @@
                 </v-stepper-content>
 
                 <!-- UPLOAD -->
-                <v-stepper-content step="7">
+                <v-stepper-content step="8">
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
                       <v-form ref="uploadForm">
@@ -860,7 +887,7 @@ export default {
           options: [],
           rules: [
             v => !!v ||
-              this.station.mode !== 'station' ||
+              this.station.mode !== 'STATION' ||
               'Station is required'
           ]
         },
@@ -868,18 +895,20 @@ export default {
           selected: null,
           rules: [
             v => !!v ||
-              this.station.mode !== 'column' ||
+              this.station.mode !== 'COLUMN' ||
               'Station column is required'
           ]
         }
       },
       depth: {
+        status: 'READY',
+        loading: false,
         mode: null, // column, value, category, unknown
         column: {
           selected: null,
           rules: [
             v => !!v ||
-              this.depth.mode !== 'column' ||
+              this.depth.mode !== 'COLUMN' ||
               'Depth column is required'
           ]
         },
@@ -888,8 +917,8 @@ export default {
           options: depthUnitsOptions,
           rules: [
             v => !!v ||
-              this.depth.mode === 'category' ||
-              this.depth.mode === 'unknown' ||
+              this.depth.mode === 'CATEGORY' ||
+              this.depth.mode === 'UNKNOWN' ||
               'Units are required'
           ]
         },
@@ -897,7 +926,7 @@ export default {
           selected: null,
           rules: [
             v => !!v ||
-              this.depth.mode !== 'value' ||
+              this.depth.mode !== 'VALUE' ||
               'Depth is required'
           ]
         },
@@ -906,7 +935,7 @@ export default {
           options: depthCategoryOptions,
           rules: [
             v => !!v ||
-              this.depth.mode !== 'category' ||
+              this.depth.mode !== 'CATEGORY' ||
               'Categorical depth is required'
           ]
         }
@@ -920,7 +949,7 @@ export default {
             selected: null,
             rules: [
               v => !!v ||
-                this.timestamp.mode !== 'combined' ||
+                this.timestamp.mode !== 'COMBINED' ||
                 'Datetime column is required'
             ]
           },
@@ -928,7 +957,7 @@ export default {
             value: null,
             rules: [
               v => !!v ||
-                this.timestamp.mode !== 'combined' ||
+                this.timestamp.mode !== 'COMBINED' ||
                 'Includes timezone is required'
             ]
           }
@@ -939,7 +968,7 @@ export default {
               selected: null,
               rules: [
                 v => !!v ||
-                  this.timestamp.mode !== 'separate' ||
+                  this.timestamp.mode !== 'SEPARATE' ||
                   'Date column is required'
               ]
             }
@@ -949,7 +978,7 @@ export default {
               selected: null,
               rules: [
                 v => !!v ||
-                  this.timestamp.mode !== 'separate' ||
+                  this.timestamp.mode !== 'SEPARATE' ||
                   'Time column is required'
               ]
             }
@@ -961,7 +990,7 @@ export default {
             selected: null,
             rules: [
               v => !!v ||
-                this.timestamp.timezone.mode !== 'column' ||
+                this.timestamp.timezone.mode !== 'COLUMN' ||
                 'UTC offset column is required'
             ]
           },
@@ -971,7 +1000,7 @@ export default {
             rules: [
               v => !!v ||
                 v === 0 ||
-                this.timestamp.timezone.mode !== 'utcOffset' ||
+                this.timestamp.timezone.mode !== 'UTCOFFSET' ||
                 'UTC offset is required'
             ]
           }
@@ -1004,7 +1033,6 @@ export default {
       meta: {
         status: 'READY',
         loading: false,
-        interval: null,
         sop_bath: null,
         accuracy: {
           selected: null,
@@ -1134,10 +1162,19 @@ export default {
           this.file.loading = false
         })
     },
+    resetFile () {
+      this.file.status = 'READY'
+      this.file.error = null
+      if (this.$refs.fileForm) this.$refs.fileForm.resetValidation()
+    },
     nextFile () {
       if (this.file.error) return
 
-      if (!this.file.selected) {
+      if (!this.file.type) {
+        this.file.status = 'ERROR'
+        this.file.error = 'File type not selected'
+        return
+      } else if (!this.file.selected) {
         this.file.status = 'ERROR'
         this.file.error = 'No file selected'
         return
@@ -1158,10 +1195,26 @@ export default {
       this.station.error = null
 
       if (!this.station.mode ||
-          !this.depth.mode ||
           !this.$refs.stationForm.validate()) {
         this.station.status = 'ERROR'
         this.station.error = 'Form is incomplete or contains an error'
+        return
+      }
+
+      this.step += 1
+    },
+    resetDepth () {
+      this.depth.status = 'READY'
+      this.depth.error = null
+      if (this.$refs.depthForm) this.$refs.depthForm.resetValidation()
+    },
+    nextDepth () {
+      this.depth.error = null
+
+      if (!this.depth.mode ||
+          !this.$refs.depthForm.validate()) {
+        this.depth.status = 'ERROR'
+        this.depth.error = 'Form is incomplete or contains an error'
         return
       }
 
@@ -1177,10 +1230,10 @@ export default {
 
       if (!this.timestamp.mode ||
           !this.$refs.timestampForm.validate() ||
-          (this.timestamp.mode === 'combined' &&
+          (this.timestamp.mode === 'COMBINED' &&
             this.timestamp.combined.includesTimezone.value === null) ||
           (!this.timestamp.timezone.mode &&
-            !(this.timestamp.mode === 'combined' &&
+            !(this.timestamp.mode === 'COMBINED' &&
               this.timestamp.combined.includesTimezone.value === true)
           )) {
         this.timestamp.status = 'ERROR'
@@ -1212,8 +1265,7 @@ export default {
     nextMeta () {
       this.meta.error = null
 
-      if (!this.meta.interval ||
-          (this.meta.interval === 'CONTINUOUS' && !this.meta.sop_bath) ||
+      if ((this.file.type === 'SERIES_CONTINUOUS' && !this.meta.sop_bath) ||
           !this.meta.accuracy ||
           !this.meta.reviewed ||
           !this.$refs.metaForm.validate()) {
@@ -1300,6 +1352,7 @@ export default {
     },
     createFileConfig () {
       const config = {
+        type: null,
         station: {
           mode: this.station.mode
         },
@@ -1314,48 +1367,89 @@ export default {
           units: this.value.units.selected,
           missing: this.value.missing.selected
         },
-        meta: {
-          interval: this.meta.interval
-        }
+        meta: {}
       }
 
-      if (this.station.mode === 'station') {
-        config.station.stationId = this.station.station.selected
-      } else if (this.station.mode === 'column') {
-        config.station.column = this.station.column.selected
+      switch (this.file.type) {
+        case 'PROFILES':
+          config.type = 'PROFILES'
+          break
+        case 'SERIES_CONTINUOUS':
+          config.type = 'SERIES'
+          config.meta.interval = 'CONTINUOUS'
+          break
+        case 'SERIES_DISCRETE':
+          config.type = 'SERIES'
+          config.meta.interval = 'DISCRETE'
+          break
+        default:
+          config.type = null
       }
 
-      if (this.depth.mode === 'column') {
-        config.depth.column = this.depth.column.selected
-        config.depth.units = this.depth.units.selected
-        config.depth.category = 'varying'
-      } else if (this.depth.mode === 'value') {
-        config.depth.value = this.depth.value.selected
-        config.depth.units = this.depth.units.selected
-      } else if (this.depth.mode === 'category') {
-        config.depth.category = this.depth.category.selected
+      switch (this.station.mode) {
+        case 'STATION':
+          config.station.stationId = this.station.station.selected
+          break
+        case 'COLUMN':
+          config.station.column = this.station.column.selected
+          break
       }
 
-      if (this.timestamp.mode === 'combined') {
-        config.timestamp.columns = [
-          this.timestamp.combined.column.selected
-        ]
-      } else if (this.timestamp.mode === 'separate') {
-        config.timestamp.columns = [
-          this.timestamp.separate.date.column.selected,
-          this.timestamp.separate.time.column.selected
-        ]
+      switch (this.depth.mode) {
+        case 'COLUMN':
+          config.depth.column = this.depth.column.selected
+          config.depth.units = this.depth.units.selected
+          config.depth.category = 'VARYING'
+          break
+        case 'VALUE':
+          config.depth.value = this.depth.value.selected
+          config.depth.units = this.depth.units.selected
+          break
+        case 'CATEGORY':
+          config.depth.category = this.depth.category.selected
+          break
       }
 
-      if (this.timestamp.mode === 'combined' &&
+      switch (this.timestamp.mode) {
+        case 'COMBINED':
+          config.timestamp.columns = [
+            this.timestamp.combined.column.selected
+          ]
+          break
+        case 'SEPARATE':
+          config.timestamp.columns = [
+            this.timestamp.separate.date.column.selected,
+            this.timestamp.separate.time.column.selected
+          ]
+          break
+      }
+
+      switch (this.timestamp.mode) {
+        case 'COMBINED':
+          config.timestamp.columns = [
+            this.timestamp.combined.column.selected
+          ]
+          break
+        case 'SEPARATE':
+          config.timestamp.columns = [
+            this.timestamp.separate.date.column.selected,
+            this.timestamp.separate.time.column.selected
+          ]
+          break
+      }
+
+      if (this.timestamp.mode === 'COMBINED' &&
           this.timestamp.combined.includesTimezone.value) {
         config.timestamp.timezone.mode = 'timestamp'
       } else {
         config.timestamp.timezone.mode = this.timestamp.timezone.mode
-        if (this.timestamp.timezone.mode === 'column') {
-          config.timestamp.timezone.column = this.timestamp.timezone.column.selected
-        } else if (this.timestamp.timezone.mode === 'utcOffset') {
-          config.timestamp.timezone.utcOffset = this.timestamp.timezone.utcOffset.selected
+        switch (this.timestamp.timezone.mode) {
+          case 'COLUMN':
+            config.timestamp.timezone.column = this.timestamp.timezone.column.selected
+            break
+          case 'UTCOFFSET':
+            config.timestamp.timezone.utcOffset = this.timestamp.timezone.utcOffset.selected
+            break
         }
       }
 
@@ -1378,6 +1472,7 @@ export default {
 
       const response = await this.$http.restricted.post(`/organizations/${organizationId}/files`, {
         filename,
+        type: config.type,
         config
       })
 

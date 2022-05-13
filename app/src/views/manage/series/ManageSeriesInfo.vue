@@ -46,7 +46,7 @@
           <td class="text-right grey--text text--darken-2">
             Depth
           </td>
-          <td class="font-weight-bold">{{ series.depth_category || (isFinite(series.depth_m) && series.depth_m !== null ? `${series.depth_m} m` : '') }}</td>
+          <td class="font-weight-bold">{{ series | seriesDepth }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -58,7 +58,7 @@
           <td class="text-right grey--text text--darken-2">
             Frequency
           </td>
-          <td class="font-weight-bold">{{ series.frequency | formatBooleanOption }}</td>
+          <td class="font-weight-bold">{{ series.frequency ? `${series.frequency} min` : '' }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">

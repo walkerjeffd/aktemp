@@ -71,6 +71,11 @@ export default {
           align: 'left'
         },
         {
+          text: 'Type',
+          value: 'type',
+          align: 'left'
+        },
+        {
           text: 'Status',
           value: 'status',
           align: 'left',

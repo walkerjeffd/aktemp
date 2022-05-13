@@ -19,20 +19,20 @@ function parseTimestamp (d, config) {
   }
 
   let parsed
-  if (config.timestamp.timezone.mode === 'timestamp') {
+  if (config.timestamp.timezone.mode === 'TIMESTAMP') {
     parsed = dayjs(value)
-  } else if (config.timestamp.timezone.mode === 'utcOffset') {
+  } else if (config.timestamp.timezone.mode === 'UTCOFFSET') {
     const utcOffset = Number(config.timestamp.timezone.utcOffset)
     parsed = dayjs(value).utc(true)
     parsed = parsed.subtract(utcOffset, 'hours')
-  } else if (config.timestamp.timezone.mode === 'column') {
+  } else if (config.timestamp.timezone.mode === 'COLUMN') {
     const utcOffset = Number(d[config.timestamp.timezone.column])
     parsed = dayjs(value).utc(true)
     parsed = parsed.subtract(utcOffset, 'hours')
   }
 
-  if (!parsed.isValid()) {
-    throw new Error(`Invalid timestamp on row=${row} ('${value}')`)
+  if (!parsed || !parsed.isValid()) {
+    throw new Error(`Invalid timestamp ('${value}') on row ${row}`)
   }
 
   return parsed.toISOString()
@@ -60,7 +60,7 @@ function parseFlag (d, config) {
 }
 
 function parseDepth (d, config) {
-  if (config.depth.mode !== 'column') return null
+  if (config.depth.mode !== 'COLUMN') return null
   const value = d[config.depth.column]
 
   const numericValue = Number(value)

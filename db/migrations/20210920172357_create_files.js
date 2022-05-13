@@ -14,6 +14,7 @@ exports.up = knex => knex.schema.createTable('files', t => {
 
   t.text('filename').notNullable()
   t.json('config').notNullable()
+  t.text('type').notNullable()
 
   t.json('s3')
   t.text('url')

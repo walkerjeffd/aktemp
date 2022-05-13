@@ -7,7 +7,7 @@ export const variableOptions = [
 
 export const depthCategoryOptions = [
   { value: 'SURFACE', label: 'Surface' },
-  { value: 'MIDDLE', label: 'Mid-Depth' },
+  { value: 'MID-DEPTH', label: 'Mid-Depth' },
   { value: 'BOTTOM', label: 'Bottom' }
 ]
 

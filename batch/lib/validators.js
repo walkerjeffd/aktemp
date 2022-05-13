@@ -20,13 +20,13 @@ function validateFileFields (fields) {
 const stationSchema = (fields) => {
   const validFields = Joi.string().valid(...fields)
   return Joi.object({
-    mode: Joi.string().valid('station', 'column').required(),
+    mode: Joi.string().valid('STATION', 'COLUMN').required(),
     stationId: Joi.number().integer().when('mode', {
-      is: 'station',
+      is: 'STATION',
       then: Joi.required()
     }),
     column: validFields.when('mode', {
-      is: 'column',
+      is: 'COLUMN',
       then: Joi.required()
     })
   })
@@ -35,25 +35,25 @@ const stationSchema = (fields) => {
 const depthSchema = (fields) => {
   const validFields = Joi.string().valid(...fields)
   return Joi.object({
-    mode: Joi.string().valid('column', 'value', 'category', 'unknown').required(),
+    mode: Joi.string().valid('COLUMN', 'VALUE', 'CATEGORY', 'UNKNOWN').required(),
     column: validFields.when('mode', {
-      is: 'column',
+      is: 'COLUMN',
       then: Joi.required()
     }),
     value: Joi.number().when('mode', {
-      is: 'value',
+      is: 'VALUE',
       then: Joi.required()
     }),
     units: Joi.string().valid('m', 'ft', 'in', 'cm')
       .when('mode', {
         switch: [
-          { is: 'value', then: Joi.required() },
-          { is: 'column', then: Joi.required() }
+          { is: 'VALUE', then: Joi.required() },
+          { is: 'COLUMN', then: Joi.required() }
         ]
       }),
     category: Joi.when('mode', {
-      is: 'category',
-      then: Joi.string().valid('BOTTOM', 'MIDDLE', 'SURFACE').required()
+      is: 'CATEGORY',
+      then: Joi.string().valid('BOTTOM', 'MID-DEPTH', 'SURFACE').required()
     })
   })
 }
@@ -64,17 +64,17 @@ const timestampSchema = (fields) => {
     columns: Joi.array().min(1).max(2).items(validFields),
     timezone: Joi.object({
       mode: Joi.string()
-        .valid('timestamp', 'column', 'utcOffset')
+        .valid('TIMESTAMP', 'COLUMN', 'UTCOFFSET')
         .required(),
       column: validFields
         .when('mode', {
-          is: 'column',
+          is: 'COLUMN',
           then: Joi.required()
         }),
       utcOffset: Joi.number().integer()
         .valid(0, -7, -8, -9)
         .when('mode', {
-          is: 'utcOffset',
+          is: 'UTCOFFSET',
           then: Joi.required()
         })
     }).required()
@@ -103,6 +103,7 @@ const metaSchema = (fields) => {
 
 const configSchema = (fields) => {
   return Joi.object({
+    type: Joi.string().valid('SERIES', 'PROFILES').required(),
     station: stationSchema(fields).required(),
     depth: depthSchema(fields).required(),
     timestamp: timestampSchema(fields).required(),

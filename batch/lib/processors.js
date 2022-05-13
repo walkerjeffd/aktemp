@@ -7,7 +7,7 @@ const utc = require('dayjs/plugin/utc.js')
 
 const { validateFileConfig } = require('./validators.js')
 const { parseTimestamp, parseValue, parseFlag, parseDepth } = require('./parsers.js')
-const { convertDepthUnits } = require('./utils.js')
+const { convertDepthUnits, medianFrequency } = require('./utils.js')
 const { File } = require('../db/models/index.js')
 
 dayjs.extend(timezone)
@@ -43,17 +43,15 @@ async function processFile (id) {
       message: `file not found in database (id=${id})`
     })
 
-  console.log(file)
-
-  // let results
-  // if (file.type === 'series') {
-  //   results = processSeriesFile(file)
-  // } else if (file.type === 'profiles') {
-  //   // results = processProfilesFile(file)
-  // } else {
-  //   throw new Error('Invalid file type, should be \'series\' or \'profiles\'')
-  // }
-  const results = processSeriesFile(file)
+  let results
+  if (file.type === 'SERIES') {
+    results = processSeriesFile(file)
+  } else if (file.type === 'PROFILES') {
+    // results = processProfilesFile(file)
+    throw new Error('Not yet implemented (file.type=\'PROFILES\')')
+  } else {
+    throw new Error('Invalid file type, should be \'SERIES\' or \'PROFILES\'')
+  }
 
   return results
 }
@@ -71,7 +69,7 @@ function parseSeriesValues (values, config) {
 
 async function processSeriesFile (file) {
   if (!file) throw new Error('missing file')
-  console.log(`processing series file: id=${file.id}`)
+  console.log(`type: series (id=${file.id})`)
 
   // delete existing series
   await file.$relatedQuery('series').delete()
@@ -96,7 +94,7 @@ async function processSeriesFile (file) {
 
   // group by station
   let stationData = []
-  if (config.station.mode === 'station') {
+  if (config.station.mode === 'STATION') {
     const station = await organization.$relatedQuery('stations')
       .findById(config.station.stationId)
       .throwIfNotFound({
@@ -106,7 +104,7 @@ async function processSeriesFile (file) {
       stationCode: station.code,
       values: data
     }]
-  } else if (config.station.mode === 'column') {
+  } else if (config.station.mode === 'COLUMN') {
     const stationColumn = config.station.column
     const d3 = await import('d3')
     stationData = Array.from(
@@ -132,9 +130,9 @@ async function processSeriesFile (file) {
 
   // series depth
   const seriesDepth = {}
-  if (file.config.depth.mode === 'category') {
+  if (file.config.depth.mode === 'CATEGORY') {
     seriesDepth.depth_category = file.config.depth.category
-  } else if (file.config.depth.mode === 'value') {
+  } else if (file.config.depth.mode === 'VALUE') {
     seriesDepth.depth_m = convertDepthUnits(file.config.depth.value, file.config.depth.units)
   }
 
@@ -146,12 +144,15 @@ async function processSeriesFile (file) {
   // save each series
   for (let i = 0; i < stationData.length; i++) {
     const d3 = await import('d3')
-    const seriesDateRange = d3.extent(stationData[i].values, d => d.datetime)
+    const datetimes = stationData[i].values.map(d => d.datetime)
+    const datetimeExtent = d3.extent(datetimes)
+    const frequency = await medianFrequency(datetimes)
     stationData[i].series = await stationData[i].station.$relatedQuery('series').insertGraph({
       file_id: file.id,
       values: stationData[i].values,
-      start_datetime: seriesDateRange[0],
-      end_datetime: seriesDateRange[1],
+      start_datetime: datetimeExtent[0],
+      end_datetime: datetimeExtent[1],
+      frequency,
       ...seriesDepth,
       ...seriesMeta
     })

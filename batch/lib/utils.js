@@ -12,6 +12,17 @@ function convertDepthUnits (value, units) {
   }
 }
 
+async function medianFrequency (datetimes) {
+  const d3 = await import('d3')
+  const sorted = datetimes.sort((a, b) => d3.ascending(a.valueOf(), b.valueOf()))
+  const deltas = sorted.map((d, i) => {
+    if (i === 0) return null
+    return ((new Date(d)).valueOf() - (new Date(sorted[i - 1])).valueOf()) / 1e3 / 60 // ms -> min
+  })
+  return d3.median(deltas)
+}
+
 module.exports = {
-  convertDepthUnits
+  convertDepthUnits,
+  medianFrequency
 }

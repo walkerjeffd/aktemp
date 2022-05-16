@@ -44,7 +44,7 @@ const createAndUploadFile = async function (file, filepath, organization, option
     status: 'UPLOADED'
   })
 
-  return file
+  return dbFile
 }
 
 function readConfig (configFile) {

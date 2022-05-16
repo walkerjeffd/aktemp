@@ -43,7 +43,8 @@ const postStations = async (req, res, next) => {
 const getStation = (req, res, next) => res.status(200).json(res.locals.station)
 
 const getStationSeries = async (req, res, next) => {
-  const series = await res.locals.station.$relatedQuery('series').modify('stationOrganization')
+  const series = await res.locals.station.$relatedQuery('series')
+    .modify('stationOrganization')
   return res.status(200).json(series)
 }
 

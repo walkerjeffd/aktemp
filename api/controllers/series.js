@@ -28,6 +28,13 @@ async function getSeriesValues (req, res, next) {
   return res.status(200).json(values)
 }
 
+async function getSeriesDaily (req, res, next) {
+  const values = await res.locals.series
+    .$relatedQuery('values')
+    .modify('daily')
+  return res.status(200).json(values)
+}
+
 async function getOrganizationSeries (req, res, next) {
   const stations = await res.locals.organization.$relatedQuery('stations')
   const rows = await Station.relatedQuery('series')
@@ -54,6 +61,7 @@ module.exports = {
   attachSeries,
   getSeries,
   getSeriesValues,
+  getSeriesDaily,
   getOrganizationSeries,
   putSeries,
   deleteSeries

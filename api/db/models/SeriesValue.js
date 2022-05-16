@@ -1,3 +1,4 @@
+const { raw } = require('objection')
 const Base = require('./Base')
 
 class SeriesValue extends Base {
@@ -12,6 +13,16 @@ class SeriesValue extends Base {
       },
       defaultOrderBy (builder) {
         builder.orderBy('datetime')
+      },
+      daily (builder) {
+        builder
+          .select(raw('to_char(datetime at time zone "series:station".timezone, \'YYYY-MM-DD\') as date'), raw('count(*)::integer as n'))
+          .min('value as min')
+          .avg('value as mean')
+          .max('value as max')
+          .groupBy('date')
+          .orderBy('date')
+          .joinRelated('series.station')
       }
     }
   }

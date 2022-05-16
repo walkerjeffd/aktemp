@@ -15,9 +15,9 @@
       <v-form ref="form" @submit.prevent="submit" :disabled="loading">
         <v-card-text class="mt-4 mb-0">
           <v-text-field
-            v-model="id.value"
-            :rules="id.rules"
-            label="ID (Abbreviation)"
+            v-model="code.value"
+            :rules="code.rules"
+            label="Code (Abbreviation)"
             hint="Capital letters and underscores only (NPS_DNP)"
             persistent-hint
             required
@@ -84,10 +84,10 @@ export default {
       },
       loading: false,
       error: null,
-      id: {
+      code: {
         value: '',
         rules: [
-          v => required(v) || 'ID is required'
+          v => required(v) || 'Code is required'
         ]
       },
       name: {
@@ -99,7 +99,7 @@ export default {
     }
   },
   methods: {
-    async open (id) {
+    async open () {
       this.dialog = true
 
       return new Promise((resolve, reject) => {
@@ -114,7 +114,7 @@ export default {
 
       this.loading = true
       const payload = {
-        id: this.id.value,
+        code: this.code.value,
         name: this.name.value
       }
 
@@ -134,7 +134,7 @@ export default {
     clear () {
       this.error = null
       this.$refs.form.resetValidation()
-      this.id.value = ''
+      this.code.value = ''
       this.name.value = ''
     },
     close () {

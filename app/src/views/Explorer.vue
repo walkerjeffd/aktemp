@@ -44,6 +44,30 @@
             </v-btn>
           </v-toolbar>
           <v-divider></v-divider>
+          <div class="pa-4 white--text">
+            <p class="font-weight-bold">Filter by Attributes (dropdown menus):</p>
+            <ul class="mb-4">
+              <li>Organization</li>
+              <li>Waterbody Type (Stream/River, Lake, Unknown)</li>
+              <li>Placement (Mainstem, Side, Unknown)</li>
+              <li>Active (True, False, Unknown)</li>
+              <li>Well-mixed (True, False, Unknown)</li>
+            </ul>
+            <p class="font-weight-bold">Filter by Data Types (toggle switches)</p>
+            <ul class="mb-4">
+              <li>Has Series (True/False)</li>
+              <li>Has Profiles (True/False)</li>
+            </ul>
+            <p class="font-weight-bold">Filter by Time (calendar pickers):</p>
+            <ul class="mb-4">
+              <li>Min date</li>
+              <li>Max date</li>
+            </ul>
+            <p class="font-weight-bold">Spatial Filter:</p>
+            <ul class="mb-4">
+              <li>Button to enable "draw" mode (user can then filter by drawing a bounding box or polygon)</li>
+            </ul>
+          </div>
         </v-navigation-drawer>
         <!-- SETTINGS -->
         <v-navigation-drawer color="grey darken-2" v-else-if="pane === 'map'" width="350">
@@ -55,6 +79,16 @@
             </v-btn>
           </v-toolbar>
           <v-divider></v-divider>
+          <div class="pa-4 white--text">
+            <p class="font-weight-bold">Color Stations By (dropdown menu):</p>
+            <ul class="mb-4">
+              <li>Organization</li>
+              <li>Waterbody Type</li>
+              <li>Placement</li>
+              <li>Active</li>
+              <li>Well-mixed</li>
+            </ul>
+          </div>
         </v-navigation-drawer>
         <!-- MAP -->
         <div style="background-color:red;position:relative" class="flex-grow-1">

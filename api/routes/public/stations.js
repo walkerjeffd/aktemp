@@ -22,6 +22,10 @@ router.route('/:stationId/series')
   .all(asyncHandler(attachStation))
   .get(asyncHandler(getStationSeries))
 
+router.route('/:stationId/series/')
+  .all(asyncHandler(attachStation))
+  .get(asyncHandler(getStationSeries))
+
 router.route('/:stationId/profiles')
   .all(asyncHandler(attachStation))
   .get(asyncHandler(getStationProfiles))

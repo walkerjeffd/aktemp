@@ -1,5 +1,5 @@
 <template>
-  <div style="position:absolute;top:20px;right:20px;z-index:3000;width:400px;background-color:white;margin:auto;pointer-events:auto" class="elevation-20">
+  <div style="position:absolute;top:20px;right:20px;z-index:1000;width:400px;background-color:white;margin:auto;pointer-events:auto" class="elevation-20">
     <v-toolbar color="grey darken-2" dark flat dense>
       <div class="font-weight-bold body-1">{{ station.code }}</div>
       <v-spacer></v-spacer>
@@ -23,7 +23,7 @@
         fixed-tabs
       >
         <v-tab><v-icon left small>mdi-information-outline</v-icon> Info</v-tab>
-        <v-tab><v-icon left small>mdi-chart-line</v-icon> Timeseries</v-tab>
+        <v-tab :disabled="station && station.n_series === 0"><v-icon left small>mdi-chart-line</v-icon> Timeseries</v-tab>
         <v-tab><v-icon left small>mdi-arrow-expand-down</v-icon> Profiles</v-tab>
 
         <!-- INFO -->
@@ -98,42 +98,12 @@
 
         <!-- TIMESERIES -->
         <v-tab-item class="pa-4">
-          <Loading v-if="loading"></Loading>
-          <v-alert type="warning" v-else-if="series.length === 0">
-            No data at this station
-          </v-alert>
-          <div v-else>
-            <v-simple-table dense>
-              <tbody>
-                <tr>
-                  <td class="text-right grey--text text--darken-2" style="width:120px">
-                    # Timeseries
-                  </td>
-                  <td class="font-weight-bold">{{ series.length }}</td>
-                </tr>
-              </tbody>
-            </v-simple-table>
-            <v-divider class="mb-4"></v-divider>
-            <highcharts :options="chart"></highcharts>
-            <v-divider class="my-4"></v-divider>
-            <div class="d-flex">
-              <v-btn color="info" small disabled>
-                <v-icon small left>mdi-chart-line</v-icon>
-                Explore
-              </v-btn>
-              <v-spacer></v-spacer>
-              <v-btn color="info" small disabled>
-                <v-icon small left>mdi-download</v-icon>
-                Download
-              </v-btn>
-            </div>
-            <Alert type="info" title="Placeholder" class="mt-4 mb-0">Chart above simply plots the raw data for every time series for the station. Not scalable for high frequency or long-term stations. Plan to switch to daily mean/range of all timeseries. Then have "Explore" button open a larger winder for seeing the raw data.</Alert>
-          </div>
+          <StationDetailSeries :station="station"></StationDetailSeries>
         </v-tab-item>
 
         <!-- PROFILES -->
         <v-tab-item class="pa-4">
-          <Alert type="warning" title="Working on it!">
+          <Alert type="warning" title="Working on it!" class="mb-0">
             Not yet implemented...
           </Alert>
         </v-tab-item>
@@ -144,99 +114,20 @@
 
 <script>
 import evt from '@/events'
+import StationDetailSeries from '@/components/StationDetailSeries'
 export default {
   name: 'StationDetail',
+  components: {
+    StationDetailSeries
+  },
   props: ['station'],
   data () {
     return {
-      loading: true,
       collapse: false,
-      tab: 0,
-      series: [],
-      chart: {
-        chart: {
-          zoomType: 'x',
-          height: 200,
-          marginLeft: 40,
-          panning: true,
-          panKey: 'shift'
-        },
-        plotOptions: {
-          series: {
-            boostThreshold: 1,
-            turboThreshold: 0
-          }
-        },
-        title: {
-          text: undefined
-        },
-        legend: {
-          enabled: false
-        },
-        tooltip: {
-          // headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
-          pointFormat: 'Temperature: <b>{point.y}</b> degC'
-          // dateTimeLabelFormats: {
-          //   year: '%b %e, %Y',
-          //   month: '%b %e, %Y',
-          //   day: '%b %e, %Y',
-          //   hour: '%b %e, %Y',
-          //   minute: '%b %e, %Y'
-          // }
-        },
-        xAxis: {
-          type: 'datetime'
-          // dateTimeLabelFormats: {
-          //   week: '%b %d'
-          // },
-          // title: {
-          //   text: 'Date'
-          // }
-        },
-        yAxis: {
-          title: {
-            text: undefined
-          }
-        },
-        series: []
-      }
-    }
-  },
-  created () {
-    this.fetchSeries()
-  },
-  watch: {
-    station () {
-      this.fetchSeries()
+      tab: 0
     }
   },
   methods: {
-    async fetchSeries () {
-      if (!this.station) return
-      this.loading = true
-      const response = await this.$http.public.get(`/stations/${this.station.id}/series`)
-      const series = response.data
-      for (let i = 0; i < series.length; i++) {
-        const response = await this.$http.public.get(`/series/${series[i].id}/values`)
-        series[i].values = response.data
-      }
-      this.series = Object.freeze(series)
-      this.chart.series = series.map(s => {
-        return {
-          name: s.id,
-          marker: {
-            enabled: false
-          },
-          data: s.values.map(v => {
-            return {
-              x: (new Date(v.datetime)).valueOf(),
-              y: v.value
-            }
-          })
-        }
-      })
-      this.loading = false
-    },
     zoomTo () {
       evt.$emit('map:zoomToStation', this.station)
     }

@@ -176,6 +176,7 @@ describe('restricted api', () => {
   describe('organization/files', () => {
     const file = {
       filename: 'test.csv',
+      type: 'SERIES',
       config: '{}'
     }
     let fileId

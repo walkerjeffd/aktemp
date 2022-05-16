@@ -3,7 +3,6 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const logger = require('morgan')
 const createError = require('http-errors')
-const jwt = require('jsonwebtoken')
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
 
 const { databaseErrorHandler } = require('./middleware/dbError')
@@ -24,7 +23,6 @@ if (isLambda()) {
 app.use('/', require('./routes'))
 
 app.use('*', (req, res, next) => {
-  console.log(req)
   next(createError(404, `Path not found (${req.originalUrl})`))
 })
 

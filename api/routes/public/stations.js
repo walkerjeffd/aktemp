@@ -6,6 +6,7 @@ const {
   attachStation,
   getStation,
   getStationSeries,
+  getStationSeriesDaily,
   getStationProfiles
 } = require('../../controllers/stations')
 
@@ -25,6 +26,10 @@ router.route('/:stationId/series')
 router.route('/:stationId/series/')
   .all(asyncHandler(attachStation))
   .get(asyncHandler(getStationSeries))
+
+router.route('/:stationId/series/daily')
+  .all(asyncHandler(attachStation))
+  .get(asyncHandler(getStationSeriesDaily))
 
 router.route('/:stationId/profiles')
   .all(asyncHandler(attachStation))

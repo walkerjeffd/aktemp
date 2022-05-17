@@ -8,7 +8,7 @@ class SeriesValue extends Base {
 
   static get modifiers () {
     return {
-      select (builder) {
+      defaultSelect (builder) {
         builder.select('datetime', 'value')
       },
       defaultOrderBy (builder) {
@@ -16,12 +16,15 @@ class SeriesValue extends Base {
       },
       daily (builder) {
         builder
-          .select(raw('to_char(datetime at time zone "series:station".timezone, \'YYYY-MM-DD\') as date'), raw('count(*)::integer as n'))
+          .select(
+            raw('to_char((datetime at time zone "series:station".timezone), \'YYYY-MM-DD\') as date'),
+            raw('count(*)::integer as n')
+          )
           .min('value as min')
           .avg('value as mean')
           .max('value as max')
-          .groupBy('date')
-          .orderBy('date')
+          .groupBy(['series_id', 'date'])
+          .orderBy(['series_id', 'date'])
           .joinRelated('series.station')
       }
     }

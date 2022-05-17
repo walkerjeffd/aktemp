@@ -48,6 +48,12 @@ const getStationSeries = async (req, res, next) => {
   return res.status(200).json(series)
 }
 
+const getStationSeriesDaily = async (req, res, next) => {
+  const rows = await res.locals.station.$relatedQuery('series')
+    .withGraphFetched('values(daily)')
+  return res.status(200).json(rows)
+}
+
 const getStationProfiles = async (req, res, next) => {
   const profiles = await res.locals.station.$relatedQuery('profiles')
   return res.status(200).json(profiles)
@@ -75,6 +81,7 @@ module.exports = {
   attachStation,
   getStation,
   getStationSeries,
+  getStationSeriesDaily,
   getStationProfiles,
   putStation,
   deleteStation

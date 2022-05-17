@@ -43,20 +43,9 @@ export default {
       loading: true,
       series: [],
       chart: {
-        plotOptions: {
-          series: {
-            boostThreshold: 1,
-            turboThreshold: 0
-          },
-          arearange: {
-            boostThreshold: 1,
-            turboThreshold: 0
-          }
-        },
         chart: {
           zoomType: 'x',
           height: 200,
-          marginLeft: 80,
           panning: true,
           panKey: 'shift',
           resetZoomButton: {
@@ -67,23 +56,26 @@ export default {
           }
         },
         title: {
-          text: undefined
+          text: 'Daily Mean (Range) Temperature (°C)',
+          style: {
+            fontSize: '0.85rem'
+          }
         },
         legend: {
           enabled: false
         },
         tooltip: {
           xDateFormat: '%b %d, %Y',
-          pointFormat: 'Series {series.name}: <b>{point.y} ({point.low}-{point.high}) °C</b><br>',
-          shared: true,
-          valueDecimals: 1
+          pointFormat: 'Daily Mean: <b>{point.y} °C</b>',
+          valueDecimals: 1,
+          enabled: true
         },
         xAxis: {
           type: 'datetime'
         },
         yAxis: {
           title: {
-            text: 'Daily Mean (Range) Temp. (°C)'
+            text: undefined
           },
           startOnTick: false,
           endOnTick: false,
@@ -106,14 +98,16 @@ export default {
       if (!this.station) return
 
       this.loading = true
-      const response = await this.$http.public.get(`/stations/${this.station.id}/series`)
-      const series = response.data
-      for (let i = 0; i < series.length; i++) {
-        const response = await this.$http.public.get(`/series/${series[i].id}/daily`)
-        series[i].values = response.data
-      }
-      this.series = Object.freeze(series)
-      this.chart.series = series.map(s => {
+      const response = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
+      // const series = await Promise.all(response.data.map(async (d) => {
+      //   const response = await this.$http.public.get(`/series/${d.id}/daily`)
+      //   return {
+      //     ...d,
+      //     values: response.data
+      //   }
+      // }))
+      this.series = Object.freeze(response.data)
+      this.chart.series = this.series.map(s => {
         return [
           {
             name: `${s.id}`,
@@ -123,23 +117,23 @@ export default {
             zIndex: 1,
             lineWidth: 1,
             data: s.values.map(v => {
-              return {
-                x: (new Date(v.date)).valueOf(),
-                y: v.mean,
-                low: v.min.toFixed(1),
-                high: v.max.toFixed(1)
-              }
+              return [
+                (new Date(v.date)).valueOf(),
+                v.mean,
+                v.min.toFixed(1),
+                v.max.toFixed(1)
+              ]
             })
           },
           {
             name: `${s.id}-range`,
             type: 'arearange',
             data: s.values.map(v => {
-              return {
-                x: (new Date(v.date)).valueOf(),
-                low: v.min,
-                high: v.max
-              }
+              return [
+                (new Date(v.date)).valueOf(),
+                v.min,
+                v.max
+              ]
             }),
             lineWidth: 0,
             linkedTo: ':previous',

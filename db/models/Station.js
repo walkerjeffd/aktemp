@@ -1,3 +1,4 @@
+const { raw } = require('objection')
 const Base = require('./Base')
 
 class Station extends Base {
@@ -9,6 +10,34 @@ class Station extends Base {
     return {
       organizationCode (builder) {
         builder.select('stations.*', 'organization.code as organization_code').joinRelated('organization')
+      },
+      seriesSummary (builder) {
+        builder.select(
+          'stations.*',
+          Station.relatedQuery('series')
+            .select(raw('count(*)::integer'))
+            .as('series_count'),
+          Station.relatedQuery('series')
+            .min('start_datetime')
+            .as('series_start_datetime'),
+          Station.relatedQuery('series')
+            .max('end_datetime')
+            .as('series_end_datetime')
+        ).debug()
+      },
+      profilesSummary (builder) {
+        builder.select(
+          'stations.*',
+          Station.relatedQuery('profiles')
+            .select(raw('count(*)::integer'))
+            .as('profiles_count'),
+          Station.relatedQuery('profiles')
+            .min('date')
+            .as('profiles_start_date'),
+          Station.relatedQuery('profiles')
+            .max('date')
+            .as('profiles_end_date')
+        )
       }
     }
   }

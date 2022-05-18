@@ -6,7 +6,7 @@ import store from '@/store'
 import router from '@/router'
 
 evt.$on('authState', async ({ state, redirect }) => {
-  console.log('authState', state)
+  // console.log('authState', state)
   if (state === 'signedOut') {
     store.dispatch('setUser', null)
     if (redirect) router.push(redirect)
@@ -36,7 +36,7 @@ export async function getOrganizations (userId) {
 }
 
 export async function getUser (force) {
-  console.log('getUser')
+  // console.log('getUser')
   try {
     const user = await Auth.currentAuthenticatedUser({ bypassCache: !!force })
     if (user && user.signInUserSession) {

@@ -2,10 +2,15 @@ import Vue from 'vue'
 import HighchartsVue from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import more from 'highcharts/highcharts-more'
-// import boost from 'highcharts/modules/boost'
+import stockInit from 'highcharts/modules/stock'
+import boost from 'highcharts/modules/boost'
+import noData from 'highcharts/modules/no-data-to-display'
+
+stockInit(Highcharts)
 
 more(Highcharts)
-// boost(Highcharts)
+boost(Highcharts)
+noData(Highcharts)
 
 Highcharts.setOptions({
   lang: {

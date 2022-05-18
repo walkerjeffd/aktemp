@@ -5,10 +5,10 @@ import store from '@/store'
 import { getUser } from '@/lib/auth'
 
 import Home from '../views/Home.vue'
-import Explorer from '../views/Explorer.vue'
 
 import AdminRoutes from '@/router/admin'
 import AuthRoutes from '@/router/auth'
+import ExplorerRoutes from '@/router/explorer'
 import ManageRoutes from '@/router/manage'
 
 Vue.use(VueRouter)
@@ -19,11 +19,7 @@ const routes = [
     name: 'home',
     component: Home
   },
-  {
-    path: '/explorer',
-    name: 'explorer',
-    component: Explorer
-  },
+  ...ExplorerRoutes,
   AdminRoutes,
   AuthRoutes,
   ...ManageRoutes

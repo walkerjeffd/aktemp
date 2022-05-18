@@ -23,7 +23,7 @@ async function getSeries (req, res, next) {
 async function getSeriesValues (req, res, next) {
   const values = await res.locals.series
     .$relatedQuery('values')
-    .modify('select')
+    .modify('defaultSelect')
     .modify('defaultOrderBy')
   return res.status(200).json(values)
 }

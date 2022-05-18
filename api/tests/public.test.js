@@ -88,4 +88,11 @@ describe('public api', () => {
     expect(response.body).toBeTruthy()
     expect(Array.isArray(response.body)).toBeTruthy()
   })
+
+  test('GET /series/:id/daily', async () => {
+    const response = await request(app).get('/public/series/1/daily')
+    expect(response.statusCode).toBe(200)
+    expect(response.body).toBeTruthy()
+    expect(Array.isArray(response.body)).toBeTruthy()
+  })
 })

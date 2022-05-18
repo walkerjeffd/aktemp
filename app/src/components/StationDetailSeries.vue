@@ -18,18 +18,6 @@
           </tr>
         </tbody>
       </v-simple-table>
-      <v-divider class="mb-4"></v-divider>
-      <div class="d-flex">
-        <v-btn color="info" small disabled>
-          <v-icon small left>mdi-chart-line</v-icon>
-          Explore
-        </v-btn>
-        <v-spacer></v-spacer>
-        <v-btn color="info" small disabled>
-          <v-icon small left>mdi-download</v-icon>
-          Download
-        </v-btn>
-      </div>
     </div>
   </div>
 </template>
@@ -99,15 +87,16 @@ export default {
 
       this.loading = true
       const response = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
-      // const series = await Promise.all(response.data.map(async (d) => {
-      //   const response = await this.$http.public.get(`/series/${d.id}/daily`)
-      //   return {
-      //     ...d,
-      //     values: response.data
-      //   }
-      // }))
-      this.series = Object.freeze(response.data)
-      this.chart.series = this.series.map(s => {
+      const series = response.data
+      const seriesValues = await Promise.all(series.map(async (d) => {
+        const response = await this.$http.public.get(`/series/${d.id}/daily`)
+        return {
+          ...d,
+          values: response.data
+        }
+      }))
+      this.series = series
+      this.chart.series = seriesValues.map(s => {
         return [
           {
             name: `${s.id}`,

@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 
 import adminModule from './admin'
+import explorerModule from './explorer'
 import manageModule from './manage'
 
 Vue.use(Vuex)
@@ -9,6 +10,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   modules: {
     admin: adminModule,
+    explorer: explorerModule,
     manage: manageModule
   },
   state: {

@@ -54,7 +54,7 @@ export const intervalOptions = [
 ]
 
 export const waterbodyTypeOptions = [
-  { value: 'STREAM', label: 'Stream or River' },
+  { value: 'STREAM', label: 'Stream/River' },
   { value: 'LAKE', label: 'Lake' },
   { value: 'OTHER', label: 'Other' },
   { value: 'UNKNOWN', label: 'Unknown' }

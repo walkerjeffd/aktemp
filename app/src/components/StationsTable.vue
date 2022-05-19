@@ -32,7 +32,7 @@
             <v-row justify="space-between">
               <v-col cols="12" md="3">
                 <v-text-field
-                  v-model="filters.search"
+                  v-model="search"
                   append-icon="mdi-magnify"
                   label="Search station codes"
                   single-line
@@ -79,12 +79,7 @@ export default {
   data () {
     return {
       collapse: false,
-      filters: {
-        search: '',
-        hasImages: false,
-        hasData: false,
-        userOnly: false
-      },
+      search: '',
       headers: [
         {
           text: 'Organization',
@@ -139,9 +134,9 @@ export default {
   },
   methods: {
     filter () {
-      const filtered = this.stations
-        .filter(d => (!this.filters.search || d.code.toLowerCase().includes(this.filters.search.toLowerCase())))
-      this.$emit('filter', filtered)
+      // const filtered = this.stations
+      //   .filter(d => (!this.filters.search || d.code.toLowerCase().includes(this.filters.search.toLowerCase())))
+      this.$emit('search', this.search)
     },
     select (station) {
       this.$emit('select', station)

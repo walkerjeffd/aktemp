@@ -45,19 +45,62 @@
           </v-toolbar>
           <v-divider></v-divider>
           <div class="pa-4 white--text">
-            <p class="font-weight-bold">Filter by Attributes (dropdown menus):</p>
-            <ul class="mb-4">
-              <li>Organization</li>
-              <li>Waterbody Type (Stream/River, Lake, Unknown)</li>
-              <li>Placement (Mainstem, Side, Unknown)</li>
-              <li>Active (True, False, Unknown)</li>
-              <li>Well-mixed (True, False, Unknown)</li>
-            </ul>
-            <p class="font-weight-bold">Filter by Data Types (toggle switches)</p>
-            <ul class="mb-4">
-              <li>Has Series (True/False)</li>
-              <li>Has Profiles (True/False)</li>
-            </ul>
+            <v-select
+              :items="storeOrganizations"
+              v-model="filters.organization.selected"
+              label="Organization"
+              item-text="code"
+              item-value="id"
+              hide-details
+              multiple
+              outlined
+              dark
+              clearable
+              @input="filter"
+              class="mb-4"
+            ></v-select>
+            <v-select
+              :items="filters.waterbodyType.options"
+              v-model="filters.waterbodyType.selected"
+              label="Waterbody Type"
+              item-text="label"
+              item-value="value"
+              hide-details
+              multiple
+              outlined
+              dark
+              clearable
+              @input="filter"
+              class="mb-4"
+            ></v-select>
+            <v-switch
+              v-model="filters.active"
+              label="Active"
+              validate-on-blur
+              outlined
+              hide-details
+              dark
+              @change="filter"
+            ></v-switch>
+            <v-switch
+              v-model="filters.series"
+              label="Timeseries Data"
+              validate-on-blur
+              outlined
+              hide-details
+              dark
+              @change="filter"
+            ></v-switch>
+            <v-switch
+              v-model="filters.profiles"
+              label="Profile Data"
+              validate-on-blur
+              outlined
+              hide-details
+              dark
+              @change="filter"
+            ></v-switch>
+            <v-divider dark class="my-4"></v-divider>
             <p class="font-weight-bold">Filter by Time (calendar pickers):</p>
             <ul class="mb-4">
               <li>Min date</li>
@@ -93,19 +136,19 @@
         <!-- MAP -->
         <div style="background-color:red;position:relative" class="flex-grow-1">
           <StationsMap
-            :loading="loading"
+            :loading="stationsStatus.loading"
             :stations="stations.filtered"
             :station="stations.selected"
             @select="select"
           />
           <StationsTable
-            v-if="stationsTable.show"
-            :loading="loading"
-            :stations="stations.all"
+            v-show="stationsTable.show"
+            :loading="stationsStatus.loading"
+            :stations="storeStations"
             :filtered="stations.filtered"
             :selected="stations.selected"
             @select="select"
-            @filter="filter"
+            @search="filterCodeSearch"
             @close="stationsTable.show = false"
           />
           <StationDetail
@@ -120,6 +163,10 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
+import { waterbodyTypeOptions } from '@/lib/constants'
+
 import StationsMap from '@/components/StationsMap'
 import StationsTable from '@/components/StationsTable'
 import StationDetail from '@/components/StationDetail'
@@ -133,11 +180,24 @@ export default {
   },
   data () {
     return {
-      loading: true,
       stations: {
-        all: [],
         filtered: [],
         selected: null
+      },
+      filters: {
+        organization: {
+          selected: []
+        },
+        waterbodyType: {
+          selected: [],
+          options: waterbodyTypeOptions
+        },
+        active: false,
+        series: false,
+        profiles: false,
+        code: {
+          search: ''
+        }
       },
       tab: 0,
       pane: null,
@@ -146,17 +206,32 @@ export default {
       }
     }
   },
-  async created () {
-    try {
-      const response = await this.$http.public.get('/stations')
-      this.stations.all = response.data
-      this.stations.filtered = this.stations.all
-    } catch (e) {
-      alert('Error occurred fetching stations')
-      console.log(e)
-    } finally {
-      this.loading = false
+  computed: {
+    ...mapGetters({
+      storeOrganizations: 'explorer/organizations',
+      storeStations: 'explorer/stations',
+      stationsStatus: 'explorer/stationsStatus',
+      organizationsStatus: 'explorer/organizationsStatus'
+    })
+  },
+  watch: {
+    storeStations () {
+      this.stations.filtered = this.storeStations
     }
+  },
+  async created () {
+    // try {
+    //   const response = await this.$http.public.get('/stations')
+    //   this.stations.all = response.data
+    //   this.stations.filtered = this.stations.all
+    // } catch (e) {
+    //   alert('Error occurred fetching stations')
+    //   console.log(e)
+    // } finally {
+    //   this.loading = false
+    // }
+    this.$store.dispatch('explorer/fetchOrganizations')
+    this.$store.dispatch('explorer/fetchStations')
   },
   methods: {
     select (station) {
@@ -166,8 +241,20 @@ export default {
         this.stations.selected = null
       }
     },
-    filter (filtered) {
-      this.stations.filtered = filtered
+    filterCodeSearch (value) {
+      this.filters.code.search = value
+      this.filter()
+    },
+    filter () {
+      console.log('filter', this.filters.active.value)
+      const codeSearchString = this.filters.code.search.toLowerCase()
+      this.stations.filtered = this.storeStations
+        .filter(d => (!this.filters.code.search || d.code.toLowerCase().includes(codeSearchString)))
+        .filter(d => (this.filters.organization.selected.length === 0 || this.filters.organization.selected.includes(d.organization_id)))
+        .filter(d => (this.filters.waterbodyType.selected.length === 0 || this.filters.waterbodyType.selected.includes(d.waterbody_type)))
+        .filter(d => this.filters.active !== true || d.active === true)
+        .filter(d => this.filters.series !== true || d.series_count > 0)
+        .filter(d => this.filters.profiles !== true || d.profiles_count > 0)
 
       if (!this.stations.filtered.includes(this.stations.selected)) {
         this.select()

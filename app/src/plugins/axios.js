@@ -5,7 +5,7 @@ import { getToken } from '@/lib/auth'
 
 const externalApi = axios.create()
 
-const publicApi = axios.create({
+export const publicApi = axios.create({
   baseURL: `${process.env.VUE_APP_API_URL}/public`
 })
 

@@ -30,7 +30,7 @@
 
 <script>
 export default {
-  name: 'AdminRoot'
+  name: 'Admin'
 }
 </script>
 

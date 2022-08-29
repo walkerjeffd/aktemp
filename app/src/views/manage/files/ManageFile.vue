@@ -89,7 +89,7 @@ export default {
           }, 3000)
         }
       } catch (err) {
-        this.error = err.toString() || 'Unknown error'
+        this.err = this.$errorMessage(err)
       } finally {
         this.loading = false
         this.refreshing = false

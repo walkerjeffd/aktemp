@@ -56,7 +56,7 @@ export default {
     },
     SET_STATUS (state, [collection, loading, error]) {
       state.status[collection].loading = loading
-      state.status[collection].error = error ? error.toString() || 'Unknown error' : null
+      state.status[collection].error = error ? this.$errorMessage(error) : null
     }
   },
   actions: {

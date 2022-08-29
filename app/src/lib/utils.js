@@ -1,3 +1,19 @@
+import Papa from 'papaparse'
+
+export function parseCsvFile (file) {
+  return new Promise((resolve, reject) => {
+    return Papa.parse(file, {
+      header: true,
+      comments: '#',
+      delimiter: ',',
+      download: false,
+      skipEmptyLines: 'greedy',
+      complete: (results) => resolve(results),
+      error: (err) => reject(err)
+    })
+  })
+}
+
 function isString (value) {
   return typeof value === 'string' || value instanceof String
 }

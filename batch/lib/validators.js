@@ -53,7 +53,7 @@ const depthSchema = (fields) => {
       }),
     category: Joi.when('mode', {
       is: 'CATEGORY',
-      then: Joi.string().valid('BOTTOM', 'MID-DEPTH', 'SURFACE').required()
+      then: Joi.string().valid('BOTTOM', 'MID-DEPTH', 'SURFACE', 'VARYING').required()
     })
   })
 }

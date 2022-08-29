@@ -153,7 +153,7 @@ export default {
         await this.refresh()
       } catch (err) {
         console.log(err)
-        this.error = err
+        this.err = this.$errorMessage(err)
       } finally {
         this.loading.init = false
       }
@@ -193,7 +193,7 @@ export default {
         this.dialog = false
       } catch (err) {
         console.error(err)
-        this.error = err
+        this.err = this.$errorMessage(err)
       } finally {
         this.loading.delete = false
       }

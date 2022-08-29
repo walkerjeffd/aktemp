@@ -1,3 +1,8 @@
+export const fileTypeOptions = [
+  { value: 'SERIES', label: 'Timeseries' },
+  { value: 'PROFILES', label: 'Profiles' }
+]
+
 export const variableOptions = [
   {
     value: 'TEMP_C',

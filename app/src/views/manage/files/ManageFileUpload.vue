@@ -829,23 +829,10 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import Papa from 'papaparse'
 
 import { utcOffsetOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions, depthCategoryOptions } from '@/lib/constants'
 import evt from '@/events'
-import { parseBooleanOption } from '@/lib/utils'
-
-const parseFile = (file) => new Promise((resolve, reject) => {
-  return Papa.parse(file, {
-    header: true,
-    comments: '#',
-    delimiter: ',',
-    download: false,
-    skipEmptyLines: 'greedy',
-    complete: (results) => resolve(results),
-    error: (err) => reject(err)
-  })
-})
+import { parseBooleanOption, parseCsvFile } from '@/lib/utils'
 
 export default {
   name: 'ManageFileUpload',
@@ -1106,7 +1093,6 @@ export default {
       } catch (err) {
         alert('Failed to load stations, see console log')
         console.error(err)
-        // this.error = err.toString()
       } finally {
         // this.loading = false
       }
@@ -1129,7 +1115,7 @@ export default {
       this.file.status = 'PENDING'
       this.file.loading = true
 
-      parseFile(this.file.selected)
+      parseCsvFile(this.file.selected)
         .then(results => {
           this.$refs.fileInput.blur()
 
@@ -1156,7 +1142,7 @@ export default {
         .catch((e) => {
           console.error(e)
           this.file.status = 'ERROR'
-          this.file.error = e.message || e.toString()
+          this.file.error = this.$errorMessage(e.message)
         })
         .finally(() => {
           this.file.loading = false
@@ -1289,7 +1275,7 @@ export default {
         console.error(err)
         this.upload.status = 'FAILED'
         this.upload.message = 'Failed to save file to database'
-        this.upload.error = (err.response && err.response.data.message) || err.toString()
+        this.upload.error = this.$errorMessage(err)
         return
       }
 
@@ -1313,7 +1299,7 @@ export default {
 
         this.upload.status = 'FAILED'
         this.upload.message = `Failed to upload file: ${file.name}.`
-        this.upload.error = (err.response && err.response.data.message) || err.toString()
+        this.upload.error = this.$errorMessage(err)
 
         this.deleteFile(this.upload.file)
         return
@@ -1330,7 +1316,7 @@ export default {
 
         this.upload.status = 'FAILED'
         this.upload.error = 'Failed to start processing file. The file has been saved to the server, but will need to be manually processed. Please contact us for help, or delete it and try uploading again.<br><br>'
-        this.upload.error += (err.response && err.response.data.message) || err.toString()
+        this.upload.error += this.$errorMessage(err)
 
         this.deleteFile(this.upload.file)
         return

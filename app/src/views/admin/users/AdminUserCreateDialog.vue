@@ -158,7 +158,7 @@ export default {
         this.dialog = false
       } catch (err) {
         console.error(err)
-        this.error = err.toString() || 'Unknown error occurred'
+        this.error = this.$errorMessage(err)
       } finally {
         this.loading = false
       }

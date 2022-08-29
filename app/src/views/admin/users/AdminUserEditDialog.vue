@@ -273,7 +273,7 @@ export default {
         await this.refresh()
       } catch (err) {
         console.log(err)
-        this.error = err.toString() || 'Unknown error'
+        this.error = this.$errorMessage(err)
       } finally {
         this.loading.user = false
       }
@@ -318,7 +318,7 @@ export default {
       } catch (err) {
         console.error(err)
         this.loading.enabled = false
-        this.error = err
+        this.err = this.$errorMessage(err)
       }
     },
     async confirmDelete () {
@@ -339,7 +339,7 @@ export default {
         this.dialog = false
       } catch (err) {
         console.error(err)
-        this.error = err
+        this.err = this.$errorMessage(err)
       } finally {
         this.loading.delete = false
       }
@@ -364,7 +364,7 @@ export default {
       } catch (err) {
         console.error(err)
         this.loading.update = false
-        this.error = err
+        this.err = this.$errorMessage(err)
       } finally {
         this.loading.update = false
       }

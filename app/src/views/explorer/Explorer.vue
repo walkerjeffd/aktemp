@@ -165,6 +165,7 @@
 <script>
 import { mapGetters } from 'vuex'
 
+import evt from '@/events'
 import { waterbodyTypeOptions } from '@/lib/constants'
 
 import StationsMap from '@/components/StationsMap'
@@ -217,6 +218,9 @@ export default {
   watch: {
     storeStations () {
       this.stations.filtered = this.storeStations
+    },
+    'stationsStatus.error' () {
+      this.checkStationsError()
     }
   },
   async created () {
@@ -232,8 +236,14 @@ export default {
     // }
     this.$store.dispatch('explorer/fetchOrganizations')
     this.$store.dispatch('explorer/fetchStations')
+    this.checkStationsError()
   },
   methods: {
+    checkStationsError () {
+      if (this.stationsStatus.error) {
+        evt.$emit('notify', `Failed to get stations: ${this.stationsStatus.error}`, 'error')
+      }
+    },
     select (station) {
       if (station && this.stations.selected !== station) {
         this.stations.selected = station

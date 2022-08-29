@@ -64,7 +64,7 @@ export default {
         const response = await this.$http.restricted(`/series/${this.$route.params.seriesId}`)
         this.series = response.data
       } catch (err) {
-        this.error = err.toString() || 'Unknown error'
+        this.err = this.$errorMessage(err)
       } finally {
         this.loading = false
       }

@@ -171,7 +171,7 @@ export default {
         this.success = true
       } catch (err) {
         console.error(err)
-        this.error = err.message || err.toString() || 'Unknown error occurred'
+        this.err = this.$errorMessage(err)
       } finally {
         this.loading = false
       }

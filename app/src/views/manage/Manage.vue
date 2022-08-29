@@ -20,6 +20,7 @@
                   outlined
                   return-object
                   hide-details
+                  style="z-index:1000"
                 ></v-select>
               </div>
             </v-toolbar>

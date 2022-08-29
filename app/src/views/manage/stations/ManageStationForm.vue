@@ -332,7 +332,7 @@ export default {
         if (err.response && err.response.data.message) {
           this.error = err.response.data.message
         } else {
-          this.error = err.message || err.toString()
+          this.err = this.$errorMessage(err)
         }
       } finally {
         this.loading = false

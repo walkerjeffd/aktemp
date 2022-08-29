@@ -6,6 +6,7 @@ import ManageStation from '@/views/manage/stations/ManageStation.vue'
 
 import ManageFiles from '@/views/manage/files/ManageFiles.vue'
 import ManageFileUpload from '@/views/manage/files/ManageFileUpload.vue'
+import ManageFileBatch from '@/views/manage/files/ManageFileBatch.vue'
 import ManageFile from '@/views/manage/files/ManageFile.vue'
 
 import ManageSeries from '@/views/manage/series/ManageSeries.vue'
@@ -72,6 +73,14 @@ export default [
     path: '/manage/files/upload',
     name: 'manageFileUpload',
     component: ManageFileUpload,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/manage/files/batch',
+    name: 'manageFileBatch',
+    component: ManageFileBatch,
     meta: {
       requiresAuth: true
     }

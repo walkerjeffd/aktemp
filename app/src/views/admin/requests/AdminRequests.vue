@@ -83,11 +83,7 @@ export default {
         this.accounts = accounts
       } catch (err) {
         console.error(err)
-        if (err.response && err.response.data) {
-          this.error = err.response.data.message || err.toString()
-        } else {
-          this.error = err.message || err.toString()
-        }
+        this.error = this.$errorMessage(err)
       } finally {
         this.loading = false
       }

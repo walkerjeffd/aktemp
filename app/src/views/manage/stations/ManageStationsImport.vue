@@ -137,10 +137,11 @@ export default {
         height: 'auto',
         licenseKey: 'non-commercial-and-evaluation',
         dropdown: true,
-        contextMenu: ['row_above', 'row_below', '---------', 'remove_row', 'undo', 'redo'],
+        contextMenu: ['row_above', 'row_below', 'remove_row', '---------', 'clear_column', '---------', 'undo', 'redo'],
         minRows: 1,
         stretchH: 'all',
         preventOverflow: 'horizontal',
+        fixedColumnsStart: 2,
         dataSchema: {
           status: '',
           code: '',

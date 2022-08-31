@@ -33,7 +33,22 @@
                       <p>File was successfully uploaded, but failed to be processed. Please review the error below, fix the file, and try uploading again.</p>
                       <div class="font-weight-bold">{{ file.error || 'Unknown error'}}</div>
                     </Alert>
-                    <SeriesTable :series="file.series" :selected="selectedSeries" @select="selectSeries" v-else></SeriesTable>
+                    <div v-else>
+                      <SeriesTable
+                        :series="file.series"
+                        :selected="selectedSeries"
+                        @select="selectSeries"
+                        v-if="file.type === 'SERIES'"
+                        class="mb-4"
+                      ></SeriesTable>
+                      <ProfilesTable
+                        :profiles="file.profiles"
+                        :selected="selectedProfile"
+                        :columns="['id', 'date']"
+                        @select="selectProfile"
+                        v-else-if="file.type === 'PROFILES'"
+                      ></ProfilesTable>
+                    </div>
                   </div>
                 </v-col>
               </v-row>
@@ -48,12 +63,14 @@
 <script>
 import ManageFileInfo from '@/views/manage/files/ManageFileInfo'
 import SeriesTable from '@/components/SeriesTable'
+import ProfilesTable from '@/components/ProfilesTable'
 
 export default {
   name: 'ManageFile',
   components: {
     ManageFileInfo,
-    SeriesTable
+    SeriesTable,
+    ProfilesTable
   },
   data () {
     return {
@@ -62,6 +79,7 @@ export default {
       error: null,
       file: null,
       selectedSeries: null,
+      selectedProfile: null,
       timeout: null
     }
   },
@@ -97,6 +115,9 @@ export default {
     },
     selectSeries (series) {
       this.$router.push({ name: 'manageSeriesOne', params: { seriesId: series.id, from: 'file' } })
+    },
+    selectProfile (profile) {
+      this.$router.push({ name: 'manageProfile', params: { profileId: profile.id, from: 'file' } })
     }
   }
 }

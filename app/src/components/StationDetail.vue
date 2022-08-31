@@ -39,7 +39,7 @@
                 </tr>
                 <tr>
                   <td class="text-right grey--text text--darken-2" style="width:0px">
-                    Code
+                    Station Code
                   </td>
                   <td class="font-weight-bold">{{ station.code }}</td>
                 </tr>
@@ -96,9 +96,7 @@
 
           <!-- PROFILES -->
           <v-tab-item class="pa-4">
-            <Alert type="warning" title="Working on it!" class="mb-0">
-              Not yet implemented...
-            </Alert>
+            <StationDetailProfiles :station="station"></StationDetailProfiles>
           </v-tab-item>
         </v-tabs>
 
@@ -124,10 +122,12 @@
 <script>
 import evt from '@/events'
 import StationDetailSeries from '@/components/StationDetailSeries'
+import StationDetailProfiles from '@/components/StationDetailProfiles'
 export default {
   name: 'StationDetail',
   components: {
-    StationDetailSeries
+    StationDetailSeries,
+    StationDetailProfiles
   },
   props: ['station'],
   data () {

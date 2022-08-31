@@ -8,7 +8,7 @@ require('dotenv-flow').config({
 })
 
 const secretsmanager = new AWS.SecretsManager({
-  region: process.env.AWS_REGION_
+  region: process.env.AWS_REGION
 })
 
 async function getCreds () {

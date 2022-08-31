@@ -20,6 +20,7 @@ const {
   processFile
 } = require('../../controllers/files')
 const { getOrganizationSeries } = require('../../controllers/series')
+const { getOrganizationProfiles } = require('../../controllers/profiles')
 
 const router = express.Router()
 
@@ -54,5 +55,8 @@ router.route('/files/:fileId/process')
 
 router.route('/series')
   .get(asyncHandler(getOrganizationSeries))
+
+router.route('/profiles')
+  .get(asyncHandler(getOrganizationProfiles))
 
 module.exports = router

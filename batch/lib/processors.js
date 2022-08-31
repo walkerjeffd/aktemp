@@ -16,7 +16,7 @@ dayjs.tz.setDefault('UTC')
 
 const s3 = new AWS.S3({
   apiVersion: '2006-03-01',
-  region: process.env.AWS_REGION_
+  region: process.env.AWS_REGION
 })
 
 async function readFile (file) {
@@ -35,28 +35,7 @@ async function readFile (file) {
   return parsed
 }
 
-async function processFile (id) {
-  console.log(`processing file: id=${id}`)
-  const file = await File.query()
-    .findById(id)
-    .throwIfNotFound({
-      message: `file not found in database (id=${id})`
-    })
-
-  let results
-  if (file.type === 'SERIES') {
-    results = processSeriesFile(file)
-  } else if (file.type === 'PROFILES') {
-    // results = processProfilesFile(file)
-    throw new Error('Not yet implemented (file.type=\'PROFILES\')')
-  } else {
-    throw new Error('Invalid file type, should be \'SERIES\' or \'PROFILES\'')
-  }
-
-  return results
-}
-
-function parseSeriesValues (values, config) {
+function parseValues (values, config) {
   return values.map((d, i) => {
     return {
       datetime: parseTimestamp(d, config),
@@ -67,12 +46,22 @@ function parseSeriesValues (values, config) {
   })
 }
 
-async function processSeriesFile (file) {
-  if (!file) throw new Error('missing file')
-  console.log(`type: series (id=${file.id})`)
+async function processFile (id) {
+  if (!id) throw new Error('missing id')
 
-  // delete existing series
-  await file.$relatedQuery('series').delete()
+  console.log(`processing file: id=${id}`)
+  const file = await File.query()
+    .findById(id)
+    .throwIfNotFound({
+      message: `file not found in database (id=${id})`
+    })
+
+  console.log(`type: ${file.type} (id=${file.id})`)
+
+  const relationTable = file.type.toLowerCase()
+
+  // delete existing series/profiles
+  await file.$relatedQuery(relationTable).delete()
 
   // update file status
   await file.$query().patch({
@@ -81,13 +70,13 @@ async function processSeriesFile (file) {
   })
 
   // read file
-  const { data, meta } = await readFile(file)
+  const { data, meta: fileMeta } = await readFile(file)
 
   // add row number
   data.forEach((d, i) => { d.$row = i + 1 })
 
   // validate config
-  const config = await validateFileConfig(file.config, meta.fields)
+  const config = await validateFileConfig(file.config, fileMeta.fields)
 
   // get organization
   const organization = await file.$relatedQuery('organization')
@@ -115,7 +104,7 @@ async function processSeriesFile (file) {
 
   // parse values
   stationData.forEach(d => {
-    d.values = parseSeriesValues(d.values, config)
+    d.values = parseValues(d.values, config)
   })
 
   // fetch each station
@@ -136,26 +125,39 @@ async function processSeriesFile (file) {
     seriesDepth.depth_m = convertDepthUnits(file.config.depth.value, file.config.depth.units)
   }
 
-  // series meta
-  const seriesMeta = {
+  // meta
+  const meta = {
     ...file.config.meta
   }
 
-  // save each series
-  for (let i = 0; i < stationData.length; i++) {
-    const d3 = await import('d3')
-    const datetimes = stationData[i].values.map(d => d.datetime)
-    const datetimeExtent = d3.extent(datetimes)
-    const frequency = await medianFrequency(datetimes)
-    stationData[i].series = await stationData[i].station.$relatedQuery('series').insertGraph({
-      file_id: file.id,
-      values: stationData[i].values,
-      start_datetime: datetimeExtent[0],
-      end_datetime: datetimeExtent[1],
-      frequency,
-      ...seriesDepth,
-      ...seriesMeta
-    })
+  const d3 = await import('d3')
+  if (config.type === 'SERIES') {
+    // save each series
+    for (let i = 0; i < stationData.length; i++) {
+      const datetimes = stationData[i].values.map(d => d.datetime)
+      const datetimeExtent = d3.extent(datetimes)
+      const frequency = await medianFrequency(datetimes)
+
+      stationData[i].series = await stationData[i].station.$relatedQuery('series').insertGraph({
+        file_id: file.id,
+        values: stationData[i].values,
+        start_datetime: datetimeExtent[0],
+        end_datetime: datetimeExtent[1],
+        frequency,
+        ...seriesDepth,
+        ...meta
+      })
+    }
+  } else if (config.type === 'PROFILES') {
+    for (let i = 0; i < stationData.length; i++) {
+      const stationProfiles = Array.from(
+        d3.group(stationData[i].values, d => d.datetime.substr(0, 10)),
+        ([key, value]) => ({ date: key, values: value, file_id: file.id, ...meta })
+      )
+      stationData[i].profiles = await stationData[i].station
+        .$relatedQuery('profiles')
+        .insertGraph(stationProfiles)
+    }
   }
 
   // update file status

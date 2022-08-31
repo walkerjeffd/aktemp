@@ -102,7 +102,7 @@
                                 color="primary"
                                 outlined
                                 bloc
-                                @click="saveStationsFile"
+                                @click="downloadFile"
                                 class="mb-4 ml-4"
                               ><v-icon left>mdi-download</v-icon> Download Stations</v-btn>
                               <p class="black--text">After you have filled out the table in the template, copy and paste your files from Excel into the table above.</p>
@@ -613,7 +613,7 @@ export default {
         })
       }
     },
-    saveStationsFile () {
+    downloadFile () {
       this.$saveFile.csv(this.organization.stations, 'stations.csv', ['code', 'description', 'waterbody_name', 'waterbody_type', 'latitude', 'longitude'])
     },
     cancel () {

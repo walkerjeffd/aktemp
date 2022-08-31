@@ -5,9 +5,9 @@ const { parseTimestamp, parseValue, parseDepth } = require('../lib/parsers')
 describe('timestamp parser', () => {
   const config = {
     timestamp: {
-      column: 'datetime',
+      columns: ['datetime'],
       timezone: {
-        mode: 'utcOffset',
+        mode: 'UTCOFFSET',
         utcOffset: 0
       }
     }
@@ -21,9 +21,9 @@ describe('timestamp parser', () => {
   describe('utcOffset(0) mode', () => {
     const config = {
       timestamp: {
-        column: 'datetime',
+        columns: ['datetime'],
         timezone: {
-          mode: 'utcOffset',
+          mode: 'UTCOFFSET',
           utcOffset: 0
         }
       }
@@ -53,9 +53,9 @@ describe('timestamp parser', () => {
   describe('utcOffset(-8) mode', () => {
     const config = {
       timestamp: {
-        column: 'datetime',
+        columns: ['datetime'],
         timezone: {
-          mode: 'utcOffset',
+          mode: 'UTCOFFSET',
           utcOffset: -8
         }
       }
@@ -73,9 +73,9 @@ describe('timestamp parser', () => {
   describe('timestamp mode', () => {
     const config = {
       timestamp: {
-        column: 'datetime',
+        columns: ['datetime'],
         timezone: {
-          mode: 'timestamp'
+          mode: 'TIMESTAMP'
         }
       }
     }
@@ -92,9 +92,9 @@ describe('timestamp parser', () => {
   describe('column mode', () => {
     const config = {
       timestamp: {
-        column: 'datetime',
+        columns: ['datetime'],
         timezone: {
-          mode: 'column',
+          mode: 'COLUMN',
           column: 'utcOffset'
         }
       }
@@ -172,7 +172,7 @@ describe('value parser', () => {
 describe('depth parser', () => {
   const config = {
     depth: {
-      mode: 'column',
+      mode: 'COLUMN',
       column: 'depth',
       units: 'm'
     }
@@ -186,30 +186,30 @@ describe('depth parser', () => {
   test('numeric value passes', () => {
     expect(parseDepth({ depth: 5.1 }, config)).toBeCloseTo(5.1)
   })
-  test('conft ft to m', () => {
+  test('convert ft to m', () => {
     const config = {
       depth: {
-        mode: 'column',
+        mode: 'COLUMN',
         column: 'depth',
         units: 'ft'
       }
     }
     expect(parseDepth({ depth: 1 }, config)).toBeCloseTo(0.3048)
   })
-  test('conft in to m', () => {
+  test('convert in to m', () => {
     const config = {
       depth: {
-        mode: 'column',
+        mode: 'COLUMN',
         column: 'depth',
         units: 'in'
       }
     }
     expect(parseDepth({ depth: 12 }, config)).toBeCloseTo(0.3048)
   })
-  test('conft cm to m', () => {
+  test('convert cm to m', () => {
     const config = {
       depth: {
-        mode: 'column',
+        mode: 'COLUMN',
         column: 'depth',
         units: 'cm'
       }

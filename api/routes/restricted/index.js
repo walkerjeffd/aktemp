@@ -77,6 +77,7 @@ router.route('/organizations')
 
 router.use('/organizations/:organizationId', asyncHandler(attachOrganization), require('./organization'))
 router.use('/files', require('./files'))
+router.use('/profiles', require('./profiles'))
 router.use('/series', require('./series'))
 router.use('/stations', require('./stations'))
 

@@ -2,7 +2,7 @@ const AWS = require('aws-sdk')
 
 // const sns = new AWS.SNS({
 //   apiVersion: '2010-03-31',
-//   region: process.env.AWS_REGION_
+//   region: process.env.AWS_REGION
 // })
 
 // exports.notify = async (subject, message) => {
@@ -21,12 +21,12 @@ const AWS = require('aws-sdk')
 
 exports.s3 = new AWS.S3({
   apiVersion: '2006-03-01',
-  region: process.env.AWS_REGION_
+  region: process.env.AWS_REGION
 })
 
 // const lambda = new AWS.Lambda({
 //   apiVersion: '2015-03-31',
-//   region: process.env.AWS_REGION_
+//   region: process.env.AWS_REGION
 // })
 
 // exports.invokeWorker = (payload) => {
@@ -40,7 +40,7 @@ exports.s3 = new AWS.S3({
 
 exports.batch = new AWS.Batch({
   apiVersion: '2016-08-10',
-  region: process.env.AWS_REGION_
+  region: process.env.AWS_REGION
 })
 
 exports.createPresignedPostPromise = (params) => {

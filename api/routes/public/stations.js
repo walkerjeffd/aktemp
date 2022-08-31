@@ -7,7 +7,8 @@ const {
   getStation,
   getStationSeries,
   getStationSeriesDaily,
-  getStationProfiles
+  getStationProfiles,
+  getStationProfilesValues
 } = require('../../controllers/stations')
 
 const router = express.Router()
@@ -34,5 +35,9 @@ router.route('/:stationId/series/daily')
 router.route('/:stationId/profiles')
   .all(asyncHandler(attachStation))
   .get(asyncHandler(getStationProfiles))
+
+router.route('/:stationId/profiles/values')
+  .all(asyncHandler(attachStation))
+  .get(asyncHandler(getStationProfilesValues))
 
 module.exports = router

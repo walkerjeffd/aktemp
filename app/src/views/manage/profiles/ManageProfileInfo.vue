@@ -1,78 +1,60 @@
 <template>
   <v-sheet elevation="2">
-    <v-simple-table dense>
+    <v-simple-table dense v-if="profile">
       <tbody>
         <tr>
           <td class="text-right grey--text text--darken-2" style="width:100px">
-            Series ID
+            Profile ID
           </td>
-          <td class="font-weight-bold">{{ series.id }}</td>
+          <td class="font-weight-bold">{{ profile.id }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             Organization
           </td>
-          <td class="font-weight-bold">{{ series.organization_code }}</td>
+          <td class="font-weight-bold">{{ profile.organization_code }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             Station
           </td>
-          <td class="font-weight-bold"><router-link :to="{ name: 'manageStation', params: { stationId: series.station_id }}">{{ series.station_code }}</router-link></td>
+          <td class="font-weight-bold"><router-link :to="{ name: 'manageStation', params: { stationId: profile.station_id }}">{{ profile.station_code }}</router-link></td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             File
           </td>
-          <td class="font-weight-bold"><router-link :to="{ name: 'manageFile', params: { fileId: series.file_id }}">{{ series.file_filename }}</router-link></td>
+          <td class="font-weight-bold"><router-link :to="{ name: 'manageFile', params: { fileId: profile.file_id }}">{{ profile.file_filename }}</router-link></td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Start
+            Date
           </td>
-          <td class="font-weight-bold">{{ series.start_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z') }}</td>
+          <td class="font-weight-bold">{{ profile.date | timestampTimezoneFormat(profile.station_timezone, 'll') }}</td>
         </tr>
-        <tr>
+        <!-- <tr>
           <td class="text-right grey--text text--darken-2">
-            End
+            Depth Range
           </td>
-          <td class="font-weight-bold">{{ series.end_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z') }}</td>
-        </tr>
-        <tr>
-          <td class="text-right grey--text text--darken-2">
-            Depth
-          </td>
-          <td class="font-weight-bold">{{ series | seriesDepth }}</td>
-        </tr>
-        <tr>
-          <td class="text-right grey--text text--darken-2">
-            Interval
-          </td>
-          <td class="font-weight-bold">{{ series.interval }}</td>
-        </tr>
-        <tr>
-          <td class="text-right grey--text text--darken-2">
-            Frequency
-          </td>
-          <td class="font-weight-bold">{{ series.frequency ? `${series.frequency} min` : '' }}</td>
-        </tr>
+          <td class="font-weight-bold">TODO</td>
+        </tr> -->
         <tr>
           <td class="text-right grey--text text--darken-2">
             Accuracy
           </td>
-          <td class="font-weight-bold">{{ series.accuracy | formatBooleanOption }}</td>
+          <td class="font-weight-bold">{{ profile.accuracy | formatBooleanOption }}</td>
         </tr>
-        <tr>
+        <!-- <tr>
           <td class="text-right grey--text text--darken-2">
             SOP Bath
           </td>
-          <td class="font-weight-bold">{{ series.sop_bath | formatBooleanOption }}</td>
-        </tr>
+          <td class="font-weight-bold">{{ profile.sop_bath | formatBooleanOption }}</td>
+        </tr> -->
         <tr>
           <td class="text-right grey--text text--darken-2">
             Reviewed
           </td>
-          <td class="font-weight-bold">{{ series.reviewed | formatBooleanOption }}</td>
+          <td class="font-weight-bold">{{ profile.reviewed | formatBooleanOption }}</td>
         </tr>
       </tbody>
     </v-simple-table>
@@ -92,7 +74,7 @@
           disabled
         >
           <v-icon left>mdi-delete</v-icon>
-          Edit Series
+          Edit Profile
         </v-btn>
         <v-btn
           color="error"
@@ -103,7 +85,7 @@
           :loading="deleteStatus.loading"
         >
           <v-icon left>mdi-delete</v-icon>
-          Delete Series
+          Delete Profile
         </v-btn>
       </div>
       <Alert type="error" title="Error Occurred" v-if="deleteStatus.error">{{ deleteStatus.error }}</Alert>
@@ -119,7 +101,7 @@
       >
         <div class="font-weight-bold body-1">Are you sure?</div>
         <div>
-          This timeseries and all its data will be permanently deleted. This action cannot be undone.
+          This profile and all its data will be permanently deleted. This action cannot be undone.
         </div>
       </v-alert>
     </ConfirmDialog>
@@ -128,8 +110,8 @@
 
 <script>
 export default {
-  name: 'ManageSeriesInfo',
-  props: ['series'],
+  name: 'ManageProfileInfo',
+  props: ['profile'],
   data () {
     return {
       deleteStatus: {
@@ -152,8 +134,8 @@ export default {
       this.deleteStatus.loading = true
       this.deleteStatus.error = null
       try {
-        await this.$http.restricted.delete(`/series/${this.series.id}`)
-        this.$router.push({ name: 'manageSeries' })
+        await this.$http.restricted.delete(`/profile/${this.profile.id}`)
+        this.$router.push({ name: 'manageProfiles' })
       } catch (err) {
         console.error(err)
         this.deleteStatus.error = err.toString() || 'Unknown error'

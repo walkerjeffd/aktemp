@@ -1,16 +1,16 @@
 <template>
-  <v-sheet class="elevation-2 py-8 px-4">
-    <Loading v-if="loading"></Loading>
-    <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data">{{ error }}</Alert>
-    <Alert v-else-if="values && values.length === 0" type="error" title="No Data">This timeseries does not have any data</Alert>
+  <v-sheet class="elevation-2 pb-8 px-4">
+    <Loading v-if="loading" class="pt-4"></Loading>
+    <Alert v-else-if="error" type="error" title="Failed to Get Profile Data">{{ error }}</Alert>
+    <Alert v-else-if="values && values.length === 0" type="error" title="No Data">This profile does not have any data</Alert>
     <highcharts v-else :options="chart"></highcharts>
   </v-sheet>
 </template>
 
 <script>
 export default {
-  name: 'ManageSeriesChart',
-  props: ['series'],
+  name: 'ManageProfileChart',
+  props: ['profile'],
   data () {
     return {
       loading: true,
@@ -18,17 +18,14 @@ export default {
       values: [],
       chart: {
         chart: {
-          zoomType: 'x',
-          height: 300,
+          height: 500,
           marginLeft: 60,
           marginRight: 20,
-          panning: true,
-          panKey: 'shift'
+          type: 'scatter'
         },
         plotOptions: {
-          series: {
-            boostThreshold: 1,
-            turboThreshold: 0
+          scatter: {
+            lineWidth: '0.5px'
           }
         },
         title: {
@@ -38,12 +35,11 @@ export default {
           enabled: false
         },
         tooltip: {
-          pointFormat: 'Temperature: <b>{point.y}</b> degC'
+          pointFormat: 'Depth: <b>{point.y}</b> m<br>Temp: <b>{point.x}</b> degC',
+          headerFormat: ''
         },
         xAxis: {
-          type: 'datetime'
-        },
-        yAxis: {
+          opposite: true,
           title: {
             text: 'Temperature (degC)',
             margin: 14,
@@ -52,6 +48,16 @@ export default {
             }
           }
         },
+        yAxis: {
+          title: {
+            text: 'Depth (m)',
+            margin: 14,
+            style: {
+              fontSize: '16px'
+            }
+          },
+          reversed: true
+        },
         series: []
       }
     }
@@ -59,21 +65,26 @@ export default {
   mounted () {
     this.fetch()
   },
+  watch: {
+    profile () {
+      this.fetch()
+    }
+  },
   methods: {
     async fetch () {
       this.loading = true
       this.error = null
 
       try {
-        const response = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/values`)
+        const response = await this.$http.restricted.get(`/profiles/${this.$route.params.profileId}/values`)
         this.values = Object.freeze(response.data)
         this.chart.series = [{
-          name: this.$route.params.seriesId,
+          name: this.$route.params.profileId,
           marker: {
-            enabled: false
+            enabled: true
           },
           data: this.values.map(v => {
-            return [(new Date(v.datetime)).valueOf(), v.value]
+            return [v.value, v.depth_m]
           })
         }]
       } catch (err) {

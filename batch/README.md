@@ -5,7 +5,7 @@ Set environmental variables
 ```sh
 source .env.<NODE_ENV>.local
 # or (manually)
-export AWS_REGION_=
+export AWS_REGION=
 export AWS_SECRET_DB=
 export NOTIFY_TOPIC=
 ```
@@ -27,7 +27,7 @@ node process.js files <id>
 source .env.development.local
 
 # log in
-aws ecr get-login-password --region ${AWS_REGION_} | docker login --username AWS --password-stdin ${AWS_REPO}
+aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_REPO}
 
 # build image (Intel chip)
 docker build -t ${AWS_REPO} .

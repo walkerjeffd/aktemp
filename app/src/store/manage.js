@@ -19,13 +19,18 @@ export default {
       series: {
         loading: false,
         error: null
+      },
+      profiles: {
+        loading: false,
+        error: null
       }
     },
     organizations: [],
     organization: null,
     stations: [],
     files: [],
-    series: []
+    series: [],
+    profiles: []
   }),
   getters: {
     organizations: state => state.organizations,
@@ -33,10 +38,12 @@ export default {
     stations: state => state.stations,
     files: state => state.files,
     series: state => state.series,
+    profiles: state => state.profiles,
     organizationsStatus: state => state.status.organizations,
     stationsStatus: state => state.status.stations,
     filesStatus: state => state.status.files,
-    seriesStatus: state => state.status.series
+    seriesStatus: state => state.status.series,
+    profilesStatus: state => state.status.profiles
   },
   mutations: {
     SET_ORGANIZATIONS (state, organizations) {
@@ -53,6 +60,9 @@ export default {
     },
     SET_SERIES (state, series) {
       state.series = series
+    },
+    SET_PROFILES (state, profiles) {
+      state.profiles = profiles
     },
     SET_STATUS (state, [collection, loading, error]) {
       state.status[collection].loading = loading
@@ -127,6 +137,19 @@ export default {
         return data
       } catch (err) {
         commit('SET_STATUS', ['series', false, err])
+      }
+    },
+    async fetchProfiles ({ commit, state }) {
+      if (!state.organization) return
+      commit('SET_STATUS', ['profiles', true, null])
+      try {
+        const response = await restrictedApi.get(`/organizations/${state.organization.id}/profiles`)
+        const data = response.data
+        commit('SET_PROFILES', data)
+        commit('SET_STATUS', ['profiles', false, null])
+        return data
+      } catch (err) {
+        commit('SET_STATUS', ['profiles', false, err])
       }
     }
   }

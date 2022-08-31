@@ -1,30 +1,30 @@
 <template>
   <div>
     <Loading v-if="loading" class="pb-8"></Loading>
-    <Alert type="error" v-else-if="series.length === 0" title="No Timeseries Data Available" class="mb-0">
+    <Alert type="error" v-else-if="series.length === 0" title="No Timeseries Available" class="mb-0">
       This station does not have any timeseries data.
     </Alert>
     <div v-else>
       <highcharts :options="chart"></highcharts>
       <div class="text--secondary caption text-right"><v-icon x-small>mdi-information-outline</v-icon> Click+drag to zoom in. Shift+click to slide.</div>
-      <v-divider class="mt-2"></v-divider>
+      <!-- <v-divider class="mt-2"></v-divider>
       <v-simple-table dense>
         <tbody>
           <tr>
             <td class="text-right grey--text text--darken-2" style="width:120px">
               # Timeseries
             </td>
-            <td class="font-weight-bold">{{ series.length }}</td>
+            <td class="font-weight-bold"></td>
           </tr>
         </tbody>
-      </v-simple-table>
+      </v-simple-table> -->
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'StationSeriesChart',
+  name: 'StationDetailSeries',
   props: ['station'],
   data () {
     return {
@@ -53,7 +53,7 @@ export default {
           enabled: false
         },
         tooltip: {
-          xDateFormat: '%b %d, %Y',
+          xDateFormat: '%Y-%m-%d',
           pointFormat: 'Daily Mean: <b>{point.y} °C</b>',
           valueDecimals: 1,
           enabled: true
@@ -88,57 +88,48 @@ export default {
       this.loading = true
       const response = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
       const series = response.data
-      const seriesValues = await Promise.all(series.map(async (d) => {
-        const response = await this.$http.public.get(`/series/${d.id}/daily`)
-        return {
-          ...d,
-          values: response.data
-        }
-      }))
       this.series = series
-      this.chart.series = seriesValues.map(s => {
-        return [
-          {
-            name: `${s.id}`,
-            marker: {
-              enabled: false
-            },
-            zIndex: 1,
-            lineWidth: 1,
-            data: s.values.map(v => {
-              return [
-                (new Date(v.date)).valueOf(),
-                v.mean,
-                v.min.toFixed(1),
-                v.max.toFixed(1)
-              ]
-            })
+      this.chart.series = [
+        {
+          name: 'mean',
+          marker: {
+            enabled: false
           },
-          {
-            name: `${s.id}-range`,
-            type: 'arearange',
-            data: s.values.map(v => {
-              return [
-                (new Date(v.date)).valueOf(),
-                v.min,
-                v.max
-              ]
-            }),
-            lineWidth: 0,
-            linkedTo: ':previous',
-            enableMouseTracking: false,
-            color: 'black',
-            fillOpacity: 0.2,
-            zIndex: 0,
-            label: {
-              enabled: false
-            },
-            marker: {
-              enabled: false
-            }
+          zIndex: 1,
+          lineWidth: 1,
+          data: series.map(v => {
+            return [
+              (new Date(v.date)).valueOf(),
+              v.mean,
+              v.min.toFixed(1),
+              v.max.toFixed(1)
+            ]
+          })
+        },
+        {
+          name: 'range',
+          type: 'arearange',
+          data: series.map(v => {
+            return [
+              (new Date(v.date)).valueOf(),
+              v.min,
+              v.max
+            ]
+          }),
+          lineWidth: 0,
+          linkedTo: ':previous',
+          enableMouseTracking: false,
+          color: 'black',
+          fillOpacity: 0.5,
+          zIndex: 0,
+          label: {
+            enabled: false
+          },
+          marker: {
+            enabled: false
           }
-        ]
-      }).flat()
+        }
+      ]
       this.loading = false
     }
   }

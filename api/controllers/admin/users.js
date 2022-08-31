@@ -4,7 +4,7 @@ const createError = require('http-errors')
 const { User } = require('../../db/models')
 
 const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({
-  region: process.env.AWS_REGION_
+  region: process.env.AWS_REGION
 })
 const userPoolId = process.env.AWS_COGNITO_USER_POOL_ID
 

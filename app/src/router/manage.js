@@ -13,6 +13,7 @@ import ManageSeries from '@/views/manage/series/ManageSeries.vue'
 import ManageSeriesOne from '@/views/manage/series/ManageSeriesOne.vue'
 
 import ManageProfiles from '@/views/manage/profiles/ManageProfiles.vue'
+import ManageProfile from '@/views/manage/profiles/ManageProfile.vue'
 
 import ManageQaqc from '@/views/manage/qaqc/ManageQaqc.vue'
 
@@ -39,12 +40,26 @@ export default [
       {
         path: 'series',
         name: 'manageSeries',
-        component: ManageSeries
+        component: ManageSeries,
+        children: [
+          {
+            path: ':seriesId',
+            name: 'manageSeriesOne',
+            component: ManageSeriesOne
+          }
+        ]
       },
       {
         path: 'profiles',
         name: 'manageProfiles',
-        component: ManageProfiles
+        component: ManageProfiles,
+        children: [
+          {
+            path: ':profileId',
+            name: 'manageProfile',
+            component: ManageProfile
+          }
+        ]
       },
       {
         path: 'qaqc',
@@ -89,14 +104,6 @@ export default [
     path: '/manage/files/:fileId',
     name: 'manageFile',
     component: ManageFile,
-    meta: {
-      requiresAuth: true
-    }
-  },
-  {
-    path: '/manage/series/:seriesId',
-    name: 'manageSeriesOne',
-    component: ManageSeriesOne,
     meta: {
       requiresAuth: true
     }

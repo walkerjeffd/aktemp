@@ -42,7 +42,7 @@
                 ></v-text-field>
               </v-col>
               <v-col cols="12" md="3" class="text-right">
-                <v-btn color="info" small disabled>
+                <v-btn color="info" small @click="downloadFile">
                   <v-icon small left>mdi-download</v-icon>
                   CSV File
                 </v-btn>
@@ -140,6 +140,9 @@ export default {
     },
     select (station) {
       this.$emit('select', station)
+    },
+    downloadFile () {
+      this.$saveFile.csv(this.stations, 'stations.csv', ['organization_code', 'code', 'description', 'waterbody_name', 'waterbody_type', 'latitude', 'longitude', 'placement', 'mixed', 'active', 'reference'])
     }
   }
 }

@@ -1,4 +1,5 @@
 const createError = require('http-errors')
+const { raw } = require('objection')
 const { Station } = require('../db/models')
 
 const getStations = async (req, res, next) => {
@@ -52,14 +53,27 @@ const getStationSeries = async (req, res, next) => {
 }
 
 const getStationSeriesDaily = async (req, res, next) => {
-  const rows = await res.locals.station.$relatedQuery('series')
-    .withGraphFetched('values(daily)')
-  return res.status(200).json(rows)
+  const values = await res.locals.station.$relatedQuery('series')
+    .select(raw('to_char(values.datetime at time zone "timezone", \'YYYY-MM-DD\') as date'))
+    .select(raw('count(values.*)::integer as n'))
+    .min('value as min')
+    .max('value as max')
+    .avg('value as mean')
+    .joinRelated('[values, station]')
+    .groupBy('date')
+    .orderBy('date')
+  return res.status(200).json(values)
 }
 
 const getStationProfiles = async (req, res, next) => {
   const profiles = await res.locals.station.$relatedQuery('profiles')
   return res.status(200).json(profiles)
+}
+
+const getStationProfilesValues = async (req, res, next) => {
+  const profilesValues = await res.locals.station.$relatedQuery('profiles')
+    .withGraphFetched('values(defaultSelect)')
+  return res.status(200).json(profilesValues)
 }
 
 const putStation = async (req, res, next) => {
@@ -86,6 +100,7 @@ module.exports = {
   getStationSeries,
   getStationSeriesDaily,
   getStationProfiles,
+  getStationProfilesValues,
   putStation,
   deleteStation
 }

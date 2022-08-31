@@ -18,6 +18,7 @@ class Profile extends Base {
 
   static get relationMappings () {
     const File = require('./File')
+    const Station = require('./Station')
     const ProfileValue = require('./ProfileValue')
     return {
       file: {
@@ -26,6 +27,14 @@ class Profile extends Base {
         join: {
           from: 'profiles.file_id',
           to: 'files.id'
+        }
+      },
+      station: {
+        relation: Base.BelongsToOneRelation,
+        modelClass: Station,
+        join: {
+          from: 'profiles.station_id',
+          to: 'stations.id'
         }
       },
       values: {

@@ -292,9 +292,11 @@
                       <v-form ref="depthForm" @input="resetDepth()">
                         <div class="text-h6">Depth</div>
 
-                        <p>What kind of depth information is available?</p>
+                        <p v-if="file.type !== 'PROFILES'">
+                          What kind of depth information is available?
+                        </p>
 
-                        <div class="text-center">
+                        <div class="text-center" v-if="file.type !== 'PROFILES'">
                           <v-btn-toggle v-model="depth.mode" @change="resetDepth()">
                             <v-btn value="COLUMN">
                               <v-icon left>mdi-chart-line-variant</v-icon>
@@ -667,7 +669,7 @@
                           <pre v-if="debug">meta.sop_bath: {{ meta.sop_bath }}</pre>
                         </div>
 
-                        <div v-if="(file.type === 'SERIES_CONTINUOUS' && !!meta.sop_bath) || file.type == 'SERIES_DISCRETE'">
+                        <div v-if="(file.type === 'SERIES_CONTINUOUS' && !!meta.sop_bath) || file.type === 'SERIES_DISCRETE' || file.type === 'PROFILES'">
                           <p>
                             What was the sensor accuracy level?
                           </p>
@@ -862,6 +864,7 @@ export default {
             return true
           }
         ],
+        type: null,
         selected: null,
         parsed: null
       },
@@ -1170,6 +1173,12 @@ export default {
         return
       }
 
+      if (this.file.type === 'PROFILES') {
+        this.depth.mode = 'COLUMN'
+      } else {
+        this.depth.mode = null
+      }
+
       this.step += 1
     },
     resetStation () {
@@ -1385,7 +1394,9 @@ export default {
         case 'COLUMN':
           config.depth.column = this.depth.column.selected
           config.depth.units = this.depth.units.selected
-          config.depth.category = 'VARYING'
+          if (config.type === 'SERIES') {
+            config.depth.category = 'VARYING'
+          }
           break
         case 'VALUE':
           config.depth.value = this.depth.value.selected

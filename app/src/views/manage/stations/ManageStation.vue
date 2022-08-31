@@ -29,14 +29,27 @@
                   <ManageStationInfo :station="station" @refresh="fetchStation"></ManageStationInfo>
                 </v-col>
                 <v-col cols="12" lg="8">
-                  <Alert type="error" title="Failed to Get Timeseries" v-if="seriesStatus.error">{{ seriesStatus.error }}</Alert>
-                  <SeriesTable
-                    :series="series"
-                    :loading="seriesStatus.loading"
-                    :columns="['id', 'start_datetime', 'end_datetime', 'depth_m', 'depth_category']"
-                    @select="selectSeries"
-                    v-else
-                  ></SeriesTable>
+                  <div>
+                    <Alert type="error" title="Failed to Get Timeseries" v-if="seriesStatus.error">{{ seriesStatus.error }}</Alert>
+                    <SeriesTable
+                      :series="series"
+                      :loading="seriesStatus.loading"
+                      :columns="['id', 'start_datetime', 'end_datetime', 'depth_m', 'depth_category']"
+                      @select="selectSeries"
+                      v-else
+                    ></SeriesTable>
+                  </div>
+
+                  <div class="mt-4">
+                    <Alert type="error" title="Failed to Get Vertical Profiles" v-if="profilesStatus.error">{{ profilesStatus.error }}</Alert>
+                    <ProfilesTable
+                      :profiles="profiles"
+                      :loading="profilesStatus.loading"
+                      :columns="['id', 'date']"
+                      @select="selectProfile"
+                      v-else
+                    ></ProfilesTable>
+                  </div>
                 </v-col>
               </v-row>
             </v-container>
@@ -50,6 +63,7 @@
 <script>
 import StationsMap from '@/components/StationsMap'
 import SeriesTable from '@/components/SeriesTable'
+import ProfilesTable from '@/components/ProfilesTable'
 import ManageStationInfo from '@/views/manage/stations/ManageStationInfo'
 
 export default {
@@ -57,7 +71,8 @@ export default {
   components: {
     ManageStationInfo,
     StationsMap,
-    SeriesTable
+    SeriesTable,
+    ProfilesTable
   },
   data () {
     return {
@@ -70,12 +85,18 @@ export default {
         loading: true,
         error: false
       },
-      series: []
+      series: [],
+      profilesStatus: {
+        loading: true,
+        error: false
+      },
+      profiles: []
     }
   },
   mounted () {
     this.fetchStation()
     this.fetchSeries()
+    this.fetchProfiles()
   },
   methods: {
     async fetchStation () {
@@ -102,9 +123,25 @@ export default {
         this.seriesStatus.loading = false
       }
     },
+    async fetchProfiles () {
+      this.profilesStatus.loading = true
+      this.profilesStatus.error = null
+      try {
+        const response = await this.$http.restricted.get(`/stations/${this.$route.params.stationId}/profiles`)
+        this.profiles = response.data
+      } catch (err) {
+        this.profilesStatus.error = err.toString() || 'Unknown error'
+      } finally {
+        this.profilesStatus.loading = false
+      }
+    },
     selectSeries (series) {
       if (!series) return
       this.$router.push({ name: 'manageSeriesOne', params: { seriesId: series.id, from: 'station' } })
+    },
+    selectProfile (profile) {
+      if (!profile) return
+      this.$router.push({ name: 'manageProfile', params: { profileId: profile.id, from: 'station' } })
     }
   }
 }

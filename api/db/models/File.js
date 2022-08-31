@@ -42,7 +42,7 @@ class File extends Base {
         modelClass: Profile,
         join: {
           from: 'files.id',
-          to: 'profile.file_id'
+          to: 'profiles.file_id'
         }
       }
     }

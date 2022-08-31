@@ -239,7 +239,7 @@
           },
           "Environment": [
             {
-              "Name": "AWS_REGION_",
+              "Name": "AWS_REGION",
               "Value": { "Ref": "AWS::Region" }
             },
             {

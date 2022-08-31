@@ -87,17 +87,9 @@
           <router-link :to="{ name: 'request' }">Don't have an account?</router-link>
         </div>
 
-        <v-alert
-          type="error"
-          text
-          colored-border
-          border="left"
-          class="body-2 mb-0 mt-4"
-          :value="!!error"
-        >
-          <div class="body-1 font-weight-bold">Server Error</div>
-          <div>{{error}}</div>
-        </v-alert>
+        <Alert type="error" title="Server Error" class="mb-0 mt-4" v-if="error">
+          {{error}}
+        </Alert>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -182,17 +174,15 @@ export default {
       try {
         this.loading = true
         user = await this.$Amplify.Auth.signIn(this.email.value, this.password.value)
-        // if (user.challengeName === '')
-        // console.log('user', user)
-        // user = await this.$Amplify.Auth.currentAuthenticatedUser()
       } catch (err) {
-        console.error(JSON.stringify(err, null, 2))
-
-        console.error(err.code)
         if (err.code && err.code === 'UserNotConfirmedException') {
           evt.$emit('localUser', { username: this.email.value })
           evt.$emit('authState', { state: 'confirmSignUp' })
-        } else throw err
+        } else {
+          console.error(err)
+          this.error = this.$errorMessage(err)
+          return
+        }
       } finally {
         this.loading = false
       }
@@ -240,10 +230,8 @@ export default {
         })
         .catch((err) => {
           console.error(err)
-          this.err = this.$errorMessage(err)
-        })
-        .finally(() => {
           this.loading = false
+          this.error = this.$errorMessage(err)
         })
     },
     clear () {

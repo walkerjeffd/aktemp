@@ -32,10 +32,9 @@ const stationSchema = (fields) => {
   })
 }
 
-const depthSchema = (fields) => {
+const depthSchema = (fields, type) => {
   const validFields = Joi.string().valid(...fields)
-  return Joi.object({
-    mode: Joi.string().valid('COLUMN', 'VALUE', 'CATEGORY', 'UNKNOWN').required(),
+  const schema = {
     column: validFields.when('mode', {
       is: 'COLUMN',
       then: Joi.required()
@@ -55,7 +54,20 @@ const depthSchema = (fields) => {
       is: 'CATEGORY',
       then: Joi.string().valid('BOTTOM', 'MID-DEPTH', 'SURFACE', 'VARYING').required()
     })
-  })
+  }
+
+  switch (type) {
+    case 'SERIES':
+      schema.mode = Joi.string().valid('COLUMN', 'VALUE', 'CATEGORY', 'UNKNOWN').required()
+      break
+    case 'PROFILES':
+      schema.mode = Joi.string().valid('COLUMN').required()
+      break
+    default:
+      throw new Error(`Missing or invalid config type ('${type}')`)
+  }
+
+  return Joi.object(schema)
 }
 
 const timestampSchema = (fields) => {
@@ -90,31 +102,29 @@ const valueSchema = (fields) => {
   })
 }
 
-const metaSchema = (fields) => {
+const metaSchema = (fields, type) => {
   const validFields = Joi.string().valid(...fields)
-  return Joi.object({
-    interval: Joi.string().valid('CONTINUOUS', 'DISCRETE').required(),
+  const schema = {
     accuracy: Joi.string().valid('1', '2', '3'),
     sop_bath: Joi.boolean().allow('', null),
     reviewed: Joi.boolean().allow('', null),
     flagColumn: validFields
-  })
+  }
+  if (type === 'SERIES') {
+    schema.interval = Joi.string().valid('CONTINUOUS', 'DISCRETE').required()
+  }
+  return Joi.object(schema)
 }
 
-const configSchema = (fields) => {
+const configSchema = (fields, type) => {
   return Joi.object({
     type: Joi.string().valid('SERIES', 'PROFILES').required(),
     station: stationSchema(fields).required(),
-    depth: depthSchema(fields).required(),
+    depth: depthSchema(fields, type).required(),
     timestamp: timestampSchema(fields).required(),
     value: valueSchema(fields).required(),
-    meta: metaSchema(fields).required()
+    meta: metaSchema(fields, type).required()
   })
-}
-
-function validateFileConfig (config, fields) {
-  fields = validateFileFields(fields)
-  return validateSchema(configSchema(fields), config)
 }
 
 function validateSchema (schema, input) {
@@ -128,12 +138,16 @@ function validateSchema (schema, input) {
   return value
 }
 
+function validateFileConfig (config, fields) {
+  fields = validateFileFields(fields)
+  return validateSchema(configSchema(fields, config.type), config)
+}
+
 module.exports = {
   validateSchema,
   validateFileConfig,
   validateFileFields,
   schemas: {
-    config: configSchema,
     station: stationSchema,
     depth: depthSchema,
     timestamp: timestampSchema,

@@ -9,7 +9,7 @@ class SeriesValue extends Base {
   static get modifiers () {
     return {
       defaultSelect (builder) {
-        builder.select('datetime', 'value')
+        builder.select('datetime', 'value', 'flag_id', 'flag_other')
       },
       defaultOrderBy (builder) {
         builder.orderBy('datetime')

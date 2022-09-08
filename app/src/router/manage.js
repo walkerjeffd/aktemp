@@ -1,12 +1,12 @@
 import Manage from '@/views/manage/Manage.vue'
 
 import ManageStations from '@/views/manage/stations/ManageStations.vue'
-import ManageStationsImport from '@/views/manage/stations/ManageStationsImport.vue'
+import ManageStationsBatch from '@/views/manage/stations/ManageStationsBatch.vue'
 import ManageStation from '@/views/manage/stations/ManageStation.vue'
 
 import ManageFiles from '@/views/manage/files/ManageFiles.vue'
-import ManageFileUpload from '@/views/manage/files/ManageFileUpload.vue'
-import ManageFileBatch from '@/views/manage/files/ManageFileBatch.vue'
+import ManageFileForm from '@/views/manage/files/ManageFileForm.vue'
+import ManageFilesBatch from '@/views/manage/files/ManageFilesBatch.vue'
 import ManageFile from '@/views/manage/files/ManageFile.vue'
 
 import ManageSeries from '@/views/manage/series/ManageSeries.vue'
@@ -16,6 +16,7 @@ import ManageProfiles from '@/views/manage/profiles/ManageProfiles.vue'
 import ManageProfile from '@/views/manage/profiles/ManageProfile.vue'
 
 import ManageQaqc from '@/views/manage/qaqc/ManageQaqc.vue'
+import ManageQaqcSeries from '@/views/manage/qaqc/ManageQaqcSeries.vue'
 
 export default [
   {
@@ -64,14 +65,21 @@ export default [
       {
         path: 'qaqc',
         name: 'manageQaqc',
-        component: ManageQaqc
+        component: ManageQaqc,
+        children: [
+          {
+            path: ':seriesId',
+            name: 'manageQaqcSeries',
+            component: ManageQaqcSeries
+          }
+        ]
       }
     ]
   },
   {
-    path: '/manage/stations/import',
-    name: 'manageStationsImport',
-    component: ManageStationsImport,
+    path: '/manage/stations/batch',
+    name: 'manageStationsBatch',
+    component: ManageStationsBatch,
     meta: {
       requiresAuth: true
     }
@@ -86,16 +94,16 @@ export default [
   },
   {
     path: '/manage/files/upload',
-    name: 'manageFileUpload',
-    component: ManageFileUpload,
+    name: 'manageFileForm',
+    component: ManageFileForm,
     meta: {
       requiresAuth: true
     }
   },
   {
     path: '/manage/files/batch',
-    name: 'manageFileBatch',
-    component: ManageFileBatch,
+    name: 'manageFilesBatch',
+    component: ManageFilesBatch,
     meta: {
       requiresAuth: true
     }

@@ -18,10 +18,10 @@
           <v-toolbar-title class="text-h5">Data Files</v-toolbar-title>
           <RefreshButton @click="fetch"></RefreshButton>
           <v-spacer></v-spacer>
-          <v-btn color="success" :to="{ name: 'manageFileUpload' }" class="mr-2">
+          <v-btn color="success" :to="{ name: 'manageFileForm' }" class="mr-2">
             <v-icon left>mdi-upload</v-icon> Upload File
           </v-btn>
-          <v-btn color="success" class="ml-2" :to="{ name: 'manageFileBatch' }">
+          <v-btn color="success" class="ml-2" :to="{ name: 'manageFilesBatch' }">
             <v-icon left>mdi-file-multiple-outline</v-icon> Batch Upload
           </v-btn>
         </v-toolbar>

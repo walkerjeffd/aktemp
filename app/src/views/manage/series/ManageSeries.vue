@@ -117,8 +117,8 @@ export default {
       status: 'manage/seriesStatus'
     })
   },
-  mounted () {
-    this.fetch()
+  async mounted () {
+    await this.fetch()
   },
   watch: {
     organization () {

@@ -23,7 +23,7 @@ class Station extends Base {
           Station.relatedQuery('series')
             .max('end_datetime')
             .as('series_end_datetime')
-        ).debug()
+        )
       },
       profilesSummary (builder) {
         builder.select(

@@ -1,6 +1,24 @@
+export const fieldConstraints = {
+  station: {
+    code: {
+      minLength: 1,
+      maxLength: 50
+    },
+    description: {
+      maxLength: 250
+    },
+    waterbodyName: {
+      maxLength: 50
+    }
+  }
+}
+
+export const stationModes = ['STATION', 'COLUMN']
+
 export const fileTypeOptions = [
-  { value: 'SERIES', label: 'Timeseries' },
-  { value: 'PROFILES', label: 'Profiles' }
+  { value: 'CONTINUOUS', label: 'Continuous Timeseries' },
+  { value: 'DISCRETE', label: 'Discrete Measurements' },
+  { value: 'PROFILES', label: 'Vertical Profiles' }
 ]
 
 export const variableOptions = [
@@ -9,6 +27,8 @@ export const variableOptions = [
     label: 'Temperature (degC)'
   }
 ]
+
+export const depthModes = ['COLUMN', 'VALUE', 'CATEGORY']
 
 export const depthCategoryOptions = [
   { value: 'SURFACE', label: 'Surface' },
@@ -31,6 +51,10 @@ export const sensorAccuracyOptions = [
 export const timezoneOptions = [
   { value: 'US/Alaska', label: 'US/Alaska (UTC-9/UTC-8)' },
   { value: 'US/Pacific', label: 'US/Pacific (UTC-8/UTC-7)' }
+]
+
+export const timezoneModes = [
+  'UTCOFFSET', 'COLUMN', 'TIMESTAMP'
 ]
 
 export const utcOffsetOptions = [

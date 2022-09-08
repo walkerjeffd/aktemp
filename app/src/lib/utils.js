@@ -36,3 +36,12 @@ export const formatBooleanOption = (value) => {
 export const sleep = async (ms) => {
   await new Promise((resolve, reject) => setTimeout(resolve, 2000))
 }
+
+export const trim = (x) => {
+  if (typeof x === 'string') {
+    return x.trim()
+  }
+  return x
+}
+
+export const joinStrings = x => x.map(d => `'${d}'`).join(', ')

@@ -837,7 +837,7 @@ import evt from '@/events'
 import { parseBooleanOption, parseCsvFile } from '@/lib/utils'
 
 export default {
-  name: 'ManageFileUpload',
+  name: 'ManageFileForm',
   data () {
     return {
       debug: true,

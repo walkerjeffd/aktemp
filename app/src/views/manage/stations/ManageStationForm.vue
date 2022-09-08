@@ -171,8 +171,8 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { parseBooleanOption, formatBooleanOption } from '@/lib/utils'
-import { timezoneOptions, placementOptions, waterbodyTypeOptions, mixedOptions } from '@/lib/constants'
+import { parseBooleanOption, formatBooleanOption, trim } from '@/lib/utils'
+import { timezoneOptions, placementOptions, waterbodyTypeOptions, mixedOptions, fieldConstraints } from '@/lib/constants'
 import evt from '@/events'
 
 export default {
@@ -198,14 +198,14 @@ export default {
         value: '',
         rules: [
           v => !!v || 'Name is required',
-          v => (!!v && v.trim().length >= 4) || 'Name must be at least 4 characters',
-          v => (!!v && v.trim().length <= 50) || 'Name cannot exceed 50 characters'
+          v => (!!v && v.trim().length >= fieldConstraints.station.code.minLength) || `Name must be at least ${fieldConstraints.station.code.minLength} characters`,
+          v => (!!v && v.trim().length <= fieldConstraints.station.code.maxLength) || `Name cannot exceed ${fieldConstraints.station.code.maxLength} characters`
         ]
       },
       description: {
         value: '',
         rules: [
-          v => !v || (!!v && v.trim().length <= 250) || 'Description cannot exceed 250 characters'
+          v => !v || (!!v && v.trim().length <= fieldConstraints.station.description.maxLength) || `Description cannot exceed ${fieldConstraints.station.description.maxLength} characters`
         ]
       },
       latitude: {
@@ -242,7 +242,7 @@ export default {
         value: null,
         rules: [
           v => !!v || 'Waterbody name is required',
-          v => (!!v && v.trim().length <= 50) || 'Name cannot exceed 50 characters'
+          v => (!!v && v.trim().length <= fieldConstraints.station.waterbodyName.maxLength) || `Name cannot exceed ${fieldConstraints.station.waterbodyName.maxLength} characters`
         ]
       },
       waterbodyType: {
@@ -302,16 +302,16 @@ export default {
       this.loading = true
       const payload = {
         organization_id: this.organizationId.value,
-        code: this.code.value,
-        description: this.description.value,
+        code: trim(this.code.value),
+        description: trim(this.description.value),
         latitude: this.latitude.value,
         longitude: this.longitude.value,
         placement: this.placement.value,
         timezone: this.timezone.value,
-        waterbody_name: this.waterbodyName.value,
+        waterbody_name: trim(this.waterbodyName.value),
         waterbody_type: this.waterbodyType.value,
         mixed: parseBooleanOption(this.mixed.value),
-        reference: this.reference.value,
+        reference: trim(this.reference.value),
         active: this.active.value,
         private: this.private_.value
       }

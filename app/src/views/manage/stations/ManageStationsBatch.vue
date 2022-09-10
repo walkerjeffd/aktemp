@@ -131,7 +131,7 @@
 </template>
 
 <script>
-/* eslint-disable standard/no-callback-literal */
+/* eslint-disable node/no-callback-literal */
 import Handsontable from 'handsontable'
 import { mapGetters } from 'vuex'
 import { timezoneOptions, placementOptions, waterbodyTypeOptions, booleanOptions, fieldConstraints } from '@/lib/constants'
@@ -150,6 +150,7 @@ export default {
         contextMenu: ['row_above', 'row_below', 'remove_row', '---------', 'clear_column', '---------', 'undo', 'redo'],
         minRows: 1,
         fixedColumnsStart: 2,
+        manualColumnResize: true,
         preventOverflow: 'horizontal',
         dataSchema: {
           status: '',
@@ -268,7 +269,7 @@ export default {
           rule: `Active must be one of: [${booleanOptions.map(d => `'${d}'`).join(', ')}]`,
           source: booleanOptions,
           type: 'dropdown',
-          width: '60px'
+          width: '80px'
         },
         {
           prop: 'mixed',
@@ -285,7 +286,6 @@ export default {
         {
           prop: 'private',
           label: 'Private',
-          allowEmpty: false,
           rule: `Private must be one of: [${booleanOptions.map(d => `'${d}'`).join(', ')}]`,
           source: booleanOptions,
           type: 'dropdown'
@@ -440,7 +440,7 @@ export default {
         active: parseBooleanOption(station.active),
         mixed: parseBooleanOption(station.mixed),
         reference: station.reference,
-        private: parseBooleanOption(station.private)
+        private: station.private ? parseBooleanOption(station.private) : false
       }
       delete payload.status
       delete payload.error

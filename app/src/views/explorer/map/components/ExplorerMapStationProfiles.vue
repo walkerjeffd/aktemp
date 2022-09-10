@@ -1,11 +1,20 @@
 <template>
-  <div>
+  <div class="py-4">
     <Loading v-if="loading" class="pb-8"></Loading>
-    <Alert type="error" v-else-if="profiles.length === 0" title="No Profiles Available" class="mb-0">
-      This station does not have any vertical profiles.
+    <Alert type="info" v-else-if="profiles.length === 0" title="No Profiles Available" class="mb-0 mx-4">
+      This station does not have any vertical profile data.
     </Alert>
     <div v-else>
-      <highcharts :options="chart"></highcharts>
+      <div class="mx-4">
+        <highcharts :options="chart"></highcharts>
+        <!-- <div class="text--secondary caption"><v-icon x-small>mdi-information</v-icon> Click+drag to zoom in. Shift+click to slide.</div> -->
+      </div>
+
+      <v-divider class="my-4"></v-divider>
+
+      <div class="text-right mx-4">
+        <DownloadButton @click="download" />
+      </div>
     </div>
   </div>
 </template>
@@ -89,6 +98,18 @@ export default {
         })
       }))
       this.loading = false
+    },
+    download () {
+      if (this.loading || this.profiles.length === 0) return
+
+      const rows = this.profiles.map(profile => {
+        return profile.values.map(v => ({
+          ...profile,
+          ...v
+        }))
+      }).flat()
+
+      this.$download.csv(rows, `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`)
     }
   }
 }

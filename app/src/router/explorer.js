@@ -1,11 +1,11 @@
-import Explorer from '../views/explorer/Explorer.vue'
-import ExplorerStation from '../views/explorer/ExplorerStation.vue'
+import ExplorerMap from '../views/explorer/map/ExplorerMap.vue'
+import ExplorerStation from '../views/explorer/station/ExplorerStation.vue'
 
 export default [
   {
     path: '/explorer',
     name: 'explorer',
-    component: Explorer
+    component: ExplorerMap
   },
   {
     path: '/explorer/stations/:stationId',

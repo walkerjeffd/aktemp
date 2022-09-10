@@ -22,13 +22,15 @@ import '@/assets/styles.css'
 
 import Alert from '@/components/Alert'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import DownloadButton from '@/components/DownloadButton'
 import Loading from '@/components/Loading'
 import RefreshButton from '@/components/RefreshButton'
 import StatusChip from '@/components/StatusChip'
 Vue.component('Alert', Alert)
+Vue.component('ConfirmDialog', ConfirmDialog)
+Vue.component('DownloadButton', DownloadButton)
 Vue.component('Loading', Loading)
 Vue.component('RefreshButton', RefreshButton)
-Vue.component('ConfirmDialog', ConfirmDialog)
 Vue.component('StatusChip', StatusChip)
 
 Vue.config.productionTip = false

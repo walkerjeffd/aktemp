@@ -145,7 +145,9 @@ async function processFile (id) {
         end_datetime: datetimeExtent[1],
         frequency,
         ...seriesDepth,
-        ...meta
+        accuracy: meta.accuracy,
+        sop_bath: meta.sop_bath,
+        reviewed: meta.reviewed
       })
     }
   } else if (config.type === 'PROFILES') {

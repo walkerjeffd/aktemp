@@ -2,7 +2,7 @@ const Base = require('./Base')
 
 class ProfileValue extends Base {
   static get tableName () {
-    return 'profile_values'
+    return 'profiles_values'
   }
 
   static get modifiers () {
@@ -23,7 +23,7 @@ class ProfileValue extends Base {
         relation: Base.BelongsToOneRelation,
         modelClass: Profile,
         join: {
-          from: 'profile_values.profile_id',
+          from: 'profiles_values.profile_id',
           to: 'profiles.id'
         }
       }

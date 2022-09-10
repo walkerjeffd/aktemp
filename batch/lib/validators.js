@@ -105,10 +105,10 @@ const valueSchema = (fields) => {
 const metaSchema = (fields, type) => {
   const validFields = Joi.string().valid(...fields)
   const schema = {
-    accuracy: Joi.string().valid('1', '2', '3'),
+    accuracy: Joi.string().valid('1', '2', '3').allow('', null),
     sop_bath: Joi.boolean().allow('', null),
     reviewed: Joi.boolean().allow('', null),
-    flagColumn: validFields
+    flagColumn: validFields.allow('', null)
   }
   if (type === 'SERIES') {
     schema.interval = Joi.string().valid('CONTINUOUS', 'DISCRETE').required()

@@ -2,6 +2,7 @@
   <v-dialog
     v-model="dialog"
     scrollable
+    max-width="800"
     @keydown.esc="close"
   >
     <v-card style="width:600px">
@@ -10,16 +11,6 @@
           Edit User
         </v-toolbar-title>
       </v-toolbar>
-<!--
-      <div v-if="loading" class="text-center pb-12 pt-4">
-        <div class="text-h5 mt-4 mb-8">Loading...</div>
-        <v-progress-circular
-          :size="50"
-          :width="5"
-          color="primary"
-          indeterminate
-        ></v-progress-circular>
-      </div> -->
       <Loading v-if="loading.user" class="pb-8"></Loading>
       <v-form ref="form" @submit.prevent="submit" v-else-if="user">
         <v-simple-table>
@@ -143,7 +134,6 @@
             label="Administrator"
             @change="modified = true"
           ></v-switch>
-          {{modified}}
         </v-card-text>
 
         <v-divider class="mb-0"></v-divider>

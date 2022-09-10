@@ -1,6 +1,7 @@
 import Vue from 'vue'
 
-Vue.prototype.$errorMessage = function (error) {
+export function errorMessage (error) {
+  if (!error) return error
   if (error.response) {
     if (error.response.data && error.response.data.message) {
       return error.response.data.message
@@ -11,3 +12,5 @@ Vue.prototype.$errorMessage = function (error) {
   }
   return error.toString() || 'Unknown error'
 }
+
+Vue.prototype.$errorMessage = errorMessage

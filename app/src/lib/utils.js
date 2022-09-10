@@ -30,7 +30,6 @@ export const parseBooleanOption = (value) => {
 export const formatBooleanOption = (value) => {
   if (value === true) return 'TRUE'
   else if (value === false) return 'FALSE'
-  else return 'UNKNOWN'
 }
 
 export const sleep = async (ms) => {

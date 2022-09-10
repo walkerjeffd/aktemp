@@ -70,8 +70,8 @@
 <script>
 import StationsMap from '@/components/StationsMap'
 import StationInfoTable from '@/components/StationInfoTable'
-import ExplorerStationProfiles from '@/views/explorer/ExplorerStationProfiles'
-import ExplorerStationSeries from '@/views/explorer/ExplorerStationSeries'
+import ExplorerStationProfiles from '@/views/explorer/station/ExplorerStationProfiles'
+import ExplorerStationSeries from '@/views/explorer/station/ExplorerStationSeries'
 
 export default {
   name: 'ExplorerStation',
@@ -113,7 +113,7 @@ export default {
       }
     },
     downloadFile () {
-      this.$saveFile.csv([this.station], `station-${this.station.organization_code}-${this.station.code}.csv`, ['organization_code', 'code', 'description', 'waterbody_name', 'waterbody_type', 'latitude', 'longitude', 'placement', 'mixed', 'active', 'reference'])
+      this.$download.csv([this.station], `station-${this.station.organization_code}-${this.station.code}.csv`, ['organization_code', 'code', 'description', 'waterbody_name', 'waterbody_type', 'latitude', 'longitude', 'placement', 'mixed', 'active', 'reference'])
     }
   }
 }

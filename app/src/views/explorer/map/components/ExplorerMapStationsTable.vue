@@ -15,6 +15,7 @@
     <v-divider v-show="!collapse"></v-divider>
     <div>
       <v-data-table
+        v-show="!collapse"
         :headers="headers"
         :items="filtered"
         :loading="loading"
@@ -23,9 +24,7 @@
         @click:row="select"
         single-select
         dense
-        loading-text="Loading... Please wait"
         class="row-cursor-pointer"
-        v-show="!collapse"
       >
         <template v-slot:top>
           <v-toolbar flat dense>
@@ -42,10 +41,7 @@
                 ></v-text-field>
               </v-col>
               <v-col cols="12" md="3" class="text-right">
-                <v-btn color="info" small @click="downloadFile">
-                  <v-icon small left>mdi-download</v-icon>
-                  CSV File
-                </v-btn>
+                <DownloadButton @click="download" :disabled="loading" />
               </v-col>
             </v-row>
           </v-toolbar>
@@ -65,6 +61,18 @@
             {{ item.profiles_start_date | timestampFormat('ll') }} -
             {{ item.profiles_end_date | timestampFormat('ll') }}
           </span>
+        </template>
+        <template v-slot:item.mixed="{ item }">
+          <v-simple-checkbox
+            v-model="item.mixed"
+            disabled
+          ></v-simple-checkbox>
+        </template>
+        <template v-slot:item.active="{ item }">
+          <v-simple-checkbox
+            v-model="item.active"
+            disabled
+          ></v-simple-checkbox>
         </template>
       </v-data-table>
     </div>
@@ -102,26 +110,32 @@ export default {
           align: 'left'
         },
         {
-          text: '# Timeseries',
-          value: 'series_count',
-          align: 'center'
+          text: 'Placement',
+          value: 'placement',
+          align: 'left'
+        },
+        {
+          text: 'Well Mixed',
+          value: 'mixed',
+          align: 'left',
+          width: '120px'
+        },
+        {
+          text: 'Active',
+          value: 'active',
+          align: 'left',
+          width: '120px'
         },
         {
           text: 'Timeseries Period',
           value: 'series_period',
           align: 'center',
-          sortable: false
-        },
-        {
-          text: '# Profiles',
-          value: 'profiles_count',
-          align: 'center'
+          sortable: true
         },
         {
           text: 'Profiles Period',
           value: 'profiles_period',
-          align: 'center',
-          sortable: false
+          align: 'center'
         }
       ]
     }
@@ -141,8 +155,8 @@ export default {
     select (station) {
       this.$emit('select', station)
     },
-    downloadFile () {
-      this.$saveFile.csv(this.stations, 'stations.csv', ['organization_code', 'code', 'description', 'waterbody_name', 'waterbody_type', 'latitude', 'longitude', 'placement', 'mixed', 'active', 'reference'])
+    download () {
+      this.$download.csv(this.stations, 'AKTEMP-stations.csv')
     }
   }
 }

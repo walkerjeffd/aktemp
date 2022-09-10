@@ -80,7 +80,6 @@
                           item-value="id"
                           outlined
                         ></v-select>
-                        <pre v-if="debug">organization: {{ organization.selected || 'none' }}</pre>
 
                         <Alert type="error" title="Form Error" v-if="organization.status === 'ERROR'">
                           {{ organization.error || 'Unknown error' }}
@@ -130,11 +129,10 @@
                               </v-btn>
                             </v-btn-toggle>
                           </div>
-                          <pre v-if="debug">file.type: {{ file.type }}</pre>
                         </div>
 
-                        <div v-if="file.type">
-                          <div class="text-h6">Select Data File</div>
+                        <div v-if="file.type" class="mt-4">
+                          <div class="text-h6 mb-4">Select Data File</div>
                           <v-file-input
                             v-model="file.selected"
                             label="Select a CSV file"
@@ -144,7 +142,6 @@
                             ref="fileInput"
                           >
                           </v-file-input>
-                          <pre v-if="debug">file: {{ file.selected && file.selected.name || 'none' }}</pre>
                         </div>
 
                         <Alert type="error" title="Error Loading File" v-if="file.status === 'ERROR'">
@@ -219,7 +216,7 @@
                           <li>Instructions...</li>
                         </ul> -->
 
-                        <div class="my-8">
+                        <div class="mb-8">
                           <p>Does this file contain data from one station or multiple stations?</p>
 
                           <div class="text-center">
@@ -234,7 +231,6 @@
                               </v-btn>
                             </v-btn-toggle>
                           </div>
-                          <pre v-if="debug">mode: {{ station.mode }}</pre>
                         </div>
 
                         <div v-if="station.mode === 'STATION'">
@@ -248,7 +244,6 @@
                               item-value="id"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">station.id: {{ station.station.selected }}</pre>
                           </div>
                         </div>
                         <div v-else-if="station.mode === 'COLUMN'">
@@ -259,7 +254,6 @@
                             :rules="station.column.rules"
                             outlined
                           ></v-select>
-                          <pre v-if="debug">column: {{ station.column.selected }}</pre>
                         </div>
 
                         <Alert type="error" title="Station Error" v-if="station.status === 'ERROR'">
@@ -296,7 +290,7 @@
                           What kind of depth information is available?
                         </p>
 
-                        <div class="text-center" v-if="file.type !== 'PROFILES'">
+                        <div class="text-center mb-4" v-if="file.type !== 'PROFILES'">
                           <v-btn-toggle v-model="depth.mode" @change="resetDepth()">
                             <v-btn value="COLUMN">
                               <v-icon left>mdi-chart-line-variant</v-icon>
@@ -316,7 +310,6 @@
                             </v-btn>
                           </v-btn-toggle>
                         </div>
-                        <pre v-if="debug">depth.mode: {{ depth.mode }}</pre>
 
                         <div v-if="depth.mode === 'COLUMN'">
                           <div>
@@ -327,7 +320,6 @@
                               :rules="depth.column.rules"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">depth.column: {{ depth.column.selected }}</pre>
                           </div>
                           <div>
                             <p>What are the units of these depths?</p>
@@ -339,7 +331,6 @@
                               item-value="value"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">depth.units: {{ depth.units.selected }}</pre>
                           </div>
                         </div>
                         <div v-else-if="depth.mode === 'VALUE'">
@@ -352,7 +343,6 @@
                               type="number"
                               outlined
                             ></v-text-field>
-                            <pre v-if="debug">depth.value: {{ depth.value.selected }}</pre>
                           </div>
 
                           <div>
@@ -365,7 +355,6 @@
                               item-value="value"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">depth.units: {{ depth.units.selected }}</pre>
                           </div>
                         </div>
                         <div v-else-if="depth.mode === 'CATEGORY'">
@@ -378,7 +367,6 @@
                             item-value="value"
                             outlined
                           ></v-select>
-                          <pre v-if="debug">depth.category: {{ depth.category.selected }}</pre>
                         </div>
 
                         <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
@@ -411,11 +399,7 @@
                       <v-form ref="timestampForm" @input="resetTimestamp()">
                         <div class="text-h6">Timestamp</div>
 
-                        <!-- <ul class="mt-2 body-2">
-                          <li>Instructions...</li>
-                        </ul> -->
-
-                        <div class="my-8">
+                        <div class="mb-8">
                           <p>Are dates and times in the same column or separate columns?</p>
 
                           <div class="text-center">
@@ -430,7 +414,6 @@
                               </v-btn>
                             </v-btn-toggle>
                           </div>
-                          <pre v-if="debug">mode: {{ timestamp.mode }}</pre>
                         </div>
 
                         <div v-if="timestamp.mode === 'COMBINED'">
@@ -442,14 +425,13 @@
                               :rules="timestamp.combined.column.rules"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">combined.column: {{ timestamp.combined.column.selected }}</pre>
                           </div>
                           <div v-if="!!timestamp.combined.column.selected">
                             <p>
                               Do the timestamps contain a UTC offset?<br>
                               <span class="text--secondary">e.g. "2022-04-27T15:00:00-0700"</span>
                             </p>
-                            <div class="text-center">
+                            <div class="text-center mb-4">
                               <v-btn-toggle v-model="timestamp.combined.includesTimezone.value" @change="resetTimestamp()">
                                 <v-btn :value="true">
                                   <v-icon left>mdi-check</v-icon>
@@ -461,7 +443,6 @@
                                 </v-btn>
                               </v-btn-toggle>
                             </div>
-                            <pre v-if="debug">timestamp.combined.includesTimezone: {{ timestamp.combined.includesTimezone.value }}</pre>
                           </div>
                         </div>
                         <div v-else-if="timestamp.mode === 'SEPARATE'">
@@ -473,7 +454,6 @@
                               :rules="timestamp.separate.date.column.rules"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">separate.date.column: {{ timestamp.separate.date.column.selected }}</pre>
                           </div>
                           <div>
                             <p>Which column contains the times?</p>
@@ -483,7 +463,6 @@
                               :rules="timestamp.separate.time.column.rules"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">separate.time.column: {{ timestamp.separate.time.column.selected }}</pre>
                           </div>
                         </div>
 
@@ -498,7 +477,7 @@
                                    )">
                           <div>
                             <p>Is there a column containing the UTC offset for each timestamp?</p>
-                            <div class="text-center">
+                            <div class="text-center mb-4">
                               <v-btn-toggle v-model="timestamp.timezone.mode" @change="resetTimestamp()">
                                 <v-btn value="COLUMN">
                                   <v-icon left>mdi-check</v-icon>
@@ -510,7 +489,6 @@
                                 </v-btn>
                               </v-btn-toggle>
                             </div>
-                            <pre v-if="debug">timezone.mode: {{ timestamp.timezone.mode }}</pre>
                           </div>
 
                           <div v-if="timestamp.timezone.mode === 'COLUMN'">
@@ -521,7 +499,6 @@
                               :rules="timestamp.timezone.column.rules"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">timezone.column: {{ timestamp.timezone.column.selected }}</pre>
                           </div>
                           <div v-else-if="timestamp.timezone.mode === 'UTCOFFSET'">
                             <p>What is the UTC offset (timezone) of the timestamps? Assumes all timestamps have the same UTC offset.</p>
@@ -533,7 +510,6 @@
                               item-value="value"
                               outlined
                             ></v-select>
-                            <pre v-if="debug">timezone.utcOffset: {{ timestamp.timezone.utcOffset.selected }}</pre>
                           </div>
                         </div>
 
@@ -579,7 +555,6 @@
                             :rules="value.column.rules"
                             outlined
                           ></v-select>
-                          <pre v-if="debug">value.column: {{ value.column.selected }}</pre>
                         </div>
 
                         <div v-if="!!value.column.selected">
@@ -592,7 +567,6 @@
                             item-value="value"
                             outlined
                           ></v-select>
-                          <pre v-if="debug">value.units: {{ value.units.selected }}</pre>
                         </div>
 
                         <div v-if="!!value.column.selected && !!value.units.selected">
@@ -614,7 +588,6 @@
                                 clearable
                               ></v-combobox>
                             </div>
-                            <pre v-if="debug">value.missing.selected: {{ value.missing.selected }}</pre>
                           </div>
                         </div>
 
@@ -650,7 +623,7 @@
 
                         <div v-if="file.type === 'SERIES_CONTINUOUS'">
                           <p>Was the sensor checked using pre/post water baths?</p>
-                          <div class="text-center">
+                          <div class="text-center mb-4">
                             <v-btn-toggle v-model="meta.sop_bath" @change="resetMeta()">
                               <v-btn value="TRUE">
                                 <v-icon left>mdi-check</v-icon>
@@ -666,7 +639,6 @@
                               </v-btn>
                             </v-btn-toggle>
                           </div>
-                          <pre v-if="debug">meta.sop_bath: {{ meta.sop_bath }}</pre>
                         </div>
 
                         <div v-if="(file.type === 'SERIES_CONTINUOUS' && !!meta.sop_bath) || file.type === 'SERIES_DISCRETE' || file.type === 'PROFILES'">
@@ -681,14 +653,13 @@
                             item-text="label"
                             outlined
                           ></v-select>
-                          <pre v-if="debug">meta.accuracy: {{ meta.accuracy.selected }}</pre>
                         </div>
 
                         <div v-if="!!meta.accuracy.selected">
                           <p>
                             Have these data already undergone a QAQC review?
                           </p>
-                          <div class="text-center">
+                          <div class="text-center mb-4">
                             <v-btn-toggle v-model="meta.reviewed" @change="resetMeta()">
                               <v-btn value="TRUE">
                                 <v-icon left>mdi-check</v-icon>
@@ -704,7 +675,6 @@
                               </v-btn>
                             </v-btn-toggle>
                           </div>
-                          <pre v-if="debug">meta.reviewed: {{ meta.reviewed }}</pre>
                         </div>
 
                         <div v-if="!!meta.reviewed">
@@ -720,7 +690,6 @@
                               clearable
                             ></v-select>
                           </div>
-                          <pre v-if="debug">meta.flagColumn: {{ meta.flagColumn.selected }}</pre>
                         </div>
 
                         <Alert type="error" title="Metadata Error" v-if="meta.status === 'ERROR'">
@@ -818,9 +787,6 @@
                   </v-row>
                 </v-stepper-content>
               </v-stepper-items>
-              <v-sheet class="ma-4 pa-4 elevation-4" v-if="debug">
-                <pre>config: {{ fileConfig }}</pre>
-              </v-sheet>
             </v-stepper>
           </v-card>
         </v-col>
@@ -840,7 +806,6 @@ export default {
   name: 'ManageFileForm',
   data () {
     return {
-      debug: true,
       step: 1,
       organization: {
         status: 'READY',
@@ -1454,7 +1419,9 @@ export default {
       if (this.meta.accuracy.selected !== 'UNKNOWN') {
         config.meta.accuracy = this.meta.accuracy.selected
       }
-      config.meta.reviewed = parseBooleanOption(this.meta.reviewed)
+      if (this.meta.reviewed !== 'UNKNOWN') {
+        config.meta.accuracy = parseBooleanOption(this.meta.reviewed)
+      }
       if (this.meta.flagColumn.selected) {
         config.meta.flagColumn = this.meta.flagColumn.selected
       }
@@ -1521,9 +1488,6 @@ export default {
       } else if (this.upload.status === 'DONE') {
         return this.$router.push({
           name: 'manageFiles'
-          // params: {
-          //   datasetId: this.upload.dataset.id
-          // }
         })
       }
       this.upload.status = 'CANCELLED'

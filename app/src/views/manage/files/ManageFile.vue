@@ -17,10 +17,10 @@
             <v-card-text>
               <Alert type="error" title="Failed to Load File" class="ma-4" v-if="error">{{ error }}</Alert>
               <v-row v-else>
-                <v-col cols="12" lg="4">
+                <v-col cols="12" lg="3">
                   <ManageFileInfo :file="file" :loading="loading" :refreshing="refreshing" @refresh="fetch(true)"></ManageFileInfo>
                 </v-col>
-                <v-col cols="12" lg="8">
+                <v-col cols="12" lg="9">
                   <Loading v-if="loading" class="pb-8"></Loading>
                   <Alert type="error" title="File Not Found" class="ma-4" v-else-if="!file">File was not found on server</Alert>
                   <div v-else>
@@ -34,7 +34,78 @@
                       <div class="font-weight-bold">{{ file.error || 'Unknown error'}}</div>
                     </Alert>
                     <div v-else>
-                      <SeriesTable
+                      <v-sheet elevation="2">
+                        <v-tabs
+                          v-model="tab"
+                          background-color="grey lighten-3"
+                          fixed-tabs
+                          centered
+                        >
+                          <v-tabs-slider></v-tabs-slider>
+
+                          <v-tab href="#series">
+                            <v-icon left>mdi-chart-line</v-icon>
+                            Timeseries
+                          </v-tab>
+
+                          <v-tab href="#profiles">
+                            <v-icon left>mdi-arrow-expand-down</v-icon>
+                            Profiles
+                          </v-tab>
+                        </v-tabs>
+
+                        <v-tabs-items v-model="tab">
+                          <v-tab-item
+                            value="series"
+                          >
+                            <v-card>
+                              <v-card-text>
+                                <Alert
+                                  v-if="series.error"
+                                  type="error"
+                                  title="Failed to Get Timeseries"
+                                >{{ series.error }}</Alert>
+
+                                <SeriesTable
+                                  v-else
+                                  :series="file.series"
+                                  :selected="series.selected"
+                                  :columns="['id', 'start_datetime', 'end_datetime', 'depth', 'reviewed']"
+                                  @select="selectSeries"
+                                ></SeriesTable>
+
+                                <SelectedSeriesCard
+                                  v-if="series.selected"
+                                  :series="series.selected"
+                                  @close="selectSeries()"
+                                  @delete="onDeleteSeries()"
+                                ></SelectedSeriesCard>
+                              </v-card-text>
+                            </v-card>
+                          </v-tab-item>
+                          <v-tab-item
+                            value="profiles"
+                          >
+                            <v-card flat>
+                              <v-card-text>
+                                <Alert type="error" title="Failed to Get Vertical Profiles" v-if="profiles.error">{{ profiles.error }}</Alert>
+                                <ProfilesTable
+                                  :profiles="file.profiles"
+                                  :selected="profiles.selected"
+                                  :columns="['id', 'date']"
+                                  @select="selectProfile"
+                                  v-else
+                                ></ProfilesTable>
+
+                                <div v-if="profiles.selected">
+                                  selected: {{ profiles.selected.id }}
+                                </div>
+                              </v-card-text>
+                            </v-card>
+                          </v-tab-item>
+                        </v-tabs-items>
+                      </v-sheet>
+                      <!-- <SeriesTable
                         :series="file.series"
                         :selected="selectedSeries"
                         @select="selectSeries"
@@ -47,7 +118,7 @@
                         :columns="['id', 'date']"
                         @select="selectProfile"
                         v-else-if="file.type === 'PROFILES'"
-                      ></ProfilesTable>
+                      ></ProfilesTable> -->
                     </div>
                   </div>
                 </v-col>
@@ -62,24 +133,35 @@
 
 <script>
 import ManageFileInfo from '@/views/manage/files/ManageFileInfo'
-import SeriesTable from '@/components/SeriesTable'
+import SeriesTable from '@/components/series/SeriesTable'
 import ProfilesTable from '@/components/ProfilesTable'
+import SelectedSeriesCard from '@/components/series/SelectedSeriesCard.vue'
 
 export default {
   name: 'ManageFile',
   components: {
     ManageFileInfo,
     SeriesTable,
+    SelectedSeriesCard,
     ProfilesTable
   },
   data () {
     return {
+      tab: 'series',
       loading: true,
       refreshing: false,
       error: null,
       file: null,
-      selectedSeries: null,
-      selectedProfile: null,
+      series: {
+        loading: true,
+        error: false,
+        selected: null
+      },
+      profiles: {
+        loading: true,
+        error: false,
+        selected: null
+      },
       timeout: null
     }
   },
@@ -114,10 +196,26 @@ export default {
       }
     },
     selectSeries (series) {
-      this.$router.push({ name: 'manageSeriesOne', params: { seriesId: series.id, from: 'file' } })
+      if (!series) {
+        this.series.selected = null
+      } else if (this.series.selected === series) {
+        this.series.selected = null
+      } else {
+        this.series.selected = series
+      }
     },
     selectProfile (profile) {
-      this.$router.push({ name: 'manageProfile', params: { profileId: profile.id, from: 'file' } })
+      if (!profile) {
+        this.profiles.selected = null
+      } else if (this.profiles.selected === profile) {
+        this.profiles.selected = null
+      } else {
+        this.profiles.selected = profile
+      }
+    },
+    onDeleteSeries () {
+      this.selectSeries()
+      this.fetch()
     }
   }
 }

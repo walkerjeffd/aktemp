@@ -10,6 +10,6 @@ function csv (rows, filename, fields) {
   saveAs(blob, filename)
 }
 
-Vue.prototype.$saveFile = {
+Vue.prototype.$download = {
   csv
 }

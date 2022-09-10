@@ -1,4 +1,5 @@
 import { restrictedApi } from '@/plugins/axios'
+import { errorMessage } from '@/plugins/error-message'
 
 export default {
   namespaced: true,
@@ -66,7 +67,7 @@ export default {
     },
     SET_STATUS (state, [collection, loading, error]) {
       state.status[collection].loading = loading
-      state.status[collection].error = error ? this.$errorMessage(error) : null
+      state.status[collection].error = errorMessage(error)
     }
   },
   actions: {

@@ -1,6 +1,4 @@
-# AKTEMP Web Application
-
-Dev URL: http://walkerenvres-aktemp-dev-website.s3-website-us-east-1.amazonaws.com
+# app2
 
 ## Project setup
 ```

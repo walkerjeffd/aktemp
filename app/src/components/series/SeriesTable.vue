@@ -30,6 +30,12 @@
     <template v-slot:item.end_datetime="{ item }">
       {{ item.end_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
     </template>
+    <template v-slot:item.depth="{ item }">
+      {{ item | seriesDepth }}
+    </template>
+    <template v-slot:item.reviewed="{ item }">
+      {{ item.reviewed }}
+    </template>
   </v-data-table>
 </template>
 
@@ -56,19 +62,18 @@ const allHeaders = [
     text: 'End',
     value: 'end_datetime',
     align: 'left'
+  },
+  {
+    text: 'Depth (m)',
+    value: 'depth',
+    align: 'left',
+    width: '200px'
+  },
+  {
+    text: 'Reviewed',
+    value: 'reviewed',
+    align: 'left'
   }
-  // {
-  //   text: 'Depth (m)',
-  //   value: 'depth_m',
-  //   align: 'left',
-  //   width: '200px'
-  // },
-  // {
-  //   text: 'Depth Cat.',
-  //   value: 'depth_category',
-  //   align: 'left',
-  //   width: '200px'
-  // }
 ]
 
 export default {
@@ -87,7 +92,7 @@ export default {
     columns: {
       type: Array,
       default () {
-        return ['id', 'station_code', 'start_datetime', 'end_datetime']
+        return allHeaders.map(d => d.value)
       }
     }
   },

@@ -253,7 +253,7 @@ export default {
         ]
       },
       active: {
-        value: true,
+        value: null,
         rules: []
       },
       mixed: {
@@ -368,7 +368,7 @@ export default {
         this.timezone.value = timezoneOptions[0].id
         this.waterbodyName.value = null
         this.waterbodyType.value = null
-        this.active.value = true
+        this.active.value = null
         this.mixed.value = null
         this.reference.value = null
         this.private_.value = false

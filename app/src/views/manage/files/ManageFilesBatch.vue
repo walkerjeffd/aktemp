@@ -180,7 +180,7 @@
 </template>
 
 <script>
-/* eslint-disable standard/no-callback-literal */
+/* eslint-disable node/no-callback-literal */
 import Handsontable from 'handsontable'
 import { mapGetters } from 'vuex'
 
@@ -196,7 +196,6 @@ export default {
       debug: true,
       error: null,
       loading: false,
-      // validateOnChange: false,
       message: null,
       files: {
         selected: [],
@@ -346,23 +345,6 @@ export default {
             label: 'Timezone Value'
           },
           {
-            prop: 'depth_mode',
-            label: 'Depth Mode',
-            type: 'dropdown',
-            source: depthModes
-          },
-          {
-            prop: 'depth_value',
-            label: 'Depth Value'
-          },
-          {
-            prop: 'depth_units',
-            label: 'Depth Units',
-            rule: `'Depth Units' must be one of: [${joinStrings(depthUnitsOptions.map(d => d.value))}]`,
-            type: 'dropdown',
-            source: depthUnitsOptions.map(d => d.value)
-          },
-          {
             prop: 'value_column',
             label: 'Temperature Column',
             allowEmpty: false,
@@ -383,6 +365,23 @@ export default {
           {
             prop: 'flag_column',
             label: 'Flag Column'
+          },
+          {
+            prop: 'depth_mode',
+            label: 'Depth Mode',
+            type: 'dropdown',
+            source: depthModes
+          },
+          {
+            prop: 'depth_value',
+            label: 'Depth Value'
+          },
+          {
+            prop: 'depth_units',
+            label: 'Depth Units',
+            rule: `'Depth Units' must be one of: [${joinStrings(depthUnitsOptions.map(d => d.value))}]`,
+            type: 'dropdown',
+            source: depthUnitsOptions.map(d => d.value)
           },
           {
             prop: 'accuracy',
@@ -470,7 +469,6 @@ export default {
     },
     initTable () {
       this.table.invalidCells = []
-      // this.validateOnChange = false
       this.error = null
       this.table.rows.splice(0, this.table.rows.length)
 
@@ -490,10 +488,7 @@ export default {
       }
     },
     afterChange (changes, source) {
-      // if (source === 'CopyPaste.paste') {
-      //   this.validateOnChange = true
-      // }
-      // if (source === 'updateData' || !this.validateOnChange) return
+      // if (source === 'updateData') return
       // this.validateSync()
     },
     validateSync () {
@@ -516,12 +511,10 @@ export default {
       return this.table.columns.findIndex(d => d.prop === prop)
     },
     async validateRows () {
-      console.log('validateRows()')
       const hot = this.$refs.hot.hotInstance
       const stationCodes = this.organization.stations.map(d => d.code)
       for (let i = 0; i < this.table.rows.length; i++) {
         const row = this.table.rows[i]
-        console.log(row)
         row.status = 'VALIDATING'
         row.errors = []
         this.message = `Validating: ${row.filename}`
@@ -618,7 +611,6 @@ export default {
 
         const file = this.files.selected[i]
         const config = this.createConfig(row)
-        console.log(file.name, config)
         const organizationId = this.organization.selected.id
 
         row.status = 'UPLOADING'
@@ -721,15 +713,17 @@ export default {
       }
 
       config.meta.sop_bath = parseBooleanOption(row.sop_bath)
-      config.meta.accuracy = row.accuracy
-      config.meta.reviewed = parseBooleanOption(row.reviewed)
-      config.meta.flagColumn = row.flag_column
+      config.meta.accuracy = row.accuracy ? row.accuracy : null
+      config.meta.reviewed = row.reviewed ? parseBooleanOption(row.reviewed) : false
+      config.meta.flagColumn = row.flag_column ? row.flag_column : null
 
       return config
     },
+    // async submit () {
+    //   console.log(this.createConfig(this.table.rows[0]))
+    // },
     async submit () {
       this.error = null
-      // this.validateOnChange = true
 
       if (!this.$refs.form.validate()) {
         // organization or files not selected
@@ -776,7 +770,7 @@ export default {
       }
     },
     downloadStationsFile () {
-      this.$saveFile.csv(this.organization.stations, 'stations.csv', ['code', 'description', 'waterbody_name', 'waterbody_type', 'latitude', 'longitude'])
+      this.$download.csv(this.organization.stations, 'stations.csv')
     },
     removeSavedFiles () {
       this.table.rows = this.table.rows.filter(d => d.status !== 'SUCCESS')

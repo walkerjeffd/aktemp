@@ -1,6 +1,14 @@
 <template>
   <div class="fill-height">
-    <v-navigation-drawer app clipped dark expand-on-hover style="z-index:2000">
+    <v-navigation-drawer
+      app
+      clipped
+      dark
+      expand-on-hover
+      mini-variant
+      permanent
+      style="z-index:2000"
+    >
       <v-list-item link @click="pane = 'filters'">
         <v-list-item-icon>
           <v-icon>mdi-filter</v-icon>
@@ -21,7 +29,7 @@
           </v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <v-list-item link @click="stationsTable.show = true">
+      <v-list-item link @click="show.stationsTable = true">
         <v-list-item-icon>
           <v-icon>mdi-table</v-icon>
         </v-list-item-icon>
@@ -35,7 +43,7 @@
     <v-main class="fill-height">
       <div class="d-flex flex-row fill-height">
         <!-- FILTER -->
-        <v-navigation-drawer color="grey darken-2" v-if="pane === 'filters'" width="350">
+        <v-navigation-drawer permanent color="grey darken-2" v-if="pane === 'filters'" width="350">
           <v-toolbar color="grey darken-2" dark flat dense>
             <div class="text-h6">Filter Stations</div>
             <v-spacer></v-spacer>
@@ -113,7 +121,7 @@
           </div>
         </v-navigation-drawer>
         <!-- SETTINGS -->
-        <v-navigation-drawer color="grey darken-2" v-else-if="pane === 'map'" width="350">
+        <v-navigation-drawer permanent color="grey darken-2" v-else-if="pane === 'map'" width="350">
           <v-toolbar color="grey darken-2" dark flat dense>
             <div class="text-h6">Map Settings</div>
             <v-spacer></v-spacer>
@@ -141,17 +149,17 @@
             :station="stations.selected"
             @select="select"
           />
-          <StationsTable
-            v-show="stationsTable.show"
+          <ExplorerMapStationsTable
+            v-show="show.stationsTable"
             :loading="stationsStatus.loading"
             :stations="storeStations"
             :filtered="stations.filtered"
             :selected="stations.selected"
             @select="select"
             @search="filterCodeSearch"
-            @close="stationsTable.show = false"
+            @close="show.stationsTable = false"
           />
-          <StationDetail
+          <ExplorerMapStation
             v-if="!!stations.selected"
             :station="stations.selected"
             @close="select"
@@ -169,18 +177,23 @@ import evt from '@/events'
 import { waterbodyTypeOptions } from '@/lib/constants'
 
 import StationsMap from '@/components/StationsMap'
-import StationsTable from '@/components/StationsTable'
-import StationDetail from '@/components/StationDetail'
+import ExplorerMapStationsTable from '@/views/explorer/map/components/ExplorerMapStationsTable'
+import ExplorerMapStation from '@/views/explorer/map/components/ExplorerMapStation'
 
 export default {
   name: 'Explorer',
   components: {
     StationsMap,
-    StationsTable,
-    StationDetail
+    ExplorerMapStationsTable,
+    ExplorerMapStation
   },
   data () {
     return {
+      tab: 0,
+      pane: null,
+      show: {
+        stationsTable: false
+      },
       stations: {
         filtered: [],
         selected: null
@@ -199,11 +212,6 @@ export default {
         code: {
           search: ''
         }
-      },
-      tab: 0,
-      pane: null,
-      stationsTable: {
-        show: false
       }
     }
   },

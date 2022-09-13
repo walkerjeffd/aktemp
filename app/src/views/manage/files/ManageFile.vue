@@ -17,10 +17,10 @@
             <v-card-text>
               <Alert type="error" title="Failed to Load File" class="ma-4" v-if="error">{{ error }}</Alert>
               <v-row v-else>
-                <v-col cols="12" lg="3">
+                <v-col cols="12" lg="4" xl="3">
                   <ManageFileInfo :file="file" :loading="loading" :refreshing="refreshing" @refresh="fetch(true)"></ManageFileInfo>
                 </v-col>
-                <v-col cols="12" lg="9">
+                <v-col cols="12" lg="8" xl="9">
                   <Loading v-if="loading" class="pb-8"></Loading>
                   <Alert type="error" title="File Not Found" class="ma-4" v-else-if="!file">File was not found on server</Alert>
                   <div v-else>

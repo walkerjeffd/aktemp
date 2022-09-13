@@ -15,7 +15,7 @@
             </v-toolbar>
 
             <Loading v-if="station.loading" class="mb-8"></Loading>
-            <Alert type="error" title="Failed to Load Station" class="ma-4" v-else-if="station.error">
+            <Alert type="error" title="Failed to Load Station" class="ma-4 mb-8" v-else-if="station.error">
               {{ station.error }}
             </Alert>
             <v-container grid-list-xs v-else-if="station.data">
@@ -60,6 +60,7 @@
                               type="error"
                               title="Failed to Get Timeseries"
                             >{{ series.error }}</Alert>
+
                             <SeriesTable
                               v-else
                               :series="series.data"
@@ -69,39 +70,12 @@
                               @select="selectSeries"
                             ></SeriesTable>
 
-                            <v-row v-if="series.selected" class="mt-4">
-                              <v-col cols="12" xl="4">
-                                <v-toolbar dense color="grey lighten-3" height="40px" elevation="2">
-                                  <v-toolbar-title>
-                                    <span class="text-overline">Selected Timeseries</span>
-                                  </v-toolbar-title>
-                                  <v-spacer></v-spacer>
-                                  <v-btn icon x-small @click="selectSeries()" class="mr-0">
-                                    <v-icon>mdi-close</v-icon>
-                                  </v-btn>
-                                </v-toolbar>
-
-                                <div class="d-xl-none">
-                                  <v-sheet elevation="2" class="pa-4">
-                                    <SeriesChart
-                                      :series="series.selected"
-                                    ></SeriesChart>
-                                  </v-sheet>
-                                  <v-divider dark></v-divider>
-                                </div>
-                                <SeriesInfo
-                                  :series="series.selected"
-                                  @delete="onDeleteSeries"
-                                ></SeriesInfo>
-                              </v-col>
-                              <v-col cols="12" xl="8">
-                                <v-sheet elevation="2" class="pa-4 d-none d-xl-flex">
-                                  <SeriesChart
-                                    :series="series.selected"
-                                  ></SeriesChart>
-                                </v-sheet>
-                              </v-col>
-                            </v-row>
+                            <SelectedSeriesCard
+                              v-if="series.selected"
+                              :series="series.selected"
+                              @close="selectSeries()"
+                              @delete="onDeleteSeries()"
+                            ></SelectedSeriesCard>
                           </v-card-text>
                         </v-card>
                       </v-tab-item>
@@ -143,8 +117,7 @@ import StationsMap from '@/components/StationsMap'
 import SeriesTable from '@/components/series/SeriesTable'
 import ProfilesTable from '@/components/ProfilesTable'
 import ManageStationInfo from '@/views/manage/stations/ManageStationInfo'
-import SeriesInfo from '@/components/series/SeriesInfo'
-import SeriesChart from '@/components/series/SeriesChart'
+import SelectedSeriesCard from '@/components/series/SelectedSeriesCard.vue'
 
 export default {
   name: 'ManageStation',
@@ -152,8 +125,7 @@ export default {
     ManageStationInfo,
     StationsMap,
     SeriesTable,
-    SeriesInfo,
-    SeriesChart,
+    SelectedSeriesCard,
     ProfilesTable
   },
   data () {

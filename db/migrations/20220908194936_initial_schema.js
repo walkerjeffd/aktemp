@@ -45,7 +45,7 @@ exports.up = async knex => {
     t.boolean('active')
     t.boolean('mixed')
     t.text('reference')
-    t.boolean('private').notNullable()
+    t.boolean('private').notNullable().default('false')
     t.unique(['organization_id', 'code'])
     t.timestamps(true, true)
   })
@@ -76,7 +76,7 @@ exports.up = async knex => {
 
     t.timestamps(true, true)
   })
-  await knex.schema.createTable('flags', t => {
+  await knex.schema.createTable('flag_types', t => {
     t.text('id').primary()
     t.text('description')
   })
@@ -104,7 +104,7 @@ exports.up = async knex => {
     t.text('interval')
     t.float('frequency')
 
-    t.boolean('reviewed').notNullable()
+    t.boolean('reviewed').notNullable().default(false)
     t.integer('accuracy')
     t.boolean('sop_bath')
 
@@ -121,10 +121,21 @@ exports.up = async knex => {
     t.timestamp('datetime').notNullable()
     t.float('value').notNullable()
     t.float('depth_m')
-    t.text('flag_id')
-      .references('flags.id')
+  })
+  await knex.schema.createTable('series_flags', t => {
+    t.increments('id').primary().unsigned()
+    t.integer('series_id')
+      .references('series.id')
+      .unsigned()
+      .index()
+      .notNullable()
+      .onDelete('CASCADE')
+    t.timestamp('start_datetime').notNullable()
+    t.timestamp('end_datetime').notNullable()
+    t.text('flag_type_id')
+      .references('flag_types.id')
       .onDelete('SET NULL')
-    t.text('flag_other')
+    t.text('flag_type_other')
   })
   await knex.schema.createTable('profiles', t => {
     t.increments('id').primary().unsigned()
@@ -143,7 +154,7 @@ exports.up = async knex => {
 
     t.date('date').index().notNullable()
 
-    t.boolean('reviewed').notNullable()
+    t.boolean('reviewed').notNullable().default(false)
     t.integer('accuracy')
     t.boolean('sop_bath')
 
@@ -160,19 +171,16 @@ exports.up = async knex => {
     t.timestamp('datetime').notNullable()
     t.float('value').notNullable()
     t.float('depth_m').notNullable()
-    t.text('flag_id')
-      .references('flags.id')
-      .onDelete('SET NULL')
-    t.text('flag_other')
   })
 }
 
 exports.down = async knex => {
   await knex.schema.dropTable('profile_values')
   await knex.schema.dropTable('profiles')
+  await knex.schema.dropTable('series_flags')
   await knex.schema.dropTable('series_values')
   await knex.schema.dropTable('series')
-  await knex.schema.dropTable('flags')
+  await knex.schema.dropTable('flag_types')
   await knex.schema.dropTable('files')
   await knex.raw('DROP TYPE status_type')
   await knex.schema.dropTable('stations')

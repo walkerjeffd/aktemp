@@ -53,7 +53,7 @@
       <div class="mx-4 pb-2">
         <div class="my-4">
           <v-btn color="primary" outlined block :disabled="!file.url" :href="file.url" download>
-            <v-icon left>mdi-download</v-icon>Download File
+            <v-icon left>mdi-download</v-icon> Original File
           </v-btn>
           <v-btn
             color="primary"

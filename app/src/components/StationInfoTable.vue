@@ -29,33 +29,9 @@
         <td
           class="text-right grey--text text--darken-2"
           style="width:140px">
-          Description
+          Coordinates
         </td>
-        <td class="font-weight-bold">{{ station.description | truncate(40) }}</td>
-      </tr>
-      <tr>
-        <td
-          class="text-right grey--text text--darken-2"
-          style="width:140px">
-          Latitude
-        </td>
-        <td class="font-weight-bold">{{ station.latitude.toFixed(4) }}</td>
-      </tr>
-      <tr>
-        <td
-          class="text-right grey--text text--darken-2"
-          style="width:140px">
-          Longitude
-        </td>
-        <td class="font-weight-bold">{{ station.longitude.toFixed(4) }}</td>
-      </tr>
-      <tr>
-        <td
-          class="text-right grey--text text--darken-2"
-          style="width:140px">
-          Placement
-        </td>
-        <td class="font-weight-bold">{{ station.placement }}</td>
+        <td class="font-weight-bold">{{ station.latitude.toFixed(5) }}, {{ station.longitude.toFixed(5) }}</td>
       </tr>
       <tr>
         <td
@@ -64,6 +40,14 @@
           Timezone
         </td>
         <td class="font-weight-bold">{{ station.timezone }}</td>
+      </tr>
+      <tr>
+        <td
+          class="text-right grey--text text--darken-2"
+          style="width:140px">
+          Description
+        </td>
+        <td class="font-weight-bold">{{ station.description | truncate(40) }}</td>
       </tr>
       <tr>
         <td
@@ -80,6 +64,14 @@
           Waterbody Type
         </td>
         <td class="font-weight-bold">{{ station.waterbody_type }}</td>
+      </tr>
+      <tr>
+        <td
+          class="text-right grey--text text--darken-2"
+          style="width:140px">
+          Placement
+        </td>
+        <td class="font-weight-bold">{{ station.placement }}</td>
       </tr>
       <tr>
         <td
@@ -103,7 +95,7 @@
           style="width:140px">
           Reference
         </td>
-        <td class="font-weight-bold">{{ (station.reference || 'N/A') | truncate(40) }}</td>
+        <td class="font-weight-bold">{{ station.reference | truncate(40) }}</td>
       </tr>
       <tr>
         <td
@@ -111,7 +103,9 @@
           style="width:140px">
           Private
         </td>
-        <td class="font-weight-bold">{{ station.private | formatBooleanOption }}</td>
+        <td class="font-weight-bold">
+          {{ station.private | formatBooleanOption }}
+        </td>
       </tr>
     </tbody>
   </v-simple-table>

@@ -652,7 +652,8 @@ export default {
         value: {
           column: row.value_column,
           units: row.value_units,
-          missing: [] // TODO row.value_missing.split(',')
+          missing: row.value_missing ? row.value_missing.split(',') : [],
+          flagColumn: row.flag_column ? row.flag_column : null
         },
         meta: {}
       }
@@ -715,7 +716,6 @@ export default {
       config.meta.sop_bath = parseBooleanOption(row.sop_bath)
       config.meta.accuracy = row.accuracy ? row.accuracy : null
       config.meta.reviewed = row.reviewed ? parseBooleanOption(row.reviewed) : false
-      config.meta.flagColumn = row.flag_column ? row.flag_column : null
 
       return config
     },

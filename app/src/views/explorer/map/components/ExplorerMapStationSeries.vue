@@ -1,23 +1,39 @@
 <template>
   <div class="py-4">
     <Loading v-if="loading" class="pb-8"></Loading>
+    <Alert v-else-if="error" type="error" title="Server Error" class="mb-0 mx-4">
+      Failed to get timeseries from the server.<br><br>
+      <strong>{{ error }}</strong>
+    </Alert>
     <Alert v-else-if="values.length === 0" type="info" title="No Timeseries Available" class="mb-0 mx-4">
       This station does not have any timeseries data.
     </Alert>
     <div v-else>
       <div class="mx-4">
         <highcharts :options="chart"></highcharts>
-        <div class="text--secondary caption">
-          <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in. Shift+click to slide.
+
+        <div class="text--secondary caption ml-2">
+          <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in, shift+click to slide. Click <code>Flagged</code> in legend to hide/show flagged data.
         </div>
-        <div class="text--secondary caption mt-2">
-          Click <code>Explore Station Data</code> button above to view raw data.
+
+        <div class="text--secondary caption ml-2 mt-4">
+          This chart shows the daily mean and range over all available timeseries at this station. Click <code>Explore Data</code> below to view the individual timeseries, which may vary by depth, or to drill down into the raw data. Click <code>CSV</code> to download a file containing the daily values shown above.
         </div>
       </div>
 
       <v-divider class="my-4"></v-divider>
 
-      <div class="text-right mx-4">
+      <div class="text-right mx-4 d-flex">
+        <v-btn
+          color="info"
+          title="Explore station data in more detail"
+          :to="{ name: 'explorerStation', params: { stationId: station.id }}"
+        >
+          <v-icon left>mdi-chart-line</v-icon>
+          Explore Data
+          <!-- <v-icon right>mdi-chevron-right</v-icon> -->
+        </v-btn>
+        <v-spacer></v-spacer>
         <DownloadButton @click="download" />
       </div>
     </div>
@@ -25,17 +41,20 @@
 </template>
 
 <script>
+import { assignDailyFlags } from '@/lib/utils'
+
 export default {
-  name: 'StationDetailSeries',
+  name: 'ExplorerMapStationSeries',
   props: ['station'],
   data () {
     return {
       loading: true,
+      error: null,
       values: [],
       chart: {
         chart: {
           zoomType: 'x',
-          height: 200,
+          height: 250,
           marginLeft: 50,
           spacingLeft: 50,
           panning: true,
@@ -45,11 +64,13 @@ export default {
               x: 0,
               y: 0
             }
-          }
+          },
+          animation: false
         },
         plotOptions: {
           series: {
-            gapSize: 5
+            gapSize: 5,
+            animation: false
           },
           arearange: {
             lineWidth: 0,
@@ -103,10 +124,11 @@ export default {
           }
         },
         legend: {
-          enabled: false
+          enabled: true,
+          align: 'right'
         },
         tooltip: {
-          xDateFormat: '%b %d, %Y',
+          xDateFormat: '%b %e, %Y',
           shared: true
         },
         xAxis: {
@@ -119,7 +141,10 @@ export default {
           tickAmount: 5,
           allowDecimals: false
         },
-        series: []
+        series: [],
+        credits: {
+          enabled: false
+        }
       }
     }
   },
@@ -136,33 +161,80 @@ export default {
       if (!this.station) return
 
       this.loading = true
-      const response = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
-      const values = response.data
-      this.values = Object.freeze(values)
-      this.chart.series = [
-        {
-          name: 'mean',
-          type: 'line',
-          data: values.map(v => {
-            return [
-              (new Date(v.date)).valueOf(),
-              v.mean
-            ]
-          })
-        },
-        {
-          name: 'range',
-          type: 'arearange',
-          data: values.map(v => {
-            return [
-              (new Date(v.date)).valueOf(),
-              v.min,
-              v.max
-            ]
-          })
-        }
-      ]
-      this.loading = false
+      try {
+        const values = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
+          .then(d => d.data)
+        const flags = await this.$http.public.get(`/stations/${this.station.id}/series/flags`)
+          .then(d => d.data)
+
+        this.values = Object.freeze(values)
+        this.flags = flags
+
+        const { values: unflaggedValues, flags: flaggedValues } = assignDailyFlags(values, flags)
+
+        this.chart.series = [
+          {
+            name: 'mean',
+            type: 'line',
+            data: unflaggedValues.map(v => {
+              return [
+                (new Date(v.date)).valueOf(),
+                v.mean
+              ]
+            }),
+            showInLegend: false
+          },
+          {
+            name: 'range',
+            type: 'arearange',
+            data: unflaggedValues.map(v => {
+              return [
+                (new Date(v.date)).valueOf(),
+                v.min,
+                v.max
+              ]
+            }),
+            showInLegend: false
+          },
+          {
+            id: 'flag',
+            name: 'Flagged',
+            type: 'line',
+            data: [],
+            color: 'orangered',
+            showInLegend: flaggedValues.length > 0
+          },
+          ...(flaggedValues.map((flag, i) => [
+            {
+              id: `flag-${i}-mean`,
+              marker: {
+                enabled: flag.values.length === 1,
+                radius: 2,
+                symbol: 'circle'
+              },
+              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.mean]),
+              color: 'orangered',
+              showInLegend: false,
+              linkedTo: 'flag'
+            },
+            {
+              id: `flag-${i}-range`,
+              type: 'arearange',
+              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.min, d.max]),
+              tooltip: {
+                pointFormat: `Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>Flag: ${flag.label}`,
+                valueDecimals: 1
+              },
+              linkedTo: ':previous',
+              showInLegend: false
+            }
+          ]).flat())
+        ]
+      } catch (err) {
+        this.error = this.$errorMessage(err)
+      } finally {
+        this.loading = false
+      }
     },
     download () {
       if (this.loading || this.values.length === 0) return

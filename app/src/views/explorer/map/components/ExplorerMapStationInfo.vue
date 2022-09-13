@@ -61,7 +61,17 @@
 
     <v-divider class="mb-4"></v-divider>
 
-    <div class="text-right mx-4 mb-4">
+    <div class="text-right mx-4 mb-4 d-flex">
+      <v-btn
+        color="info"
+        title="Explore station data in more detail"
+        :to="{ name: 'explorerStation', params: { stationId: station.id }}"
+      >
+        <v-icon left>mdi-chart-line</v-icon>
+        Explore Data
+        <!-- <v-icon right>mdi-chevron-right</v-icon> -->
+      </v-btn>
+      <v-spacer></v-spacer>
       <DownloadButton @click="download" />
     </div>
   </div>

@@ -1,6 +1,6 @@
 <template>
-  <v-card elevation="4" class="mt-4">
-    <v-toolbar dense color="grey lighten-3" height="40px" elevation="2">
+  <v-card elevation="2" class="mt-4">
+    <v-toolbar dense flat color="grey lighten-3" height="40px">
       <v-toolbar-title>
         <span class="text-overline">Selected Timeseries</span>
       </v-toolbar-title>
@@ -13,16 +13,16 @@
     <v-card-text>
       <v-row>
         <v-col cols="12" xl="4">
-          <div class="d-xl-none">
+          <div v-if="!$vuetify.breakpoint.xl">
             <v-sheet elevation="2" class="pa-4">
               <SeriesChart :series="series" />
             </v-sheet>
-            <v-divider dark></v-divider>
+            <v-divider dark class="my-2"></v-divider>
           </div>
           <SeriesInfo :series="series" @delete="$emit('delete')" />
         </v-col>
-        <v-col cols="12" xl="8">
-          <v-sheet elevation="2" class="pa-4 d-none d-xl-flex">
+        <v-col cols="12" xl="8" v-if="$vuetify.breakpoint.xl">
+          <v-sheet elevation="2" class="pa-4 fill-height">
             <SeriesChart :series="series" />
           </v-sheet>
         </v-col>

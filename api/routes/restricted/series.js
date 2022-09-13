@@ -5,6 +5,8 @@ const {
   attachSeries,
   getSeries,
   getSeriesValues,
+  getSeriesDaily,
+  getSeriesFlags,
   putSeries,
   deleteSeries
 } = require('../../controllers/series')
@@ -20,5 +22,13 @@ router.route('/:seriesId')
 router.route('/:seriesId/values')
   .all(asyncHandler(attachSeries))
   .get(asyncHandler(getSeriesValues))
+
+router.route('/:seriesId/daily')
+  .all(asyncHandler(attachSeries))
+  .get(asyncHandler(getSeriesDaily))
+
+router.route('/:seriesId/flags')
+  .all(asyncHandler(attachSeries))
+  .get(asyncHandler(getSeriesFlags))
 
 module.exports = router

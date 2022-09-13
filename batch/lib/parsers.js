@@ -55,8 +55,8 @@ function parseValue (d, config) {
 }
 
 function parseFlag (d, config) {
-  if (!config.meta.flagColumn) return null
-  return d[config.meta.flagColumn]
+  if (!config.value.flagColumn) return null
+  return d[config.value.flagColumn]
 }
 
 function parseDepth (d, config) {

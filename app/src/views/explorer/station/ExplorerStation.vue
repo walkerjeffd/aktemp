@@ -13,53 +13,53 @@
                 <v-icon left>mdi-chevron-left</v-icon> <span v-if="!$vuetify.breakpoint.mobile">Back to Explorer</span><span v-else>Back</span>
               </v-btn>
             </v-toolbar>
-            <Loading v-if="status.loading" class="pb-8"></Loading>
-            <Alert type="error" title="Failed to Load Station" class="ma-4" v-else-if="status.error">
-              {{ status.error }}
-            </Alert>
 
-            <v-container grid-list-xs v-else-if="station" elevation="2">
-              <v-row>
-                <v-col cols="12" lg="4">
-                  <v-sheet elevation="2">
-                    <StationsMap
-                      :stations="[station]"
-                      :station="station"
-                      style="height:300px"
-                    ></StationsMap>
-                    <StationInfoTable :station="station"></StationInfoTable>
+            <v-card-text>
+              <Loading v-if="status.loading" class="pb-8"></Loading>
+              <Alert v-else-if="status.error" type="error" title="Failed to Load Station" class="mb-0">
+                {{ status.error }}
+              </Alert>
+              <v-container grid-list-xs v-else-if="station" elevation="2" class="pa-0">
+                <v-row>
+                  <v-col cols="12" lg="4">
+                    <v-sheet elevation="2">
+                      <StationsMap
+                        :stations="[station]"
+                        :station="station"
+                        style="height:300px"
+                      ></StationsMap>
+                      <StationInfoTable :station="station"></StationInfoTable>
 
-                    <v-divider></v-divider>
+                      <v-divider></v-divider>
 
-                    <div class="pa-4">
-                      <v-btn color="info" block @click="downloadFile">
-                        <v-icon left>mdi-download</v-icon>
-                        Download Station Info
-                      </v-btn>
-                    </div>
-                  </v-sheet>
-                </v-col>
-                <v-col cols="12" lg="8">
-                  <v-tabs class="elevation-2" grow :vertical="$vuetify.breakpoint.mobile">
-                    <v-tab>
-                      <v-icon left>mdi-chart-line</v-icon> Timeseries
-                    </v-tab>
-                    <v-tab>
-                      <v-icon left>mdi-arrow-expand-down</v-icon> Profiles
-                    </v-tab>
+                      <div class="pa-4 text-right">
+                        <DownloadButton @click="downloadFile"></DownloadButton>
+                      </div>
+                    </v-sheet>
+                  </v-col>
+                  <v-col cols="12" lg="8">
+                    <v-tabs class="elevation-2" grow :vertical="$vuetify.breakpoint.mobile">
+                      <v-tab>
+                        <v-icon left>mdi-chart-line</v-icon> Timeseries
+                      </v-tab>
+                      <v-tab>
+                        <v-icon left>mdi-arrow-expand-down</v-icon> Profiles
+                      </v-tab>
 
-                    <!-- SERIES -->
-                    <v-tab-item>
-                      <ExplorerStationSeries :station="station"></ExplorerStationSeries>
-                    </v-tab-item>
-                    <!-- PROFILES -->
-                    <v-tab-item>
-                      <ExplorerStationProfiles :station="station"></ExplorerStationProfiles>
-                    </v-tab-item>
-                  </v-tabs>
-                </v-col>
-              </v-row>
-            </v-container>
+                      <!-- SERIES -->
+                      <v-tab-item>
+                        <ExplorerStationSeries :station="station"></ExplorerStationSeries>
+                      </v-tab-item>
+                      <!-- PROFILES -->
+                      <v-tab-item>
+                        <ExplorerStationProfiles :station="station"></ExplorerStationProfiles>
+                      </v-tab-item>
+                    </v-tabs>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+
           </v-card>
         </v-col>
       </v-row>

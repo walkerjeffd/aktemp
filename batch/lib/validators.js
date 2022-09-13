@@ -98,17 +98,16 @@ const valueSchema = (fields) => {
   return Joi.object({
     column: validFields.required(),
     units: Joi.string().valid('C', 'F').required(),
-    missing: Joi.array().default([])
+    missing: Joi.array().default([]),
+    flagColumn: validFields.allow('', null)
   })
 }
 
 const metaSchema = (fields, type) => {
-  const validFields = Joi.string().valid(...fields)
   const schema = {
     accuracy: Joi.string().valid('1', '2', '3').allow('', null),
     sop_bath: Joi.boolean().allow('', null),
-    reviewed: Joi.boolean().allow('', null),
-    flagColumn: validFields.allow('', null)
+    reviewed: Joi.boolean().allow('', null)
   }
   if (type === 'SERIES') {
     schema.interval = Joi.string().valid('CONTINUOUS', 'DISCRETE').required()

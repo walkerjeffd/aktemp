@@ -21,11 +21,26 @@ async function getSeries (req, res, next) {
 }
 
 async function getSeriesValues (req, res, next) {
-  const values = await res.locals.series
+  let query = res.locals.series
     .$relatedQuery('values')
     .modify('defaultSelect')
-    .modify('defaultOrderBy')
+    .modify('defaultSort')
+  if (req.query.start) {
+    query = query.where('datetime', '>=', req.query.start)
+  }
+  if (req.query.end) {
+    query = query.where('datetime', '<=', req.query.end)
+  }
+  const values = await query
   return res.status(200).json(values)
+}
+
+async function getSeriesFlags (req, res, next) {
+  const flags = await res.locals.series
+    .$relatedQuery('flags')
+    .modify('defaultSort')
+    .modify('dates')
+  return res.status(200).json(flags)
 }
 
 async function getSeriesDaily (req, res, next) {
@@ -62,6 +77,7 @@ module.exports = {
   getSeries,
   getSeriesValues,
   getSeriesDaily,
+  getSeriesFlags,
   getOrganizationSeries,
   putSeries,
   deleteSeries

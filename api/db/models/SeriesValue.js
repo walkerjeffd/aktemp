@@ -11,7 +11,7 @@ class SeriesValue extends Base {
       defaultSelect (builder) {
         builder.select('datetime', 'value')
       },
-      defaultOrderBy (builder) {
+      defaultSort (builder) {
         builder.orderBy('datetime')
       },
       daily (builder) {

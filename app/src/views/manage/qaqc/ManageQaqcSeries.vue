@@ -13,7 +13,7 @@
     <v-container grid-list-xs v-else-if="series">
       <v-row>
         <v-col cols="12" lg="4" xl="3">
-          <ManageSeriesInfo :series="series"></ManageSeriesInfo>
+          <SeriesInfo :series="series"></SeriesInfo>
         </v-col>
         <v-col cols="12" lg="8" xl="9">
           <ManageSeriesChart :series="series"></ManageSeriesChart>
@@ -24,13 +24,13 @@
 </template>
 
 <script>
-import ManageSeriesInfo from '@/views/manage/series/ManageSeriesInfo'
+import SeriesInfo from '@/components/series/SeriesInfo'
 import ManageSeriesChart from '@/views/manage/series/ManageSeriesChart'
 
 export default {
   name: 'ManageQaqcSeries',
   components: {
-    ManageSeriesInfo,
+    SeriesInfo,
     ManageSeriesChart
   },
   data () {

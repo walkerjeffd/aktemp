@@ -9,6 +9,7 @@ const knex = require('knex')(config)
 
 async function createDatabase () {
   try {
+    await knex.raw(`DROP DATABASE IF EXISTS ${config.connection.testDatabase}`)
     await knex.raw(`CREATE DATABASE ${config.connection.testDatabase}`)
   } catch (err) {
     console.log(err)

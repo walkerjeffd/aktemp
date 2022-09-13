@@ -6,7 +6,7 @@
       This station does not have any timeseries data.
     </Alert>
     <div v-else>
-      <highcharts :constructor-type="'stockChart'" :options="chart" ref="seriesChart"></highcharts>
+      <highcharts :constructor-type="'stockChart'" :options="chart" ref="chart"></highcharts>
       <v-divider class="my-4"></v-divider>
       <v-data-table
         v-model="selected"
@@ -22,23 +22,16 @@
         <template v-slot:item.station_code="{ item }">
           {{ item.station_code | truncate(20) }}
         </template>
-        <template v-slot:item.period="{ item }">
-          {{ item.start_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }} - {{ item.end_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
-        </template>
-        <!-- <template v-slot:item.start_datetime="{ item }">
+        <template v-slot:item.start_datetime="{ item }">
           {{ item.start_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
         </template>
         <template v-slot:item.end_datetime="{ item }">
           {{ item.end_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
-        </template> -->
+        </template>
       </v-data-table>
       <v-divider class="mb-4"></v-divider>
-      <div class="d-flex">
-        <!-- <v-spacer></v-spacer> -->
-        <v-btn color="info" disabled>
-          <v-icon left>mdi-download</v-icon>
-          Download Timeseries
-        </v-btn>
+      <div class="text-right">
+        <DownloadButton disabled></DownloadButton>
       </div>
       <!-- <pre>selected: {{ selected }}</pre> -->
     </div>
@@ -47,6 +40,8 @@
 
 <script>
 import * as d3 from 'd3'
+
+import { assignDailyFlags } from '@/lib/utils'
 
 export default {
   name: 'ExploreStationSeries',
@@ -89,6 +84,8 @@ export default {
           },
           series: {
             animation: false,
+            showInLegend: false,
+            showInNavigator: false,
             gapSize: 5,
             states: {
               hover: {
@@ -98,10 +95,6 @@ export default {
                 enabled: false
               }
             }
-            // boostThreshold: 5000000,
-            // dataGrouping: {
-            //   enabled: false
-            // }
           }
         },
         lang: {
@@ -119,7 +112,8 @@ export default {
           seriesThreshold: 50
         },
         chart: {
-          height: 500
+          height: 500,
+          animation: false
         },
         title: {
           text: 'Daily Mean (Range) Temperature (°C)',
@@ -158,11 +152,12 @@ export default {
         series: [],
         tooltip: {
           animation: false,
-          xDateFormat: '%b %d, %Y',
+          xDateFormat: '%b %e, %Y',
           pointFormat: 'Daily Mean: <b>{point.y} °C</b>',
           valueDecimals: 1,
           enabled: true,
-          shared: false
+          shared: true,
+          split: false
         },
         navigator: {
           series: []
@@ -171,10 +166,21 @@ export default {
           ordinal: false
         },
         yAxis: {
+          allowDecimals: false,
           opposite: false,
           startOnTick: false,
           endOnTick: false,
-          tickAmount: 4
+          tickAmount: 8,
+          title: {
+            text: 'Temperature (degC)'
+          }
+        },
+        legend: {
+          enabled: true,
+          align: 'right'
+        },
+        credits: {
+          enabled: false
         }
       },
       table: {
@@ -183,16 +189,16 @@ export default {
             text: 'ID',
             value: 'id',
             align: 'left',
-            width: '80px'
+            width: '70px'
           },
           {
-            text: 'Period',
-            value: 'period',
+            text: 'Start',
+            value: 'start_datetime',
             align: 'left'
           },
           {
-            text: 'Frequency (min)',
-            value: 'frequency',
+            text: 'End',
+            value: 'end_datetime',
             align: 'left'
           },
           {
@@ -222,83 +228,162 @@ export default {
       if (!this.station) return
 
       this.loading = true
-      const response = await this.$http.public.get(`/stations/${this.station.id}/series`)
-      const series = response.data
-      const seriesValues = await Promise.all(series.map(async (d) => {
-        const response = await this.$http.public.get(`/series/${d.id}/daily`)
-        return {
-          ...d,
-          values: response.data
-        }
-      }))
+      let series = await this.$http.public
+        .get(`/stations/${this.station.id}/series`)
+        .then(d => d.data)
 
-      seriesValues.forEach(s => {
-        s.values = s.values.map(v => {
-          return [
-            (new Date(v.date)).valueOf(),
-            v.mean,
-            v.min,
-            v.max
-          ]
+      series = await Promise.all(
+        series.map(async (d) => {
+          const values = await this.$http.public
+            .get(`/series/${d.id}/daily`)
+            .then(d => d.data)
+          const flags = await this.$http.public
+            .get(`/series/${d.id}/flags`)
+            .then(d => d.data)
+          const { values: unflaggedValues, flags: flaggedValues } = assignDailyFlags(values, flags)
+          return {
+            ...d,
+            values,
+            unflaggedValues,
+            flags: flaggedValues
+          }
         })
-      })
+      )
 
       this.series = series
       this.selected = this.series
 
-      this.chart.series = seriesValues.map(s => {
+      const chartSeries = series.map(s => {
+        const flagSeries = s.flags.map(flag => {
+          const label = flag.flag_type_id === 'OTHER' ? flag.flag_type_other : flag.flag_type_id
+          return [
+            {
+              id: `daily-flag-mean-${s.id}-${flag.id}`,
+              name: `series-${s.id}-flag`,
+              seriesId: s.id,
+              flag: true,
+              type: 'line',
+              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.mean]),
+              visible: true,
+              showInNavigator: false,
+              tooltip: {
+                pointFormat: `Series ${s.id}: <b>{point.y} °C</b> (Flag: ${label})<br/>`
+              },
+              linkedTo: 'daily-flag-mean',
+              color: 'orangered'
+            },
+            {
+              id: `daily-flag-range-${s.id}-${flag.id}`,
+              name: `series-${s.id}-flag`,
+              seriesId: s.id,
+              flag: true,
+              type: 'arearange',
+              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.min, d.max]),
+              tooltip: {
+                pointFormat: `Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>Flag: ${label}`,
+                valueDecimals: 1
+              },
+              linkedTo: ':previous',
+              showInNavigator: false
+            }
+          ]
+        }).flat()
         return [
           {
-            name: s.id,
+            id: `daily-mean-${s.id}`,
+            seriesId: s.id,
             type: 'line',
-            data: s.values.map(d => [d[0], d[1]]),
+            data: s.unflaggedValues.map(d => [(new Date(d.date)).valueOf(), d.mean]),
             visible: true,
-            showInNavigator: false
+            showInNavigator: false,
+            tooltip: {
+              pointFormat: `Series ${s.id}: <b>{point.y} °C</b><br/>`
+            }
           },
           {
-            name: s.id,
+            id: `daily-range-${s.id}`,
+            name: `series-${s.id}`,
+            seriesId: s.id,
             type: 'arearange',
-            data: s.values.map(d => [d[0], d[2], d[3]]),
+            data: s.unflaggedValues.map(d => [(new Date(d.date)).valueOf(), d.min, d.max]),
             visible: true
-          }
+          },
+          ...flagSeries
         ]
       }).flat()
+      this.chart.series = [
+        {
+          id: 'daily-flag-mean',
+          name: 'Flagged',
+          type: 'line',
+          data: [],
+          visible: true,
+          showInLegend: true,
+          color: 'orangered',
+          events: {
+            hide: () => this.updateNavigator(false),
+            show: () => this.updateNavigator(true)
+          }
+        },
+        ...chartSeries
+      ]
 
-      const dailyStats = Array.from(
-        d3.rollup(
-          seriesValues.map(d => d.values).flat(),
-          v => ({
-            mean: d3.mean(v, d => d[1]),
-            min: d3.min(v, d => d[2]),
-            max: d3.max(v, d => d[3])
-          }),
-          d => d[0]
-        )
-      ).sort((a, b) => d3.ascending(a[0], b[0]))
-
+      const navigatorData = this.getNavigatorData(true)
       this.chart.navigator.series = [
         {
-          name: 'navigator',
+          id: 'navigator',
           type: 'areaspline',
           visible: true,
-          data: dailyStats.map(d => [d[0], d[1].max])
+          color: undefined,
+          data: navigatorData.map(d => [(new Date(d[0])).valueOf(), d[1].max])
         }
       ]
 
       this.loading = false
     },
+    getNavigatorData (includeFlags) {
+      const selectedIds = this.selected.map(d => d.id)
+      return Array.from(
+        d3.rollup(
+          this.series
+            .filter(s => selectedIds.includes(s.id))
+            .map(d => includeFlags ? d.values : d.unflaggedValues).flat(),
+          v => ({
+            mean: d3.mean(v, d => d.mean),
+            min: d3.min(v, d => d.min),
+            max: d3.max(v, d => d.max)
+          }),
+          d => d.date
+        )
+      ).sort((a, b) => d3.ascending(a[0], b[0]))
+    },
     updateChart () {
-      const selectedSeriesIds = this.selected.map(d => d.id)
-      if (this.$refs.seriesChart) {
-        this.$refs.seriesChart.chart.series.forEach((s) => {
-          if (selectedSeriesIds.includes(s.name) || s.name === 'navigator') {
-            s.setVisible(true, false)
+      if (!this.$refs.chart || !this.$refs.chart.chart) return
+      const chart = this.$refs.chart.chart
+      const flagVisible = chart.get('daily-flag-mean').visible
+      const selectedIds = this.selected.map(d => d.id)
+      chart.series.forEach((s) => {
+        console.log(s.options.seriesId)
+        if (s.options.seriesId === undefined) return
+        if (selectedIds.includes(s.options.seriesId)) {
+          if (s.flag) {
+            s.setVisible(flagVisible, false)
           } else {
-            s.setVisible(false, false)
+            s.setVisible(true, false)
           }
-        })
-        this.$refs.seriesChart.chart.redraw(false)
-      }
+        } else {
+          s.setVisible(false, false)
+        }
+      })
+      chart.redraw(false)
+      this.updateNavigator(flagVisible)
+    },
+    updateNavigator (includeFlags) {
+      if (!this.$refs.chart || !this.$refs.chart.chart) return
+      const navigatorData = this.getNavigatorData(includeFlags)
+      this.$refs.chart.chart.get('navigator')
+        .setData(navigatorData.map(d => [(new Date(d[0])).valueOf(), d[1].max]))
+      window.chart = this.$refs.chart.chart
     },
     onInput () {
       this.updateChart()

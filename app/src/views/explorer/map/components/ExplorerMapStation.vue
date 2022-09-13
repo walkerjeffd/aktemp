@@ -19,7 +19,7 @@
       </v-btn>
     </v-toolbar>
     <div v-if="!collapse">
-      <div class="d-flex pa-4">
+      <!-- <div class="d-flex pa-4">
         <v-btn
           color="info"
           block
@@ -30,7 +30,7 @@
           Explore Station Data
           <v-icon right>mdi-chevron-right</v-icon>
         </v-btn>
-      </div>
+      </div> -->
 
       <v-divider></v-divider>
 

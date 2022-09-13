@@ -1,5 +1,5 @@
 <template>
-  <v-btn :disabled="disabled" small title="Download CSV File" @click="$emit('click')">
+  <v-btn :disabled="disabled" title="Download CSV File" @click="$emit('click')">
     <v-icon small left>mdi-download</v-icon>
     CSV
   </v-btn>

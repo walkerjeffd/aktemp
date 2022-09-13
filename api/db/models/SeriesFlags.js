@@ -1,30 +1,25 @@
 const { raw } = require('objection')
 const Base = require('./Base')
 
-class SeriesValue extends Base {
+class SeriesFlag extends Base {
   static get tableName () {
-    return 'series_values'
+    return 'series_flags'
   }
 
   static get modifiers () {
     return {
-      defaultSelect (builder) {
-        builder.select('datetime', 'value')
-      },
       defaultSort (builder) {
-        builder.orderBy('datetime')
+        builder.orderBy('start_datetime')
       },
       daily (builder) {
         builder
           .select(
-            raw('to_char((datetime at time zone "series:station".timezone), \'YYYY-MM-DD\') as date'),
-            raw('count(*)::integer as n')
+            'id',
+            raw('to_char((start_datetime at time zone "series:station".timezone), \'YYYY-MM-DD\') as start_date'),
+            raw('to_char((end_datetime at time zone "series:station".timezone), \'YYYY-MM-DD\') as end_date'),
+            'flag_type_id',
+            'flag_type_other'
           )
-          .min('value as min')
-          .avg('value as mean')
-          .max('value as max')
-          .groupBy(['series_id', 'date'])
-          .orderBy(['series_id', 'date'])
           .joinRelated('series.station')
       }
     }
@@ -37,7 +32,7 @@ class SeriesValue extends Base {
         relation: Base.BelongsToOneRelation,
         modelClass: Series,
         join: {
-          from: 'series_values.series_id',
+          from: 'series_flags.series_id',
           to: 'series.id'
         }
       }
@@ -51,4 +46,4 @@ class SeriesValue extends Base {
   }
 }
 
-module.exports = SeriesValue
+module.exports = SeriesFlag

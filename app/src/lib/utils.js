@@ -44,3 +44,25 @@ export const trim = (x) => {
 }
 
 export const joinStrings = x => x.map(d => `'${d}'`).join(', ')
+
+export function assignDailyFlags (values, flags) {
+  values = values.slice()
+
+  flags.forEach((flag, i) => {
+    flag.label = flag.flag_type_id === 'OTHER' ? flag.flag_type_other : flag.flag_type_id
+
+    const startIndex = values.findIndex(d => d.date >= flag.start_date)
+    const endIndex = values.findIndex(d => d.date >= flag.end_date)
+
+    if (startIndex >= 0 && endIndex < 0) {
+      // flag ends after last value
+      flag.values = values.splice(startIndex, values.length - startIndex)
+    } else if (startIndex === 0 && endIndex >= 0) {
+      // flag begins on or before first value
+      flag.values = values.splice(startIndex, endIndex)
+    } else {
+      flag.values = values.splice(startIndex, endIndex - startIndex + 1)
+    }
+  })
+  return { values, flags }
+}

@@ -49,6 +49,7 @@ const getStation = (req, res, next) => res.status(200).json(res.locals.station)
 const getStationSeries = async (req, res, next) => {
   const series = await res.locals.station.$relatedQuery('series')
     .modify('stationOrganization')
+    .modify('filename')
   return res.status(200).json(series)
 }
 
@@ -62,6 +63,13 @@ const getStationSeriesDaily = async (req, res, next) => {
     .joinRelated('[values, station]')
     .groupBy('date')
     .orderBy('date')
+  return res.status(200).json(values)
+}
+
+const getStationSeriesFlags = async (req, res, next) => {
+  const values = await res.locals.station.$relatedQuery('series')
+    .select('flags.*')
+    .joinRelated('flags(dates)')
   return res.status(200).json(values)
 }
 
@@ -99,6 +107,7 @@ module.exports = {
   getStation,
   getStationSeries,
   getStationSeriesDaily,
+  getStationSeriesFlags,
   getStationProfiles,
   getStationProfilesValues,
   putStation,

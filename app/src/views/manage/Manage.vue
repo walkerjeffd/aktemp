@@ -32,12 +32,12 @@
               <v-tab :to="{ name: 'manageFiles' }">
                 <v-icon left>mdi-file-multiple-outline</v-icon> Files
               </v-tab>
-              <v-tab :to="{ name: 'manageSeries' }">
+              <!-- <v-tab :to="{ name: 'manageSeries' }">
                 <v-icon left>mdi-chart-line</v-icon> Timeseries
               </v-tab>
               <v-tab :to="{ name: 'manageProfiles' }">
                 <v-icon left>mdi-arrow-expand-down</v-icon> Profiles
-              </v-tab>
+              </v-tab> -->
               <v-tab :to="{ name: 'manageQaqc' }">
                 <v-icon left>mdi-tools</v-icon> QAQC
               </v-tab>

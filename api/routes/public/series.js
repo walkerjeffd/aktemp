@@ -5,7 +5,8 @@ const {
   attachSeries,
   getSeries,
   getSeriesValues,
-  getSeriesDaily
+  getSeriesDaily,
+  getSeriesFlags
 } = require('../../controllers/series')
 
 const router = express.Router()
@@ -21,5 +22,9 @@ router.route('/:seriesId/values')
 router.route('/:seriesId/daily')
   .all(asyncHandler(attachSeries))
   .get(asyncHandler(getSeriesDaily))
+
+router.route('/:seriesId/flags')
+  .all(asyncHandler(attachSeries))
+  .get(asyncHandler(getSeriesFlags))
 
 module.exports = router

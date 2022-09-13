@@ -375,7 +375,7 @@ describe('file config validator', () => {
     })
   })
   describe('value', () => {
-    const fields = ['datetime', 'temp']
+    const fields = ['datetime', 'temp', 'flag']
     const schema = schemas.value(fields)
     const valid = {
       column: 'temp',
@@ -433,9 +433,23 @@ describe('file config validator', () => {
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })
+    test('valid flagColumn passes', () => {
+      const value = {
+        ...valid,
+        flagColumn: 'flag'
+      }
+      expect(validateSchema(schema, value)).toMatchObject(value)
+    })
+    test('invalid flagColumn fails', () => {
+      const value = {
+        ...valid,
+        flagColumn: 'invalid'
+      }
+      expect(() => validateSchema(schema, value)).toThrow()
+    })
   })
   describe('meta/series', () => {
-    const fields = ['datetime', 'temp', 'flag']
+    const fields = ['datetime', 'temp']
     const schema = schemas.meta(fields, 'SERIES')
     const valid = {
       interval: 'CONTINUOUS'
@@ -448,7 +462,6 @@ describe('file config validator', () => {
         ...valid,
         accuracy: '1',
         reviewed: true,
-        flagColumn: 'flag',
         sop_bath: true
       }
       expect(validateSchema(schema, value)).toMatchObject(value)
@@ -464,7 +477,6 @@ describe('file config validator', () => {
         interval: 'DISCRETE',
         accuracy: '1',
         reviewed: true,
-        flagColumn: 'flag',
         sop_bath: true
       }
       expect(validateSchema(schema, value)).toMatchObject(value)
@@ -480,13 +492,6 @@ describe('file config validator', () => {
       const value = {
         ...valid,
         reviewed: 'invalid'
-      }
-      expect(() => validateSchema(schema, value)).toThrow()
-    })
-    test('invalid flagColumn fails', () => {
-      const value = {
-        ...valid,
-        accuracy: 'invalid'
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })
@@ -510,7 +515,6 @@ describe('file config validator', () => {
       const value = {
         accuracy: '1',
         reviewed: true,
-        flagColumn: 'flag',
         sop_bath: true
       }
       expect(validateSchema(schema, value)).toMatchObject(value)
@@ -525,12 +529,6 @@ describe('file config validator', () => {
     test('invalid reviewed fails', () => {
       const value = {
         reviewed: 'invalid'
-      }
-      expect(() => validateSchema(schema, value)).toThrow()
-    })
-    test('invalid flagColumn fails', () => {
-      const value = {
-        accuracy: 'invalid'
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })

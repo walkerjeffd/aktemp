@@ -3,31 +3,16 @@
     <v-simple-table dense>
       <tbody>
         <tr>
-          <td class="text-right grey--text text--darken-2" style="width:100px">
-            Series ID
-          </td>
-          <td class="font-weight-bold">{{ series.id }}</td>
-        </tr>
-        <tr>
           <td class="text-right grey--text text--darken-2">
             Organization
           </td>
           <td class="font-weight-bold">{{ series.organization_code }}</td>
         </tr>
         <tr>
-          <td class="text-right grey--text text--darken-2">
-            Station
+          <td class="text-right grey--text text--darken-2" style="width:100px">
+            Series ID
           </td>
-          <td class="font-weight-bold">
-            <router-link :to="{
-              name: 'manageStation',
-              params: {
-                stationId: series.station_id
-              }
-            }">
-              {{ series.station_code }}
-            </router-link>
-          </td>
+          <td class="font-weight-bold">{{ series.id }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -46,6 +31,21 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
+            Station
+          </td>
+          <td class="font-weight-bold">
+            <router-link :to="{
+              name: 'manageStation',
+              params: {
+                stationId: series.station_id
+              }
+            }">
+              {{ series.station_code }}
+            </router-link>
+          </td>
+        </tr>
+        <tr>
+          <td class="text-right grey--text text--darken-2">
             Start
           </td>
           <td class="font-weight-bold">{{ series.start_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z') }}</td>
@@ -58,21 +58,21 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Depth
-          </td>
-          <td class="font-weight-bold">{{ series | seriesDepth }}</td>
-        </tr>
-        <tr>
-          <td class="text-right grey--text text--darken-2">
             Interval
           </td>
           <td class="font-weight-bold">{{ series.interval }}</td>
         </tr>
-        <tr>
+        <tr v-if="series.interval === 'CONTINUOUS'">
           <td class="text-right grey--text text--darken-2">
             Frequency
           </td>
           <td class="font-weight-bold">{{ series.frequency ? `${series.frequency} min` : '' }}</td>
+        </tr>
+        <tr>
+          <td class="text-right grey--text text--darken-2">
+            Depth
+          </td>
+          <td class="font-weight-bold">{{ series | seriesDepth }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -100,7 +100,7 @@
     <div class="mx-4 pb-2">
       <div class="my-4">
         <v-btn color="primary" outlined block download disabled>
-          <v-icon left>mdi-download</v-icon>Download CSV
+          <v-icon left>mdi-download</v-icon> Download
         </v-btn>
         <v-btn
           color="error"
@@ -109,7 +109,7 @@
           class="mt-4"
           disabled
         >
-          <v-icon left>mdi-delete</v-icon>
+          <v-icon left>mdi-pencil</v-icon>
           Edit Series
         </v-btn>
         <v-btn

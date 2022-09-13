@@ -1,7 +1,7 @@
 exports.seed = async knex => {
-  await knex('flags').del()
-  await knex('flags').insert([
-    { id: 'OTHER', description: 'User-defined' },
+  await knex('flag_types').del()
+  await knex('flag_types').insert([
+    { id: 'OTHER', description: 'Other' },
     { id: 'BURIED', description: 'Buried logger' },
     { id: 'OOW', description: 'Out of water' }
   ])

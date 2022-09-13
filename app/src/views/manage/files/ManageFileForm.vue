@@ -589,6 +589,22 @@
                               ></v-combobox>
                             </div>
                           </div>
+
+                          <div>
+                            <p>
+                              Which column (if any) contain QAQC flags? (Optional)
+                            </p>
+                            <div class="text-center">
+                              <v-select
+                                v-model="value.flagColumn.selected"
+                                :items="fileColumns"
+                                :rules="value.flagColumn.rules"
+                                outlined
+                                clearable
+                              ></v-select>
+                            </div>
+                          </div>
+
                         </div>
 
                         <Alert type="error" title="Temperature Values Error" v-if="value.status === 'ERROR'">
@@ -674,21 +690,6 @@
                                 Unknown
                               </v-btn>
                             </v-btn-toggle>
-                          </div>
-                        </div>
-
-                        <div v-if="!!meta.reviewed">
-                          <p>
-                            Which column (if any) contain QAQC flags? (Optional)
-                          </p>
-                          <div class="text-center">
-                            <v-select
-                              v-model="meta.flagColumn.selected"
-                              :items="fileColumns"
-                              :rules="meta.flagColumn.rules"
-                              outlined
-                              clearable
-                            ></v-select>
                           </div>
                         </div>
 
@@ -983,6 +984,10 @@ export default {
           mode: null,
           selected: [],
           options: ['N/A', '#N/A', 'NA', 'missing', '-99', '-99.99']
+        },
+        flagColumn: {
+          selected: null,
+          rules: []
         }
       },
       meta: {
@@ -994,11 +999,7 @@ export default {
           options: sensorAccuracyOptions,
           rules: []
         },
-        reviewed: null,
-        flagColumn: {
-          selected: null,
-          rules: []
-        }
+        reviewed: null
       },
       upload: {
         status: 'READY',
@@ -1325,7 +1326,8 @@ export default {
         value: {
           column: this.value.column.selected,
           units: this.value.units.selected,
-          missing: this.value.missing.selected
+          missing: this.value.missing.selected,
+          flagColumn: this.value.flagColumn.selected
         },
         meta: {}
       }
@@ -1420,10 +1422,7 @@ export default {
         config.meta.accuracy = this.meta.accuracy.selected
       }
       if (this.meta.reviewed !== 'UNKNOWN') {
-        config.meta.accuracy = parseBooleanOption(this.meta.reviewed)
-      }
-      if (this.meta.flagColumn.selected) {
-        config.meta.flagColumn = this.meta.flagColumn.selected
+        config.meta.reviewed = parseBooleanOption(this.meta.reviewed)
       }
 
       return config

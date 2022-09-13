@@ -20,6 +20,7 @@ class Series extends Base {
     const File = require('./File')
     const Station = require('./Station')
     const SeriesValue = require('./SeriesValue')
+    const SeriesFlag = require('./SeriesFlag')
     return {
       file: {
         relation: Base.BelongsToOneRelation,
@@ -42,6 +43,14 @@ class Series extends Base {
         modelClass: SeriesValue,
         join: {
           from: 'series_values.series_id',
+          to: 'series.id'
+        }
+      },
+      flags: {
+        relation: Base.HasManyRelation,
+        modelClass: SeriesFlag,
+        join: {
+          from: 'series_flags.series_id',
           to: 'series.id'
         }
       }

@@ -6,7 +6,7 @@ const timezone = require('dayjs/plugin/timezone.js')
 const utc = require('dayjs/plugin/utc.js')
 
 const { validateFileConfig } = require('./validators.js')
-const { parseTimestamp, parseValue, parseFlag, parseDepth } = require('./parsers.js')
+const { parseTimestamp, parseValue, parseDepth } = require('./parsers.js')
 const { convertDepthUnits, medianFrequency } = require('./utils.js')
 const { File } = require('../db/models/index.js')
 
@@ -40,8 +40,8 @@ function parseValues (values, config) {
     return {
       datetime: parseTimestamp(d, config),
       value: parseValue(d, config),
-      depth_m: parseDepth(d, config),
-      flag_other: parseFlag(d, config)
+      depth_m: parseDepth(d, config)
+      // flag_other: parseFlag(d, config)
     }
   })
 }
@@ -129,6 +129,7 @@ async function processFile (id) {
   const meta = {
     ...file.config.meta
   }
+  console.log(meta)
 
   const d3 = await import('d3')
   if (config.type === 'SERIES') {
@@ -145,9 +146,7 @@ async function processFile (id) {
         end_datetime: datetimeExtent[1],
         frequency,
         ...seriesDepth,
-        accuracy: meta.accuracy,
-        sop_bath: meta.sop_bath,
-        reviewed: meta.reviewed
+        ...meta
       })
     }
   } else if (config.type === 'PROFILES') {

@@ -48,21 +48,60 @@ export const joinStrings = x => x.map(d => `'${d}'`).join(', ')
 export function assignDailyFlags (values, flags) {
   values = values.slice()
 
-  flags.forEach((flag, i) => {
+  flags = flags.map(flag => {
     flag.label = flag.flag_type_id === 'OTHER' ? flag.flag_type_other : flag.flag_type_id
 
     const startIndex = values.findIndex(d => d.date >= flag.start_date)
     const endIndex = values.findIndex(d => d.date >= flag.end_date)
 
+    let flagValues
     if (startIndex >= 0 && endIndex < 0) {
       // flag ends after last value
-      flag.values = values.splice(startIndex, values.length - startIndex)
+      flagValues = values.splice(startIndex, values.length - startIndex)
     } else if (startIndex === 0 && endIndex >= 0) {
       // flag begins on or before first value
-      flag.values = values.splice(startIndex, endIndex)
+      flagValues = values.splice(startIndex, endIndex)
     } else {
-      flag.values = values.splice(startIndex, endIndex - startIndex + 1)
+      flagValues = values.splice(startIndex, endIndex - startIndex + 1)
+    }
+    return {
+      ...flag,
+      values: flagValues
     }
   })
+  return { values, flags }
+}
+
+export function assignRawFlags (values, flags) {
+  values = values.slice()
+
+  if (values.length === 0) {
+    return { values, flags: [] }
+  }
+
+  flags = flags.map(flag => {
+    flag.label = flag.flag_type_id === 'OTHER' ? flag.flag_type_other : flag.flag_type_id
+
+    let flagValues = []
+    if (new Date(flag.end_datetime) >= new Date(values[0].datetime) && // flag ends after first value
+        new Date(flag.start_datetime) <= new Date(values[values.length - 1].datetime)) { // flag starts before last value
+      const startIndex = values.findIndex(d => new Date(d.datetime) >= new Date(flag.start_datetime))
+      const endIndex = values.findIndex(d => new Date(d.datetime) >= new Date(flag.end_datetime))
+
+      if (startIndex < 0 && endIndex >= 0) {
+        flagValues = values.splice(0, values.length - endIndex + 1)
+      } else if (startIndex >= 0 && endIndex < 0) {
+        flagValues = values.splice(startIndex, values.length - startIndex)
+      } else {
+        flagValues = values.splice(startIndex, endIndex - startIndex + 1)
+      }
+    }
+
+    return {
+      ...flag,
+      values: flagValues
+    }
+  })
+
   return { values, flags }
 }

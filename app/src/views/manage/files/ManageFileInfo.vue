@@ -132,7 +132,7 @@ export default {
         this.$emit('refresh')
       } catch (err) {
         console.error(err)
-        this.err = this.$errorMessage(err)
+        this.error = this.$errorMessage(err)
       } finally {
         this.statusLoading.process = false
       }
@@ -146,7 +146,7 @@ export default {
         this.$router.push({ name: 'manageFiles' })
       } catch (err) {
         console.error(err)
-        this.err = this.$errorMessage(err)
+        this.error = this.$errorMessage(err)
       } finally {
         this.statusLoading.delete = false
       }

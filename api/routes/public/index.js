@@ -8,6 +8,7 @@ router.get('/', function (req, res, next) {
 
 router.use('/organizations', require('./organizations'))
 router.use('/profiles', require('./profiles'))
+router.use('/requests', require('./requests'))
 router.use('/series', require('./series'))
 router.use('/stations', require('./stations'))
 router.use('/users', require('./users'))

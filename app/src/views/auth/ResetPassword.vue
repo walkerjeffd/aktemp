@@ -149,7 +149,7 @@ export default {
         this.requestSent = true
       } catch (err) {
         console.error(err)
-        this.err = this.$errorMessage(err)
+        this.error = this.$errorMessage(err)
       } finally {
         this.loading = false
       }
@@ -168,7 +168,7 @@ export default {
         })
       } catch (err) {
         console.error(err)
-        this.err = this.$errorMessage(err)
+        this.error = this.$errorMessage(err)
       } finally {
         this.loading = false
       }

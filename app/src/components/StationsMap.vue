@@ -4,7 +4,7 @@
       color="grey lighten-1"
       :value="loading"
       absolute
-      style="z-index:5000;width:100%;height:100%" class="text-center"
+      style="width:100%;height:100%" class="text-center"
     >
       <div class="text-h2 font-weight-medium mb-4">Loading...</div>
       <v-progress-circular

@@ -1,6 +1,6 @@
 <template>
   <!-- eslint-disable vue/valid-v-slot -->
-  <div style="position:absolute;transform:translate(-50%, 0);left:50%;bottom:20px;z-index:3000;width:90%;background-color:white;pointer-events:autocomplete" class="elevation-20">
+  <div style="position:absolute;transform:translate(-50%, 0);left:50%;bottom:20px;width:90%;background-color:white;pointer-events:autocomplete" class="elevation-20">
     <v-toolbar color="grey darken-2" dark flat dense>
       <div class="text-h6">Stations Table</div>
       <v-spacer></v-spacer>

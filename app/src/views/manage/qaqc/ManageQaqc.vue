@@ -48,9 +48,9 @@
         <template v-slot:item.depth="{ item }">
           {{ item | seriesDepth }}
         </template>
-        <template v-slot:item.reviewed="{ item }">
+        <!-- <template v-slot:item.reviewed="{ item }">
           {{ item.reviewed === true ? 'Yes' : 'No' }}
-        </template>
+        </template> -->
       </v-data-table>
     </v-col>
     <v-col cols="12">
@@ -78,7 +78,7 @@ export default {
   name: 'ManageQaqc',
   data () {
     return {
-      showReviewed: false,
+      showReviewed: true,
       selected: [null],
       headers: [
         {
@@ -127,7 +127,7 @@ export default {
       if (!this.series) return []
 
       return this.series
-        .filter(d => this.showReviewed || !this.reviewed)
+        .filter((d) => (this.showReviewed || !d.reviewed))
     }
   },
   mounted () {
@@ -138,6 +138,7 @@ export default {
       this.fetch()
     },
     series () {
+      if (!this.series) return
       if (this.$route.params.seriesId) {
         const row = this.series
           .find(d => d.id === parseInt(this.$route.params.seriesId))
@@ -160,9 +161,11 @@ export default {
           .find(d => d.id === parseInt(this.$route.params.seriesId))
         if (row) {
           this.selected = [row]
-        } else {
-          this.$router.push({ name: 'manageQaqc' })
         }
+      } else if (this.$route.params.refresh) {
+        console.log('refresh')
+        this.selected = [null]
+        this.$store.dispatch('manage/fetchSeries')
       }
     },
     select (series, row) {

@@ -7,7 +7,6 @@
       expand-on-hover
       mini-variant
       permanent
-      style="z-index:2000"
     >
       <v-list-item link @click="pane = 'filters'">
         <v-list-item-icon>

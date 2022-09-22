@@ -1,6 +1,9 @@
 const createError = require('http-errors')
 
+const { cognito } = require('../../aws')
 const { Organization } = require('../../db/models')
+
+const userPoolId = process.env.USER_POOL_ID
 
 async function getOrganizations (req, res, next) {
   const rows = await Organization.query()
@@ -28,6 +31,28 @@ const getOrganization = async (req, res, next) => {
   return res.status(200).json(res.locals.organization)
 }
 
+const getOrganizationUsers = async (req, res, next) => {
+  const dbUsers = await res.locals.organization
+    .$relatedQuery('users')
+  console.log(dbUsers)
+  const users = []
+
+  if (dbUsers.length > 0) {
+    for (let i = 0; i < dbUsers.length; i++) {
+      const cognitoUser = await cognito.adminGetUser({
+        UserPoolId: userPoolId,
+        Username: dbUsers[i].id
+      }).promise()
+      const id = cognitoUser.Username
+      const name = cognitoUser.UserAttributes.find(d => d.Name === 'name').Value
+      const email = cognitoUser.UserAttributes.find(d => d.Name === 'email').Value
+      users.push({ id, name, email })
+    }
+  }
+
+  return res.status(200).json(users)
+}
+
 const putOrganization = async (req, res, next) => {
   const row = await res.locals.organization.$query()
     .patchAndFetch(req.body)
@@ -49,6 +74,7 @@ module.exports = {
   postOrganizations,
   attachOrganization,
   getOrganization,
+  getOrganizationUsers,
   putOrganization,
   deleteOrganization
 }

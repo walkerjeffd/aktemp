@@ -7,10 +7,7 @@
     <v-form ref="form" @submit.prevent="submit" :disabled="loading || success">
       <v-card-text class="body-1 pt-4 black--text">
         <p>
-          Request an account to upload your streamflow photos and data.
-        </p>
-        <p>
-          An account is <strong>not required</strong> to view or download temperature data. It is only required to upload data.
+          Use this form to request an account. An account is <strong>not required to view or download</strong> temperature data. It is only required to upload data.
         </p>
         <p>
           Your name and email will be kept private, and will not be publicly displayed. However, your organization will be publicly displayed as the owner of your data.
@@ -18,9 +15,13 @@
         <p>
           We may use your email to contact you if we have questions about your photos or data, but we will not share it with any third party.
         </p>
-        <p class="mb-8">
+        <!-- <p class="mb-8">
           If you have questions or trouble requesting an account, contact us at <a href="mailto:gs-naar-lsc-ecosheds@doimspp.onmicrosoft.com">gs-naar-lsc-ecosheds@doimspp.onmicrosoft.com</a>.
-        </p>
+        </p> -->
+        <!-- TODO: add contact info -->
+
+        <v-divider class="my-8"></v-divider>
+
         <v-text-field
           v-model="name.value"
           :rules="name.rules"
@@ -38,25 +39,35 @@
           validate-on-blur
         ></v-text-field>
         <v-text-field
-          v-model="organizationName.value"
-          :rules="organizationName.rules"
-          label="Organization (Full Name)"
+          v-model="organization.value"
+          :rules="organization.rules"
+          label="Organization"
           counter
           outlined
           maxlength="128"
-          hint="The full name of your organization (e.g. U.S. Geological Survey or MA Dept of Environmental Protection)."
+          hint="Full name of your organization (e.g. University of Alaska, Anchorage). Please include branch or office if applicable."
           validate-on-blur
         ></v-text-field>
         <v-text-field
-          v-model="organizationCode.value"
-          :rules="organizationCode.rules"
-          label="Organization (Abbreviation)"
+          v-model="abbreviation.value"
+          :rules="abbreviation.rules"
+          label="Organization Abbreviation"
           counter
           outlined
           maxlength="16"
-          hint="A short abbreviation for your organization (e.g. USGS or MA DEP). Please only use UPPERCASE letters and spaces."
+          hint="Short abbreviation for your organization (e.g. UAA). Please only use UPPERCASE letters and underscores."
           validate-on-blur
         ></v-text-field>
+        <v-textarea
+          v-model="description.value"
+          :rules="description.rules"
+          label="Brief Description"
+          counter
+          outlined
+          maxlength="500"
+          hint="Please briefly describe your monitoring program (what kind of data you collect, what time period, which regions or basins, etc.)"
+          validate-on-blur
+        ></v-textarea>
 
         <div class="mt-4">
           <router-link :to="{ name: 'login' }">
@@ -64,90 +75,78 @@
           </router-link>
         </div>
 
-        <v-alert
-          type="error"
-          text
-          colored-border
-          border="left"
-          class="body-2 mb-0 mt-4"
-          v-if="!!error"
-        >
-          <div class="body-1 font-weight-bold">Server Error</div>
-          <div>{{error}}</div>
-        </v-alert>
-
-        <v-alert
-          type="success"
-          text
-          colored-border
-          border="left"
-          class="body-2 mb-0 mt-4"
-          v-else-if="success"
-        >
-          <div class="body-1 font-weight-bold">Account Request Has Been Submitted</div>
+        <Alert v-if="error" type="error" title="Server Error" class="mb-0 mt-4">
+          {{error}}
+        </Alert>
+        <Alert v-else-if="success" type="success" title="Request Submitted" class="mb-0 mt-4">
           <p>
-            We will create your account in the next 1-2 business days and send you an email with your login and password.
+            Your account will be created in the next 1-2 business days. You will then receive an email with a temporary password to complete your account registration.
           </p>
           <p>
-            If you don't get an email in the next few days, check your spam folder then contact us at: <a href="mailto:gs-naar-lsc-ecosheds@doimspp.onmicrosoft.com">gs-naar-lsc-ecosheds@doimspp.onmicrosoft.com</a>
+            If you don't get an email in the next few days, <strong>please check your spam folder</strong> and then contact us.
+            <!-- TODO: add contact email -->
           </p>
           <p class="mb-0">
-            Until then, go <router-link :to="{ name: 'explorer' }">explore our current photos</router-link>!
+            Until then, <router-link :to="{ name: 'explorer' }">click here</router-link> to go explore our existing temperature data.
           </p>
-        </v-alert>
+        </Alert>
       </v-card-text>
 
       <v-divider></v-divider>
 
       <v-card-actions class="mx-2 py-4">
-        <v-btn type="submit" color="primary" class="mr-4" :loading="loading" :disabled="success">submit</v-btn>
-        <v-btn text @click="clear" :disabled="success">clear</v-btn>
+        <v-btn
+          type="submit"
+          color="primary"
+          class="mr-4"
+          :loading="loading"
+          :disabled="success"
+        >submit</v-btn>
+        <v-btn
+          text
+          @click="clear"
+          :disabled="loading || success"
+        >clear</v-btn>
         <v-spacer></v-spacer>
-        <v-btn text @click="$router.push({ name: 'home' })">close</v-btn>
+        <v-btn
+          text
+          @click="$router.push({ name: 'home' })"
+        >close</v-btn>
       </v-card-actions>
     </v-form>
   </v-card>
 </template>
 
 <script>
-import { email } from '@/lib/validators'
+import { rules } from '@/lib/validators'
 
 export default {
-  name: 'Request',
+  name: 'AuthRequest',
   data () {
     return {
       loading: false,
       success: false,
-      status: 'READY',
       error: null,
+
       name: {
         value: '',
-        rules: [
-          v => !!v || 'Name is required'
-        ]
+        rules: rules.request.name
       },
       email: {
         value: '',
-        rules: [
-          v => !!v || 'Email is required',
-          v => (!!v && email(v)) || 'Must be a valid email address'
-        ]
+        rules: rules.request.email
       },
-      organizationName: {
+      organization: {
         value: '',
-        rules: [
-          v => !!v || 'Full organization name is required',
-          v => (!!v && v.trim().length >= 4) || 'Full organization name must be at least 4 characters',
-          v => (!!v && v.length <= 128) || 'Full organization name cannot exceed 128 characters'
-        ]
+        rules: rules.request.organization
       },
-      organizationCode: {
+      abbreviation: {
         value: '',
-        rules: [
-          v => !!v || 'Abbreviated organization is required',
-          v => (!!v && v.trim().length >= 2) || 'Abbreviated organization must be at least 2 characters',
-          v => (!!v && v.length <= 16) || 'Abbreviated organization cannot exceed 16 characters'
-        ]
+        rules: rules.request.abbreviation
+      },
+      description: {
+        value: '',
+        rules: rules.request.description
       }
     }
   },
@@ -162,16 +161,17 @@ export default {
       const payload = {
         name: this.name.value,
         email: this.email.value,
-        organization_name: this.organizationName.value,
-        organization_code: this.organizationCode.value
+        organization: this.organization.value,
+        abbreviation: this.abbreviation.value,
+        description: this.description.value
       }
 
       try {
-        await this.$http.public.post('/accounts', payload)
+        await this.$http.public.post('/requests', payload)
         this.success = true
       } catch (err) {
         console.error(err)
-        this.err = this.$errorMessage(err)
+        this.error = this.$errorMessage(err)
       } finally {
         this.loading = false
       }
@@ -183,8 +183,9 @@ export default {
 
       this.name.value = ''
       this.email.value = ''
-      this.organizationName.value = ''
-      this.organizationCode.value = ''
+      this.organization.value = ''
+      this.abbreviation.value = ''
+      this.description.value = ''
     }
   }
 }

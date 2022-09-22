@@ -1,19 +1,13 @@
 const path = require('path')
 const AWS = require('aws-sdk')
 
-require('dotenv-flow').config({
-  default_node_env: 'development',
-  path: __dirname,
-  silent: true
-})
-
 const secretsmanager = new AWS.SecretsManager({
-  region: process.env.AWS_REGION
+  region: process.env.REGION
 })
 
 async function getCreds () {
   const secret = await secretsmanager.getSecretValue({
-    SecretId: process.env.AWS_SECRET_DB,
+    SecretId: process.env.DB_SECRET,
     VersionStage: 'AWSCURRENT'
   }).promise()
   return JSON.parse(secret.SecretString)
@@ -41,7 +35,7 @@ const envConnection = {
 
 const config = {
   client: 'postgresql',
-  connection: !!process.env.AWS_SECRET_DB && process.env.NODE_ENV !== 'test' ? asyncConnection : envConnection,
+  connection: !!process.env.DB_SECRET && process.env.NODE_ENV !== 'test' ? asyncConnection : envConnection,
   migrations: {
     tableName: 'knex_migrations',
     directory: path.join(__dirname, 'db', 'migrations')

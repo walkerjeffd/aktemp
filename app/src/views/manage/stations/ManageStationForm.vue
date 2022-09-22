@@ -1,19 +1,18 @@
 <template>
   <v-dialog
     v-model="dialog"
-    style="z-index:5001"
     scrollable
+    max-width="800"
     @keydown.esc="close"
   >
-    <v-card style="width:800px">
+    <v-card>
       <v-toolbar color="grey lighten-2">
-        <v-toolbar-title class="text-h5">
+        <v-toolbar-title class="text-h6">
           <span v-if="!station">Create Station</span>
           <span v-else>Edit Station</span>
         </v-toolbar-title>
       </v-toolbar>
 
-      <!-- need to move <v-form> inside <v-card-text> for scrollable dialog to work -->
       <v-card-text class="body-2 py-8 px-4">
         <v-form ref="form" @submit.prevent="submit" :disabled="loading">
           <v-select
@@ -332,7 +331,7 @@ export default {
         if (err.response && err.response.data.message) {
           this.error = err.response.data.message
         } else {
-          this.err = this.$errorMessage(err)
+          this.error = this.$errorMessage(err)
         }
       } finally {
         this.loading = false

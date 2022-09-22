@@ -7,8 +7,12 @@ const {
   getSeriesValues,
   getSeriesDaily,
   getSeriesFlags,
+  postSeriesFlags,
   putSeries,
-  deleteSeries
+  putSeriesFlag,
+  deleteSeries,
+  deleteSeriesFlag,
+  deleteSeriesFlags
 } = require('../../controllers/series')
 
 const router = express.Router()
@@ -30,5 +34,12 @@ router.route('/:seriesId/daily')
 router.route('/:seriesId/flags')
   .all(asyncHandler(attachSeries))
   .get(asyncHandler(getSeriesFlags))
+  .post(asyncHandler(postSeriesFlags))
+  .delete(asyncHandler(deleteSeriesFlags))
+
+router.route('/:seriesId/flags/:flagId')
+  .all(asyncHandler(attachSeries))
+  .put(asyncHandler(putSeriesFlag))
+  .delete(asyncHandler(deleteSeriesFlag))
 
 module.exports = router

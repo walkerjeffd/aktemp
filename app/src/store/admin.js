@@ -39,8 +39,7 @@ export default {
     async fetchOrganizations ({ commit }) {
       commit('SET_STATUS', ['organizations', true, null])
       try {
-        const response = await adminApi.get('/organizations')
-        const data = response.data
+        const data = await adminApi.get('/organizations').then(d => d.data)
         commit('SET_ORGANIZATIONS', data)
         commit('SET_STATUS', ['organizations', false, null])
         return data

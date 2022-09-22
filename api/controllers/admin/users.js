@@ -1,12 +1,9 @@
-const { CognitoIdentityServiceProvider } = require('aws-sdk')
 const createError = require('http-errors')
 
+const { cognito } = require('../../aws')
 const { User } = require('../../db/models')
 
-const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({
-  region: process.env.AWS_REGION
-})
-const userPoolId = process.env.AWS_COGNITO_USER_POOL_ID
+const userPoolId = process.env.USER_POOL_ID
 
 async function listOrganizationsForUser (id) {
   return await User.relatedQuery('organizations')
@@ -14,14 +11,37 @@ async function listOrganizationsForUser (id) {
 }
 
 async function setOrganizations (id, organizationIds) {
+  const user = await User.query().findById(id)
+
+  if (!user) {
+    await User.query().insert({ id })
+  }
+
   // clear existing organizations first
   await User.relatedQuery('organizations')
     .for(id)
     .unrelate()
-  return await User.relatedQuery('organizations')
+
+  if (organizationIds && organizationIds.length > 0) {
+    await User.relatedQuery('organizations')
+      .for(id)
+      .relate(organizationIds)
+      .returning('*')
+  }
+  return User.relatedQuery('organizations')
     .for(id)
-    .relate(organizationIds)
-    .returning('*')
+}
+
+async function removeFromOrganization (id, organizationId) {
+  console.log('removeFromOrganization', id, organizationId)
+  console.log(await User.relatedQuery('organizations').for(id))
+  await User.relatedQuery('organizations')
+    .for(id)
+    .unrelate()
+    .where('id', organizationId)
+
+  return User.relatedQuery('organizations')
+    .for(id)
 }
 
 async function attachAdminUser (req, res, next) {
@@ -62,7 +82,7 @@ async function createCognitoUser (email, name) {
       }
     ]
   }
-  const response = await cognitoIdentityServiceProvider.adminCreateUser(params).promise()
+  const response = await cognito.adminCreateUser(params).promise()
   return response.User
 }
 
@@ -80,7 +100,7 @@ async function deleteCognitoUser (id) {
     Username: id
   }
 
-  await cognitoIdentityServiceProvider.adminDeleteUser(params).promise()
+  await cognito.adminDeleteUser(params).promise()
   return {
     message: `User (${id}) has been deleted`
   }
@@ -115,7 +135,7 @@ async function addUserToGroup (id, groupname) {
     Username: id
   }
 
-  await cognitoIdentityServiceProvider.adminAddUserToGroup(params).promise()
+  await cognito.adminAddUserToGroup(params).promise()
   return {
     message: `User (${id}) added to group (${groupname})`
   }
@@ -129,7 +149,7 @@ async function removeUserFromGroup (id, groupname) {
     Username: id
   }
 
-  await cognitoIdentityServiceProvider.adminRemoveUserFromGroup(params).promise()
+  await cognito.adminRemoveUserFromGroup(params).promise()
   return {
     message: `User (${id}) removed from group (${groupname})`
   }
@@ -142,7 +162,7 @@ async function disableUser (id) {
     Username: id
   }
 
-  await cognitoIdentityServiceProvider.adminDisableUser(params).promise()
+  await cognito.adminDisableUser(params).promise()
   return {
     message: `User (${id}) disabled`
   }
@@ -155,7 +175,7 @@ async function enableUser (id) {
     Username: id
   }
 
-  await cognitoIdentityServiceProvider.adminEnableUser(params).promise()
+  await cognito.adminEnableUser(params).promise()
   return {
     message: `User (${id}) enabled`
   }
@@ -179,7 +199,7 @@ async function listUsers (users, token, iter) {
     PaginationToken: token || null
   }
 
-  const result = await cognitoIdentityServiceProvider.listUsers(params).promise()
+  const result = await cognito.listUsers(params).promise()
   users = [...(users || []), ...result.Users]
   if (result.PaginationToken) {
     return await listUsers(users, result.PaginationToken, iter + 1)
@@ -210,7 +230,7 @@ async function listUsersInGroup (groupname, users, token, iter) {
     NextToken: token || null
   }
 
-  const result = await cognitoIdentityServiceProvider.listUsersInGroup(params).promise()
+  const result = await cognito.listUsersInGroup(params).promise()
 
   users = [...(users || []), ...result.Users]
 
@@ -227,7 +247,7 @@ async function listGroupsForUser (id) {
     Username: id
   }
 
-  const result = await cognitoIdentityServiceProvider.adminListGroupsForUser(params).promise()
+  const result = await cognito.adminListGroupsForUser(params).promise()
   return result.Groups.map(d => d.GroupName)
 }
 
@@ -250,7 +270,7 @@ async function fetchUser (id) {
     Username: id
   }
   try {
-    return await cognitoIdentityServiceProvider.adminGetUser(params).promise()
+    return await cognito.adminGetUser(params).promise()
   } catch (err) {
     if (err.code && err.code === 'UserNotFoundException') {
       console.log(`user (${id}) not found`)
@@ -279,6 +299,8 @@ async function putUser (req, res, next) {
     response = await signOutUser(res.locals.adminUser)
   } else if (req.body.action === 'setOrganizations') {
     response = await setOrganizations(res.locals.adminUser.id, req.body.organizationIds)
+  } else if (req.body.action === 'removeFromOrganization') {
+    response = await removeFromOrganization(res.locals.adminUser.id, req.body.organizationId)
   } else {
     throw createError(400, 'Invalid user action')
   }
@@ -291,7 +313,7 @@ async function signOutUser (id) {
     Username: id
   }
 
-  await cognitoIdentityServiceProvider.adminUserGlobalSignOut(params).promise()
+  await cognito.adminUserGlobalSignOut(params).promise()
   return {
     message: `User (${id}) signed out from all devices`
   }
@@ -303,5 +325,6 @@ module.exports = {
   postUsers,
   getUser,
   putUser,
-  deleteUser
+  deleteUser,
+  listUsers
 }

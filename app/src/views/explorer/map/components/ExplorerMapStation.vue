@@ -104,7 +104,6 @@ export default {
   position: absolute;
   top: 20px;
   right: 20px;
-  z-index: 1000;
   pointer-events: auto;
 }
 </style>

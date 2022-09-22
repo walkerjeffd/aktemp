@@ -189,7 +189,7 @@ export default {
           }, 3000)
         }
       } catch (err) {
-        this.err = this.$errorMessage(err)
+        this.error = this.$errorMessage(err)
       } finally {
         this.loading = false
         this.refreshing = false

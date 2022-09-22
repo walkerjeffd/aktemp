@@ -5,7 +5,6 @@
       color="#00573d"
       dark
       clipped-left
-      style="z-index:1001;"
     >
       <v-toolbar-title>AKTEMP</v-toolbar-title>
 
@@ -106,7 +105,7 @@
     <router-view/>
     <!-- </v-main> -->
 
-    <v-snackbar v-model="snackbar.show" :timeout="snackbar.timeout" :color="snackbar.color" :top="true" elevation="12" style="margin-top:70px" :light="true" outlined text>
+    <v-snackbar v-model="snackbar.show" :timeout="snackbar.timeout" :color="snackbar.color" :top="true" elevation="12" light outlined text style="z-index:1000">
       <span class="font-weight-bold">{{ snackbar.text }}</span>
       <template v-slot:action="{ attrs }">
         <v-btn :color="snackbar.color" icon text v-bind="attrs" @click="snackbar.show = false">

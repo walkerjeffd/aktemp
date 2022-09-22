@@ -20,3 +20,13 @@
 .highcharts-range-selector {
   background-color: #fff !important;
 }
+
+/* wrap text in <pre> */
+pre {
+  white-space: pre-line;
+}
+
+/* for hiding submit buttons */
+.hidden {
+  display: none;
+}

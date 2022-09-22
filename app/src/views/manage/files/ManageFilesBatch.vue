@@ -31,7 +31,6 @@
                         validate-on-blur
                         outlined
                         return-object
-                        style="z-index:1000"
                       ></v-select>
                     </v-col>
                   </v-row>
@@ -224,7 +223,7 @@ export default {
       table: {
         rows: [],
         settings: {
-          // height: 'auto',
+          height: 'auto',
           licenseKey: 'non-commercial-and-evaluation',
           // dropdown: true,
           contextMenu: ['remove_row', '---------', 'clear_column', '---------', 'undo', 'redo'],
@@ -461,7 +460,7 @@ export default {
         this.organization.stations = response.data
         this.renderHot()
       } catch (err) {
-        this.err = this.$errorMessage(err)
+        this.error = this.$errorMessage(err)
       }
     },
     selectFiles () {
@@ -478,7 +477,8 @@ export default {
           filename: d.name
         })
       })
-      this.renderHot()
+      console.log(this.table.rows)
+      setTimeout(() => this.renderHot(), 1000)
     },
     afterValidate (isValid, value, row, prop) {
       if (!isValid) {
@@ -746,6 +746,8 @@ export default {
       try {
         await this.validateRows()
       } catch (err) {
+        // this.error = this.$errorMessage(err)
+        this.loading = false
         return this.renderHot()
       }
 

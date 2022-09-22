@@ -2,7 +2,7 @@
   <v-main>
     <v-container>
       <v-row justify="space-around">
-        <v-col cols="12" md="6">
+        <v-col cols="12" sm="8" md="6" lg="5" xl="4" class="pt-8">
           <router-view></router-view>
         </v-col>
       </v-row>

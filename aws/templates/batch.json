@@ -239,11 +239,11 @@
           },
           "Environment": [
             {
-              "Name": "AWS_REGION",
+              "Name": "REGION",
               "Value": { "Ref": "AWS::Region" }
             },
             {
-              "Name": "AWS_SECRET_DB",
+              "Name": "DB_SECRET",
               "Value": { "Ref": "dbSecretName" }
             },
             {

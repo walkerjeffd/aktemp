@@ -118,25 +118,25 @@
             "ENV": {
               "Ref": "env"
             },
-            "AWS_REGION": {
+            "REGION": {
               "Ref": "AWS::Region"
             },
-            "AWS_S3_STORAGE_BUCKET": {
+            "STORAGE_BUCKET": {
               "Ref": "storageBucketName"
             },
-            "AWS_SECRET_DB": {
+            "DB_SECRET": {
               "Ref": "dbSecretName"
             },
             "AWS_LAMBDA_WORKER": {
               "Ref": "lambdaWorkerName"
             },
-            "AWS_BATCH_JOB_DEFINITION": {
+            "JOB_DEFINITION": {
               "Ref": "batchJobDefinitionName"
             },
-            "AWS_BATCH_JOB_QUEUE": {
+            "JOB_QUEUE": {
               "Ref": "batchJobQueueName"
             },
-            "AWS_COGNITO_USER_POOL_ID": {
+            "USER_POOL_ID": {
               "Ref": "userPoolId"
             },
             "NOTIFY_TOPIC": {

@@ -1,12 +1,12 @@
 <template>
   <v-dialog
     v-model="dialog"
-    :max-width="options.width"
+    max-width="500"
     :style="{ zIndex: options.zIndex }"
     @keydown.esc="close"
   >
     <v-card>
-      <v-toolbar :color="options.color">
+      <v-toolbar flat dense :color="options.color">
         <v-toolbar-title class="text-h6">
           {{ title }}
         </v-toolbar-title>

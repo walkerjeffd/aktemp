@@ -29,7 +29,6 @@
                       validate-on-blur
                       outlined
                       return-object
-                      style="z-index:1000"
                     ></v-select>
                   </v-col>
                 </v-row>
@@ -146,6 +145,7 @@ export default {
       error: false,
 
       settings: {
+        height: 'auto',
         licenseKey: 'non-commercial-and-evaluation',
         contextMenu: ['row_above', 'row_below', 'remove_row', '---------', 'clear_column', '---------', 'undo', 'redo'],
         minRows: 1,

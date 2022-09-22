@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+require('dotenv-flow').config({
+  default_node_env: 'development',
+  path: '..',
+  silent: true
+})
+
 const app = require('./app')
 const http = require('http')
 

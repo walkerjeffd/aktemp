@@ -49,7 +49,7 @@ export function assignDailyFlags (values, flags) {
   values = values.slice()
 
   flags = flags.map(flag => {
-    flag.label = flag.flag_type_id === 'OTHER' ? flag.flag_type_other : flag.flag_type_id
+    const label = flagLabel(flag)
 
     const startIndex = values.findIndex(d => d.date >= flag.start_date)
     const endIndex = values.findIndex(d => d.date >= flag.end_date)
@@ -66,6 +66,7 @@ export function assignDailyFlags (values, flags) {
     }
     return {
       ...flag,
+      label,
       values: flagValues
     }
   })
@@ -80,7 +81,7 @@ export function assignRawFlags (values, flags) {
   }
 
   flags = flags.map(flag => {
-    flag.label = flag.flag_type_id === 'OTHER' ? flag.flag_type_other : flag.flag_type_id
+    const label = flagLabel(flag)
 
     let flagValues = []
     if (new Date(flag.end_datetime) >= new Date(values[0].datetime) && // flag ends after first value
@@ -99,9 +100,18 @@ export function assignRawFlags (values, flags) {
 
     return {
       ...flag,
+      label,
       values: flagValues
     }
   })
 
   return { values, flags }
+}
+
+export function flagLabel (flag) {
+  let label = flag.flag_type_id
+  if (flag.flag_type_id === 'OTHER') {
+    label += ` (${flag.flag_type_other || 'N/A'})`
+  }
+  return label
 }

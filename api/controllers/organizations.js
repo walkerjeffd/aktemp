@@ -15,7 +15,7 @@ const attachOrganization = async (req, res, next) => {
 
 const getOrganizations = async (req, res, next) => {
   const organizations = await Organization.query()
-    .withGraphFetched('users')
+    .orderBy('code')
   return res.status(200).json(organizations)
 }
 

@@ -16,8 +16,7 @@ exports.seed = async knex => {
     { code: 'UAA', name: 'Univ. Alaska, Anchorage' }
   ]).returning('*')
   const users = await knex('users').insert([
-    { id: 'e31729fb-09dd-40ab-bea6-af098086eb57' },
-    { id: '1bd55518-0a27-4d0b-a116-f371c05bae26' }
+    { id: 'e31729fb-09dd-40ab-bea6-af098086eb57' }
   ]).returning('*')
   await knex('users_organizations').insert([
     { user_id: users[0].id, organization_id: organizations[0].id },

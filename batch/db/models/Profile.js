@@ -41,7 +41,7 @@ class Profile extends Base {
         relation: Base.HasManyRelation,
         modelClass: ProfileValue,
         join: {
-          from: 'profiles_values.profile_id',
+          from: 'profile_values.profile_id',
           to: 'profiles.id'
         }
       }

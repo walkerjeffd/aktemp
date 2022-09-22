@@ -102,6 +102,7 @@ export default {
       }
     },
     async fetchStations ({ commit, state }) {
+      console.log('fetchStations')
       if (!state.organization) return
       commit('SET_STATUS', ['stations', true, null])
       try {

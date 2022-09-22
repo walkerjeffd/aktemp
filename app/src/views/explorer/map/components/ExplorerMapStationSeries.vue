@@ -69,7 +69,7 @@ export default {
         },
         plotOptions: {
           series: {
-            gapSize: 5,
+            gapSize: 2,
             animation: false
           },
           arearange: {

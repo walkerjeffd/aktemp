@@ -2,19 +2,33 @@ const statusTypes = require('../types/status')
 
 exports.up = async knex => {
   await knex.raw('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+
+  await knex.schema.createTable('requests', t => {
+    t.increments('id').primary().unsigned()
+    t.text('name').notNullable()
+    t.text('email').notNullable()
+    t.text('organization').notNullable()
+    t.text('abbreviation').notNullable()
+    t.text('description')
+    t.boolean('pending').default(true)
+    t.timestamps(true, true)
+  })
+
   await knex.schema.createTable('organizations', t => {
     t.increments('id').primary().unsigned()
-    t.text('code').notNullable()
+    t.text('code').unique().notNullable()
     t.text('name').notNullable()
     t.text('poc_name')
     t.text('poc_tel')
     t.text('poc_email')
     t.timestamps(true, true)
   })
+
   await knex.schema.createTable('users', t => {
     t.text('id').primary() // cognito sub
     t.timestamps(true, true)
   })
+
   await knex.schema.createTable('users_organizations', t => {
     t.text('user_id') // cognito sub
       .references('users.id')
@@ -27,6 +41,7 @@ exports.up = async knex => {
       .notNullable()
       .onDelete('CASCADE')
   })
+
   await knex.schema.createTable('stations', t => {
     t.increments('id').primary().unsigned()
     t.integer('organization_id')
@@ -49,6 +64,7 @@ exports.up = async knex => {
     t.unique(['organization_id', 'code'])
     t.timestamps(true, true)
   })
+
   await knex.schema.createTable('files', t => {
     t.increments('id').primary().unsigned()
     t.integer('organization_id')
@@ -76,10 +92,12 @@ exports.up = async knex => {
 
     t.timestamps(true, true)
   })
+
   await knex.schema.createTable('flag_types', t => {
     t.text('id').primary()
     t.text('description')
   })
+
   await knex.schema.createTable('series', t => {
     t.increments('id').primary().unsigned()
     t.integer('file_id')
@@ -110,6 +128,7 @@ exports.up = async knex => {
 
     t.timestamps(true, true)
   })
+
   await knex.schema.createTable('series_values', t => {
     t.bigIncrements('id').primary().unsigned()
     t.integer('series_id')
@@ -122,6 +141,7 @@ exports.up = async knex => {
     t.float('value').notNullable()
     t.float('depth_m')
   })
+
   await knex.schema.createTable('series_flags', t => {
     t.increments('id').primary().unsigned()
     t.integer('series_id')
@@ -137,6 +157,7 @@ exports.up = async knex => {
       .onDelete('SET NULL')
     t.text('flag_type_other')
   })
+
   await knex.schema.createTable('profiles', t => {
     t.increments('id').primary().unsigned()
     t.integer('file_id')
@@ -160,6 +181,7 @@ exports.up = async knex => {
 
     t.timestamps(true, true)
   })
+
   await knex.schema.createTable('profile_values', t => {
     t.bigIncrements('id').primary().unsigned()
     t.integer('profile_id')
@@ -187,5 +209,6 @@ exports.down = async knex => {
   await knex.schema.dropTable('users_organizations')
   await knex.schema.dropTable('users')
   await knex.schema.dropTable('organizations')
+  await knex.schema.dropTable('requests')
   await knex.raw('DROP EXTENSION "uuid-ossp"')
 }

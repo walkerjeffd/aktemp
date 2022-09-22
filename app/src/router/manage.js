@@ -9,12 +9,6 @@ import ManageFileForm from '@/views/manage/files/ManageFileForm.vue'
 import ManageFilesBatch from '@/views/manage/files/ManageFilesBatch.vue'
 import ManageFile from '@/views/manage/files/ManageFile.vue'
 
-import ManageSeries from '@/views/manage/series/ManageSeries.vue'
-import ManageSeriesOne from '@/views/manage/series/ManageSeriesOne.vue'
-
-import ManageProfiles from '@/views/manage/profiles/ManageProfiles.vue'
-import ManageProfile from '@/views/manage/profiles/ManageProfile.vue'
-
 import ManageQaqc from '@/views/manage/qaqc/ManageQaqc.vue'
 import ManageQaqcSeries from '@/views/manage/qaqc/ManageQaqcSeries.vue'
 
@@ -37,30 +31,6 @@ export default [
         path: 'files',
         name: 'manageFiles',
         component: ManageFiles
-      },
-      {
-        path: 'series',
-        name: 'manageSeries',
-        component: ManageSeries,
-        children: [
-          {
-            path: ':seriesId',
-            name: 'manageSeriesOne',
-            component: ManageSeriesOne
-          }
-        ]
-      },
-      {
-        path: 'profiles',
-        name: 'manageProfiles',
-        component: ManageProfiles,
-        children: [
-          {
-            path: ':profileId',
-            name: 'manageProfile',
-            component: ManageProfile
-          }
-        ]
       },
       {
         path: 'qaqc',

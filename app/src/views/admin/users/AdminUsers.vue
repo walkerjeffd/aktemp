@@ -1,117 +1,126 @@
 <template>
   <!-- eslint-disable vue/valid-v-slot -->
   <div>
-    <Alert type="error" title="Error Occurred" v-if="status.error" class="ma-4">{{ status.error }}</Alert>
+    <Alert v-if="status.error" type="error" title="Server Error" class="ma-4 elevation-2">
+      {{ status.error }}
+    </Alert>
 
     <v-data-table
       ref="table"
       :headers="headers"
       :items="users"
       :loading="status.loading"
-      :sort-by="['attributes.name']"
+      :sort-by="['created_at']"
+      :sort-desc="[true]"
+      :search="search"
       loading-text="Loading... Please wait"
-      @click:row="select"
       single-select
       class="row-cursor-pointer"
+      @click:row="select"
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <div class="text-h5">Users</div>
+          <div class="text-h6">Users</div>
           <RefreshButton :loading="status.loading" @click="fetchUsers"></RefreshButton>
           <v-spacer></v-spacer>
-          <v-btn color="success" @click="createUser">
+          <v-btn color="success" @click="create">
             <v-icon left>mdi-plus</v-icon> New User
           </v-btn>
         </v-toolbar>
+        <v-row class="justify-space-between align-end px-4 mb-2">
+          <v-col cols="12" lg="4" xl="3">
+            <v-text-field
+              v-model="search"
+              append-icon="mdi-magnify"
+              label="Search users"
+              single-line
+              hide-details
+              clearable
+              dense
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" lg="4" xl="3" class="body-2 text--secondary text-right">
+            <v-icon small>mdi-information-outline</v-icon>
+            Click on a row to edit a user
+          </v-col>
+        </v-row>
         <v-divider></v-divider>
       </template>
 
       <template v-slot:item.created_at="{ item }">
-        {{ item.created_at | timestampFormat('lll') }}
+        {{ item.created_at | timestampFormat('ll') }}
       </template>
       <template v-slot:item.id="{ item }">
-        {{ item.id.substr(1, 7) }}...
+        {{ item.id | truncate(5) }}
       </template>
       <template v-slot:item.admin="{ item }">
-        <v-icon v-if="item.admin" color="primary">mdi-check-circle</v-icon>
-        <v-icon v-else color="gray">mdi-close-circle</v-icon>
+        <v-simple-checkbox
+          v-model="item.admin"
+          disabled
+        ></v-simple-checkbox>
       </template>
       <template v-slot:item.enabled="{ item }">
-        <v-icon v-if="item.enabled" color="primary">mdi-check-circle</v-icon>
-        <v-icon v-else color="gray">mdi-close-circle</v-icon>
+        <v-simple-checkbox
+          v-model="item.enabled"
+          disabled
+        ></v-simple-checkbox>
       </template>
       <template v-slot:item.status="{ item }">
-        <v-chip
-          v-if="item.status==='CONFIRMED'"
-          small
-          label
-          color="gray"
-        >
-          {{ item.status }}
-        </v-chip>
-        <v-chip
-          v-else
-          small
-          label
-          color="warning"
+        <v-chip small label
+          :color="item.status==='CONFIRMED' ? 'gray' : 'warning'"
         >
           {{ item.status }}
         </v-chip>
       </template>
     </v-data-table>
 
-    <AdminUserCreateDialog ref="createUserForm"></AdminUserCreateDialog>
-    <AdminUserEditDialog ref="editUserForm"></AdminUserEditDialog>
+    <AdminCreateUserDialog ref="createUserDialog"></AdminCreateUserDialog>
+    <AdminEditUserDialog ref="editUserDialog"></AdminEditUserDialog>
   </div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
-import AdminUserCreateDialog from '@/views/admin/users/AdminUserCreateDialog'
-import AdminUserEditDialog from '@/views/admin/users/AdminUserEditDialog'
+
+import AdminCreateUserDialog from '@/views/admin/users/AdminCreateUserDialog'
+import AdminEditUserDialog from '@/views/admin/users/AdminEditUserDialog'
 
 export default {
   name: 'AdminUsers',
   components: {
-    AdminUserCreateDialog,
-    AdminUserEditDialog
+    AdminCreateUserDialog,
+    AdminEditUserDialog
   },
   data: () => ({
+    search: '',
     headers: [
       {
         text: 'ID',
-        value: 'id',
-        align: 'left'
+        value: 'id'
       },
       {
         text: 'Created',
-        value: 'created_at',
-        align: 'left'
+        value: 'created_at'
       },
       {
         text: 'Name',
-        value: 'attributes.name',
-        align: 'left'
+        value: 'attributes.name'
       },
       {
         text: 'Email',
-        value: 'attributes.email',
-        align: 'left'
+        value: 'attributes.email'
       },
       {
         text: 'Admin',
-        value: 'admin',
-        align: 'left'
+        value: 'admin'
       },
       {
         text: 'Enabled',
-        value: 'enabled',
-        align: 'left'
+        value: 'enabled'
       },
       {
         text: 'Status',
-        value: 'status',
-        align: 'left'
+        value: 'status'
       }
     ]
   }),
@@ -127,14 +136,14 @@ export default {
   methods: {
     ...mapActions({ fetchUsers: 'admin/fetchUsers' }),
     async select (user, row) {
-      const saved = await this.$refs.editUserForm.open(user.id)
+      const saved = await this.$refs.editUserDialog.open(user.id)
       if (saved) {
         return await this.fetchUsers()
       }
     },
-    async createUser () {
-      const created = await this.$refs.createUserForm.open()
-      if (created) {
+    async create () {
+      const user = await this.$refs.createUserDialog.open()
+      if (user) {
         await this.fetchUsers()
       }
     }

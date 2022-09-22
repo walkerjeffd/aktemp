@@ -66,7 +66,7 @@ async function postFiles (req, res, next) {
     }
   } else {
     const presignedUrl = await createPresignedPostPromise({
-      Bucket: process.env.AWS_S3_STORAGE_BUCKET,
+      Bucket: process.env.STORAGE_BUCKET,
       Fields: {
         key: `files/${row.uuid}/${row.filename}`
       },
@@ -108,8 +108,8 @@ async function processFile (req, res, next) {
   // console.log(`process dataset (id=${res.locals.dataset.id})`)
   await batch.submitJob({
     jobName: `process-file-${res.locals.file.id}`,
-    jobDefinition: process.env.AWS_BATCH_JOB_DEFINITION,
-    jobQueue: process.env.AWS_BATCH_JOB_QUEUE,
+    jobDefinition: process.env.JOB_DEFINITION,
+    jobQueue: process.env.JOB_QUEUE,
     containerOverrides: {
       command: [
         'node',

@@ -57,9 +57,27 @@ async function getOrganizationSeries (req, res, next) {
   return res.status(200).json(rows)
 }
 
+async function postSeriesFlags (req, res, next) {
+  const row = await res.locals.series.$relatedQuery('flags')
+    .insert(req.body)
+    .returning('*')
+  return res.status(201).json(row)
+}
+
 async function putSeries (req, res, next) {
   const row = await res.locals.series.$query()
     .patchAndFetch(req.body)
+  return res.status(200).json(row)
+}
+
+async function putSeriesFlag (req, res, next) {
+  const flag = await res.locals.series.$relatedQuery('flags')
+    .where('id', req.params.flagId)
+    .first()
+  if (!flag) {
+    return next(createError(404, `Flag (id=${req.params.flagId}not found for series (id=${res.locals.series.id})`))
+  }
+  const row = await flag.$query().patchAndFetch(req.body)
   return res.status(200).json(row)
 }
 
@@ -72,6 +90,24 @@ async function deleteSeries (req, res, next) {
   return res.status(204).json()
 }
 
+async function deleteSeriesFlag (req, res, next) {
+  const flag = await res.locals.series.$relatedQuery('flags')
+    .where('id', req.params.flagId)
+    .first()
+  if (!flag) {
+    return next(createError(404, `Flag (id=${req.params.flagId}not found for series (id=${res.locals.series.id})`))
+  }
+  await flag.$query().delete()
+  return res.status(204).json()
+}
+
+async function deleteSeriesFlags (req, res, next) {
+  await res.locals.series
+    .$relatedQuery('flags')
+    .delete()
+  return res.status(204).json()
+}
+
 module.exports = {
   attachSeries,
   getSeries,
@@ -79,6 +115,10 @@ module.exports = {
   getSeriesDaily,
   getSeriesFlags,
   getOrganizationSeries,
+  postSeriesFlags,
   putSeries,
-  deleteSeries
+  putSeriesFlag,
+  deleteSeries,
+  deleteSeriesFlag,
+  deleteSeriesFlags
 }

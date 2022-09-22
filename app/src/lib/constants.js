@@ -104,3 +104,16 @@ export const depthUnitsOptions = [
 
 export const booleanOptions = ['TRUE', 'FALSE']
 export const booleanOrNullOptions = ['TRUE', 'FALSE', 'UNKNOWN']
+
+export const flagTypeOptions = [
+  {
+    id: 'OOW',
+    description: 'Out of water'
+  }, {
+    id: 'BURIED',
+    description: 'Buried logger'
+  }, {
+    id: 'OTHER',
+    description: 'Other'
+  }
+]

@@ -138,7 +138,7 @@ export default {
         this.clear()
       } catch (err) {
         console.error(err)
-        this.err = this.$errorMessage(err)
+        this.error = this.$errorMessage(err)
       } finally {
         this.loading = false
       }

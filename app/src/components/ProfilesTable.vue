@@ -25,7 +25,7 @@
       {{ item.station_code | truncate(20) }}
     </template>
     <template v-slot:item.date="{ item }">
-      {{ item.date | timestampTimezoneFormat(item.station_timezone, 'll') }}
+      {{ item.date | formatTimestamp('ll', item.station_timezone) }}
     </template> -->
   </v-data-table>
 </template>

@@ -243,8 +243,8 @@ export default {
         {
           prop: 'placement',
           label: 'Placement',
-          rule: `Placement must be one of: [${placementOptions.map(d => `'${d.value}'`).filter(d => d !== 'UNKNOWN').join(', ')}]`,
-          source: placementOptions.map(d => d.value).filter(d => d !== 'UNKNOWN'),
+          rule: `Placement must be one of: [${placementOptions.map(d => `'${d.value}'`).join(', ')}]`,
+          source: placementOptions.map(d => d.value),
           type: 'dropdown'
         },
         {
@@ -259,8 +259,8 @@ export default {
         {
           prop: 'waterbody_type',
           label: 'Waterbody Type',
-          rule: `Waterbody Type must be one of: [${waterbodyTypeOptions.map(d => `'${d.value}'`).filter(d => d !== 'UNKNOWN').join(', ')}]`,
-          source: waterbodyTypeOptions.map(d => d.value).filter(d => d !== 'UNKNOWN'),
+          rule: `Waterbody Type must be one of: [${waterbodyTypeOptions.map(d => `'${d.value}'`).join(', ')}]`,
+          source: waterbodyTypeOptions.map(d => d.value),
           type: 'dropdown'
         },
         {

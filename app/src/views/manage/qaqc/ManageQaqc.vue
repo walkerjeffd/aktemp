@@ -40,17 +40,11 @@
           {{ item.station_code | truncate(20) }}
         </template>
         <template v-slot:item.start_datetime="{ item }">
-          {{ item.start_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
+          {{ item.start_datetime | formatTimestamp('ll', item.station_timezone) }}
         </template>
         <template v-slot:item.end_datetime="{ item }">
-          {{ item.end_datetime | timestampTimezoneFormat(item.station_timezone, 'll') }}
+          {{ item.end_datetime | formatTimestamp('ll', item.station_timezone) }}
         </template>
-        <template v-slot:item.depth="{ item }">
-          {{ item | seriesDepth }}
-        </template>
-        <!-- <template v-slot:item.reviewed="{ item }">
-          {{ item.reviewed === true ? 'Yes' : 'No' }}
-        </template> -->
       </v-data-table>
     </v-col>
     <v-col cols="12">
@@ -84,35 +78,28 @@ export default {
         {
           text: 'ID',
           value: 'id',
-          align: 'left',
           width: '80px'
         },
         {
           text: 'Station',
           value: 'station_code',
-          align: 'left',
           width: '200px'
         },
         {
           text: 'Start',
-          value: 'start_datetime',
-          align: 'left'
+          value: 'start_datetime'
         },
         {
           text: 'End',
-          value: 'end_datetime',
-          align: 'left'
+          value: 'end_datetime'
         },
         {
-          text: 'Depth',
-          value: 'depth',
-          align: 'left',
-          width: '200px'
+          text: 'Depth Category',
+          value: 'depth_category'
         },
         {
           text: 'Reviewed',
-          value: 'reviewed',
-          align: 'left'
+          value: 'reviewed'
         }
       ]
     }

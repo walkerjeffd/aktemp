@@ -10,6 +10,7 @@ import './filters'
 
 import './plugins/amplify'
 import './plugins/axios'
+import './plugins/chrono'
 import './plugins/dayjs'
 import './plugins/error-message'
 import './plugins/file-saver'

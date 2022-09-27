@@ -385,9 +385,9 @@ export default {
           {
             prop: 'accuracy',
             label: 'Sensor Accuracy',
-            rule: `'Sensor Accuracy' must be one of: [${joinStrings(sensorAccuracyOptions.map(d => d.value).filter(d => d !== 'UNKNOWN'))}]`,
+            rule: `'Sensor Accuracy' must be one of: [${joinStrings(sensorAccuracyOptions.map(d => d.value))}]`,
             type: 'dropdown',
-            source: sensorAccuracyOptions.map(d => d.value).filter(d => d !== 'UNKNOWN')
+            source: sensorAccuracyOptions.map(d => d.value)
           },
           {
             prop: 'sop_bath',
@@ -641,7 +641,7 @@ export default {
           mode: row.station_mode
         },
         depth: {
-          mode: row.depth_mode || 'UNKNOWN'
+          mode: row.depth_mode
         },
         timestamp: {
           columns: [row.datetime_column],
@@ -710,7 +710,7 @@ export default {
           config.depth.category = row.depth_value
           break
         default:
-          config.depth.mode = 'UNKNOWN'
+          config.depth.mode = null
       }
 
       config.meta.sop_bath = parseBooleanOption(row.sop_bath)

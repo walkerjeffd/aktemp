@@ -1,4 +1,7 @@
 import Papa from 'papaparse'
+import '../plugins/dayjs'
+import dayjs from 'dayjs'
+import * as chrono from 'chrono-node'
 
 export function parseCsvFile (file) {
   return new Promise((resolve, reject) => {
@@ -114,4 +117,26 @@ export function flagLabel (flag) {
     label += ` (${flag.flag_type_other || 'N/A'})`
   }
   return label
+}
+
+export function guessUtcOffset (timestamp, stationTimezone) {
+  const d = parseTimestamp(timestamp, 0).tz(stationTimezone)
+  if (!d.isValid()) {
+    throw new Error(`Failed to guess UTC offset for timestamp (${timestamp}) at time zone (${stationTimezone})`)
+  }
+  return d.utcOffset() / 60
+}
+
+export function parseTimestamp (timestamp, utcOffset = 0) {
+  // timestamp: string
+  // returns Date object
+  const x = chrono.parseDate(timestamp, { timezone: 'UTC' })
+  if (!x) {
+    throw new Error(`Failed parse timestamp (${timestamp})`)
+  }
+  return dayjs(x).subtract(utcOffset, 'hours')
+}
+
+export function formatTimestamp (timestamp, format, timezone) {
+  return timezone ? dayjs(timestamp).tz(timezone).format(format) : dayjs(timestamp).format(format)
 }

@@ -18,6 +18,9 @@ describe('timestamp parser', () => {
   test('invalid value fails', () => {
     expect(() => parseTimestamp({ datetime: 'invalid' }, config)).toThrow()
   })
+  test('dst transition time passes', () => {
+    expect(parseTimestamp({ datetime: '3/10/13 2:00' }, config)).toBe('2013-03-10T02:00:00.000Z')
+  })
   describe('utcOffset(0) mode', () => {
     const config = {
       timestamp: {
@@ -82,8 +85,8 @@ describe('timestamp parser', () => {
     test('ISO timestamp ends in Z passes', () => {
       expect(parseTimestamp({ datetime: '2022-05-04T16:35:00.000Z' }, config)).toBe('2022-05-04T16:35:00.000Z')
     })
-    test('ISO timestamp ends in -08 fails', () => {
-      expect(() => parseTimestamp({ datetime: '2022-05-04T16:35:00.000-08' }, config)).toThrow()
+    test('ISO timestamp ends in -08 passes', () => {
+      expect(parseTimestamp({ datetime: '2022-05-04T16:35:00.000-08' }, config)).toBe('2022-05-05T00:35:00.000Z')
     })
     test('ISO timestamp ends in -0800 passes', () => {
       expect(parseTimestamp({ datetime: '2022-05-04T16:35:00.000-0800' }, config)).toBe('2022-05-05T00:35:00.000Z')

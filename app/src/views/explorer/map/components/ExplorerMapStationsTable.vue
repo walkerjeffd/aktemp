@@ -49,8 +49,8 @@
         </template>
         <template v-slot:item.series_period="{ item }">
           <span v-if="item.series_start_datetime && item.series_end_datetime">
-            {{ item.series_start_datetime | timestampTimezoneFormat(item.timezone, 'll') }} -
-            {{ item.series_end_datetime | timestampTimezoneFormat(item.timezone, 'll') }}
+            {{ item.series_start_datetime | formatTimestamp('ll', item.timezone) }} -
+            {{ item.series_end_datetime | formatTimestamp('ll', item.timezone) }}
           </span>
         </template>
         <template v-slot:item.waterbody_name="{ item }">

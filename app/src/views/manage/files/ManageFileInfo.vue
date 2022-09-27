@@ -25,7 +25,10 @@
             <td class="text-right grey--text text--darken-2">
               Uploaded
             </td>
-            <td class="font-weight-bold">{{ file.created_at | timestampFormat('lll') }}</td>
+            <td class="font-weight-bold">
+              {{ file.created_at | formatTimestamp('lll') }}<br>
+              (about {{ file.created_at | timestampFromNow }})
+            </td>
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">

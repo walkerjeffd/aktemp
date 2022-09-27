@@ -48,13 +48,13 @@
           <td class="text-right grey--text text--darken-2">
             Start
           </td>
-          <td class="font-weight-bold">{{ series.start_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z') }}</td>
+          <td class="font-weight-bold">{{ series.start_datetime | formatTimestamp('lll z', series.station_timezone) }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             End
           </td>
-          <td class="font-weight-bold">{{ series.end_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z') }}</td>
+          <td class="font-weight-bold">{{ series.end_datetime | formatTimestamp('lll z', series.station_timezone) }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -70,9 +70,15 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Depth
+            Depth Category
           </td>
-          <td class="font-weight-bold">{{ series | seriesDepth }}</td>
+          <td class="font-weight-bold">{{ series.depth_category }}</td>
+        </tr>
+        <tr>
+          <td class="text-right grey--text text--darken-2">
+            Depth (m)
+          </td>
+          <td class="font-weight-bold">{{ series.depth_m }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">

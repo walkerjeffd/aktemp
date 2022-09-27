@@ -3,7 +3,7 @@ const AWS = require('aws-sdk')
 
 require('dotenv-flow').config({
   default_node_env: 'development',
-  path: __dirname,
+  path: '..',
   silent: true
 })
 

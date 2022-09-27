@@ -52,10 +52,10 @@
 
                         <div v-else class="text-body-1">
                           <div>
-                            Start: <strong>{{ flag.selected.start_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z')}}</strong>
+                            Start: <strong>{{ flag.selected.start_datetime | formatTimestamp('lll z', series.station_timezone)}}</strong>
                           </div>
                           <div>
-                            End: <strong>{{ flag.selected.end_datetime | timestampTimezoneFormat(series.station_timezone, 'lll z')}}</strong>
+                            End: <strong>{{ flag.selected.end_datetime | formatTimestamp('lll z', series.station_timezone)}}</strong>
                           </div>
 
                           <div class="text--secondary caption">

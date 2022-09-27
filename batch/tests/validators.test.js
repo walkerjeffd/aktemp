@@ -92,16 +92,17 @@ describe('file config validator', () => {
   describe('depth/series', () => {
     const fields = ['datetime', 'temp', 'depth']
     const schema = schemas.depth(fields, 'SERIES')
-    const valid = {
-      mode: 'CATEGORY',
-      category: 'SURFACE'
-    }
+    test('empty passes', () => {
+      expect(validateSchema(schema, {})).toMatchObject({})
+    })
     test('valid category passes', () => {
-      expect(validateSchema(schema, valid)).toMatchObject(valid)
+      const value = {
+        category: 'SURFACE'
+      }
+      expect(validateSchema(schema, value)).toMatchObject(value)
     })
     test('valid value passes', () => {
       const value = {
-        mode: 'VALUE',
         value: 1,
         units: 'm'
       }
@@ -109,45 +110,19 @@ describe('file config validator', () => {
     })
     test('valid column passes', () => {
       const value = {
-        mode: 'COLUMN',
         column: 'depth',
         units: 'm'
       }
       expect(validateSchema(schema, value)).toMatchObject(value)
     })
-    test('invalid mode fails', () => {
-      const value = {
-        mode: 'INVALID'
-      }
-      expect(() => validateSchema(schema, value)).toThrow()
-    })
-    test('missing mode fails', () => {
-      const value = {}
-      expect(() => validateSchema(schema, value)).toThrow()
-    })
-    test('missing category fails', () => {
-      const value = {
-        mode: 'CATEGORY'
-      }
-      expect(() => validateSchema(schema, value)).toThrow()
-    })
     test('invalid category fails', () => {
       const value = {
-        mode: 'CATEGORY',
         category: 'invalid'
-      }
-      expect(() => validateSchema(schema, value)).toThrow()
-    })
-    test('missing value fails', () => {
-      const value = {
-        mode: 'VALUE',
-        units: 'm'
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })
     test('invalid value fails', () => {
       const value = {
-        mode: 'VALUE',
         value: 'invalid',
         units: 'm'
       }
@@ -155,14 +130,12 @@ describe('file config validator', () => {
     })
     test('missing value units fails', () => {
       const value = {
-        mode: 'VALUE',
         value: 1
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })
     test('invalid value units fails', () => {
       const value = {
-        mode: 'VALUE',
         value: 1,
         units: 'invalid'
       }
@@ -170,29 +143,19 @@ describe('file config validator', () => {
     })
     test('invalid column fails', () => {
       const value = {
-        mode: 'COLUMN',
         column: 'invalid',
-        units: 'm'
-      }
-      expect(() => validateSchema(schema, value)).toThrow()
-    })
-    test('missing column fails', () => {
-      const value = {
-        mode: 'COLUMN',
         units: 'm'
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })
     test('missing column units fails', () => {
       const value = {
-        mode: 'COLUMN',
         column: 'depth'
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })
     test('invalid column units fails', () => {
       const value = {
-        mode: 'COLUMN',
         column: 'depth',
         units: 'invalid'
       }
@@ -203,26 +166,18 @@ describe('file config validator', () => {
     const fields = ['datetime', 'temp', 'depth']
     const schema = schemas.depth(fields, 'PROFILES')
     const valid = {
-      mode: 'COLUMN',
       column: 'depth',
       units: 'm'
     }
     test('valid config passes', () => {
       expect(validateSchema(schema, valid)).toMatchObject(valid)
     })
-    test('category mode fails', () => {
-      const value = {
-        mode: 'CATEGORY'
-      }
-      expect(() => validateSchema(schema, value)).toThrow()
-    })
-    test('missing mode fails', () => {
+    test('empty fails', () => {
       const value = {}
       expect(() => validateSchema(schema, value)).toThrow()
     })
     test('invalid column fails', () => {
       const value = {
-        mode: 'COLUMN',
         column: 'invalid',
         units: 'm'
       }
@@ -230,21 +185,18 @@ describe('file config validator', () => {
     })
     test('missing column fails', () => {
       const value = {
-        mode: 'COLUMN',
         units: 'm'
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })
     test('missing column units fails', () => {
       const value = {
-        mode: 'COLUMN',
         column: 'depth'
       }
       expect(() => validateSchema(schema, value)).toThrow()
     })
     test('invalid column units fails', () => {
       const value = {
-        mode: 'COLUMN',
         column: 'depth',
         units: 'invalid'
       }

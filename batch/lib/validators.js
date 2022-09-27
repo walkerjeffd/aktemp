@@ -35,36 +35,19 @@ const stationSchema = (fields) => {
 const depthSchema = (fields, type) => {
   const validFields = Joi.string().valid(...fields)
   const schema = {
-    column: validFields.when('mode', {
-      is: 'COLUMN',
-      then: Joi.required()
-    }),
-    value: Joi.number().when('mode', {
-      is: 'VALUE',
-      then: Joi.required()
-    }),
-    units: Joi.string().valid('m', 'ft', 'in', 'cm')
-      .when('mode', {
-        switch: [
-          { is: 'VALUE', then: Joi.required() },
-          { is: 'COLUMN', then: Joi.required() }
-        ]
-      }),
-    category: Joi.when('mode', {
-      is: 'CATEGORY',
-      then: Joi.string().valid('BOTTOM', 'MID-DEPTH', 'SURFACE', 'VARYING').required()
-    })
-  }
-
-  switch (type) {
-    case 'SERIES':
-      schema.mode = Joi.string().valid('COLUMN', 'VALUE', 'CATEGORY', 'UNKNOWN').required()
-      break
-    case 'PROFILES':
-      schema.mode = Joi.string().valid('COLUMN').required()
-      break
-    default:
-      throw new Error(`Missing or invalid config type ('${type}')`)
+    category: Joi.string().valid('BOTTOM', 'MID-DEPTH', 'SURFACE').allow('', null).empty(['']),
+    value: Joi.number().allow('', null),
+    column: type === 'PROFILES' ? validFields.required() : validFields.allow('', null).empty(['']),
+    units: Joi
+      .when('value', {
+        is: Joi.number().valid(null, ''),
+        then: Joi.when('column', {
+          is: Joi.any().valid(null, ''),
+          then: Joi.optional().allow('', null),
+          otherwise: Joi.string().valid('m', 'ft', 'in', 'cm').required()
+        }),
+        otherwise: Joi.string().valid('m', 'ft', 'in', 'cm').required()
+      })
   }
 
   return Joi.object(schema)
@@ -76,7 +59,7 @@ const timestampSchema = (fields) => {
     columns: Joi.array().min(1).max(2).items(validFields),
     timezone: Joi.object({
       mode: Joi.string()
-        .valid('TIMESTAMP', 'COLUMN', 'UTCOFFSET')
+        .valid('GUESS', 'TIMESTAMP', 'COLUMN', 'UTCOFFSET')
         .required(),
       column: validFields
         .when('mode', {
@@ -107,7 +90,7 @@ const metaSchema = (fields, type) => {
   const schema = {
     accuracy: Joi.string().valid('1', '2', '3').allow('', null),
     sop_bath: Joi.boolean().allow('', null),
-    reviewed: Joi.boolean().allow('', null)
+    reviewed: Joi.boolean().allow('', null).empty(['', null]).default(false)
   }
   if (type === 'SERIES') {
     schema.interval = Joi.string().valid('CONTINUOUS', 'DISCRETE').required()

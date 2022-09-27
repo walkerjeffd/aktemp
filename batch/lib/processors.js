@@ -6,7 +6,7 @@ const timezone = require('dayjs/plugin/timezone.js')
 const utc = require('dayjs/plugin/utc.js')
 
 const { validateFileConfig } = require('./validators.js')
-const { parseTimestamp, parseValue, parseDepth } = require('./parsers.js')
+const { parseTimestamp, parseValue, parseDepth, extractTimestamp } = require('./parsers.js')
 const { convertDepthUnits, medianFrequency } = require('./utils.js')
 const { File } = require('../db/models/index.js')
 
@@ -35,7 +35,22 @@ async function readFile (file) {
   return parsed
 }
 
-function parseValues (values, config) {
+function guessUtcOffset (row, station, config) {
+  const timestamp = extractTimestamp(row, config)
+  const d = dayjs.tz(timestamp, station.timezone)
+  if (!d.isValid()) {
+    throw new Error(`Failed to guess UTC offset for timestamp (${timestamp}) at time zone (${station.timezone})`)
+  }
+  return d.utcOffset() / 60
+}
+
+function parseValues (values, station, config) {
+  if (config.timestamp.timezone.mode === 'GUESS') {
+    if (values.length === 0) return []
+    const utcOffset = guessUtcOffset(values[0], station, config)
+    config.timestamp.timezone.utcOffset = utcOffset
+  }
+
   return values.map((d, i) => {
     return {
       datetime: parseTimestamp(d, config),
@@ -102,11 +117,6 @@ async function processFile (id) {
     )
   }
 
-  // parse values
-  stationData.forEach(d => {
-    d.values = parseValues(d.values, config)
-  })
-
   // fetch each station
   for (let i = 0; i < stationData.length; i++) {
     stationData[i].station = await organization.$relatedQuery('stations')
@@ -117,19 +127,23 @@ async function processFile (id) {
       })
   }
 
+  // parse values
+  stationData.forEach(d => {
+    d.values = parseValues(d.values, d.station, config)
+  })
+
   // series depth
   const seriesDepth = {}
-  if (file.config.depth.mode === 'CATEGORY') {
-    seriesDepth.depth_category = file.config.depth.category
-  } else if (file.config.depth.mode === 'VALUE') {
-    seriesDepth.depth_m = convertDepthUnits(file.config.depth.value, file.config.depth.units)
+  if (config.depth.mode === 'CATEGORY') {
+    seriesDepth.depth_category = config.depth.category
+  } else if (config.depth.mode === 'VALUE') {
+    seriesDepth.depth_m = convertDepthUnits(config.depth.value, config.depth.units)
   }
 
   // meta
   const meta = {
-    ...file.config.meta
+    ...config.meta
   }
-  console.log(meta)
 
   const d3 = await import('d3')
   if (config.type === 'SERIES') {

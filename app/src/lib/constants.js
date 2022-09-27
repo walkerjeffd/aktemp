@@ -44,8 +44,7 @@ export const temperatureUnitsOptions = [
 export const sensorAccuracyOptions = [
   { value: '1', label: 'Level 1: < ±0.25 degC (best; e.g., Hobo Pro v2, Tidbit)' },
   { value: '2', label: 'Level 2: < ±0.5 degC' },
-  { value: '3', label: 'Level 3: > ±0.5 degC (worst)' },
-  { value: 'UNKNOWN', label: 'Unknown' }
+  { value: '3', label: 'Level 3: > ±0.5 degC (worst)' }
 ]
 
 export const timezoneOptions = [
@@ -73,8 +72,7 @@ export const timestampFormats = [
 
 export const placementOptions = [
   { value: 'MAIN', label: 'Main Channel' },
-  { value: 'SIDE', label: 'Side Channel' },
-  { value: 'UNKNOWN', label: 'Unknown' }
+  { value: 'SIDE', label: 'Side Channel' }
 ]
 
 export const intervalOptions = [
@@ -85,14 +83,12 @@ export const intervalOptions = [
 export const waterbodyTypeOptions = [
   { value: 'STREAM', label: 'Stream/River' },
   { value: 'LAKE', label: 'Lake' },
-  { value: 'OTHER', label: 'Other' },
-  { value: 'UNKNOWN', label: 'Unknown' }
+  { value: 'OTHER', label: 'Other' }
 ]
 
 export const mixedOptions = [
   { value: 'TRUE', label: 'Yes' },
-  { value: 'FALSE', label: 'No' },
-  { value: 'UNKNOWN', label: 'Unknown' }
+  { value: 'FALSE', label: 'No' }
 ]
 
 export const depthUnitsOptions = [
@@ -103,7 +99,6 @@ export const depthUnitsOptions = [
 ]
 
 export const booleanOptions = ['TRUE', 'FALSE']
-export const booleanOrNullOptions = ['TRUE', 'FALSE', 'UNKNOWN']
 
 export const flagTypeOptions = [
   {

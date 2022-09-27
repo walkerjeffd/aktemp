@@ -1,3 +1,4 @@
+const chrono = require('chrono-node')
 const dayjs = require('dayjs')
 const timezone = require('dayjs/plugin/timezone')
 const utc = require('dayjs/plugin/utc')
@@ -7,28 +8,39 @@ dayjs.tz.setDefault('UTC')
 
 const { convertDepthUnits } = require('./utils')
 
-function parseTimestamp (d, config) {
+function chronoParseDate (value) {
+  let x = chrono.parseDate(value, { timezone: 'UTC' })
+  if (x === null) {
+    x = dayjs.utc(chrono.parseDate(value.replace('2:', '3:'), { timezone: 'UTC' })).subtract(1, 'hour').toDate()
+  }
+  return x
+}
+
+function extractTimestamp (d, config) {
   let value = d[config.timestamp.columns[0]]
   if (config.timestamp.columns.length === 2) {
     value = `${value} ${d[config.timestamp.columns[1]]}`
   }
+  return value
+}
+
+function parseTimestamp (d, config) {
+  const value = extractTimestamp(d, config)
   const row = d.$row || 'N/A'
 
   if (!value) {
-    throw new Error(`Invalid timestamp on row=${row} ('${value}')`)
+    throw new Error(`Missing timestamp on row=${row} ('${value}')`)
   }
 
   let parsed
-  if (config.timestamp.timezone.mode === 'TIMESTAMP') {
-    parsed = dayjs(value)
-  } else if (config.timestamp.timezone.mode === 'UTCOFFSET') {
-    const utcOffset = Number(config.timestamp.timezone.utcOffset)
-    parsed = dayjs(value).utc(true)
-    parsed = parsed.subtract(utcOffset, 'hours')
+  if (config.timestamp.timezone.mode === 'GUESS' || config.timestamp.timezone.mode === 'UTCOFFSET') {
+    const utcOffset = config.timestamp.timezone.utcOffset
+    parsed = dayjs(chronoParseDate(value)).subtract(utcOffset, 'hours')
+  } else if (config.timestamp.timezone.mode === 'TIMESTAMP') {
+    parsed = dayjs.utc(chronoParseDate(value))
   } else if (config.timestamp.timezone.mode === 'COLUMN') {
-    const utcOffset = Number(d[config.timestamp.timezone.column])
-    parsed = dayjs(value).utc(true)
-    parsed = parsed.subtract(utcOffset, 'hours')
+    const utcOffset = d[config.timestamp.timezone.column]
+    parsed = dayjs.tz(chronoParseDate(value)).subtract(utcOffset, 'hours')
   }
 
   if (!parsed || !parsed.isValid()) {
@@ -45,7 +57,7 @@ function parseValue (d, config) {
     return null
   }
   let numericValue = Number(value)
-  if (!isFinite(numericValue)) {
+  if (isNaN(numericValue) || value === null || (typeof value === 'string' && value.trim() === '')) {
     throw new Error(`Invalid temperature value at row ${row} ('${value}')`)
   }
   if (config.value.units === 'F') {
@@ -76,5 +88,6 @@ module.exports = {
   parseTimestamp,
   parseValue,
   parseFlag,
-  parseDepth
+  parseDepth,
+  extractTimestamp
 }

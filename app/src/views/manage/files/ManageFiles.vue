@@ -35,7 +35,7 @@
         {{ item.filename | truncate(80) }}
       </template>
       <template v-slot:item.created_at="{ item }">
-        {{ item.created_at | timestampFormat('lll') }}
+        {{ item.created_at | formatTimestamp('lll') }}
       </template>
       <template v-slot:item.status="{ item }">
         <StatusChip :status="item.status"></StatusChip>

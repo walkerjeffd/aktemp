@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1030.0",
+    "chrono-node": "^2.4.1",
     "commander": "^8.3.0",
     "d3": "^7.4.4",
     "dayjs": "^1.10.7",

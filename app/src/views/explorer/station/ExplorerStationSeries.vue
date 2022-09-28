@@ -2,7 +2,7 @@
   <!-- eslint-disable vue/valid-v-slot -->
   <div class="pa-4">
     <Loading v-if="loading" class="pb-8"></Loading>
-    <Alert type="error" v-else-if="series.length === 0" title="No Timeseries Data Available" class="mb-0">
+    <Alert type="info" v-else-if="series.length === 0" title="No Timeseries Data Available" class="mb-0">
       This station does not have any timeseries data.
     </Alert>
     <div v-else>
@@ -30,7 +30,7 @@
       </v-data-table>
       <v-divider class="mb-4"></v-divider>
       <div class="text-right">
-        <DownloadButton disabled></DownloadButton>
+        <DownloadButton disabled small></DownloadButton>
       </div>
       <!-- <pre>selected: {{ selected }}</pre> -->
     </div>

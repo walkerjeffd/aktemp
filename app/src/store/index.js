@@ -18,7 +18,8 @@ export default new Vuex.Store({
   },
   getters: {
     user: state => state.user,
-    userId: state => state.user ? state.user.username : null
+    userId: state => state.user ? state.user.username : null,
+    userIsAdmin: state => state.user ? !!state.user.isAdmin : false
   },
   mutations: {
     SET_USER (state, user) {

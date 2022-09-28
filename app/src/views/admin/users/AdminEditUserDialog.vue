@@ -4,6 +4,7 @@
     scrollable
     max-width="600"
     @keydown.esc="close"
+    style="z-index:2000"
   >
     <v-card>
       <v-toolbar flat dense color="grey lighten-2">
@@ -34,7 +35,7 @@
                   style="width:140px">
                   Created
                 </td>
-                <td class="font-weight-bold">{{ user.created_at | timestampFormat('lll') }}</td>
+                <td class="font-weight-bold">{{ user.created_at | formatTimestamp('lll z') }}</td>
               </tr>
               <tr>
                 <td
@@ -42,7 +43,7 @@
                   style="width:140px">
                   Updated
                 </td>
-                <td class="font-weight-bold">{{ user.updated_at | timestampFormat('lll') }}</td>
+                <td class="font-weight-bold">{{ user.updated_at | formatTimestamp('lll z') }}</td>
               </tr>
               <tr>
                 <td

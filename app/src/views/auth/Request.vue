@@ -1,7 +1,7 @@
 <template>
   <v-card elevation="4">
     <v-toolbar flat dense color="grey lighten-3">
-      <span class="text-h5">Request Account</span>
+      <span class="text-h6">Request Account</span>
     </v-toolbar>
 
     <v-form ref="form" @submit.prevent="submit" :disabled="loading || success">

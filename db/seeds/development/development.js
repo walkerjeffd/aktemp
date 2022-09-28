@@ -20,8 +20,7 @@ exports.seed = async knex => {
   ]).returning('*')
   await knex('users_organizations').insert([
     { user_id: users[0].id, organization_id: organizations[0].id },
-    { user_id: users[0].id, organization_id: organizations[1].id },
-    { user_id: users[1].id, organization_id: organizations[0].id }
+    { user_id: users[0].id, organization_id: organizations[1].id }
   ])
   await knex('stations').insert([
     { organization_id: organizations[0].id, code: 'TEST_001', longitude: -152, latitude: 61, timezone: 'US/Alaska', private: false }

@@ -44,7 +44,7 @@
       </template>
 
       <template v-slot:item.created_at="{ item }">
-        {{ item.created_at | timestampFormat('ll') }}
+        {{ item.created_at | formatTimestamp('ll') }}
       </template>
       <template v-slot:item.pending="{ item }">
         <v-simple-checkbox

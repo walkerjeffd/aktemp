@@ -13,7 +13,7 @@
   >
     <template v-slot:top>
       <v-toolbar flat>
-        <v-toolbar-title class="text-h5">Timeseries</v-toolbar-title>
+        <v-toolbar-title class="text-h6">Timeseries</v-toolbar-title>
       </v-toolbar>
       <div class="body-2 text--secondary mx-4 mb-2">
         <v-icon small>mdi-information-outline</v-icon>
@@ -31,7 +31,7 @@
       {{ item.end_datetime | formatTimestamp('ll', item.station_timezone) }}
     </template>
     <template v-slot:item.reviewed="{ item }">
-      {{ item.reviewed }}
+      <v-simple-checkbox :value="item.reviewed" disabled />
     </template>
   </v-data-table>
 </template>
@@ -41,35 +41,35 @@ const allHeaders = [
   {
     text: 'ID',
     value: 'id',
-    align: 'left',
     width: '80px'
   },
   {
     text: 'Station',
-    value: 'station_code',
-    align: 'left',
-    width: '200px'
+    value: 'station_code'
   },
   {
     text: 'Start',
-    value: 'start_datetime',
-    align: 'left'
+    value: 'start_datetime'
   },
   {
     text: 'End',
-    value: 'end_datetime',
-    align: 'left'
+    value: 'end_datetime'
   },
   {
     text: 'Depth Category',
-    value: 'depth_category',
-    align: 'left',
-    width: '200px'
+    value: 'depth_category'
+  },
+  {
+    text: 'Depth (m)',
+    value: 'depth_m'
+  },
+  {
+    text: 'Interval',
+    value: 'interval'
   },
   {
     text: 'Reviewed',
-    value: 'reviewed',
-    align: 'left'
+    value: 'reviewed'
   }
 ]
 

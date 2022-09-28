@@ -4,6 +4,7 @@
     scrollable
     max-width="800"
     @keydown.esc="close"
+    style="z-index:2000"
   >
     <v-card>
       <v-toolbar color="grey lighten-2">
@@ -13,8 +14,17 @@
         </v-toolbar-title>
       </v-toolbar>
 
-      <v-card-text class="body-2 py-8 px-4">
+      <v-card-text class="body-2 pa-4">
         <v-form ref="form" @submit.prevent="submit" :disabled="loading">
+          <v-checkbox
+            v-model="private_.value"
+            label="Private"
+            hint="If checked, this station will not be shown on the public data explorer"
+            persistent-hint
+            validate-on-blur
+            outlined
+            class="mb-4 mt-0"
+          ></v-checkbox>
           <v-select
             v-model="organizationId.value"
             :items="organizations"
@@ -31,56 +41,40 @@
             label="Station Code"
             counter
             maxlength="50"
-            hint="A short name or site code for this station (e.g. Browns Brook or BB001)"
+            hint="A short name or site code for this station (e.g. Browns Brook or BB001). Must be unique within organization."
             persistent-hint
             validate-on-blur
             outlined
-          ></v-text-field>
-          <v-text-field
-            v-model="description.value"
-            :rules="description.rules"
-            label="Station Description"
-            counter
-            maxlength="250"
-            hint="Description of station (e.g., Browns Brook Downstream of Rt 1 Bridge)"
-            persistent-hint
-            validate-on-blur
-            outlined
+            clearable
           ></v-text-field>
           <v-row>
             <v-col cols="6">
               <v-text-field
                 v-model="latitude.value"
                 :rules="latitude.rules"
+                type="number"
                 label="Latitude"
                 hint="Decimal degrees (e.g. 61.782)"
                 persistent-hint
                 validate-on-blur
                 outlined
+                clearable
               ></v-text-field>
             </v-col>
             <v-col cols="6">
               <v-text-field
                 v-model="longitude.value"
                 :rules="longitude.rules"
+                type="number"
                 label="Longitude"
                 hint="Decimal degrees (e.g. -150.213)"
                 persistent-hint
                 validate-on-blur
                 outlined
+                clearable
               ></v-text-field>
             </v-col>
           </v-row>
-          <v-select
-            v-model="placement.value"
-            :items="placement.options"
-            :rules="placement.rules"
-            item-text="label"
-            item-value="id"
-            label="Sensor Placement"
-            validate-on-blur
-            outlined
-          ></v-select>
           <v-select
             v-model="timezone.value"
             :items="timezone.options"
@@ -90,6 +84,18 @@
             label="Time Zone"
             validate-on-blur
             outlined
+            clearable
+          ></v-select>
+          <v-select
+            v-model="waterbodyType.value"
+            :items="waterbodyType.options"
+            :rules="waterbodyType.rules"
+            item-text="label"
+            item-value="value"
+            label="Waterbody Type"
+            validate-on-blur
+            outlined
+            clearable
           ></v-select>
           <v-text-field
             v-model="waterbodyName.value"
@@ -100,26 +106,52 @@
             persistent-hint
             validate-on-blur
             outlined
+            clearable
           ></v-text-field>
-          <v-select
-            v-model="waterbodyType.value"
-            :items="waterbodyType.options"
-            :rules="waterbodyType.rules"
-            item-text="label"
-            item-value="id"
-            label="Waterbody Type"
+          <v-text-field
+            v-model="description.value"
+            :rules="description.rules"
+            label="Description"
+            counter
+            maxlength="250"
+            hint="Description of station location (e.g., Browns Brook Downstream of Rt 1 Bridge)"
+            persistent-hint
             validate-on-blur
             outlined
+            clearable
+          ></v-text-field>
+          <v-select
+            v-model="placement.value"
+            :items="placement.options"
+            :rules="placement.rules"
+            item-text="label"
+            item-value="value"
+            label="Sensor Placement"
+            validate-on-blur
+            outlined
+            clearable
           ></v-select>
           <v-select
             v-model="mixed.value"
             :items="mixed.options"
             :rules="mixed.rules"
             item-text="label"
-            item-value="id"
+            item-value="value"
             label="Is position considered well-mixed?"
             validate-on-blur
             outlined
+            clearable
+          ></v-select>
+          <v-select
+            v-model="active.value"
+            :items="active.options"
+            :rules="active.rules"
+            item-text="label"
+            item-value="value"
+            label="Is station currently active?"
+            validate-on-blur
+            outlined
+            clearable
           ></v-select>
           <v-text-field
             v-model="reference.value"
@@ -130,22 +162,6 @@
             validate-on-blur
             outlined
           ></v-text-field>
-          <v-checkbox
-            v-model="active.value"
-            label="Active Station"
-            validate-on-blur
-            outlined
-            hide-details
-            class="mt-0"
-          ></v-checkbox>
-          <v-checkbox
-            v-model="private_.value"
-            label="Private"
-            hint="If checked, station will not be shown on the public data explorer"
-            persistent-hint
-            validate-on-blur
-            outlined
-          ></v-checkbox>
         </v-form>
       </v-card-text>
 
@@ -171,7 +187,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { parseBooleanOption, formatBooleanOption, trim } from '@/lib/utils'
-import { timezoneOptions, placementOptions, waterbodyTypeOptions, mixedOptions, fieldConstraints } from '@/lib/constants'
+import { timezoneOptions, placementOptions, waterbodyTypeOptions, booleanOptions, fieldConstraints } from '@/lib/constants'
 import evt from '@/events'
 
 export default {
@@ -196,15 +212,8 @@ export default {
       code: {
         value: '',
         rules: [
-          v => !!v || 'Name is required',
-          v => (!!v && v.trim().length >= fieldConstraints.station.code.minLength) || `Name must be at least ${fieldConstraints.station.code.minLength} characters`,
-          v => (!!v && v.trim().length <= fieldConstraints.station.code.maxLength) || `Name cannot exceed ${fieldConstraints.station.code.maxLength} characters`
-        ]
-      },
-      description: {
-        value: '',
-        rules: [
-          v => !v || (!!v && v.trim().length <= fieldConstraints.station.description.maxLength) || `Description cannot exceed ${fieldConstraints.station.description.maxLength} characters`
+          v => !!v || 'Code is required',
+          v => (!!v && v.trim().length <= fieldConstraints.station.code.maxLength) || `Code cannot exceed ${fieldConstraints.station.code.maxLength} characters`
         ]
       },
       latitude: {
@@ -223,13 +232,6 @@ export default {
           v => (Number(v) <= 180 && Number(v) >= -180) || 'Longitude must be between -180 and 180'
         ]
       },
-      placement: {
-        value: null,
-        options: placementOptions,
-        rules: [
-          v => !!v || 'Placement is required'
-        ]
-      },
       timezone: {
         value: null,
         options: timezoneOptions,
@@ -237,30 +239,37 @@ export default {
           v => !!v || 'Timezone is required'
         ]
       },
+      description: {
+        value: '',
+        rules: [
+          v => !v || (!!v && v.trim().length <= fieldConstraints.station.description.maxLength) || `Description cannot exceed ${fieldConstraints.station.description.maxLength} characters`
+        ]
+      },
+      placement: {
+        value: null,
+        options: placementOptions,
+        rules: []
+      },
       waterbodyName: {
         value: null,
         rules: [
-          v => !!v || 'Waterbody name is required',
-          v => (!!v && v.trim().length <= fieldConstraints.station.waterbodyName.maxLength) || `Name cannot exceed ${fieldConstraints.station.waterbodyName.maxLength} characters`
+          v => !v || (!!v && v.trim().length <= fieldConstraints.station.waterbodyName.maxLength) || `Name cannot exceed ${fieldConstraints.station.waterbodyName.maxLength} characters`
         ]
       },
       waterbodyType: {
         value: null,
         options: waterbodyTypeOptions,
-        rules: [
-          v => !!v || 'Waterbody type is required'
-        ]
+        rules: []
       },
       active: {
         value: null,
+        options: booleanOptions,
         rules: []
       },
       mixed: {
         value: null,
-        options: mixedOptions,
-        rules: [
-          v => !!v || 'Well-mixed conditions is required'
-        ]
+        options: booleanOptions,
+        rules: []
       },
       reference: {
         value: null,

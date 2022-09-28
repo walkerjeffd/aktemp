@@ -27,98 +27,53 @@
                     <Alert type="error" title="File Created But Not Uploaded" v-if="file.status == 'CREATED'">File has been created in the database, but was not actually uploaded. This indicates a problem occurred with the upload form. Please delete this file and try again.</Alert>
                     <Alert type="warning" title="File Is Being Uploaded" v-else-if="file.status === 'UPLOADING'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
                     <Alert type="info" title="File Has Been Uploaded" v-else-if="file.status === 'UPLOADED'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
-                    <Alert type="info" title="File Is Queued for Processing" v-else-if="file.status === 'QUEUED'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
+                    <Alert type="info" title="File Is Queued for Processing" v-else-if="file.status === 'QUEUED'">If the status does not change within an hour, please delete this file and try to upload it again. It is safe to close the browser or navigate to another page, and then check back later.</Alert>
                     <Alert type="warning" title="File Is Being Processed" v-else-if="file.status === 'PROCESSING'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
                     <Alert type="error" title="Failed To Process File" v-else-if="file.status === 'FAILED'">
                       <p>File was successfully uploaded, but failed to be processed. Please review the error below, fix the file, and try uploading again.</p>
                       <div class="font-weight-bold">{{ file.error || 'Unknown error'}}</div>
                     </Alert>
                     <div v-else>
-                      <v-sheet elevation="2">
-                        <v-tabs
-                          v-model="tab"
-                          background-color="grey lighten-3"
-                          fixed-tabs
-                          centered
-                        >
-                          <v-tabs-slider></v-tabs-slider>
+                      <v-sheet v-if="file.type === 'SERIES'">
+                        <Alert
+                          v-if="series.error"
+                          type="error"
+                          title="Failed to Get Timeseries"
+                          class="elevation-2"
+                        >{{ series.error }}</Alert>
 
-                          <v-tab href="#series">
-                            <v-icon left>mdi-chart-line</v-icon>
-                            Timeseries
-                          </v-tab>
+                        <SeriesTable
+                          v-else
+                          :series="file.series"
+                          :selected="series.selected"
+                          :columns="['id', 'start_datetime', 'end_datetime', 'reviewed']"
+                          @select="selectSeries"
+                        ></SeriesTable>
 
-                          <v-tab href="#profiles">
-                            <v-icon left>mdi-arrow-expand-down</v-icon>
-                            Profiles
-                          </v-tab>
-                        </v-tabs>
-
-                        <v-tabs-items v-model="tab">
-                          <v-tab-item
-                            value="series"
-                          >
-                            <v-card>
-                              <v-card-text>
-                                <Alert
-                                  v-if="series.error"
-                                  type="error"
-                                  title="Failed to Get Timeseries"
-                                >{{ series.error }}</Alert>
-
-                                <SeriesTable
-                                  v-else
-                                  :series="file.series"
-                                  :selected="series.selected"
-                                  :columns="['id', 'start_datetime', 'end_datetime', 'depth', 'reviewed']"
-                                  @select="selectSeries"
-                                ></SeriesTable>
-
-                                <SelectedSeriesCard
-                                  v-if="series.selected"
-                                  :series="series.selected"
-                                  @close="selectSeries()"
-                                  @delete="onDeleteSeries()"
-                                ></SelectedSeriesCard>
-                              </v-card-text>
-                            </v-card>
-                          </v-tab-item>
-                          <v-tab-item
-                            value="profiles"
-                          >
-                            <v-card flat>
-                              <v-card-text>
-                                <Alert type="error" title="Failed to Get Vertical Profiles" v-if="profiles.error">{{ profiles.error }}</Alert>
-                                <ProfilesTable
-                                  :profiles="file.profiles"
-                                  :selected="profiles.selected"
-                                  :columns="['id', 'date']"
-                                  @select="selectProfile"
-                                  v-else
-                                ></ProfilesTable>
-
-                                <div v-if="profiles.selected">
-                                  selected: {{ profiles.selected.id }}
-                                </div>
-                              </v-card-text>
-                            </v-card>
-                          </v-tab-item>
-                        </v-tabs-items>
+                        <SelectedSeriesCard
+                          v-if="series.selected"
+                          :series="series.selected"
+                          @close="selectSeries()"
+                          @delete="onDeleteSeries()"
+                        ></SelectedSeriesCard>
                       </v-sheet>
-                      <!-- <SeriesTable
-                        :series="file.series"
-                        :selected="selectedSeries"
-                        @select="selectSeries"
-                        v-if="file.type === 'SERIES'"
-                        class="mb-4"
-                      ></SeriesTable>
-                      <ProfilesTable
-                        :profiles="file.profiles"
-                        :selected="selectedProfile"
-                        :columns="['id', 'date']"
-                        @select="selectProfile"
-                        v-else-if="file.type === 'PROFILES'"
-                      ></ProfilesTable> -->
+                      <v-sheet v-if="file.type === 'PROFILES'">
+                        <Alert
+                          v-if="profiles.error"
+                          type="error"
+                          title="Failed to Get Vertical Profiles"
+                          class="elevation-2"
+                        >{{ profiles.error }}</Alert>
+                        <ProfilesTable
+                          :profiles="file.profiles"
+                          :selected="profiles.selected"
+                          :columns="['id', 'date']"
+                          @select="selectProfile"
+                          v-else
+                        ></ProfilesTable>
+
+                        <Alert type="error" title="Not Implemented">Profiles chart not yet implemented</Alert>
+                      </v-sheet>
                     </div>
                   </div>
                 </v-col>
@@ -147,7 +102,6 @@ export default {
   },
   data () {
     return {
-      tab: 'series',
       loading: true,
       refreshing: false,
       error: null,

@@ -40,7 +40,7 @@
 
                 <!-- FILES -->
                 <div class="text-h6 mb-2">Select Data Files</div>
-                <p class="black--text">Each file must be in comma-separated value (CSV) format and only contain data for a single station.</p>
+                <p class="black--text">Each file must be in comma-separated value (CSV) format.</p>
                 <v-row>
                   <v-col cols="12" md="6" class="pb-0">
                     <v-file-input
@@ -49,7 +49,7 @@
                       :rules="files.rules"
                       label="Select data files"
                       truncate-length="200"
-                      @change="selectFiles"
+                      @change="initTable"
                       outlined
                       multiple
                       validate-on-blur
@@ -68,7 +68,7 @@
                     color="primary"
                     outlined
                     bloc
-                    href="static/aktemp-files-template.xlsx"
+                    href="static/AKTEMP-files-template.xlsx"
                     download
                     class="mb-4"
                   ><v-icon left>mdi-download</v-icon> Download Template</v-btn>
@@ -101,61 +101,205 @@
                       :width="col.width"
                     ></HotColumn>
                   </HotTable>
-                  <p>
-                    Hint: Ctrl+c/Ctrl+v to copy/paste. Right-click to undo/redo. <br>
-                  </p>
+                  <div class="text-caption mt-2">Status: {{ message || 'Ready' }}</div>
+                  <div class="text--secondary caption mb-4">
+                    * = Required. Ctrl+c/Ctrl+v to copy/paste. Right-click to undo/redo.
+                  </div>
+
+                  <div v-if="table.selectedRow">
+                    <Alert
+                      v-if="table.selectedRow.status === 'READY'"
+                      type="info"
+                      title="File is Ready"
+                      style="max-width:800px"
+                    >
+                      File ({{table.selectedRow.filename}}) is ready to be validated and uploaded.
+                    </Alert>
+                    <Alert
+                      v-if="table.selectedRow.status === 'VALIDATING'"
+                      type="warning"
+                      title="Validating File"
+                      style="max-width:800px"
+                    >
+                      File ({{table.selectedRow.filename}}) is being validated.
+                    </Alert>
+                    <Alert
+                      v-if="table.selectedRow.status === 'UPLOADING'"
+                      type="warning"
+                      title="File is Uploading"
+                      style="max-width:800px"
+                    >
+                      File ({{table.selectedRow.filename}}) is being uploaded.
+                    </Alert>
+                    <Alert
+                      v-else-if="table.selectedRow.status === 'INVALID'"
+                      type="error"
+                      title="Validation Failed"
+                      style="max-width:800px"
+                    >
+                      <!-- <pre>
+                        Columns: {{ joinStrings(table.selectedRow.fields) }}
+                      </pre> -->
+                      <table class="mt-2">
+                        <tbody>
+                          <tr>
+                            <td class="text-right pr-2">Row:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.table_row }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2">Filename:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.filename }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2"># Rows:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.n_rows === 0 || !!table.selectedRow.n_rows ? table.selectedRow.n_rows.toLocaleString() : '' }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                            <td class="font-weight-bold">
+                              <div v-for="field in table.selectedRow.fields" :key="field">'{{ field }}'</div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <p class="mt-4">Please fix the following errors, then click Submit to try again</p>
+                      <ul>
+                        <li v-for="(err, i) in table.selectedRow.errors" :key="'err-' + i" class="mb-2">
+                          <div v-html="err.error"></div>
+                          <div v-if="err.column && err.column.type === 'dropdown'">
+                            Allowed values: {{ err.column.source.map(d => `'${d}'`).join(', ') }}
+                          </div>
+                          <div v-if="err.details" v-html="err.details"></div>
+                        </li>
+                      </ul>
+                    </Alert>
+                    <Alert
+                      v-else-if="table.selectedRow.status === 'SUCCESS'"
+                      type="success"
+                      title="File Uploaded Successfully"
+                      style="max-width:800px"
+                    >
+                      <table class="mt-2">
+                        <tbody>
+                          <tr>
+                            <td class="text-right pr-2">Row:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.table_row }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2">Filename:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.filename }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2"># Rows:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.n_rows === 0 || !!table.selectedRow.n_rows ? table.selectedRow.n_rows.toLocaleString() : '' }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                            <td class="font-weight-bold">
+                              <div v-for="field in table.selectedRow.fields" :key="field">'{{ field }}'</div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <div class="mt-4">This file has been uploaded to the server and queued for processing. Visit the <router-link :to="{ name: 'manageFiles' }">Manage Files</router-link> page to check on its status.</div>
+                    </Alert>
+                    <Alert
+                      v-else-if="table.selectedRow.status === 'FAILED'"
+                      type="error"
+                      title="File Upload Failed"
+                      style="max-width:800px"
+                    >
+                      <table class="mt-2">
+                        <tbody>
+                          <tr>
+                            <td class="text-right pr-2">Row:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.table_row }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2">Filename:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.filename }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2"># Rows:</td>
+                            <td class="font-weight-bold">{{ table.selectedRow.n_rows === 0 || !!table.selectedRow.n_rows ? table.selectedRow.n_rows.toLocaleString() : '' }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                            <td class="font-weight-bold">
+                              <div v-for="field in table.selectedRow.fields" :key="field">'{{ field }}'</div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <div class="body-1 font-weight-bold mt-4">Server Errors</div>
+                      <p>Please fix the following errors, then click Submit to try again</p>
+                      <ul>
+                        <li v-for="(err, i) in table.selectedRow.errors" :key="'err-' + i" class="mb-2">
+                          <div v-html="err.error"></div>
+                          <div v-if="err.details" v-html="err.details"></div>
+                        </li>
+                      </ul>
+                    </Alert>
+                  </div>
+                  <!-- <Alert
+                    v-else
+                    type="info"
+                    title="Select a File"
+                    style="max-width:800px"
+                    prominent
+                    icon="mdi-chevron-up"
+                  >
+                    Click on any cell in the table above to view the status of each file.
+                  </Alert> -->
 
                   <Alert
-                    type="error"
-                    v-for="(d, i) in table.invalidCells.slice(0, table.maxInvalidCellErrors)"
-                    :key="i"
-                    :title="`Row ${ d.row + 1 }: Invalid ${d.column.label} (${ d.value || 'null' })`"
+                    v-if="table.failedCount > 0"
+                    type="warning"
+                    title="Table Contains Failed or Invalid Files"
                     style="max-width:800px"
+                    class="mb-0"
                   >
-                    {{ d.column.rule }}
+                    <p>
+                      {{ table.failedCount.toLocaleString() }} file(s) failed to be validated or uploaded to the server.
+                    </p>
+                    <div>
+                      Click on any row marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span> for more details.
+                    </div>
                   </Alert>
-
-                  <p v-if="table.invalidCells.length > table.maxInvalidCellErrors" class="body-1">
-                    and {{ table.invalidCells.length - table.maxInvalidCellErrors }} more...
-                  </p>
                 </div>
 
-                <div v-if="error" class="pb-1">
+                <div v-if="error">
                   <v-divider class="mb-4"></v-divider>
 
-                  <Alert type="error" title="Error" class="ma-4" style="max-width:800px">{{ error }}</Alert>
+                  <Alert type="error" title="Error" class="mb-0" style="max-width:800px">{{ error }}</Alert>
                 </div>
 
-                <div v-if="!loading && failedFiles.length > 0" class="pb-1">
+                <!-- <div v-if="!loading && failedFiles.length > 0" class="pb-1">
                   <v-divider class="mb-4"></v-divider>
                   <Alert type="error" title="Failed to Save Stations" class="my-4" style="max-width:800px">
                     <p>One or more files failed to be saved on the server. Fix the following errors and click Submit to try again.</p>
-                    <ul>
-                      <li v-for="(file, i) in failedFiles" :key="'failed-' + i">
-                        <strong>Row {{ file.$row + 1 }} ({{ file.filename }})</strong>:
-                        <ul>
-                          <li v-for="(err, j) in file.errors" :key="'error-' + i + '-' + j">
-                            {{ err }}
-                          </li>
-                        </ul>
-                      </li>
-                    </ul>
+                    <div v-for="(file, i) in failedFiles.slice(0, this.maxFailedFileErrors)" :key="'failed-' + i">
+                      <div class="font-weight-bold body-1">Row {{ file.$row + 1 }} ({{ file.filename }}):</div>
+                      <div v-for="(error, j) in file.errors" :key="'error-' + i + '-' + j" class="ml-4">
+                        <div class="font-weight-bold">Error {{ j + 1 }}: {{ error.error }}</div>
+                        <p>{{ error.details }}</p>
+                      </div>
+                    </div>
+                    <p v-if="failedFiles.length > table.maxFailedFileErrors" class="body-1">
+                      and {{ failedFiles.length - table.maxFailedFileErrors }} more...
+                    </p>
                     <div v-if="savedFiles.length > 0">
                       <p class="mt-4">Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been saved to the server and can be removed from the table above. Click the following button to remove them and focus on the remaining files that were not saved.</p>
                       <v-btn color="default" @click="removeSavedFiles"><v-icon small left>mdi-delete</v-icon> Remove Saved Files</v-btn>
                     </div>
                   </Alert>
-                </div>
-
-                <Alert
-                  type="info"
-                  :title="message"
-                  v-if="message"
-                >
-                </Alert>
+                </div> -->
               </v-card-text>
 
-              <v-divider class="mt-4"></v-divider>
+              <v-divider></v-divider>
 
               <v-card-actions class="pa-4">
                 <v-btn
@@ -184,9 +328,9 @@ import Handsontable from 'handsontable'
 import { mapGetters } from 'vuex'
 
 import evt from '@/events'
-import { parseCsvFile, joinStrings, parseBooleanOption } from '@/lib/utils'
+import { parseCsvFile, parseBooleanOption, isNumber } from '@/lib/utils'
 import uploader from '@/lib/uploader'
-import { fileTypeOptions, stationModes, timezoneModes, depthModes, temperatureUnitsOptions, utcOffsetOptions, sensorAccuracyOptions, depthUnitsOptions, booleanOptions, depthCategoryOptions } from '@/lib/constants'
+import { fileTypeOptions, timezoneModes, depthCategoryOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions, booleanOptions, utcOffsetOptions } from '@/lib/constants'
 
 export default {
   name: 'ManageFilesBatch',
@@ -200,17 +344,7 @@ export default {
         selected: [],
         type: null,
         rules: [
-          v => {
-            // if (!v) return true
-            if (v.length === 0) return 'No files selected'
-            for (let i = 0; i < v.length; i++) {
-              const fileExtension = v[i].name.split('.').pop().toLowerCase()
-              if (fileExtension !== 'csv') {
-                return `Invalid file type ('${v[i].name}'), must be a comma-separated value (CSV) file with extension '.csv'`
-              }
-            }
-            return true
-          }
+          v => v.length > 0 || 'No files selected'
         ]
       },
       organization: {
@@ -223,25 +357,29 @@ export default {
       table: {
         rows: [],
         settings: {
-          height: 'auto',
+          height: 270,
           licenseKey: 'non-commercial-and-evaluation',
-          // dropdown: true,
-          contextMenu: ['remove_row', '---------', 'clear_column', '---------', 'undo', 'redo'],
+          contextMenu: ['clear_column', '---------', 'undo', 'redo'],
           minRows: 0,
           fixedColumnsStart: 3,
+          manualColumnResize: true,
           preventOverflow: 'horizontal',
           dataSchema: {
             status: '',
+            table_row: '',
             filename: '',
+            skip_lines: '',
             type: '',
-            station_mode: '',
-            station_value: '',
+            station_code: '',
+            station_column: '',
             datetime_column: '',
             time_column: '',
             timezone_mode: '',
-            timezone_value: '',
-            depth_mode: '',
+            timezone_utcoffset: '',
+            timezone_column: '',
+            depth_category: '',
             depth_value: '',
+            depth_column: '',
             depth_units: '',
             value_column: '',
             value_units: '',
@@ -263,7 +401,7 @@ export default {
                 td.innerText = '✓'
                 td.style.color = 'white'
                 td.style.background = '#4caf50'
-              } else if (value === 'FAILED') {
+              } else if (value === 'FAILED' || value === 'INVALID') {
                 td.innerText = '✕'
                 td.style.color = 'white'
                 td.style.background = '#ff5252'
@@ -283,7 +421,7 @@ export default {
             readOnly: true
           },
           {
-            prop: 'row',
+            prop: 'table_row',
             label: 'Row',
             readOnly: true,
             width: '40px',
@@ -299,61 +437,79 @@ export default {
             readOnly: true
           },
           {
+            prop: 'skip_lines',
+            label: 'Skip Lines*',
+            validate: (row) => isNumber(row.skip_lines),
+            rule: '<b>Skip Lines</b> is required and must be a number'
+          },
+          {
             prop: 'type',
-            label: 'File Type',
-            allowEmpty: false,
-            rule: `'File Type' must be one of: [${joinStrings(fileTypeOptions.map(d => d.value))}]`,
+            label: 'File Type*',
+            validate: (row) => fileTypeOptions.map(d => d.value).includes(row.type),
+            rule: '<b>File Type</b> is required and must match an allowed value',
             type: 'dropdown',
             source: fileTypeOptions.map(d => d.value),
             width: '120px'
           },
           {
-            prop: 'station_mode',
-            label: 'Station Mode',
-            allowEmpty: false,
-            rule: `'Station Mode' must be one of: [${joinStrings(stationModes)}]`,
-            type: 'dropdown',
-            source: stationModes
+            prop: 'station_code',
+            label: 'Station Code',
+            validate: (row) => (!!row.station_code &&
+                                this.stationCodes.includes(row.station_code)) ||
+                                row.station_column,
+            rule: '<b>Station Code</b> must match an existing station for the selected organization (or be blank if file contains a column of station codes as specified by <b>Station Column</b>)'
           },
           {
-            prop: 'station_value',
-            label: 'Station Value',
-            allowEmpty: false,
-            rule: "'Station Value' is required"
+            prop: 'station_column',
+            label: 'Station Column',
+            validate: (row) => row.station_code || row.fields.includes(row.station_column),
+            rule: '<b>Station Column</b> must match a column name (or be blank if file contains data for a single station as specified by <b>Station Code</b>)'
           },
           {
             prop: 'datetime_column',
-            label: 'Datetime/Date Column',
-            allowEmpty: false,
-            rule: "'Datetime/Date Column' is required"
+            label: 'Datetime/Date Column*',
+            validate: (row) => row.fields.includes(row.datetime_column),
+            rule: '<b>Datetime/Date Column</b> is required and must match a column name'
           },
           {
             prop: 'time_column',
-            label: 'Time Column'
+            label: 'Time Column',
+            validate: (row) => !row.time_column || row.fields.includes(row.time_column),
+            rule: '<b>Time Column</b> must match a column name (or be blank if times are included in the <b>Datetime Column</b>)'
           },
           {
             prop: 'timezone_mode',
-            label: 'Timezone Mode',
-            allowEmpty: false,
-            rule: `'Timezone Mode' must be one of: [${joinStrings(timezoneModes)}]`,
+            label: 'Timezone Mode*',
+            validate: (row) => timezoneModes.map(d => d.value).includes(row.timezone_mode),
+            rule: '<b>Timezone Mode</b> is required and must match an allowed value',
             type: 'dropdown',
-            source: timezoneModes
+            source: timezoneModes.map(d => d.value)
           },
           {
-            prop: 'timezone_value',
-            label: 'Timezone Value'
+            prop: 'timezone_utcoffset',
+            label: 'UTC Offset',
+            validate: (row) => row.timezone_mode !== 'UTCOFFSET' || utcOffsetOptions.map(d => d.value).includes(row.timezone_utcoffset),
+            rule: '<b>UTC Offset</b> is required and must match an allowed value when <b>Timezone Mode</b>=<b>UTCOFFSET</b>',
+            type: 'dropdown',
+            source: utcOffsetOptions.map(d => d.value)
+          },
+          {
+            prop: 'timezone_column',
+            label: 'Timezone Column',
+            validate: (row) => row.timezone_mode !== 'COLUMN' || row.fields.includes(row.timezone_column),
+            rule: '<b>Timezone Column</b> is required when <b>Timezone Mode</b>=<b>COLUMN</b> and must match a column name'
           },
           {
             prop: 'value_column',
-            label: 'Temperature Column',
-            allowEmpty: false,
-            rule: "'Temperature Column' is required"
+            label: 'Temperature Column*',
+            validate: (row) => row.fields.includes(row.value_column),
+            rule: '<b>Temperature Column</b> is required and must match a column name'
           },
           {
             prop: 'value_units',
-            label: 'Temperature Units',
-            allowEmpty: false,
-            rule: `'Temperature Units' must be one of: [${joinStrings(temperatureUnitsOptions.map(d => d.value))}]`,
+            label: 'Temperature Units*',
+            validate: (row) => temperatureUnitsOptions.map(d => d.value).includes(row.value_units),
+            rule: '<b>Temperature Units</b> is required and must be an allowed value',
             type: 'dropdown',
             source: temperatureUnitsOptions.map(d => d.value)
           },
@@ -363,49 +519,69 @@ export default {
           },
           {
             prop: 'flag_column',
-            label: 'Flag Column'
+            label: 'Flag Column',
+            validate: (row) => !row.flag_column || row.fields.includes(row.flag_column),
+            rule: '<b>Flag Column</b> must match a column name (or be blank if not flags are present)'
           },
           {
-            prop: 'depth_mode',
-            label: 'Depth Mode',
+            prop: 'depth_category',
+            label: 'Depth Category',
+            validate: (row) => !row.depth_category || depthCategoryOptions.map(d => d.value).includes(row.depth_category),
+            rule: '<b>Depth Category</b> must be one of the allowed values (or blank if unknown)',
             type: 'dropdown',
-            source: depthModes
+            source: depthCategoryOptions.map(d => d.value)
           },
           {
             prop: 'depth_value',
-            label: 'Depth Value'
+            label: 'Numeric Depth',
+            validate: (row) => row.depth_value === undefined ||
+              row.depth_value === null ||
+              row.depth_value === '' ||
+              isNumber(row.depth_value),
+            rule: '<b>Numeric Depth</b> must be numeric (or blank if unknown)'
+          },
+          {
+            prop: 'depth_column',
+            label: 'Depth Column',
+            validate: (row) => !row.depth_column || row.fields.includes(row.depth_column),
+            rule: '<b>Depth Column</b> must match a column name (or be blank if unknown)'
           },
           {
             prop: 'depth_units',
             label: 'Depth Units',
-            rule: `'Depth Units' must be one of: [${joinStrings(depthUnitsOptions.map(d => d.value))}]`,
+            validate: (row) => (!row.depth_column && !row.depth_value) || depthUnitsOptions.map(d => d.value).includes(row.depth_units),
+            rule: '<b>Depth Units</b> is required and must match an allowed value if either <b>Numeric Depth</b> or <b>Depth Column</b> is not blank',
             type: 'dropdown',
             source: depthUnitsOptions.map(d => d.value)
           },
           {
             prop: 'accuracy',
             label: 'Sensor Accuracy',
-            rule: `'Sensor Accuracy' must be one of: [${joinStrings(sensorAccuracyOptions.map(d => d.value))}]`,
+            validate: (row) => !row.accuracy || sensorAccuracyOptions.map(d => d.value).includes(row.accuracy),
+            rule: '<b>Sensor Accuracy</b> must match an allowed value (or be blank if unknown)',
             type: 'dropdown',
             source: sensorAccuracyOptions.map(d => d.value)
           },
           {
             prop: 'sop_bath',
             label: 'SOP Bath',
-            rule: `'SOP Bath' must be one of: [${joinStrings(booleanOptions)}]`,
+            validate: (row) => !row.sop_bath || sensorAccuracyOptions.map(d => d.value).includes(row.sop_bath),
+            rule: '<b>SOP Bath</b> must match an allowed value (or be blank if unknown)',
             type: 'dropdown',
-            source: booleanOptions
+            source: booleanOptions.map(d => d.value)
           },
           {
             prop: 'reviewed',
             label: 'Reviewed',
-            rule: `'Reviewed' must be one of: [${joinStrings(booleanOptions)}]`,
+            validate: (row) => !row.reviewed || booleanOptions.map(d => d.value).includes(row.reviewed),
+            rule: '<b>Reviewed</b> must match an allowed value (or be blank if unknown)',
             type: 'dropdown',
-            source: booleanOptions
+            source: booleanOptions.map(d => d.value)
           }
         ],
-        invalidCells: [],
-        maxInvalidCellErrors: 3
+        maxFailedFileErrors: 5,
+        selectedRow: null,
+        failedCount: 0
       }
     }
   },
@@ -414,20 +590,18 @@ export default {
       organizations: 'manage/organizations',
       defaultOrganization: 'manage/organization'
     }),
-    failedFiles () {
-      const copy = this.table.rows.slice()
-      copy.forEach((d, i) => {
-        d.$row = i
-      })
-      return copy.filter(d => d.status === 'FAILED')
-    },
-    savedFiles () {
-      const copy = this.table.rows.slice()
-      copy.forEach((d, i) => {
-        d.$row = i
-      })
-      return copy.filter(d => d.status === 'SUCCESS')
+    stationCodes () {
+      return this.organization && this.organization.stations
+        ? this.organization.stations.map(d => d.code)
+        : []
     }
+    // savedFiles () {
+    //   const copy = this.table.rows.slice()
+    //   copy.forEach((d, i) => {
+    //     d.$row = i
+    //   })
+    //   return copy.filter(d => d.status === 'SUCCESS')
+    // }
   },
   watch: {
     defaultOrganization () {
@@ -438,176 +612,120 @@ export default {
     }
   },
   async mounted () {
-    Handsontable.hooks.add('afterValidate', this.afterValidate, this.$refs.hot.hotInstance)
-    Handsontable.hooks.add('afterChange', this.afterChange, this.$refs.hot.hotInstance)
+    Handsontable.hooks.add('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
     this.setDefaultOrganization()
   },
   beforeDestroy () {
-    Handsontable.hooks.remove('afterValidate', this.afterValidate, this.$refs.hot.hotInstance)
-    Handsontable.hooks.remove('afterChange', this.afterChange, this.$refs.hot.hotInstance)
+    Handsontable.hooks.remove('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
   },
   methods: {
     setDefaultOrganization () {
       this.organization.selected = this.defaultOrganization ? this.defaultOrganization : null
     },
+    afterSelection (row) {
+      this.table.selectedRow = this.table.rows[row]
+    },
     async fetchStations () {
+      console.log('fetchStations')
       if (!this.organization.selected) {
         this.organization.stations = []
         return
       }
       try {
-        const response = await this.$http.restricted.get(`/organizations/${this.organization.selected.id}/stations`)
-        this.organization.stations = response.data
+        this.organization.stations = await this.$http.restricted
+          .get(`/organizations/${this.organization.selected.id}/stations`)
+          .then(d => d.data)
         this.renderHot()
       } catch (err) {
         this.error = this.$errorMessage(err)
       }
     },
-    selectFiles () {
-      this.initTable()
-    },
     initTable () {
-      this.table.invalidCells = []
+      console.log('initTable')
       this.error = null
       this.table.rows.splice(0, this.table.rows.length)
+      this.table.selectedRow = null
 
-      this.files.selected.forEach((d, i) => {
+      this.files.selected.forEach((file, i) => {
         this.table.rows.push({
-          row: i + 1,
-          filename: d.name
+          status: 'READY',
+          table_row: i + 1,
+          file_index: i,
+          file,
+          filename: file.name,
+          skip_lines: '0',
+          fields: [],
+          errors: []
         })
       })
-      console.log(this.table.rows)
-      setTimeout(() => this.renderHot(), 1000)
-    },
-    afterValidate (isValid, value, row, prop) {
-      if (!isValid) {
-        if (!this.table.invalidCells.find(d => d.row === row && d.prop === prop)) {
-          this.table.invalidCells.unshift({ value, row, prop, column: this.table.columns.find(d => d.prop === prop) })
-        }
-      }
-    },
-    afterChange (changes, source) {
-      // if (source === 'updateData') return
-      // this.validateSync()
-    },
-    validateSync () {
-      this.table.invalidCells = []
-      this.$refs.hot.hotInstance.validateCells()
-    },
-    validateCells () {
-      this.table.invalidCells = []
-      return new Promise((resolve, reject) => {
-        this.$refs.hot.hotInstance.validateCells((valid) => {
-          if (valid) {
-            return resolve(true)
-          } else {
-            return reject(new Error('Table contains validation errors'))
-          }
-        })
-      })
+      // this.renderHot()
     },
     findColumnIndex (prop) {
       return this.table.columns.findIndex(d => d.prop === prop)
     },
-    async validateRows () {
+    async validateTable () {
+      console.log('validateTable')
       const hot = this.$refs.hot.hotInstance
-      const stationCodes = this.organization.stations.map(d => d.code)
+
       for (let i = 0; i < this.table.rows.length; i++) {
         const row = this.table.rows[i]
+        this.message = `Validating ${row.filename}`
         row.status = 'VALIDATING'
         row.errors = []
-        this.message = `Validating: ${row.filename}`
         this.renderHot()
-        try {
-          const parsed = await parseCsvFile(this.files.selected[i])
-          const fields = parsed.meta.fields
 
-          if (row.station_mode === 'STATION' &&
-              !stationCodes.includes(row.station_value)) {
-            hot.setCellMeta(i, this.findColumnIndex('station_value'), 'valid', false)
-            row.errors.push(`'Station Value' is not a valid station code (${row.station_value || 'missing'}). When 'Station Mode' = 'STATION', then 'Station Value' is required and must contain an existing station code for the selected organization. A list of existing stations can be downloaded below for reference.`)
-          }
-          if (row.station_mode === 'COLUMN' &&
-              !fields.includes(row.station_value)) {
-            hot.setCellMeta(i, this.findColumnIndex('station_value'), 'valid', false)
-            row.errors.push(`'Station Value' is not a valid column name (${row.station_value || 'missing'}). When 'Station Mode'='COLUMN' then 'Station Value' must be one of: [${joinStrings(fields)}].`)
-          }
-          if (!fields.includes(row.datetime_column)) {
-            hot.setCellMeta(i, this.findColumnIndex('datetime_column'), 'valid', false)
-            row.errors.push(`'Datetime/Date Column' is not a valid column name (${row.datetime_column || 'missing'}). Must be one of: [${joinStrings(fields)}].`)
-          }
-          if (row.time_column && !fields.includes(row.time_column)) {
-            hot.setCellMeta(i, this.findColumnIndex('time_column'), 'valid', false)
-            row.errors.push(`'Time Column' is not a valid column name (${row.time_column || 'missing'}). Must be one of: [${joinStrings(fields)}].`)
-          }
-          if (row.timezone_mode === 'UTCOFFSET' &&
-              !utcOffsetOptions.map(d => d.value.toString()).includes(row.timezone_value)) {
-            hot.setCellMeta(i, this.findColumnIndex('timezone_value'), 'valid', false)
-            row.errors.push(`'Timezone Value' is not a valid UTC offset (${row.timezone_value || 'missing'}). When 'Timezone Mode'='UTCOFFSET' then 'Timezone Value' must be one of: [${joinStrings(utcOffsetOptions.map(d => d.value.toString()))}])`)
-          }
-          if (row.timezone_mode === 'COLUMN' &&
-              !fields.includes(row.timezone_value)) {
-            hot.setCellMeta(i, this.findColumnIndex('timezone_value'), 'valid', false)
-            row.errors.push(`'Timezone Value' is not a valid column name(${row.timezone_value || 'missing'}). When 'Timezone Mode'='COLUMN' then 'Timezone Value' must be one of: [${joinStrings(fields)}])`)
-          }
-          if (row.depth_mode === 'COLUMN' &&
-              !fields.includes(row.depth_value)) {
-            hot.setCellMeta(i, this.findColumnIndex('depth_value'), 'valid', false)
-            row.errors.push(`'Depth Value' is not a valid column name(${row.depth_value || 'missing'}). When 'Depth Mode'='COLUMN' then 'Depth Value' must be one of: [${joinStrings(fields)}])`)
-          }
-          if (row.depth_mode === 'VALUE' &&
-              !isFinite(row.depth_value)) {
-            hot.setCellMeta(i, this.findColumnIndex('depth_value'), 'valid', false)
-            row.errors.push(`'Depth Value' is not a valid number (${row.depth_value || 'missing'}). When 'Depth Mode'='VALUE' then 'Depth Value' must be numeric.`)
-          }
-          if (row.depth_mode === 'CATEGORY' &&
-              !depthCategoryOptions.map(d => d.value).includes(row.depth_value)) {
-            hot.setCellMeta(i, this.findColumnIndex('depth_value'), 'valid', false)
-            row.errors.push(`'Depth Value' is not a valid depth category (${row.depth_value || 'missing'}). When 'Depth Mode'='CATEGORY' then 'Depth Value' must be one of: [${joinStrings(depthCategoryOptions.map(d => d.value))}].`)
-          }
-          if ((row.depth_mode === 'COLUMN' || row.depth_mode === 'VALUE') &&
-              !depthUnitsOptions.map(d => d.value).includes(row.depth_units)) {
-            hot.setCellMeta(i, this.findColumnIndex('depth_units'), 'valid', false)
-            row.errors.push(`'Depth Units' is not a valid depth unit (${row.depth_units || 'missing'}). When 'Depth Mode'='COLUMN' or 'VALUE then 'Depth Units' must be one of: [${joinStrings(depthCategoryOptions.map(d => d.value))}].`)
-          }
-          if (row.type === 'PROFILES' && row.depth_mode !== 'COLUMN') {
-            hot.setCellMeta(i, this.findColumnIndex('depth_mode'), 'valid', false)
-            row.errors.push("'Depth Mode' must be 'COLUMN' when 'File Type'='PROFILES'")
-          }
-          if (!fields.includes(row.value_column)) {
-            hot.setCellMeta(i, this.findColumnIndex('value_column'), 'valid', false)
-            row.errors.push(`'Temperature Column' is not a valid column (${row.value_column || 'missing'}). Must be one of: [${joinStrings(fields)}].`)
-          }
-          if (row.flag_column && !fields.includes(row.flag_column)) {
-            hot.setCellMeta(i, this.findColumnIndex('flag_column'), 'valid', false)
-            row.errors.push(`'Flag Column' is not a valid column (${row.flag_column || 'missing'}). Must be one of: [${joinStrings(fields)}].`)
-          }
+        try {
+          const parsed = await parseCsvFile(this.files.selected[i], Number(row.skip_lines))
+          console.log(parsed)
+          row.n_rows = parsed.data.length
+          row.fields = parsed.meta.fields.filter(d => d !== '')
+          hot.setCellMeta(i, this.findColumnIndex('filename'), 'valid', true)
         } catch (err) {
           console.error(err)
-          row.status = 'FAILED'
-          row.errors = [this.$errorMessage(err)]
+          hot.setCellMeta(i, this.findColumnIndex('filename'), 'valid', false)
+          row.errors.push({
+            error: '<b>Failed to read file</b>',
+            details: this.$errorMessage(err)
+          })
         }
+
+        if (row.errors.length === 0) {
+          try {
+            this.table.columns.forEach((column, j) => {
+              if (column.validate && !column.validate(row)) {
+                hot.setCellMeta(i, j, 'valid', false)
+                row.errors.push({
+                  error: `${column.rule} (value: ${JSON.stringify(row[column.prop])})`,
+                  column
+                })
+              } else {
+                hot.setCellMeta(i, j, 'valid', true)
+              }
+            })
+          } catch (err) {
+            console.error(err)
+            row.errors.push({
+              error: 'Unexpected error during validation',
+              details: this.$errorMessage(err)
+            })
+          }
+        }
+
         if (row.errors.length > 0) {
-          row.status = 'FAILED'
+          row.status = 'INVALID'
         } else {
           row.status = 'READY'
         }
+
         this.renderHot()
       }
       this.message = null
-      // to force failedFiles to update
-      this.table.rows = this.table.rows.slice()
-      // this.loading = false
-      if (this.table.rows.some(d => d.status === 'FAILED')) {
-        throw new Error('Failed to validate all files')
-      }
     },
     async uploadFiles () {
       // const hot = this.$refs.hot.hotInstance
       for (let i = 0; i < this.table.rows.length; i++) {
         const row = this.table.rows[i]
-        if (row.status === 'SUCCESS') continue
+        if (row.status === 'SUCCESS' || row.status === 'INVALID') continue
 
         const file = this.files.selected[i]
         const config = this.createConfig(row)
@@ -617,7 +735,7 @@ export default {
         this.renderHot()
 
         try {
-          this.message = `Uploading: ${file.name}`
+          this.message = `Uploading ${file.name}`
           await uploader(file, config, organizationId)
           row.status = 'SUCCESS'
         } catch (err) {
@@ -629,19 +747,34 @@ export default {
         }
         this.renderHot()
       }
-      // to force failedFiles to update
-      this.table.rows = this.table.rows.slice()
+    },
+    updateFailedCount () {
+      console.log('updateFailedCount')
+      this.table.failedCount = this.table.rows.filter(d => d.status === 'FAILED' || d.status === 'INVALID').length
     },
     renderHot () {
-      this.$refs.hot && this.$refs.hot.hotInstance.render()
+      if (this.$refs.hot) {
+        this.$refs.hot.hotInstance.render()
+      }
     },
     createConfig (row) {
       const config = {
+        file: {
+          filename: row.filename,
+          skipLines: row.skip_lines
+        },
         station: {
-          mode: row.station_mode
+          mode: row.station_code
+            ? 'STATION'
+            : row.station_column
+              ? 'COLUMN'
+              : null
         },
         depth: {
-          mode: row.depth_mode
+          category: row.depth_category,
+          value: row.depth_value,
+          column: row.depth_column,
+          units: row.depth_units
         },
         timestamp: {
           columns: [row.datetime_column],
@@ -672,13 +805,14 @@ export default {
           break
       }
 
-      switch (row.station_mode) {
-        case 'STATION':
-          config.station.stationId = this.organization.stations.find(d => d.code === row.station_value).id
-          break
-        case 'COLUMN':
-          config.station.column = row.station_value
-          break
+      if (config.station.mode === 'STATION') {
+        const station = this.organization.stations.find(d => d.code === row.station_code)
+        if (!station) {
+          throw new Error(`Could not find station with code '${row.station_code}'`)
+        }
+        config.station.stationId = station.id
+      } else if (config.station.mode === 'COLUMN') {
+        config.station.column = row.station_column
       }
 
       if (row.time_column) {
@@ -687,30 +821,11 @@ export default {
 
       switch (row.timezone_mode) {
         case 'UTCOFFSET':
-          config.timestamp.timezone.utcOffset = parseInt(row.timezone_value)
+          config.timestamp.timezone.utcOffset = parseInt(row.timezone_utcoffset)
           break
         case 'COLUMN':
-          config.timestamp.timezone.column = row.timezone_value
+          config.timestamp.timezone.column = row.timezone_column
           break
-      }
-
-      switch (row.depth_mode) {
-        case 'COLUMN':
-          config.depth.column = row.depth_value
-          config.depth.units = row.depth_units
-          if (config.type === 'SERIES') {
-            config.depth.category = 'VARYING'
-          }
-          break
-        case 'VALUE':
-          config.depth.value = row.depth_value
-          config.depth.units = row.depth_units
-          break
-        case 'CATEGORY':
-          config.depth.category = row.depth_value
-          break
-        default:
-          config.depth.mode = null
       }
 
       config.meta.sop_bath = parseBooleanOption(row.sop_bath)
@@ -719,21 +834,12 @@ export default {
 
       return config
     },
-    // async submit () {
-    //   console.log(this.createConfig(this.table.rows[0]))
-    // },
     async submit () {
       this.error = null
 
       if (!this.$refs.form.validate()) {
         // organization or files not selected
         this.error = 'Check form errors above'
-        return
-      }
-
-      try {
-        await this.validateCells()
-      } catch (err) {
         return
       }
 
@@ -744,15 +850,16 @@ export default {
 
       this.loading = true
       try {
-        await this.validateRows()
+        await this.validateTable()
       } catch (err) {
-        // this.error = this.$errorMessage(err)
-        this.loading = false
+        this.error = this.$errorMessage(err)
         return this.renderHot()
       }
 
+      this.renderHot()
+
       try {
-        console.log('uploading...')
+        // console.log('uploading...')
         await this.uploadFiles()
       } catch (err) {
         console.log(err)
@@ -761,6 +868,7 @@ export default {
 
       this.loading = false
 
+      this.updateFailedCount()
       this.renderHot()
 
       if (!this.table.rows.some(d => d.status !== 'SUCCESS')) {
@@ -772,7 +880,7 @@ export default {
       }
     },
     downloadStationsFile () {
-      this.$download.csv(this.organization.stations, 'stations.csv')
+      this.$download.csv(this.organization.stations, `AKTEMP-${this.organization.selected.code}-stations.csv`)
     },
     removeSavedFiles () {
       this.table.rows = this.table.rows.filter(d => d.status !== 'SUCCESS')

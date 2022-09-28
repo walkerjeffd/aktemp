@@ -123,7 +123,7 @@ exports.up = async knex => {
     t.float('frequency')
 
     t.boolean('reviewed').notNullable().default(false)
-    t.integer('accuracy')
+    t.text('accuracy')
     t.boolean('sop_bath')
 
     t.timestamps(true, true)

@@ -15,7 +15,7 @@
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title class="text-h5">Data Files</v-toolbar-title>
+          <v-toolbar-title class="text-h6">Data Files</v-toolbar-title>
           <RefreshButton @click="fetch"></RefreshButton>
           <v-spacer></v-spacer>
           <v-btn color="success" :to="{ name: 'manageFileForm' }" class="mr-2">

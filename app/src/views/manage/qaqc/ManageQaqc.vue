@@ -16,7 +16,7 @@
       >
         <template v-slot:top>
           <v-toolbar flat>
-            <v-toolbar-title class="text-h5">Timeseries</v-toolbar-title>
+            <v-toolbar-title class="text-h6">Timeseries</v-toolbar-title>
             <v-spacer></v-spacer>
             <RefreshButton @click="fetch"></RefreshButton>
           </v-toolbar>

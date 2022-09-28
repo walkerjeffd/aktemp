@@ -1,6 +1,12 @@
 const path = require('path')
 const AWS = require('aws-sdk')
 
+require('dotenv-flow').config({
+  default_node_env: 'development',
+  path: __dirname,
+  silent: true
+})
+
 const secretsmanager = new AWS.SecretsManager({
   region: process.env.REGION
 })

@@ -1,4 +1,4 @@
-<template>
+i<template>
   <div class="py-4">
     <Loading v-if="loading" class="pb-8"></Loading>
     <Alert v-else-if="error" type="error" title="Server Error" class="mb-0 mx-4">
@@ -13,10 +13,16 @@
         <highcharts :options="chart"></highcharts>
 
         <div class="text--secondary caption ml-2">
-          <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in, shift+click to slide. Click <code>Flagged</code> in legend to hide/show flagged data.
+          <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in, shift+click to slide. Click <code>Flagged</code> in legend to hide/show flagged data (if any).
         </div>
 
-        <div class="text--secondary caption ml-2 mt-4">
+        <v-btn x-small text @click="about = !about" class="mt-4">
+          About This Chart
+          <v-icon v-if="about" x-small right>mdi-chevron-up-circle-outline</v-icon>
+          <v-icon v-else x-small right>mdi-chevron-down-circle-outline</v-icon>
+        </v-btn>
+
+        <div class="text--secondary caption ml-2" v-if="about">
           This chart shows the daily mean and range over all available timeseries at this station. Click <code>Explore Data</code> below to view the individual timeseries, which may vary by depth, or to drill down into the raw data. Click <code>CSV</code> to download a file containing the daily values shown above.
         </div>
       </div>
@@ -50,13 +56,14 @@ export default {
     return {
       loading: true,
       error: null,
+      about: false,
       values: [],
       chart: {
         chart: {
           zoomType: 'x',
           height: 250,
-          marginLeft: 50,
-          spacingLeft: 50,
+          // marginLeft: 60,
+          // spacingLeft: 50,
           panning: true,
           panKey: 'shift',
           resetZoomButton: {

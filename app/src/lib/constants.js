@@ -1,7 +1,6 @@
 export const fieldConstraints = {
   station: {
     code: {
-      minLength: 1,
       maxLength: 50
     },
     description: {
@@ -12,8 +11,6 @@ export const fieldConstraints = {
     }
   }
 }
-
-export const stationModes = ['STATION', 'COLUMN']
 
 export const fileTypeOptions = [
   { value: 'CONTINUOUS', label: 'Continuous Timeseries' },
@@ -53,7 +50,10 @@ export const timezoneOptions = [
 ]
 
 export const timezoneModes = [
-  'UTCOFFSET', 'COLUMN', 'TIMESTAMP'
+  { value: 'GUESS' },
+  { value: 'UTCOFFSET' },
+  { value: 'COLUMN' },
+  { value: 'TIMESTAMP' }
 ]
 
 export const utcOffsetOptions = [
@@ -61,13 +61,6 @@ export const utcOffsetOptions = [
   { value: -8, label: 'UTC-08 (AKDT/PST)' },
   { value: -7, label: 'UTC-07 (PDT)' },
   { value: 0, label: 'UTC' }
-]
-
-// https://day.js.org/docs/en/parse/string-format
-export const timestampFormats = [
-  'YYYY-MM-DDTHH:mm:ss',
-  'YYYY-MM-DD HH:mm:ss',
-  'YYYY-MM-DD HH:mm'
 ]
 
 export const placementOptions = [
@@ -86,7 +79,7 @@ export const waterbodyTypeOptions = [
   { value: 'OTHER', label: 'Other' }
 ]
 
-export const mixedOptions = [
+export const booleanOptions = [
   { value: 'TRUE', label: 'Yes' },
   { value: 'FALSE', label: 'No' }
 ]
@@ -97,8 +90,6 @@ export const depthUnitsOptions = [
   { value: 'in', label: 'Inches (in)' },
   { value: 'ft', label: 'Feet (ft)' }
 ]
-
-export const booleanOptions = ['TRUE', 'FALSE']
 
 export const flagTypeOptions = [
   {

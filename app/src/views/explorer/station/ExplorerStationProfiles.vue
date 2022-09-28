@@ -2,7 +2,7 @@
   <!-- eslint-disable vue/valid-v-slot -->
   <div class="pa-4">
     <Loading v-if="loading" class="pb-8"></Loading>
-    <Alert type="error" v-else-if="profiles.length === 0" title="No Profiles Available" class="mb-0">
+    <Alert type="info" v-else-if="profiles.length === 0" title="No Profiles Available" class="mb-0">
       This station does not have any vertical profile data.
     </Alert>
     <div v-else>

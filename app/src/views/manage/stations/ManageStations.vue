@@ -15,7 +15,7 @@
         >
           <template v-slot:top>
             <v-toolbar flat>
-              <v-toolbar-title class="text-h5">Stations</v-toolbar-title>
+              <v-toolbar-title class="text-h6">Stations</v-toolbar-title>
               <RefreshButton @click="fetch"></RefreshButton>
               <v-spacer></v-spacer>
               <v-btn color="success" @click="create" class="mr-2">
@@ -27,7 +27,7 @@
             </v-toolbar>
             <div class="body-2 text--secondary mx-4 mb-2">
               <v-icon small>mdi-information-outline</v-icon>
-              Click on a row to edit or upload data for a station
+              Click on a row to edit or view data for a station
             </div>
             <v-divider></v-divider>
           </template>
@@ -38,8 +38,10 @@
             {{ item.waterbody_name | truncate(40) }}
           </template>
           <template v-slot:item.private="{ item }">
-            <v-icon v-if="item.private">mdi-check-circle</v-icon>
-            <v-icon v-else>mdi-circle-outline</v-icon>
+            <v-simple-checkbox
+              :value="item.private"
+              disabled
+            ></v-simple-checkbox>
           </template>
         </v-data-table>
         <ManageStationForm ref="form"></ManageStationForm>

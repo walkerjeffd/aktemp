@@ -7,7 +7,7 @@
       <div class="text--secondary overline ml-12">
         Mode: <strong>{{ mode === 'daily' ? 'Daily Mean and Range' : 'Raw Instantaneous' }}</strong>
       </div>
-      <div class="text--secondary caption ml-12"><v-icon x-small>mdi-information</v-icon> Zoom in to see raw instantaneous data (selected period must be &lt; 30 days long). Click "Flagged" in the bottom right corner to hide/show flagged values.</div>
+      <div class="text--secondary caption ml-12"><v-icon x-small>mdi-information</v-icon> Zoom in to see raw instantaneous data (selected period must be &leq; 31 days long). Click "Flagged" in the bottom right corner to hide/show flagged values.</div>
     </div>
   </div>
 </template>
@@ -89,8 +89,7 @@ export default {
               }
             },
             tooltip: {
-              pointFormat: 'Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>',
-              valueDecimals: 1
+              pointFormat: null
             },
             states: {
               hover: {
@@ -121,8 +120,8 @@ export default {
           // xDateFormat: '%b %e, %Y',
           valueDecimals: 1,
           enabled: true,
-          shared: true,
-          split: false
+          shared: false,
+          split: true
         },
         scrollbar: {
           liveRedraw: false
@@ -315,7 +314,7 @@ export default {
         .filter(d => d.startsWith('raw-'))
         .forEach(id => this.chart.get(id).remove(false))
 
-      if (durationDays <= 30) {
+      if (durationDays <= 31) {
         await this.fetchRaw(start.toDate(), end.toDate())
         this.mode = 'raw'
       } else if (this.mode === 'raw') {
@@ -377,9 +376,7 @@ export default {
               type: 'line',
               data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.mean]),
               tooltip: {
-                pointFormat: this.selected.length === 1
-                  ? 'Mean: <b>{point.y}</b> °C<br/>'
-                  : `Series ${s.id}: <b>{point.y}</b> °C (Flag: ${label})<br/>`
+                pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (Flag: <b>${label}</b>)`
               },
               linkedTo: 'flag-daily',
               color: 'orangered',
@@ -396,12 +393,6 @@ export default {
               flag: true,
               type: 'arearange',
               data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.min, d.max]),
-              tooltip: {
-                pointFormat: this.selected.length === 1
-                  ? `Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>Flag: ${label}`
-                  : '',
-                valueDecimals: 1
-              },
               linkedTo: 'flag-daily'
             }
           ]
@@ -415,9 +406,7 @@ export default {
             visible: true,
             showInNavigator: false,
             tooltip: {
-              pointFormat: this.selected.length === 1
-                ? 'Mean: <b>{point.y}</b> °C<br/>'
-                : `Series ${s.id}: <b>{point.y}</b> °C<br/>`
+              pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
             }
           },
           {
@@ -427,11 +416,6 @@ export default {
             type: 'arearange',
             data: s.values.unflagged.map(d => [(new Date(d.date)).valueOf(), d.min, d.max]),
             visible: true,
-            tooltip: {
-              pointFormat: this.selected.length === 1
-                ? 'Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>'
-                : ''
-            },
             linkedTo: ':previous'
           },
           ...flagSeries
@@ -488,9 +472,7 @@ export default {
             type: 'line',
             data: flag.values.map(d => [(new Date(d.datetime)).valueOf(), d.value]),
             tooltip: {
-              pointFormat: this.selected.length === 1
-                ? `Temperature: <b>{point.y}</b> °C<br/>Flag: <b>${label}</b>`
-                : `Series ${s.id}: <b>{point.y}</b> °C (Flag: ${label})<br/>`
+              pointFormat: `Series ${s.id}: <b>{point.y}</b> °C<br/>Flag: ${label}`
             },
             linkedTo: 'flag-raw',
             visible: this.showFlags,
@@ -510,9 +492,7 @@ export default {
             type: 'line',
             data: s.values.unflagged.map(d => [(new Date(d.datetime)).valueOf(), d.value]),
             tooltip: {
-              pointFormat: this.selected.length === 1
-                ? 'Temperature: <b>{point.y}</b> °C<br/>'
-                : `Series ${s.id}: <b>{point.y}</b> °C<br/>`
+              pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
             }
           },
           ...flagSeries

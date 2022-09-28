@@ -7,36 +7,20 @@
     <v-toolbar color="grey darken-2" dark flat dense>
       <div class="font-weight-bold body-1">{{ station.code | truncate(25) }}</div>
       <v-spacer></v-spacer>
-      <v-btn icon small @click="zoomTo">
+      <v-btn icon small @click="zoomTo" title="Zoom to location">
         <v-icon small>mdi-target</v-icon>
       </v-btn>
-      <v-btn icon small @click="collapse = !collapse">
+      <v-btn icon small @click="collapse = !collapse" title="Collapse">
         <v-icon small v-if="collapse">mdi-menu-down</v-icon>
         <v-icon small v-else>mdi-menu-up</v-icon>
       </v-btn>
-      <v-btn icon small @click="$emit('close')">
+      <v-btn icon small @click="$emit('close')" title="Close">
         <v-icon small>mdi-close</v-icon>
       </v-btn>
     </v-toolbar>
     <div v-if="!collapse">
-      <!-- <div class="d-flex pa-4">
-        <v-btn
-          color="info"
-          block
-          title="Explore timeseries and profile data in more detail"
-          :to="{ name: 'explorerStation', params: { stationId: station.id }}"
-        >
-          <v-icon left>mdi-chart-line</v-icon>
-          Explore Station Data
-          <v-icon right>mdi-chevron-right</v-icon>
-        </v-btn>
-      </div> -->
 
       <v-divider></v-divider>
-
-      <!-- <v-toolbar color="grey lighten-2" dense height="40" class="text-overline">
-        Preview Summary
-      </v-toolbar> -->
 
       <v-tabs
         v-model="tab"
@@ -105,5 +89,6 @@ export default {
   top: 20px;
   right: 20px;
   pointer-events: auto;
+  z-index: 1000;
 }
 </style>

@@ -44,7 +44,7 @@
                       color="primary"
                       outlined
                       bloc
-                      href="static/aktemp-stations-template.xlsx"
+                      href="static/AKTEMP-stations-template.xlsx"
                       download
                       class="mb-4"
                     ><v-icon left>mdi-download</v-icon> Download Template</v-btn>
@@ -72,9 +72,9 @@
                     :width="col.width"
                   ></HotColumn>
                 </HotTable>
-                <p>
-                  Hint: Ctrl+c/Ctrl+v to copy/paste. Right-click to add/remove rows or undo/redo.
-                </p>
+                <div class="text--secondary caption">
+                  * = Required. Ctrl+c/Ctrl+v to copy/paste. Right-click to add/remove rows or undo/redo.
+                </div>
 
                 <Alert
                   type="error"
@@ -134,7 +134,7 @@
 import Handsontable from 'handsontable'
 import { mapGetters } from 'vuex'
 import { timezoneOptions, placementOptions, waterbodyTypeOptions, booleanOptions, fieldConstraints } from '@/lib/constants'
-import { parseBooleanOption } from '@/lib/utils'
+import { parseBooleanOption, isNumber } from '@/lib/utils'
 import evt from '@/events'
 
 export default {
@@ -192,29 +192,20 @@ export default {
         },
         {
           prop: 'code',
-          label: 'Code',
+          label: 'Code*',
           allowEmpty: false,
           validator: function (value, callback) {
-            callback(!!value && value.length >= fieldConstraints.station.code.minLength && value.length <= fieldConstraints.station.code.maxLength)
+            callback(!!value && value.length <= fieldConstraints.station.code.maxLength)
           },
-          rule: `Code must be unique and between ${fieldConstraints.station.code.minLength} to ${fieldConstraints.station.code.maxLength} characters`,
+          rule: `Code must be unique and ${fieldConstraints.station.code.maxLength} or fewer characters`,
           width: '100px'
         },
         {
-          prop: 'description',
-          label: 'Description',
-          validator: function (value, callback) {
-            callback(!value || value.length <= fieldConstraints.station.description.maxLength)
-          },
-          rule: `Description must be ${fieldConstraints.station.description.maxLength} characters or less`,
-          width: '150px'
-        },
-        {
           prop: 'latitude',
-          label: 'Latitude',
+          label: 'Latitude*',
           allowEmpty: false,
           validator: function (value, callback) {
-            callback(!!value && isFinite(value) && +value > -90 && +value < 90)
+            callback(!!value && isNumber(value) && +value > -90 && +value < 90)
           },
           rule: 'Latitude must be a decimal number between -90 and 90',
           type: 'numeric',
@@ -222,10 +213,10 @@ export default {
         },
         {
           prop: 'longitude',
-          label: 'Longitude',
+          label: 'Longitude*',
           allowEmpty: false,
           validator: function (value, callback) {
-            callback(!!value && isFinite(value) && +value > -180 && +value < 180)
+            callback(!!value && isNumber(value) && +value > -180 && +value < 180)
           },
           rule: 'Longitude must be a decimal number between -180 and 180',
           type: 'numeric',
@@ -233,7 +224,7 @@ export default {
         },
         {
           prop: 'timezone',
-          label: 'Timezone',
+          label: 'Timezone*',
           allowEmpty: false,
           rule: `Timezone must be one of: [${timezoneOptions.map(d => `'${d.value}'`).join(', ')}]`,
           source: timezoneOptions.map(d => d.value),
@@ -241,10 +232,10 @@ export default {
           width: '100px'
         },
         {
-          prop: 'placement',
-          label: 'Placement',
-          rule: `Placement must be one of: [${placementOptions.map(d => `'${d.value}'`).join(', ')}]`,
-          source: placementOptions.map(d => d.value),
+          prop: 'waterbody_type',
+          label: 'Waterbody Type',
+          rule: `Waterbody Type must be one of: [${waterbodyTypeOptions.map(d => `'${d.value}'`).join(', ')}]`,
+          source: waterbodyTypeOptions.map(d => d.value),
           type: 'dropdown'
         },
         {
@@ -257,25 +248,34 @@ export default {
           width: '150px'
         },
         {
-          prop: 'waterbody_type',
-          label: 'Waterbody Type',
-          rule: `Waterbody Type must be one of: [${waterbodyTypeOptions.map(d => `'${d.value}'`).join(', ')}]`,
-          source: waterbodyTypeOptions.map(d => d.value),
+          prop: 'description',
+          label: 'Description',
+          validator: function (value, callback) {
+            callback(!value || value.length <= fieldConstraints.station.description.maxLength)
+          },
+          rule: `Description must be ${fieldConstraints.station.description.maxLength} characters or less`,
+          width: '150px'
+        },
+        {
+          prop: 'placement',
+          label: 'Placement',
+          rule: `Placement must be one of: [${placementOptions.map(d => `'${d.value}'`).join(', ')}]`,
+          source: placementOptions.map(d => d.value),
           type: 'dropdown'
         },
         {
           prop: 'active',
           label: 'Active',
-          rule: `Active must be one of: [${booleanOptions.map(d => `'${d}'`).join(', ')}]`,
-          source: booleanOptions,
+          rule: `Active must be one of: [${booleanOptions.map(d => d.value).map(d => `'${d}'`).join(', ')}]`,
+          source: booleanOptions.map(d => d.value),
           type: 'dropdown',
           width: '80px'
         },
         {
           prop: 'mixed',
           label: 'Well-mixed',
-          rule: `Well-mixed must be one of: [${booleanOptions.map(d => `'${d}'`).join(', ')}]`,
-          source: booleanOptions,
+          rule: `Well-mixed must be one of: [${booleanOptions.map(d => d.value).map(d => `'${d}'`).join(', ')}]`,
+          source: booleanOptions.map(d => d.value),
           type: 'dropdown'
         },
         {
@@ -286,8 +286,8 @@ export default {
         {
           prop: 'private',
           label: 'Private',
-          rule: `Private must be one of: [${booleanOptions.map(d => `'${d}'`).join(', ')}]`,
-          source: booleanOptions,
+          rule: `Private must be one of: [${booleanOptions.map(d => d.value).map(d => `'${d}'`).join(', ')}]`,
+          source: booleanOptions.map(d => d.value),
           type: 'dropdown'
         }
       ],

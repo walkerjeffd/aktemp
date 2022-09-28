@@ -1,6 +1,6 @@
 <template>
   <div class="text-center">
-    <div class="text-h5 mt-4 mb-8">Loading...</div>
+    <div class="text-h6 mt-4 mb-8">Loading...</div>
     <v-progress-circular
       :size="size"
       :width="width"

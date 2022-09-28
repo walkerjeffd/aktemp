@@ -84,7 +84,7 @@
           <td class="text-right grey--text text--darken-2">
             Accuracy
           </td>
-          <td class="font-weight-bold">{{ series.accuracy | formatBooleanOption }}</td>
+          <td class="font-weight-bold">{{ series.accuracy | accuracy }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">

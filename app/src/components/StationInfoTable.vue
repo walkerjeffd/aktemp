@@ -70,21 +70,21 @@
           class="text-right grey--text text--darken-2">
           Active
         </td>
-        <td class="font-weight-bold">{{ station.active | formatBooleanOption }}</td>
+        <td class="font-weight-bold">{{ station.active | boolean }}</td>
       </tr>
       <tr>
         <td
           class="text-right grey--text text--darken-2">
           Mixed
         </td>
-        <td class="font-weight-bold">{{ station.mixed | formatBooleanOption }}</td>
+        <td class="font-weight-bold">{{ station.mixed | boolean }}</td>
       </tr>
       <tr>
         <td
           class="text-right grey--text text--darken-2">
           Reference
         </td>
-        <td class="font-weight-bold">{{ station.reference | truncate(40) }}</td>
+        <td class="font-weight-bold">{{ station.reference }}</td>
       </tr>
       <tr>
         <td
@@ -92,7 +92,7 @@
           Private
         </td>
         <td class="font-weight-bold">
-          {{ station.private | formatBooleanOption }}
+          {{ station.private | boolean }}
         </td>
       </tr>
     </tbody>

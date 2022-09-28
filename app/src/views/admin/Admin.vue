@@ -5,7 +5,7 @@
         <v-col cols="12" xl="10">
           <v-card elevation="4" class="pb-4">
             <v-toolbar flat dense color="grey lighten-3">
-              <v-toolbar-title class="text-h5">
+              <v-toolbar-title class="text-h6">
                 Database Administration
               </v-toolbar-title>
             </v-toolbar>

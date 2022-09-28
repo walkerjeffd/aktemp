@@ -19,14 +19,28 @@ const s3 = new AWS.S3({
   region: process.env.REGION
 })
 
-async function readFile (file) {
+async function readFile (file, config) {
   const { Bucket, Key } = file.s3
   const object = await s3.getObject({ Bucket, Key }).promise()
-  const csv = stripBom(object.Body.toString())
+  let csv = stripBom(object.Body.toString())
+  const { skipLines } = config.file
 
+  if (skipLines > 0) {
+    // if skipLines > 0, then
+    //   1. parse file without headers
+    //   2. remove first `skipLines` lines
+    //   3. convert unnamed json arrays back to csv (first row should be header)
+    //   4. parse result with header
+    const results = Papa.parse(csv, {
+      header: false,
+      delimiter: ',',
+      columns: true,
+      skipEmptyLines: 'greedy'
+    })
+    csv = Papa.unparse(results.data.slice(skipLines))
+  }
   const parsed = Papa.parse(csv, {
     header: true,
-    comments: '#',
     delimiter: ',',
     columns: true,
     skipEmptyLines: 'greedy'
@@ -51,14 +65,16 @@ function parseValues (values, station, config) {
     config.timestamp.timezone.utcOffset = utcOffset
   }
 
-  return values.map((d, i) => {
-    return {
-      datetime: parseTimestamp(d, config),
-      value: parseValue(d, config),
-      depth_m: parseDepth(d, config)
-      // flag_other: parseFlag(d, config)
-    }
-  })
+  return values
+    .map((d, i) => {
+      return {
+        datetime: parseTimestamp(d, config),
+        value: parseValue(d, config),
+        depth_m: parseDepth(d, config)
+        // flag_other: parseFlag(d, config)
+      }
+    })
+    .filter(d => d.value !== null)
 }
 
 async function processFile (id) {
@@ -85,7 +101,7 @@ async function processFile (id) {
   })
 
   // read file
-  const { data, meta: fileMeta } = await readFile(file)
+  const { data, meta: fileMeta } = await readFile(file, file.config)
 
   // add row number
   data.forEach((d, i) => { d.$row = i + 1 })
@@ -133,20 +149,22 @@ async function processFile (id) {
   })
 
   // series depth
-  const seriesDepth = {}
-  if (config.depth.mode === 'CATEGORY') {
-    seriesDepth.depth_category = config.depth.category
-  } else if (config.depth.mode === 'VALUE') {
-    seriesDepth.depth_m = convertDepthUnits(config.depth.value, config.depth.units)
+  const seriesDepth = {
+    depth_category: config.depth.category,
+    depth_m: convertDepthUnits(config.depth.value, config.depth.units)
   }
 
   // meta
   const meta = {
-    ...config.meta
+    accuracy: config.meta.accuracy,
+    reviewed: config.meta.reviewed
   }
 
   const d3 = await import('d3')
   if (config.type === 'SERIES') {
+    meta.interval = config.meta.interval
+    meta.sop_bath = config.meta.sop_bath
+
     // save each series
     for (let i = 0; i < stationData.length; i++) {
       const datetimes = stationData[i].values.map(d => d.datetime)

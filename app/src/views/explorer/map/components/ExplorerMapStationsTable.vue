@@ -1,6 +1,6 @@
 <template>
   <!-- eslint-disable vue/valid-v-slot -->
-  <div style="position:absolute;transform:translate(-50%, 0);left:50%;bottom:20px;width:90%;background-color:white;pointer-events:autocomplete" class="elevation-20">
+  <div class="aktemp-explorer-map-stations-table-container elevation-20">
     <v-toolbar color="grey darken-2" dark flat dense>
       <div class="text-h6">Stations Table</div>
       <v-spacer></v-spacer>
@@ -58,8 +58,8 @@
         </template>
         <template v-slot:item.profiles_period="{ item }">
           <span v-if="item.profiles_start_date && item.profiles_end_date">
-            {{ item.profiles_start_date | timestampFormat('ll') }} -
-            {{ item.profiles_end_date | timestampFormat('ll') }}
+            {{ item.profiles_start_date | formatTimestamp('ll', item.timezone) }} -
+            {{ item.profiles_end_date | formatTimestamp('ll', item.timezone) }}
           </span>
         </template>
         <template v-slot:item.mixed="{ item }">
@@ -161,3 +161,16 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.aktemp-explorer-map-stations-table-container {
+  position: absolute;
+  transform: translate(-50%, 0);
+  left: 50%;
+  bottom: 20px;
+  width: 90%;
+  background-color: white;
+  pointer-events: autocomplete;
+  z-index: 1000;
+}
+</style>

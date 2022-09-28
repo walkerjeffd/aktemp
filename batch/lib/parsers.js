@@ -6,12 +6,12 @@ dayjs.extend(timezone)
 dayjs.extend(utc)
 dayjs.tz.setDefault('UTC')
 
-const { convertDepthUnits } = require('./utils')
+const { convertDepthUnits, isNumber } = require('./utils')
 
 function chronoParseDate (value) {
-  let x = chrono.parseDate(value, { timezone: 'UTC' })
+  let x = chrono.strict.parseDate(value, { timezone: 'UTC' })
   if (x === null) {
-    x = dayjs.utc(chrono.parseDate(value.replace('2:', '3:'), { timezone: 'UTC' })).subtract(1, 'hour').toDate()
+    x = dayjs.utc(chrono.strict.parseDate(value.replace('2:', '3:'), { timezone: 'UTC' })).subtract(1, 'hour').toDate()
   }
   return x
 }
@@ -52,15 +52,13 @@ function parseTimestamp (d, config) {
 
 function parseValue (d, config) {
   const value = d[config.value.column]
-  const row = d.$row
   if (config.value.missing.includes(value)) {
     return null
   }
   let numericValue = Number(value)
-  if (isNaN(numericValue) || value === null || (typeof value === 'string' && value.trim() === '')) {
-    throw new Error(`Invalid temperature value at row ${row} ('${value}')`)
-  }
-  if (config.value.units === 'F') {
+  if (!isNumber(numericValue)) {
+    numericValue = null
+  } else if (config.value.units === 'F') {
     numericValue = (numericValue - 32) * 5 / 9
   }
   return numericValue

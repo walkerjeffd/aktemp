@@ -7,7 +7,7 @@
       <div class="text--secondary overline ml-12">
         Mode: <strong>{{ mode === 'daily' ? 'Daily Mean and Range' : 'Raw Instantaneous' }}</strong>
       </div>
-      <div class="text--secondary caption ml-12"><v-icon x-small>mdi-information</v-icon> Zoom in to see raw instantaneous data (selected period must be &lt; 30 days long).</div>
+      <div class="text--secondary caption ml-12"><v-icon x-small>mdi-information</v-icon> Zoom in to see raw instantaneous data (selected period must be &leq; 31 days long).</div>
     </div>
   </div>
 </template>
@@ -322,7 +322,7 @@ export default {
         .filter(d => d.startsWith('raw-'))
         .forEach(id => this.chart.get(id).remove(false))
 
-      if (durationDays <= 30) {
+      if (durationDays <= 31) {
         await this.fetchRaw(start.toDate(), end.toDate())
         this.mode = 'raw'
       } else if (this.mode === 'raw') {

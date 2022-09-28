@@ -30,3 +30,12 @@ pre {
 .hidden {
   display: none;
 }
+
+.text-monospace {
+  font-family: monospace;
+}
+
+/* prevent hidden dropdowns */
+.handsontable .handsontableEditor {
+  /* position: fixed; */
+}

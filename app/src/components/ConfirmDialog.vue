@@ -2,8 +2,8 @@
   <v-dialog
     v-model="dialog"
     max-width="500"
-    :style="{ zIndex: options.zIndex }"
     @keydown.esc="close"
+    style="z-index:3000"
   >
     <v-card>
       <v-toolbar flat dense :color="options.color">
@@ -47,7 +47,6 @@ export default {
       options: {
         color: 'grey lighten-2',
         width: 600,
-        zIndex: 5000,
         noconfirm: false,
         btnColor: 'primary'
       }

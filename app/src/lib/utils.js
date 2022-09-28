@@ -3,23 +3,52 @@ import '../plugins/dayjs'
 import dayjs from 'dayjs'
 import * as chrono from 'chrono-node'
 
-export function parseCsvFile (file) {
+import { sensorAccuracyOptions } from '@/lib/constants'
+
+export function isNumber (x) {
+  return !(isNaN(x) || x === null || (typeof x === 'string' && x.trim() === ''))
+}
+
+export function parseCsvFile (file, skipLines = 0) {
+  // if skipLines > 0, then
+  //   1. parse file without headers
+  //   2. remove first `skipLines` lines
+  //   3. convert unnamed json arrays back to csv (first row should be header)
+  //   4. parse result with header
   return new Promise((resolve, reject) => {
+    const fileExtension = file.name.split('.').pop().toLowerCase()
+    if (fileExtension !== 'csv') {
+      return reject(new Error('Invalid file type, must be a comma-separated value (CSV) file with extension \'.csv\''))
+    }
     return Papa.parse(file, {
-      header: true,
-      comments: '#',
+      header: skipLines === 0,
       delimiter: ',',
       download: false,
       skipEmptyLines: 'greedy',
-      complete: (results) => resolve(results),
+      complete: (results) => {
+        if (skipLines === 0) return resolve(results)
+        const csv = Papa.unparse(results.data.slice(skipLines))
+        Papa.parse(csv, {
+          header: true,
+          delimiter: ',',
+          download: false,
+          skipEmptyLines: 'greedy',
+          complete: (results) => {
+            return resolve(results)
+          },
+          error: (err) => reject(err)
+        })
+      },
       error: (err) => reject(err)
     })
   })
 }
 
-function isString (value) {
-  return typeof value === 'string' || value instanceof String
+export const sleep = async (ms) => {
+  await new Promise((resolve, reject) => setTimeout(resolve, 2000))
 }
+
+// bools ----------------------------------------------------
 
 export const parseBooleanOption = (value) => {
   if (isString(value) && value.toLowerCase() === 'true') {
@@ -35,8 +64,16 @@ export const formatBooleanOption = (value) => {
   else if (value === false) return 'FALSE'
 }
 
-export const sleep = async (ms) => {
-  await new Promise((resolve, reject) => setTimeout(resolve, 2000))
+export const formatAccuracy = (value) => {
+  const item = sensorAccuracyOptions.find(d => d.value === value)
+  console.log(value, sensorAccuracyOptions, item)
+  return item ? item.label : null
+}
+
+// strings --------------------------------------------------
+
+function isString (value) {
+  return typeof value === 'string' || value instanceof String
 }
 
 export const trim = (x) => {
@@ -47,6 +84,8 @@ export const trim = (x) => {
 }
 
 export const joinStrings = x => x.map(d => `'${d}'`).join(', ')
+
+// flags ----------------------------------------------------
 
 export function assignDailyFlags (values, flags) {
   values = values.slice()
@@ -119,6 +158,8 @@ export function flagLabel (flag) {
   return label
 }
 
+// timestamps -----------------------------------------------
+
 export function guessUtcOffset (timestamp, stationTimezone) {
   const d = parseTimestamp(timestamp, 0).tz(stationTimezone)
   if (!d.isValid()) {
@@ -129,8 +170,15 @@ export function guessUtcOffset (timestamp, stationTimezone) {
 
 export function parseTimestamp (timestamp, utcOffset = 0) {
   // timestamp: string
-  // returns Date object
-  const x = chrono.parseDate(timestamp, { timezone: 'UTC' })
+  // utcOffset: number (hours)
+  // returns dayjs object
+  let x = chrono.strict.parseDate(timestamp, { timezone: 'UTC' })
+  if (x === null) {
+    x = chrono.strict.parseDate(timestamp.replace('2:', '3:'), { timezone: 'UTC' })
+    if (x !== null) {
+      x = dayjs.utc().subtract(1, 'hour').toDate()
+    }
+  }
   if (!x) {
     throw new Error(`Failed parse timestamp (${timestamp})`)
   }

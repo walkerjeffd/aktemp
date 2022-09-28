@@ -17,6 +17,13 @@ function validateFileFields (fields) {
   return value
 }
 
+const fileSchema = () => {
+  return Joi.object({
+    filename: Joi.string().required(),
+    skipLines: Joi.number().integer().allow('', null).empty(['', null]).default(0)
+  })
+}
+
 const stationSchema = (fields) => {
   const validFields = Joi.string().valid(...fields)
   return Joi.object({
@@ -101,6 +108,7 @@ const metaSchema = (fields, type) => {
 const configSchema = (fields, type) => {
   return Joi.object({
     type: Joi.string().valid('SERIES', 'PROFILES').required(),
+    file: fileSchema().required(),
     station: stationSchema(fields).required(),
     depth: depthSchema(fields, type).required(),
     timestamp: timestampSchema(fields).required(),

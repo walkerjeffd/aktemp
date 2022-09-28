@@ -47,7 +47,7 @@
       </template>
 
       <template v-slot:item.created_at="{ item }">
-        {{ item.created_at | timestampFormat('ll') }}
+        {{ item.created_at | formatTimestamp('ll') }}
       </template>
       <template v-slot:item.users_count="{ item }">
         {{ item.users.length }}

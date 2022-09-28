@@ -13,7 +13,7 @@
   >
     <template v-slot:top>
       <v-toolbar flat>
-        <v-toolbar-title class="text-h5">Vertical Profiles</v-toolbar-title>
+        <v-toolbar-title class="text-h6">Vertical Profiles</v-toolbar-title>
       </v-toolbar>
       <div class="body-2 text--secondary mx-4 mb-2">
         <v-icon small>mdi-information-outline</v-icon>

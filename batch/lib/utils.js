@@ -1,4 +1,9 @@
+function isNumber (x) {
+  return !(isNaN(x) || x === null || (typeof x === 'string' && x.trim() === ''))
+}
+
 function convertDepthUnits (value, units) {
+  if (!isNumber(value)) return null
   if (units === 'm') {
     return value
   } else if (units === 'ft') {
@@ -24,6 +29,6 @@ async function medianFrequency (datetimes) {
 
 module.exports = {
   convertDepthUnits,
-  medianFrequency
+  medianFrequency,
+  isNumber
 }
-

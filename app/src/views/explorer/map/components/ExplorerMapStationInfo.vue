@@ -16,15 +16,15 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Description
-          </td>
-          <td class="font-weight-bold">{{ station.description }}</td>
-        </tr>
-        <tr>
-          <td class="text-right grey--text text--darken-2">
             Coordinates
           </td>
           <td class="font-weight-bold">{{ station.latitude.toFixed(5) }}, {{ station.longitude.toFixed(5) }}</td>
+        </tr>
+        <tr>
+          <td class="text-right grey--text text--darken-2">
+            Description
+          </td>
+          <td class="font-weight-bold">{{ station.description }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">

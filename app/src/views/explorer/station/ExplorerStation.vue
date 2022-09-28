@@ -33,7 +33,7 @@
                       <v-divider></v-divider>
 
                       <div class="pa-4 text-right">
-                        <DownloadButton @click="downloadFile"></DownloadButton>
+                        <DownloadButton @click="downloadFile" small></DownloadButton>
                       </div>
                     </v-sheet>
                   </v-col>

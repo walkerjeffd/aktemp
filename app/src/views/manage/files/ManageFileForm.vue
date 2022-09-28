@@ -35,19 +35,19 @@
                 <v-divider></v-divider>
 
                 <v-stepper-step step="4" :complete="step > 4">
-                  Depth
-                </v-stepper-step>
-
-                <v-divider></v-divider>
-
-                <v-stepper-step step="5" :complete="step > 5">
                   Timestamps
                 </v-stepper-step>
 
                 <v-divider></v-divider>
 
-                <v-stepper-step step="6" :complete="step > 6">
+                <v-stepper-step step="5" :complete="step > 5">
                   Temperatures
+                </v-stepper-step>
+
+                <v-divider></v-divider>
+
+                <v-stepper-step step="6" :complete="step > 6">
+                  Depth
                 </v-stepper-step>
 
                 <v-divider></v-divider>
@@ -110,28 +110,96 @@
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
                       <v-form ref="fileForm">
-                        <div class="text-h6">File Type</div>
-
                         <div>
-                          <p>What kind of data does this file contain?</p>
-                          <div class="text-center">
-                            <v-btn-toggle v-model="file.type" @change="resetFile()">
-                              <v-btn value="SERIES_CONTINUOUS">
-                                <v-icon left>mdi-chart-line-variant</v-icon>
-                                Continuous
-                              </v-btn>
-                              <v-btn value="SERIES_DISCRETE">
-                                <v-icon left>mdi-chart-bubble</v-icon>
-                                Discrete
-                              </v-btn>
-                              <v-btn value="PROFILES">
-                                <v-icon left>mdi-arrow-expand-down</v-icon>
-                                Profiles
-                              </v-btn>
-                            </v-btn-toggle>
-                          </div>
+                          <div class="text-h6 mb-4">Select Data File</div>
+                          <p>Select the data file, which must be in comma-separate values (CSV) format. Then specify the number of lines above the header row containing the column names, and click <code>Load File</code>.</p>
+                          <v-file-input
+                            ref="fileInput"
+                            v-model="file.selected"
+                            label="Select CSV File"
+                            :rules="file.rules"
+                            truncate-length="200"
+                            @change="resetFile"
+                            class="mb-4"
+                          >
+                          </v-file-input>
 
-                          <Alert v-if="file.type" type="info" class="mt-4">
+                          <v-text-field
+                            v-model="file.skipLines"
+                            label="# Lines to Skip"
+                            type="number"
+                            hint="Enter # of extra lines above header row (if any). Do not skip the header line with column names."
+                            persistent-hint
+                            outlined
+                          ></v-text-field>
+
+                          <v-btn
+                            color="primary"
+                            class="mt-4"
+                            :loading="file.loading"
+                            @click="loadFile"
+                          >
+                            Load File
+                          </v-btn>
+                        </div>
+
+                        <Alert v-if="file.status === 'ERROR'" type="error" title="Failed to Parse File" class="mt-4">
+                          <div v-html="file.error || 'Unknown error'"></div>
+                        </Alert>
+
+                        <Alert
+                          v-if="file.status === 'SUCCESS'"
+                          title="File Loaded Successfully"
+                          type="success"
+                          class="body-2 my-4"
+                        >
+                          <p class="body-1">
+                            Please verify this information looks correct before continuing.
+                          </p>
+                          <table>
+                            <tbody>
+                              <tr>
+                                <td class="text-right pr-2">Filename:</td>
+                                <td class="font-weight-bold">{{ file.selected.name }}</td>
+                              </tr>
+                              <tr>
+                                <td class="text-right pr-2">File Size:</td>
+                                <td class="font-weight-bold">{{ file.selected.size | prettyBytes(1) }}</td>
+                              </tr>
+                              <tr>
+                                <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                                <td class="font-weight-bold">
+                                  {{ fileColumns.map(d => `"${d}"`).join(', ')}}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td class="text-right pr-2"># Rows:</td>
+                                <td class="font-weight-bold">{{ file.parsed.data.length.toLocaleString() }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </Alert>
+
+                        <div class="mt-4" v-if="file.status === 'SUCCESS'">
+                          <v-divider class="my-4"></v-divider>
+                          <div class="text-h6">File Type</div>
+                          <p>What kind of data does this file contain?</p>
+                          <v-btn-toggle v-model="file.type">
+                            <v-btn value="SERIES_CONTINUOUS">
+                              <v-icon left>mdi-chart-line-variant</v-icon>
+                              Continuous
+                            </v-btn>
+                            <v-btn value="SERIES_DISCRETE">
+                              <v-icon left>mdi-chart-bubble</v-icon>
+                              Discrete
+                            </v-btn>
+                            <v-btn value="PROFILES">
+                              <v-icon left>mdi-arrow-expand-down</v-icon>
+                              Profiles
+                            </v-btn>
+                          </v-btn-toggle>
+
+                          <Alert v-if="file.type" type="info" class="mt-4 body-1">
                             <div v-if="file.type === 'SERIES_CONTINUOUS'">
                               <strong>Continuous temperature</strong> data are collected at regular time steps (e.g., every 15 minutes) at a fixed point in space, typically by a data logger.
                             </div>
@@ -147,66 +215,16 @@
                           </Alert>
                         </div>
 
-                        <div v-if="file.type" class="mt-4">
-                          <div class="text-h6 mb-4">Select Data File</div>
-                          <v-file-input
-                            v-model="file.selected"
-                            label="Select a CSV file"
-                            :rules="file.rules"
-                            truncate-length="200"
-                            @change="selectFile"
-                            ref="fileInput"
-                          >
-                          </v-file-input>
-                        </div>
-
-                        <Alert type="error" title="Error" v-if="file.status === 'ERROR'" class="mt-4">
-                          {{ file.error || 'Unknown error' }}
-                        </Alert>
-
-                        <v-alert
-                          type="success"
-                          text
-                          colored-border
-                          border="left"
-                          class="body-2 mb-0"
-                          v-if="file.status === 'SUCCESS'"
-                        >
-                          <div class="font-weight-bold body-1">File successfuly loaded</div>
-                          <div class="mt-4">
-                            <table>
-                              <tbody>
-                                <tr>
-                                  <td class="text-right pr-2">Filename:</td>
-                                  <td class="font-weight-bold">{{ file.selected.name }}</td>
-                                </tr>
-                                <tr>
-                                  <td class="text-right pr-2">File Size:</td>
-                                  <td class="font-weight-bold">{{ file.selected.size | prettyBytes(1) }}</td>
-                                </tr>
-                                <tr>
-                                  <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
-                                  <td class="font-weight-bold">
-                                    {{ fileColumns.map(d => `"${d}"`).join(', ')}}
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td class="text-right pr-2"># Rows:</td>
-                                  <td class="font-weight-bold">{{ file.parsed.data.length.toLocaleString() }}</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                            <p class="mt-4 body-1 mb-0">
-                              If this information looks correct, click <strong>Continue</strong>.
-                            </p>
-                          </div>
-                        </v-alert>
-
-                        <v-row class="mt-8 mb-4 px-3">
+                        <v-row class="mt-12 mb-4 px-3">
                           <v-btn text class="mr-4 px-4" @click="step -= 1">
                             <v-icon left>mdi-chevron-left</v-icon> Previous
                           </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="nextFile" :loading="file.loading">
+                          <v-btn
+                            color="primary"
+                            class="mr-4 px-4"
+                            @click="nextFile"
+                            :disabled="!(file.status === 'SUCCESS' && file.type)"
+                          >
                             Continue <v-icon right>mdi-chevron-right</v-icon>
                           </v-btn>
 
@@ -231,18 +249,16 @@
                         <div class="mb-8">
                           <p>Does this file contain data from one station or multiple stations?</p>
 
-                          <div class="text-center">
-                            <v-btn-toggle v-model="station.mode" @change="resetStation()">
-                              <v-btn value="STATION">
-                                <v-icon left>mdi-map-marker</v-icon>
-                                One Station
-                              </v-btn>
-                              <v-btn value="COLUMN">
-                                <v-icon left>mdi-map-marker-multiple</v-icon>
-                                Multiple Stations
-                              </v-btn>
-                            </v-btn-toggle>
-                          </div>
+                          <v-btn-toggle v-model="station.mode" @change="resetStation()">
+                            <v-btn value="STATION">
+                              <v-icon left>mdi-map-marker</v-icon>
+                              One Station
+                            </v-btn>
+                            <v-btn value="COLUMN">
+                              <v-icon left>mdi-map-marker-multiple</v-icon>
+                              Multiple Stations
+                            </v-btn>
+                          </v-btn-toggle>
                         </div>
 
                         <div v-if="station.mode === 'STATION'">
@@ -292,102 +308,8 @@
                   </v-row>
                 </v-stepper-content>
 
-                <!-- DEPTH -->
-                <v-stepper-content step="4">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="depthForm" @input="resetDepth()">
-                        <div class="text-h6">Depth</div>
-
-                        <div v-if="file.type !== 'PROFILES'">
-                          <p>Where in the water column were these measurements taken?</p>
-                          <div class="text-center mb-4">
-                            <v-btn-toggle v-model="depth.category.selected" @change="resetFile()">
-                              <v-btn value="SURFACE">
-                                <v-icon left>mdi-arrow-collapse-up</v-icon>
-                                Surface
-                              </v-btn>
-                              <v-btn value="MID-DEPTH">
-                                <v-icon left>mdi-arrow-expand-horizontal</v-icon>
-                                Mid-Depth
-                              </v-btn>
-                              <v-btn value="BOTTOM">
-                                <v-icon left>mdi-arrow-collapse-down</v-icon>
-                                Bottom
-                              </v-btn>
-                            </v-btn-toggle>
-                          </div>
-
-                          <p>What was the approximate depth (if known)?</p>
-                          <v-text-field
-                            v-model="depth.value.selected"
-                            :rules="depth.value.rules"
-                            type="number"
-                            hint="If depth varies, use depth at start of the deployment."
-                            persistent-hint
-                            outlined
-                          ></v-text-field>
-
-                          <p>
-                            Which file column contains time-varying depths (if any)?
-                          </p>
-                          <v-select
-                            v-model="depth.column.selected"
-                            :items="fileColumns"
-                            :rules="depth.column.rules"
-                            outlined
-                            clearable
-                          ></v-select>
-                        </div>
-                        <div v-else>
-                          <p>
-                            Which column contains the depth of each measurement?
-                          </p>
-                          <v-select
-                            v-model="depth.column.selected"
-                            :items="fileColumns"
-                            :rules="depth.column.rules"
-                            outlined
-                            clearable
-                          ></v-select>
-                        </div>
-
-                        <p>What are the depth units?</p>
-                        <v-select
-                          v-model="depth.units.selected"
-                          :items="depth.units.options"
-                          :rules="depth.units.rules"
-                          item-text="label"
-                          item-value="value"
-                          outlined
-                          clearable
-                        ></v-select>
-
-                        <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
-                          {{ depth.error || 'Unknown error' }}
-                        </Alert>
-
-                        <v-row class="mt-8 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" @click="step -= 1">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="nextDepth" :loading="depth.loading">
-                            Continue <v-icon right>mdi-chevron-right</v-icon>
-                          </v-btn>
-
-                          <v-spacer></v-spacer>
-
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-                      </v-form>
-                    </v-col>
-                  </v-row>
-                </v-stepper-content>
-
                 <!-- TIMESTAMP -->
-                <v-stepper-content step="5">
+                <v-stepper-content step="4">
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
                       <v-form ref="timestampForm" @input="resetTimestamp()">
@@ -396,18 +318,16 @@
                         <div class="mb-8">
                           <p>Are dates and times in the same column or separate columns?</p>
 
-                          <div class="text-center">
-                            <v-btn-toggle v-model="timestamp.mode" @change="resetTimestamp()">
-                              <v-btn value="COMBINED">
-                                <v-icon left>mdi-format-align-justify</v-icon>
-                                One Column (Datetime)
-                              </v-btn>
-                              <v-btn value="SEPARATE">
-                                <v-icon left>mdi-format-columns</v-icon>
-                                Two Columns (Date, Time)
-                              </v-btn>
-                            </v-btn-toggle>
-                          </div>
+                          <v-btn-toggle v-model="timestamp.mode" @change="resetTimestamp()">
+                            <v-btn value="COMBINED">
+                              <v-icon left>mdi-format-align-justify</v-icon>
+                              One Column (Datetime)
+                            </v-btn>
+                            <v-btn value="SEPARATE">
+                              <v-icon left>mdi-format-columns</v-icon>
+                              Two Columns (Date, Time)
+                            </v-btn>
+                          </v-btn-toggle>
                         </div>
 
                         <div v-if="timestamp.mode === 'COMBINED'">
@@ -418,7 +338,7 @@
                               :items="fileColumns"
                               :rules="timestamp.combined.column.rules"
                               outlined
-                              @input="updateExampleTimestamp()"
+                              @input="resetTimestamp()"
                             ></v-select>
                           </div>
                         </div>
@@ -430,7 +350,7 @@
                               :items="fileColumns"
                               :rules="timestamp.separate.date.column.rules"
                               outlined
-                              @input="updateExampleTimestamp()"
+                              @input="resetTimestamp()"
                             ></v-select>
                           </div>
                           <div>
@@ -440,7 +360,7 @@
                               :items="fileColumns"
                               :rules="timestamp.separate.time.column.rules"
                               outlined
-                              @input="updateExampleTimestamp()"
+                              @input="resetTimestamp()"
                             ></v-select>
                           </div>
                         </div>
@@ -449,7 +369,6 @@
                           <p>
                             How should the timestamps be converted to UTC (aka GMT)? (please select one)
                           </p>
-
                           <v-radio-group v-model="timestamp.timezone.mode" @change="updateExampleTimestamp()">
                             <v-radio
                               value="GUESS"
@@ -483,7 +402,7 @@
                               </p>
                               <div v-if="timestamp.timezone.example.error">
                                 <strong>Failed to parse first timestamp ('{{ firstTimestamp }}').</strong><br>
-                                Error: {{ timestamp.timezone.example.error }}
+                                {{ timestamp.timezone.example.error }}
                               </div>
                               <div v-else-if="timestamp.timezone.example.parsed">
                                 <p>Verify that the first timestamp of the file was correctly parsed:</p>
@@ -531,7 +450,7 @@
 
                               <div v-if="timestamp.timezone.example.error">
                                 <strong>Failed to parse first timestamp ('{{ firstTimestamp }}').</strong><br>
-                                Error: {{ timestamp.timezone.example.error }}
+                                {{ timestamp.timezone.example.error }}
                               </div>
                               <div v-else-if="timestamp.timezone.example.parsed">
                                 <p>Verify that the first timestamp of the file was correctly parsed:</p>
@@ -569,7 +488,7 @@
 
                               <div v-if="timestamp.timezone.example.error">
                                 <strong>Failed to parse first timestamp ('{{ firstTimestamp }}').</strong><br>
-                                Error: {{ timestamp.timezone.example.error }}
+                                {{ timestamp.timezone.example.error }}
                               </div>
                               <div v-else-if="timestamp.timezone.example.parsed">
                                 <p>Verify that the first timestamp of the file was correctly parsed:</p>
@@ -614,7 +533,7 @@
 
                               <div v-if="timestamp.timezone.example.error">
                                 <strong>Failed to parse first timestamp ('{{ firstTimestamp }}').</strong><br>
-                                Error: {{ timestamp.timezone.example.error }}
+                                {{ timestamp.timezone.example.error }}
                               </div>
                               <div v-else-if="timestamp.timezone.example.parsed">
                                 <p>Verify that the first timestamp of the file was correctly parsed:</p>
@@ -664,7 +583,7 @@
                 </v-stepper-content>
 
                 <!-- VALUE -->
-                <v-stepper-content step="6">
+                <v-stepper-content step="5">
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
                       <v-form ref="valueForm" @input="resetValue()">
@@ -702,19 +621,18 @@
                               What are the missing value indicators (e.g., 'N/A')? (Optional, leave blank if none)<br>
                               <span class="text--secondary"></span>
                             </p>
-                            <div class="text-center">
-                              <v-combobox
-                                v-model="value.missing.selected"
-                                :items="value.missing.options"
-                                label="Select or enter missing value indicators"
-                                hint="Select from the list, or type and press enter to add a custom value. Use backspace to delete."
-                                persistent-hint
-                                multiple
-                                outlined
-                                small-chips
-                                clearable
-                              ></v-combobox>
-                            </div>
+                            <v-combobox
+                              v-model="value.missing.selected"
+                              :items="value.missing.options"
+                              label="Select or enter missing value indicators"
+                              hint="Select from the list, or type and press enter to add a custom value. Use backspace to delete."
+                              persistent-hint
+                              multiple
+                              outlined
+                              small-chips
+                              deletable-chips
+                              clearable
+                            ></v-combobox>
                           </div>
 
                           <div>
@@ -757,62 +675,157 @@
                   </v-row>
                 </v-stepper-content>
 
+                <!-- DEPTH -->
+                <v-stepper-content step="6">
+                  <v-row justify="space-around">
+                    <v-col cols="12" md="8" lg="6" xl="4">
+                      <v-form ref="depthForm" @input="resetDepth()">
+                        <div class="text-h6">Depth</div>
+
+                        <div v-if="file.type !== 'PROFILES'">
+                          <p>Where in the water column were these measurements taken?</p>
+                          <v-btn-toggle v-model="depth.category.selected" class="mb-4">
+                            <v-btn value="SURFACE">
+                              <v-icon left>mdi-arrow-collapse-up</v-icon>
+                              Surface
+                            </v-btn>
+                            <v-btn value="MID-DEPTH">
+                              <v-icon left>mdi-arrow-expand-horizontal</v-icon>
+                              Mid-Depth
+                            </v-btn>
+                            <v-btn value="BOTTOM">
+                              <v-icon left>mdi-arrow-collapse-down</v-icon>
+                              Bottom
+                            </v-btn>
+                          </v-btn-toggle>
+
+                          <p>What was the numeric depth (approx., if known)?</p>
+                          <v-text-field
+                            v-model="depth.value.selected"
+                            :rules="depth.value.rules"
+                            type="number"
+                            hint="If depth varies, use depth at start of the deployment."
+                            persistent-hint
+                            outlined
+                          ></v-text-field>
+
+                          <p>
+                            Which file column contains time-varying depths (if any)?
+                          </p>
+                          <v-select
+                            v-model="depth.column.selected"
+                            :items="fileColumns"
+                            :rules="depth.column.rules"
+                            outlined
+                            clearable
+                          ></v-select>
+                        </div>
+                        <div v-else>
+                          <p>
+                            Which column contains the depth of each measurement?
+                          </p>
+                          <v-select
+                            v-model="depth.column.selected"
+                            :items="fileColumns"
+                            :rules="depth.column.rules"
+                            outlined
+                            clearable
+                          ></v-select>
+                        </div>
+
+                        <p>What are the depth units (applies to both numeric depth and depth column)?</p>
+                        <v-select
+                          v-model="depth.units.selected"
+                          :items="depth.units.options"
+                          :rules="depth.units.rules"
+                          item-text="label"
+                          item-value="value"
+                          outlined
+                          clearable
+                        ></v-select>
+
+                        <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
+                          {{ depth.error || 'Unknown error' }}
+                        </Alert>
+
+                        <v-row class="mt-8 mb-4 px-3">
+                          <v-btn text class="mr-4 px-4" @click="step -= 1">
+                            <v-icon left>mdi-chevron-left</v-icon> Previous
+                          </v-btn>
+                          <v-btn color="primary" class="mr-4 px-4" @click="nextDepth" :loading="depth.loading">
+                            Continue <v-icon right>mdi-chevron-right</v-icon>
+                          </v-btn>
+
+                          <v-spacer></v-spacer>
+
+                          <v-btn text @click="cancel">
+                            Cancel
+                          </v-btn>
+                        </v-row>
+                      </v-form>
+                    </v-col>
+                  </v-row>
+                </v-stepper-content>
+
                 <!-- METADATA -->
                 <v-stepper-content step="7">
                   <v-row justify="space-around">
                     <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="metaForm" @input="resetMeta()">
+                      <v-form ref="metaForm">
                         <div class="text-h6">Metadata</div>
 
                         <div v-if="file.type === 'SERIES_CONTINUOUS'">
                           <p>Was the sensor checked using pre/post water baths?</p>
-                          <div class="text-center mb-4">
-                            <v-btn-toggle v-model="meta.sop_bath" @change="resetMeta()">
-                              <v-btn value="TRUE">
-                                <v-icon left>mdi-check</v-icon>
-                                Yes
-                              </v-btn>
-                              <v-btn value="FALSE">
-                                <v-icon left>mdi-close</v-icon>
-                                No
-                              </v-btn>
-                            </v-btn-toggle>
-                          </div>
+                          <v-btn-toggle v-model="meta.sop_bath" class="mb-8">
+                            <v-btn value="TRUE">
+                              <v-icon left>mdi-check</v-icon>
+                              Yes
+                            </v-btn>
+                            <v-btn value="FALSE">
+                              <v-icon left>mdi-close</v-icon>
+                              No
+                            </v-btn>
+                          </v-btn-toggle>
                         </div>
 
-                        <div>
-                          <p>
-                            What was the sensor accuracy level?
-                          </p>
-                          <v-select
-                            v-model="meta.accuracy.selected"
-                            :items="meta.accuracy.options"
-                            :rules="meta.accuracy.rules"
-                            item-value="value"
-                            item-text="label"
-                            outlined
-                          ></v-select>
-                        </div>
+                        <p>
+                          What was the sensor accuracy level?
+                        </p>
+                        <v-select
+                          v-model="meta.accuracy.selected"
+                          :items="meta.accuracy.options"
+                          :rules="meta.accuracy.rules"
+                          label="Select sensor accuracy"
+                          item-value="value"
+                          item-text="label"
+                          outlined
+                          clearable
+                        ></v-select>
 
-                        <div>
-                          <p>
-                            Have these data already undergone a QAQC review?
-                          </p>
-                          <div class="text-center mb-4">
-                            <v-btn-toggle v-model="meta.reviewed" @change="resetMeta()">
-                              <v-btn value="TRUE">
-                                <v-icon left>mdi-check</v-icon>
-                                Yes
-                              </v-btn>
-                              <v-btn value="FALSE">
-                                <v-icon left>mdi-close</v-icon>
-                                No
-                              </v-btn>
-                            </v-btn-toggle>
-                          </div>
-                        </div>
+                        <p>
+                          Have these data already undergone a QAQC review?
+                        </p>
+                        <v-btn-toggle v-model="meta.reviewed" class="mb-4">
+                          <v-btn value="TRUE">
+                            <v-icon left>mdi-check</v-icon>
+                            Yes
+                          </v-btn>
+                          <v-btn value="FALSE">
+                            <v-icon left>mdi-close</v-icon>
+                            No
+                          </v-btn>
+                        </v-btn-toggle>
 
-                        <Alert type="error" title="Metadata Error" v-if="meta.status === 'ERROR'">
+                        <Alert v-if="meta.reviewed === 'TRUE'" type="info" title="QAQC Review Assumptions">
+                          <p>If a file has already undergone a QAQC review, then we assume either:</p>
+
+                          <ol>
+                            <li>The file contains a column of QAQC flags indicating invalid values (see 'Temperatures' step), or</li>
+                            <li>If no flag column is present, then all data are assumed to be valid.</li>
+                          </ol>
+                        </Alert>
+
+                        <Alert type="error" title="Metadata Error" v-if="!meta.status === 'ERROR'">
                           {{ meta.error || 'Unknown error' }}
                         </Alert>
 
@@ -941,7 +954,7 @@ export default {
         loading: false,
         rules: [
           v => {
-            if (!v) return true
+            if (!v) return 'File is required'
             const fileExtension = this.file.selected.name.split('.').pop().toLowerCase()
             if (fileExtension !== 'csv') {
               return 'File must be a comma-separated value (CSV) file with extension \'.csv\''
@@ -951,6 +964,7 @@ export default {
         ],
         type: null,
         selected: null,
+        skipLines: 0,
         parsed: null
       },
       station: {
@@ -1086,7 +1100,7 @@ export default {
         missing: {
           mode: null,
           selected: [],
-          options: ['N/A', '#N/A', 'NA', 'missing', '-99', '-99.99']
+          options: ['N/A', '#N/A', 'NA', '-99', '-9999', '-99.99', 'missing']
         },
         flagColumn: {
           selected: null,
@@ -1181,12 +1195,18 @@ export default {
         // this.loading = false
       }
     },
-    selectFile () {
+    resetFile () {
+      this.file.status = 'READY'
+      this.file.error = null
+      this.file.parsed = null
+    },
+    loadFile () {
       this.file.error = null
       this.file.parsed = null
 
       if (!this.$refs.fileForm.validate()) {
         this.file.status = 'ERROR'
+        this.file.error = 'Fix the validation errors above.'
         return
       }
 
@@ -1199,7 +1219,7 @@ export default {
       this.file.status = 'PENDING'
       this.file.loading = true
 
-      parseCsvFile(this.file.selected)
+      parseCsvFile(this.file.selected, this.file.skipLines)
         .then(results => {
           this.$refs.fileInput.blur()
 
@@ -1217,7 +1237,7 @@ export default {
           } else if (!results.meta.fields.every(d => d.length > 0)) {
             this.file.status = 'ERROR'
             const index = results.meta.fields.findIndex(d => d.length === 0) + 1
-            this.file.error = `File contains an unnamed column (column ${index}). Please remove this column or add a header name to the file and try again.`
+            this.file.error = `File is missing column name at index ${index}. Found the following column names:<br><br><pre class='ml-4'>${results.meta.fields.map((d, i) => `Col ${i + 1}: '${d}'`).join('<br>')}</pre><br>Please remove the unnamed column or add a header name to the file and try again.`
           } else {
             this.file.status = 'SUCCESS'
             this.file.parsed = results
@@ -1231,11 +1251,6 @@ export default {
         .finally(() => {
           this.file.loading = false
         })
-    },
-    resetFile () {
-      this.file.status = 'READY'
-      this.file.error = null
-      if (this.$refs.fileForm) this.$refs.fileForm.resetValidation()
     },
     nextFile () {
       if (this.file.error) return
@@ -1287,7 +1302,7 @@ export default {
         for (const x of fileStationCodes) {
           if (!existingStationCodes.includes(x)) {
             this.station.status = 'ERROR'
-            this.station.error = `File contains unknown station code (${JSON.stringify(x)}) in column '${this.station.column.selected}'.`
+            this.station.error = `File contains unknown station code ${JSON.stringify(x)} in column ${JSON.stringify(this.station.column.selected)}.`
             return
           }
         }
@@ -1499,6 +1514,10 @@ export default {
     createFileConfig () {
       const config = {
         type: null,
+        file: {
+          filename: this.file.selected.name,
+          skipLines: this.file.skipLines || 0
+        },
         station: {
           mode: this.station.mode
         },

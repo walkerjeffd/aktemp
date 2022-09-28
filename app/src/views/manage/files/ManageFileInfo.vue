@@ -27,7 +27,7 @@
             </td>
             <td class="font-weight-bold">
               {{ file.created_at | formatTimestamp('lll') }}<br>
-              (about {{ file.created_at | timestampFromNow }})
+              ({{ file.created_at | timestampFromNow }})
             </td>
           </tr>
           <tr>
@@ -56,17 +56,18 @@
       <div class="mx-4 pb-2">
         <div class="my-4">
           <v-btn color="primary" outlined block :disabled="!file.url" :href="file.url" download>
-            <v-icon left>mdi-download</v-icon> Original File
+            <v-icon left>mdi-download</v-icon> Download File
           </v-btn>
           <v-btn
-            color="primary"
+            v-if="userIsAdmin"
+            color="warning"
             outlined
             block
             class="my-4"
             @click="processFile"
             :loading="statusLoading.process"
           >
-            <v-icon left>mdi-refresh</v-icon>Process File
+            <v-icon left>mdi-refresh</v-icon>Process File (Admin Only)
           </v-btn>
           <v-btn
             color="error"
@@ -103,6 +104,7 @@
 
 <script>
 import evt from '@/events'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ManageFileInfo',
@@ -115,6 +117,9 @@ export default {
         process: false
       }
     }
+  },
+  computed: {
+    ...mapGetters(['userIsAdmin'])
   },
   methods: {
     async confirmDelete () {

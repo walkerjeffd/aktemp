@@ -4,6 +4,7 @@
     scrollable
     max-width="600"
     @keydown.esc="close"
+    style="z-index:2000"
   >
     <v-card>
       <v-toolbar flat dense color="grey lighten-2">
@@ -19,7 +20,7 @@
           <div v-if="request">
             <div class="font-weight-bold body-1">User Request</div>
             <pre class="d-block ml-4 mb-4">
-              Submitted: {{ request.created_at | timestampFormat('lll z') }}
+              Submitted: {{ request.created_at | formatTimestamp('lll z') }}
               Name: {{ request.name }}
               Email: {{ request.email }}
               Organization: {{ request.organization }}

@@ -26,6 +26,7 @@
         left
         bottom
         offset-y
+        z-index="2000"
       >
         <template v-slot:activator="{ on, attrs }">
           <v-btn

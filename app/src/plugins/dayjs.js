@@ -30,9 +30,4 @@ Object.defineProperties(Vue.prototype, {
   }
 })
 
-export function timestampToLocalDate (x, tz) {
-  const utcOffset = dayjs.tz(x, tz).utcOffset() / 60
-  return dayjs(x).subtract(utcOffset, 'hour').toISOString().substring(0, 10)
-}
-
 // window.dayjs = dayjs

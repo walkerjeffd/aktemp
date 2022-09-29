@@ -3,20 +3,33 @@
   <div>
     <Alert type="error" title="Failed to Load Files" class="ma-4" v-if="status.error">{{ status.error }}</Alert>
     <v-data-table
+      v-model="selected"
       :headers="headers"
       :items="files"
-      :loading="status.loading"
+      :search="search"
+      :loading="status.loading || deleting"
       :sort-by="['created_at']"
       :sort-desc="[true]"
       @click:row="select"
       loading-text="Loading... Please wait"
       class="row-cursor-pointer elevation-2"
+      show-select
       v-else
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title class="text-h6">Data Files</v-toolbar-title>
-          <RefreshButton @click="fetch"></RefreshButton>
+          <v-toolbar-title class="text-h6">Files</v-toolbar-title>
+          <v-divider inset vertical class="mx-4"></v-divider>
+          <v-text-field
+            v-model="search"
+            append-icon="mdi-magnify"
+            label="Search files"
+            single-line
+            hide-details
+            clearable
+            dense
+          ></v-text-field>
+
           <v-spacer></v-spacer>
           <v-btn color="success" :to="{ name: 'manageFileForm' }" class="mr-2">
             <v-icon left>mdi-upload</v-icon> Upload File
@@ -24,10 +37,12 @@
           <v-btn color="success" class="ml-2" :to="{ name: 'manageFilesBatch' }">
             <v-icon left>mdi-file-multiple-outline</v-icon> Batch Upload
           </v-btn>
+          <v-divider inset vertical class="ml-4"></v-divider>
+          <RefreshButton @click="fetch"></RefreshButton>
         </v-toolbar>
         <div class="body-2 text--secondary mx-4 mb-2">
           <v-icon small>mdi-information-outline</v-icon>
-          Click on a row to view or delete data from each file
+          Click on a row to view and manage data for each file
         </div>
         <v-divider></v-divider>
       </template>
@@ -40,18 +55,49 @@
       <template v-slot:item.status="{ item }">
         <StatusChip :status="item.status"></StatusChip>
       </template>
+      <template v-slot:footer.prepend>
+        <v-btn
+          outlined
+          small
+          color="error"
+          :disabled="selected.length === 0"
+          :loading="deleting"
+          @click="confirmDelete"
+        >
+          <v-icon left>mdi-delete</v-icon>
+          Delete Selected
+        </v-btn>
+      </template>
     </v-data-table>
+    <ConfirmDialog ref="confirmDelete">
+      <v-alert
+        type="error"
+        text
+        colored-border
+        border="left"
+        class="body-2 mb-0"
+      >
+        <div class="font-weight-bold body-1">Are you sure?</div>
+        <div>
+          These files and all of their data will be permanently deleted. This action cannot be undone.
+        </div>
+      </v-alert>
+    </ConfirmDialog>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 
+import evt from '@/events'
+
 export default {
   name: 'ManageFiles',
   data () {
     return {
+      deleting: false,
       search: '',
+      selected: [],
       headers: [
         {
           text: 'ID',
@@ -105,6 +151,34 @@ export default {
     },
     select (file) {
       this.$router.push({ name: 'manageFile', params: { fileId: file.id } })
+    },
+    async confirmDelete () {
+      const ok = await this.$refs.confirmDelete.open(
+        'Confirm Deletion',
+        { btnColor: 'error' }
+      )
+      if (ok) {
+        return await this.deleteFiles()
+      }
+    },
+    async deleteFiles () {
+      const files = this.selected
+      this.deleting = true
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        try {
+          await this.$http.restricted.delete(`/files/${file.id}`)
+          this.$store.dispatch('manage/removeFileById', file.id)
+        } catch (err) {
+          console.error(err)
+          this.error = this.$errorMessage(err)
+          this.deleting = false
+          return
+        }
+      }
+      this.fetch()
+      evt.$emit('notify', 'Files have been deleted', 'success')
+      this.deleting = false
     }
   }
 }

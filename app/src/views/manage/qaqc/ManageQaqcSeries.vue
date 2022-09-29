@@ -10,7 +10,7 @@
       </v-btn>
     </v-toolbar>
 
-    <Loading v-if="loading"></Loading>
+    <Loading v-if="loading" class="pb-8"></Loading>
     <Alert type="error" title="Failed to Load Series" class="mx-8 mt-8" v-else-if="error">{{ error }}</Alert>
     <v-container grid-list-xs v-else-if="series">
       <v-row>

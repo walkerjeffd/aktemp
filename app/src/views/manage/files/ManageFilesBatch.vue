@@ -244,16 +244,6 @@
                       </ul>
                     </Alert>
                   </div>
-                  <!-- <Alert
-                    v-else
-                    type="info"
-                    title="Select a File"
-                    style="max-width:800px"
-                    prominent
-                    icon="mdi-chevron-up"
-                  >
-                    Click on any cell in the table above to view the status of each file.
-                  </Alert> -->
 
                   <Alert
                     v-if="table.failedCount > 0"
@@ -263,40 +253,23 @@
                     class="mb-0"
                   >
                     <p>
-                      {{ table.failedCount.toLocaleString() }} file(s) failed to be validated or uploaded to the server.
+                      {{ table.failedCount.toLocaleString() }} file(s) failed to be validated or uploaded to the server (marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span>). Click on a file in the table above for more details.
                     </p>
-                    <div>
-                      Click on any row marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span> for more details.
+                    <div v-if="table.rows.length > table.failedCount">
+                      <div>
+                        Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been uploaded to the server and can be safely removed from the table above. Click the following button to remove them from the batch import table leaving only the remaining files that failed to upload.
+                      </div>
+                      <v-btn color="default" @click="removeUploadedFiles" class="mt-4">
+                        <v-icon small left>mdi-close</v-icon> Remove Uploaded Files
+                      </v-btn>
                     </div>
                   </Alert>
                 </div>
 
                 <div v-if="error">
                   <v-divider class="mb-4"></v-divider>
-
                   <Alert type="error" title="Error" class="mb-0" style="max-width:800px">{{ error }}</Alert>
                 </div>
-
-                <!-- <div v-if="!loading && failedFiles.length > 0" class="pb-1">
-                  <v-divider class="mb-4"></v-divider>
-                  <Alert type="error" title="Failed to Save Stations" class="my-4" style="max-width:800px">
-                    <p>One or more files failed to be saved on the server. Fix the following errors and click Submit to try again.</p>
-                    <div v-for="(file, i) in failedFiles.slice(0, this.maxFailedFileErrors)" :key="'failed-' + i">
-                      <div class="font-weight-bold body-1">Row {{ file.$row + 1 }} ({{ file.filename }}):</div>
-                      <div v-for="(error, j) in file.errors" :key="'error-' + i + '-' + j" class="ml-4">
-                        <div class="font-weight-bold">Error {{ j + 1 }}: {{ error.error }}</div>
-                        <p>{{ error.details }}</p>
-                      </div>
-                    </div>
-                    <p v-if="failedFiles.length > table.maxFailedFileErrors" class="body-1">
-                      and {{ failedFiles.length - table.maxFailedFileErrors }} more...
-                    </p>
-                    <div v-if="savedFiles.length > 0">
-                      <p class="mt-4">Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been saved to the server and can be removed from the table above. Click the following button to remove them and focus on the remaining files that were not saved.</p>
-                      <v-btn color="default" @click="removeSavedFiles"><v-icon small left>mdi-delete</v-icon> Remove Saved Files</v-btn>
-                    </div>
-                  </Alert>
-                </div> -->
               </v-card-text>
 
               <v-divider></v-divider>
@@ -379,8 +352,8 @@ export default {
             timezone_column: '',
             depth_category: '',
             depth_value: '',
-            depth_column: '',
             depth_units: '',
+            depth_column: '',
             value_column: '',
             value_units: '',
             value_missing: '',
@@ -412,7 +385,7 @@ export default {
               } else if (value === 'UPLOADING') {
                 td.innerText = '⇧'
                 td.style.color = 'white'
-                td.style.background = '#1976d2'
+                td.style.background = '#fb8c00'
               } else {
                 td.innerText = ''
                 td.style.background = '#EEE'
@@ -541,18 +514,18 @@ export default {
             rule: '<b>Numeric Depth</b> must be numeric (or blank if unknown)'
           },
           {
-            prop: 'depth_column',
-            label: 'Depth Column',
-            validate: (row) => !row.depth_column || row.fields.includes(row.depth_column),
-            rule: '<b>Depth Column</b> must match a column name (or be blank if unknown)'
-          },
-          {
             prop: 'depth_units',
             label: 'Depth Units',
             validate: (row) => (!row.depth_column && !row.depth_value) || depthUnitsOptions.map(d => d.value).includes(row.depth_units),
             rule: '<b>Depth Units</b> is required and must match an allowed value if either <b>Numeric Depth</b> or <b>Depth Column</b> is not blank',
             type: 'dropdown',
             source: depthUnitsOptions.map(d => d.value)
+          },
+          {
+            prop: 'depth_column',
+            label: 'Depth Column',
+            validate: (row) => !row.depth_column || row.fields.includes(row.depth_column),
+            rule: '<b>Depth Column</b> must match a column name (or be blank if unknown)'
           },
           {
             prop: 'accuracy',
@@ -595,13 +568,6 @@ export default {
         ? this.organization.stations.map(d => d.code)
         : []
     }
-    // savedFiles () {
-    //   const copy = this.table.rows.slice()
-    //   copy.forEach((d, i) => {
-    //     d.$row = i
-    //   })
-    //   return copy.filter(d => d.status === 'SUCCESS')
-    // }
   },
   watch: {
     defaultOrganization () {
@@ -624,6 +590,11 @@ export default {
     },
     afterSelection (row) {
       this.table.selectedRow = this.table.rows[row]
+    },
+    renderHot () {
+      if (this.$refs.hot) {
+        this.$refs.hot.hotInstance.render()
+      }
     },
     async fetchStations () {
       console.log('fetchStations')
@@ -663,101 +634,11 @@ export default {
     findColumnIndex (prop) {
       return this.table.columns.findIndex(d => d.prop === prop)
     },
-    async validateTable () {
-      console.log('validateTable')
-      const hot = this.$refs.hot.hotInstance
-
-      for (let i = 0; i < this.table.rows.length; i++) {
-        const row = this.table.rows[i]
-        this.message = `Validating ${row.filename}`
-        row.status = 'VALIDATING'
-        row.errors = []
-        this.renderHot()
-
-        try {
-          const parsed = await parseCsvFile(this.files.selected[i], Number(row.skip_lines))
-          console.log(parsed)
-          row.n_rows = parsed.data.length
-          row.fields = parsed.meta.fields.filter(d => d !== '')
-          hot.setCellMeta(i, this.findColumnIndex('filename'), 'valid', true)
-        } catch (err) {
-          console.error(err)
-          hot.setCellMeta(i, this.findColumnIndex('filename'), 'valid', false)
-          row.errors.push({
-            error: '<b>Failed to read file</b>',
-            details: this.$errorMessage(err)
-          })
-        }
-
-        if (row.errors.length === 0) {
-          try {
-            this.table.columns.forEach((column, j) => {
-              if (column.validate && !column.validate(row)) {
-                hot.setCellMeta(i, j, 'valid', false)
-                row.errors.push({
-                  error: `${column.rule} (value: ${JSON.stringify(row[column.prop])})`,
-                  column
-                })
-              } else {
-                hot.setCellMeta(i, j, 'valid', true)
-              }
-            })
-          } catch (err) {
-            console.error(err)
-            row.errors.push({
-              error: 'Unexpected error during validation',
-              details: this.$errorMessage(err)
-            })
-          }
-        }
-
-        if (row.errors.length > 0) {
-          row.status = 'INVALID'
-        } else {
-          row.status = 'READY'
-        }
-
-        this.renderHot()
-      }
-      this.message = null
-    },
-    async uploadFiles () {
-      // const hot = this.$refs.hot.hotInstance
-      for (let i = 0; i < this.table.rows.length; i++) {
-        const row = this.table.rows[i]
-        if (row.status === 'SUCCESS' || row.status === 'INVALID') continue
-
-        const file = this.files.selected[i]
-        const config = this.createConfig(row)
-        const organizationId = this.organization.selected.id
-
-        row.status = 'UPLOADING'
-        this.renderHot()
-
-        try {
-          this.message = `Uploading ${file.name}`
-          await uploader(file, config, organizationId)
-          row.status = 'SUCCESS'
-        } catch (err) {
-          console.log('uploader failed', err)
-          row.status = 'FAILED'
-          row.error = err.toString() || 'Unknown error'
-        } finally {
-          this.message = null
-        }
-        this.renderHot()
-      }
-    },
     updateFailedCount () {
       console.log('updateFailedCount')
       this.table.failedCount = this.table.rows.filter(d => d.status === 'FAILED' || d.status === 'INVALID').length
     },
-    renderHot () {
-      if (this.$refs.hot) {
-        this.$refs.hot.hotInstance.render()
-      }
-    },
-    createConfig (row) {
+    createFileConfig (row) {
       const config = {
         file: {
           filename: row.filename,
@@ -836,39 +717,41 @@ export default {
     },
     async submit () {
       this.error = null
+      this.table.selectedRow = null
 
+      // check form inputs (organization, files)
       if (!this.$refs.form.validate()) {
-        // organization or files not selected
         this.error = 'Check form errors above'
         return
       }
 
+      // reset status if failed or invalid
       this.table.rows.forEach(d => {
-        d.status = d.status === 'FAILED' ? null : d.status
+        d.status = d.status === 'FAILED' || d.status === 'INVALID' ? null : d.status
         d.errors = []
       })
+      this.table.failedCount = 0
 
       this.loading = true
-      try {
-        await this.validateTable()
-      } catch (err) {
-        this.error = this.$errorMessage(err)
-        return this.renderHot()
-      }
-
-      this.renderHot()
-
-      try {
-        // console.log('uploading...')
-        await this.uploadFiles()
-      } catch (err) {
-        console.log(err)
-        this.error = this.$errorMessage(err)
+      for (let i = 0; i < this.table.rows.length; i++) {
+        const row = this.table.rows[i]
+        try {
+          const isValid = await this.validateRow(row, i)
+          if (isValid) {
+            await this.uploadFile(row, i)
+          }
+          if (row.status === 'INVALID' || row.status === 'FAILED') {
+            this.table.failedCount += 1
+          }
+        } catch (err) {
+          console.log(err)
+          this.error = this.$errorMessage(err)
+          break
+        }
       }
 
       this.loading = false
 
-      this.updateFailedCount()
       this.renderHot()
 
       if (!this.table.rows.some(d => d.status !== 'SUCCESS')) {
@@ -879,10 +762,86 @@ export default {
         })
       }
     },
+    async validateRow (row, i) {
+      if (row.status === 'SUCCESS') return true
+      const hot = this.$refs.hot.hotInstance
+      this.message = `Validating ${row.filename}`
+      row.status = 'VALIDATING'
+      row.errors = []
+      this.renderHot()
+
+      // read file
+      try {
+        const parsed = await parseCsvFile(this.files.selected[i], Number(row.skip_lines))
+        row.n_rows = parsed.data.length
+        row.fields = parsed.meta.fields.filter(d => d !== '')
+        hot.setCellMeta(i, this.findColumnIndex('filename'), 'valid', true)
+      } catch (err) {
+        hot.setCellMeta(i, this.findColumnIndex('filename'), 'valid', false)
+        row.errors.push({
+          error: '<b>Failed to read file</b>',
+          details: this.$errorMessage(err)
+        })
+      }
+
+      if (row.errors.length === 0) {
+        try {
+          this.table.columns.forEach((column, j) => {
+            if (column.validate && !column.validate(row)) {
+              hot.setCellMeta(i, j, 'valid', false)
+              row.errors.push({
+                error: `${column.rule} (value: ${JSON.stringify(row[column.prop])})`,
+                column
+              })
+            } else {
+              hot.setCellMeta(i, j, 'valid', true)
+            }
+          })
+        } catch (err) {
+          console.error(err)
+          row.errors.push({
+            error: 'Unexpected error during validation',
+            details: this.$errorMessage(err)
+          })
+        }
+      }
+
+      if (row.errors.length > 0) {
+        row.status = 'INVALID'
+      } else {
+        row.status = 'READY'
+      }
+      this.renderHot()
+
+      return row.status === 'READY'
+    },
+    async uploadFile (row, i) {
+      if (row.status === 'SUCCESS' || row.status === 'INVALID') return
+
+      const organizationId = this.organization.selected.id
+      const file = this.files.selected[row.file_index]
+      const config = this.createFileConfig(row)
+
+      row.status = 'UPLOADING'
+      this.renderHot()
+
+      try {
+        this.message = `Uploading ${file.name}`
+        await uploader(file, config, organizationId)
+        row.status = 'SUCCESS'
+      } catch (err) {
+        console.log(err)
+        row.status = 'FAILED'
+        row.error = this.$errorMessage(err)
+      } finally {
+        this.message = null
+        this.renderHot()
+      }
+    },
     downloadStationsFile () {
       this.$download.csv(this.organization.stations, `AKTEMP-${this.organization.selected.code}-stations.csv`)
     },
-    removeSavedFiles () {
+    removeUploadedFiles () {
       this.table.rows = this.table.rows.filter(d => d.status !== 'SUCCESS')
     }
   }

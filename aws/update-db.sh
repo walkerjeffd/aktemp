@@ -4,4 +4,4 @@
 
 set -eu
 
-aws cloudformation deploy --stack-name ${STACK_NAME}-db --template-file templates/db.json
+aws cloudformation deploy --stack-name ${STACK_NAME}-db --template-file templates/db.json --capabilities CAPABILITY_NAMED_IAM

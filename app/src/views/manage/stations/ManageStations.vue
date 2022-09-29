@@ -7,6 +7,7 @@
         <v-data-table
           :headers="headers"
           :items="stations"
+          :search="search"
           :loading="status.loading"
           :sort-by="['code']"
           @click:row="select"
@@ -16,14 +17,25 @@
           <template v-slot:top>
             <v-toolbar flat>
               <v-toolbar-title class="text-h6">Stations</v-toolbar-title>
-              <RefreshButton @click="fetch"></RefreshButton>
+              <v-divider inset vertical class="mx-4"></v-divider>
+              <v-text-field
+                v-model="search"
+                append-icon="mdi-magnify"
+                label="Search stations"
+                single-line
+                hide-details
+                clearable
+                dense
+              ></v-text-field>
               <v-spacer></v-spacer>
               <v-btn color="success" @click="create" class="mr-2">
-                <v-icon left>mdi-plus</v-icon> New Station
+                <v-icon left>mdi-plus</v-icon> New
               </v-btn>
               <v-btn color="success" :to="{name: 'manageStationsBatch'}" class="ml-2">
                 <v-icon left>mdi-table-plus</v-icon> Batch Import
               </v-btn>
+              <v-divider inset vertical class="ml-4"></v-divider>
+              <RefreshButton @click="fetch"></RefreshButton>
             </v-toolbar>
             <div class="body-2 text--secondary mx-4 mb-2">
               <v-icon small>mdi-information-outline</v-icon>

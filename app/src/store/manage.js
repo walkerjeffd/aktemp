@@ -128,6 +128,17 @@ export default {
         commit('SET_STATUS', ['files', false, err])
       }
     },
+    removeFileById ({ commit, state }, id) {
+      console.log('removeFileById', id)
+      const files = state.files.filter(d => d.id !== id)
+      commit('SET_FILES', files)
+      // const index = state.files.findIndex(d => d.id === id)
+      // console.log('index', index)
+      // if (index >= 0) {
+      //   console.log('index', state.files.length)
+      //   state.files.splice(index, 1)
+      // }
+    },
     async fetchSeries ({ commit, state }) {
       if (!state.organization) return
       commit('SET_STATUS', ['series', true, null])

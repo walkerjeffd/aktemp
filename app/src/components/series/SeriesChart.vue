@@ -1,6 +1,6 @@
 <template>
   <div style="width:100%">
-    <Loading v-if="loading" :style="{ 'height': settings.height - 16 + 'px' }"></Loading>
+    <Loading v-if="loading" :style="{ 'height': settings.height - 16 + 'px' }" class="pb-8"></Loading>
     <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data" class="mb-0">{{ error }}</Alert>
     <div v-show="!loading && !error">
       <highcharts :constructor-type="'stockChart'" :options="settings" ref="chart"></highcharts>

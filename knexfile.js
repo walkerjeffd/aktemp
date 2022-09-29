@@ -19,12 +19,14 @@ async function getCreds () {
   return JSON.parse(secret.SecretString)
 }
 
+console.log(`proxy host: ${process.env.DB_PROXY_HOST}`)
+
 async function asyncConnection () {
   // https://github.com/knex/knex/pull/3364
   const creds = await getCreds()
   return {
-    host: creds.host,
-    port: creds.port,
+    host: process.env.DB_PROXY_HOST || creds.host,
+    port: process.env.DB_PROXY_PORT || creds.port,
     database: creds.dbname || 'postgres',
     user: creds.username,
     password: creds.password

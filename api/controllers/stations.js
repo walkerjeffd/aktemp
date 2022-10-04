@@ -15,6 +15,7 @@ const getStations = async (req, res, next) => {
     .modify('organizationCode')
     .modify('seriesSummary')
     .modify('profilesSummary')
+
   return res.status(200).json(stations)
 }
 

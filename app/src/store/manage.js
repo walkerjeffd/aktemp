@@ -1,5 +1,6 @@
 import { restrictedApi } from '@/plugins/axios'
 import { errorMessage } from '@/plugins/error-message'
+import { countDays } from '@/plugins/dayjs'
 
 export default {
   namespaced: true,
@@ -81,8 +82,9 @@ export default {
     async fetchOrganizations ({ commit, state }) {
       commit('SET_STATUS', ['organizations', true, null])
       try {
-        const response = await restrictedApi.get('/organizations')
-        const data = response.data
+        const data = await restrictedApi
+          .get('/organizations')
+          .then(d => d.data)
         commit('SET_ORGANIZATIONS', data)
         commit('SET_STATUS', ['organizations', false, null])
         if (data.length > 0) {
@@ -102,12 +104,15 @@ export default {
       }
     },
     async fetchStations ({ commit, state }) {
-      console.log('fetchStations')
       if (!state.organization) return
       commit('SET_STATUS', ['stations', true, null])
       try {
-        const response = await restrictedApi.get(`/organizations/${state.organization.id}/stations`)
-        const data = response.data
+        const data = await restrictedApi
+          .get(`/organizations/${state.organization.id}/stations`)
+          .then(d => d.data)
+        data.forEach(d => {
+          d.series_count_days = countDays(d.series_start_timestamp, d.series_end_timestamp, d.timezone)
+        })
         commit('SET_STATIONS', data)
         commit('SET_STATUS', ['stations', false, null])
         return data
@@ -115,12 +120,17 @@ export default {
         commit('SET_STATUS', ['stations', false, err])
       }
     },
+    removeStationById ({ commit, state }, id) {
+      const stations = state.stations.filter(d => d.id !== id)
+      commit('SET_STATIONS', stations)
+    },
     async fetchFiles ({ commit, state }) {
       if (!state.organization) return
       commit('SET_STATUS', ['files', true, null])
       try {
-        const response = await restrictedApi.get(`/organizations/${state.organization.id}/files`)
-        const data = response.data
+        const data = await restrictedApi
+          .get(`/organizations/${state.organization.id}/files`)
+          .then(d => d.data)
         commit('SET_FILES', data)
         commit('SET_STATUS', ['files', false, null])
         return data
@@ -129,22 +139,16 @@ export default {
       }
     },
     removeFileById ({ commit, state }, id) {
-      console.log('removeFileById', id)
       const files = state.files.filter(d => d.id !== id)
       commit('SET_FILES', files)
-      // const index = state.files.findIndex(d => d.id === id)
-      // console.log('index', index)
-      // if (index >= 0) {
-      //   console.log('index', state.files.length)
-      //   state.files.splice(index, 1)
-      // }
     },
     async fetchSeries ({ commit, state }) {
       if (!state.organization) return
       commit('SET_STATUS', ['series', true, null])
       try {
-        const response = await restrictedApi.get(`/organizations/${state.organization.id}/series`)
-        const data = response.data
+        const data = await restrictedApi
+          .get(`/organizations/${state.organization.id}/series`)
+          .then(d => d.data)
         commit('SET_SERIES', data)
         commit('SET_STATUS', ['series', false, null])
         return data
@@ -156,8 +160,9 @@ export default {
       if (!state.organization) return
       commit('SET_STATUS', ['profiles', true, null])
       try {
-        const response = await restrictedApi.get(`/organizations/${state.organization.id}/profiles`)
-        const data = response.data
+        const data = await restrictedApi
+          .get(`/organizations/${state.organization.id}/profiles`)
+          .then(d => d.data)
         commit('SET_PROFILES', data)
         commit('SET_STATUS', ['profiles', false, null])
         return data

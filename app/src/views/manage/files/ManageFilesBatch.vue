@@ -82,10 +82,11 @@
                   <p class="black--text">After you have filled out the table in the template, copy and paste the cells from Excel into the table below (excluding the header row).</p>
 
                   <HotTable
+                    ref="hot"
                     :data="table.rows"
                     :colHeaders="true"
                     :settings="table.settings"
-                    ref="hot"
+                    class="elevation-2"
                   >
                     <HotColumn
                       v-for="col in table.columns"
@@ -106,58 +107,31 @@
                     * = Required. Ctrl+c/Ctrl+v to copy/paste. Right-click to undo/redo.
                   </div>
 
-                  <div v-if="table.selectedRow">
+                  <div v-if="table.selected">
                     <Alert
-                      v-if="table.selectedRow.status === 'READY'"
-                      type="info"
-                      title="File is Ready"
-                      style="max-width:800px"
-                    >
-                      File ({{table.selectedRow.filename}}) is ready to be validated and uploaded.
-                    </Alert>
-                    <Alert
-                      v-if="table.selectedRow.status === 'VALIDATING'"
-                      type="warning"
-                      title="Validating File"
-                      style="max-width:800px"
-                    >
-                      File ({{table.selectedRow.filename}}) is being validated.
-                    </Alert>
-                    <Alert
-                      v-if="table.selectedRow.status === 'UPLOADING'"
-                      type="warning"
-                      title="File is Uploading"
-                      style="max-width:800px"
-                    >
-                      File ({{table.selectedRow.filename}}) is being uploaded.
-                    </Alert>
-                    <Alert
-                      v-else-if="table.selectedRow.status === 'INVALID'"
+                      v-if="table.selected.status === 'INVALID'"
                       type="error"
                       title="Validation Failed"
                       style="max-width:800px"
                     >
-                      <!-- <pre>
-                        Columns: {{ joinStrings(table.selectedRow.fields) }}
-                      </pre> -->
                       <table class="mt-2">
                         <tbody>
                           <tr>
                             <td class="text-right pr-2">Row:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.table_row }}</td>
+                            <td class="font-weight-bold">{{ table.selected.table_row }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2">Filename:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.filename }}</td>
+                            <td class="font-weight-bold">{{ table.selected.filename }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2"># Rows:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.n_rows === 0 || !!table.selectedRow.n_rows ? table.selectedRow.n_rows.toLocaleString() : '' }}</td>
+                            <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
                             <td class="font-weight-bold">
-                              <div v-for="field in table.selectedRow.fields" :key="field">'{{ field }}'</div>
+                              <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
                             </td>
                           </tr>
                         </tbody>
@@ -165,7 +139,7 @@
 
                       <p class="mt-4">Please fix the following errors, then click Submit to try again</p>
                       <ul>
-                        <li v-for="(err, i) in table.selectedRow.errors" :key="'err-' + i" class="mb-2">
+                        <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
                           <div v-html="err.error"></div>
                           <div v-if="err.column && err.column.type === 'dropdown'">
                             Allowed values: {{ err.column.source.map(d => `'${d}'`).join(', ') }}
@@ -175,29 +149,29 @@
                       </ul>
                     </Alert>
                     <Alert
-                      v-else-if="table.selectedRow.status === 'SUCCESS'"
+                      v-else-if="table.selected.status === 'SUCCESS'"
                       type="success"
-                      title="File Uploaded Successfully"
+                      title="File Successfully Uploaded"
                       style="max-width:800px"
                     >
                       <table class="mt-2">
                         <tbody>
                           <tr>
                             <td class="text-right pr-2">Row:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.table_row }}</td>
+                            <td class="font-weight-bold">{{ table.selected.table_row }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2">Filename:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.filename }}</td>
+                            <td class="font-weight-bold">{{ table.selected.filename }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2"># Rows:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.n_rows === 0 || !!table.selectedRow.n_rows ? table.selectedRow.n_rows.toLocaleString() : '' }}</td>
+                            <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
                             <td class="font-weight-bold">
-                              <div v-for="field in table.selectedRow.fields" :key="field">'{{ field }}'</div>
+                              <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
                             </td>
                           </tr>
                         </tbody>
@@ -206,7 +180,7 @@
                       <div class="mt-4">This file has been uploaded to the server and queued for processing. Visit the <router-link :to="{ name: 'manageFiles' }">Manage Files</router-link> page to check on its status.</div>
                     </Alert>
                     <Alert
-                      v-else-if="table.selectedRow.status === 'FAILED'"
+                      v-else-if="table.selected.status === 'FAILED'"
                       type="error"
                       title="File Upload Failed"
                       style="max-width:800px"
@@ -215,20 +189,20 @@
                         <tbody>
                           <tr>
                             <td class="text-right pr-2">Row:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.table_row }}</td>
+                            <td class="font-weight-bold">{{ table.selected.table_row }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2">Filename:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.filename }}</td>
+                            <td class="font-weight-bold">{{ table.selected.filename }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2"># Rows:</td>
-                            <td class="font-weight-bold">{{ table.selectedRow.n_rows === 0 || !!table.selectedRow.n_rows ? table.selectedRow.n_rows.toLocaleString() : '' }}</td>
+                            <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
                           </tr>
                           <tr>
                             <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
                             <td class="font-weight-bold">
-                              <div v-for="field in table.selectedRow.fields" :key="field">'{{ field }}'</div>
+                              <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
                             </td>
                           </tr>
                         </tbody>
@@ -237,7 +211,7 @@
                       <div class="body-1 font-weight-bold mt-4">Server Errors</div>
                       <p>Please fix the following errors, then click Submit to try again</p>
                       <ul>
-                        <li v-for="(err, i) in table.selectedRow.errors" :key="'err-' + i" class="mb-2">
+                        <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
                           <div v-html="err.error"></div>
                           <div v-if="err.details" v-html="err.details"></div>
                         </li>
@@ -253,11 +227,11 @@
                     class="mb-0"
                   >
                     <p>
-                      {{ table.failedCount.toLocaleString() }} file(s) failed to be validated or uploaded to the server (marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span>). Click on a file in the table above for more details.
+                      {{ table.failedCount.toLocaleString() }} file(s) failed to be validated or uploaded to the server (marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span>). Click on the table row for more details.
                     </p>
                     <div v-if="table.rows.length > table.failedCount">
                       <div>
-                        Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been uploaded to the server and can be safely removed from the table above. Click the following button to remove them from the batch import table leaving only the remaining files that failed to upload.
+                        Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been uploaded to the server and can be safely removed from the table above. Click the following button to remove them leaving only the remaining files that failed to upload.
                       </div>
                       <v-btn color="default" @click="removeUploadedFiles" class="mt-4">
                         <v-icon small left>mdi-close</v-icon> Remove Uploaded Files
@@ -281,11 +255,20 @@
                   class="mr-4"
                   :loading="loading"
                 >Submit</v-btn>
-                <v-btn color="default" text @click="initTable" :disabled="loading || this.table.rows.length === 0">Clear</v-btn>
+                <v-btn
+                  color="default"
+                  text
+                  @click="initTable"
+                  :disabled="loading || this.table.rows.length === 0"
+                >Clear</v-btn>
 
                 <v-spacer></v-spacer>
 
-                <v-btn color="default" text @click="$router.push({ name: 'manageFiles' })">Cancel</v-btn>
+                <v-btn
+                  color="default"
+                  text
+                  @click="$router.push({ name: 'manageFiles' })"
+                >Cancel</v-btn>
               </v-card-actions>
             </v-form>
           </v-card>
@@ -296,12 +279,11 @@
 </template>
 
 <script>
-/* eslint-disable node/no-callback-literal */
 import Handsontable from 'handsontable'
 import { mapGetters } from 'vuex'
 
 import evt from '@/events'
-import { parseCsvFile, parseBooleanOption, isNumber } from '@/lib/utils'
+import { parseCsvFile, parseBooleanOption, isNumber, emptyStringToNull } from '@/lib/utils'
 import uploader from '@/lib/uploader'
 import { fileTypeOptions, timezoneModes, depthCategoryOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions, booleanOptions, utcOffsetOptions } from '@/lib/constants'
 
@@ -309,10 +291,10 @@ export default {
   name: 'ManageFilesBatch',
   data () {
     return {
-      debug: true,
-      error: null,
       loading: false,
+      error: null,
       message: null,
+
       files: {
         selected: [],
         type: null,
@@ -320,6 +302,7 @@ export default {
           v => v.length > 0 || 'No files selected'
         ]
       },
+
       organization: {
         selected: null,
         stations: [],
@@ -327,46 +310,15 @@ export default {
           v => !!v || 'Organization is required'
         ]
       },
+
       table: {
+        selected: null,
+        failedCount: 0,
         rows: [],
-        settings: {
-          height: 270,
-          licenseKey: 'non-commercial-and-evaluation',
-          contextMenu: ['clear_column', '---------', 'undo', 'redo'],
-          minRows: 0,
-          fixedColumnsStart: 3,
-          manualColumnResize: true,
-          preventOverflow: 'horizontal',
-          dataSchema: {
-            status: '',
-            table_row: '',
-            filename: '',
-            skip_lines: '',
-            type: '',
-            station_code: '',
-            station_column: '',
-            datetime_column: '',
-            time_column: '',
-            timezone_mode: '',
-            timezone_utcoffset: '',
-            timezone_column: '',
-            depth_category: '',
-            depth_value: '',
-            depth_units: '',
-            depth_column: '',
-            value_column: '',
-            value_units: '',
-            value_missing: '',
-            flag_column: '',
-            accuracy: '',
-            sop_bath: '',
-            reviewed: ''
-          }
-        },
         columns: [
           {
             prop: 'status',
-            label: ' ',
+            label: '✓',
             width: '30px',
             renderer: function (instance, td, row, col, prop, value, cellProperties) {
               td.className = 'htCenter'
@@ -394,16 +346,6 @@ export default {
             readOnly: true
           },
           {
-            prop: 'table_row',
-            label: 'Row',
-            readOnly: true,
-            width: '40px',
-            renderer: function (instance, td, row, col, prop, value, cellProperties) {
-              td.className = 'htRight'
-              td.innerText = value
-            }
-          },
-          {
             prop: 'filename',
             label: 'Filename',
             allowEmpty: false,
@@ -427,7 +369,7 @@ export default {
           {
             prop: 'station_code',
             label: 'Station Code',
-            validate: (row) => (!!row.station_code &&
+            validate: (row) => (row.station_code &&
                                 this.stationCodes.includes(row.station_code)) ||
                                 row.station_column,
             rule: '<b>Station Code</b> must match an existing station for the selected organization (or be blank if file contains a column of station codes as specified by <b>Station Column</b>)'
@@ -552,9 +494,43 @@ export default {
             source: booleanOptions.map(d => d.value)
           }
         ],
-        maxFailedFileErrors: 5,
-        selectedRow: null,
-        failedCount: 0
+        settings: {
+          height: 270,
+          renderAllRows: true,
+          licenseKey: 'non-commercial-and-evaluation',
+          contextMenu: ['clear_column', '---------', 'undo', 'redo'],
+          minRows: 0,
+          rowHeaders: true,
+          rowHeaderWidth: 40,
+          fixedColumnsStart: 2,
+          manualColumnResize: true,
+          preventOverflow: 'horizontal',
+          dataSchema: {
+            status: '',
+            table_row: '',
+            filename: '',
+            skip_lines: '',
+            type: '',
+            station_code: '',
+            station_column: '',
+            datetime_column: '',
+            time_column: '',
+            timezone_mode: '',
+            timezone_utcoffset: '',
+            timezone_column: '',
+            depth_category: '',
+            depth_value: '',
+            depth_units: '',
+            depth_column: '',
+            value_column: '',
+            value_units: '',
+            value_missing: '',
+            flag_column: '',
+            accuracy: '',
+            sop_bath: '',
+            reviewed: ''
+          }
+        }
       }
     }
   },
@@ -564,7 +540,7 @@ export default {
       defaultOrganization: 'manage/organization'
     }),
     stationCodes () {
-      return this.organization && this.organization.stations
+      return this.organization.stations
         ? this.organization.stations.map(d => d.code)
         : []
     }
@@ -574,7 +550,7 @@ export default {
       this.setDefaultOrganization()
     },
     'organization.selected' () {
-      this.fetchStations()
+      this.fetchOrganizationStations()
     }
   },
   async mounted () {
@@ -586,18 +562,17 @@ export default {
   },
   methods: {
     setDefaultOrganization () {
-      this.organization.selected = this.defaultOrganization ? this.defaultOrganization : null
+      this.organization.selected = this.defaultOrganization || null
     },
     afterSelection (row) {
-      this.table.selectedRow = this.table.rows[row]
+      this.table.selected = this.table.rows[row]
     },
     renderHot () {
       if (this.$refs.hot) {
         this.$refs.hot.hotInstance.render()
       }
     },
-    async fetchStations () {
-      console.log('fetchStations')
+    async fetchOrganizationStations () {
       if (!this.organization.selected) {
         this.organization.stations = []
         return
@@ -606,16 +581,14 @@ export default {
         this.organization.stations = await this.$http.restricted
           .get(`/organizations/${this.organization.selected.id}/stations`)
           .then(d => d.data)
-        this.renderHot()
       } catch (err) {
         this.error = this.$errorMessage(err)
       }
     },
     initTable () {
-      console.log('initTable')
       this.error = null
       this.table.rows.splice(0, this.table.rows.length)
-      this.table.selectedRow = null
+      this.table.selected = null
 
       this.files.selected.forEach((file, i) => {
         this.table.rows.push({
@@ -652,10 +625,10 @@ export default {
               : null
         },
         depth: {
-          category: row.depth_category,
-          value: row.depth_value,
-          column: row.depth_column,
-          units: row.depth_units
+          category: emptyStringToNull(row.depth_category),
+          value: emptyStringToNull(row.depth_value),
+          column: emptyStringToNull(row.depth_column),
+          units: emptyStringToNull(row.depth_units)
         },
         timestamp: {
           columns: [row.datetime_column],
@@ -667,7 +640,7 @@ export default {
           column: row.value_column,
           units: row.value_units,
           missing: row.value_missing ? row.value_missing.split(',') : [],
-          flagColumn: row.flag_column ? row.flag_column : null
+          flagColumn: emptyStringToNull(row.flag_column)
         },
         meta: {}
       }
@@ -710,14 +683,14 @@ export default {
       }
 
       config.meta.sop_bath = parseBooleanOption(row.sop_bath)
-      config.meta.accuracy = row.accuracy ? row.accuracy : null
+      config.meta.accuracy = emptyStringToNull(row.accuracy)
       config.meta.reviewed = row.reviewed ? parseBooleanOption(row.reviewed) : false
 
       return config
     },
     async submit () {
       this.error = null
-      this.table.selectedRow = null
+      this.table.selected = null
 
       // check form inputs (organization, files)
       if (!this.$refs.form.validate()) {
@@ -746,6 +719,7 @@ export default {
         } catch (err) {
           console.log(err)
           this.error = this.$errorMessage(err)
+          this.message = null
           break
         }
       }
@@ -812,6 +786,7 @@ export default {
         row.status = 'READY'
       }
       this.renderHot()
+      this.message = null
 
       return row.status === 'READY'
     },

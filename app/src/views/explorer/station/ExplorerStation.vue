@@ -38,7 +38,7 @@
                     </v-sheet>
                   </v-col>
                   <v-col cols="12" lg="8">
-                    <v-tabs class="elevation-2" grow :vertical="$vuetify.breakpoint.mobile">
+                    <v-tabs class="elevation-2" grow>
                       <v-tab>
                         <v-icon left>mdi-chart-line</v-icon> Timeseries
                       </v-tab>

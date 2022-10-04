@@ -3,6 +3,16 @@
   cursor: pointer;
 }
 
+/* data table header row */
+thead.v-data-table-header {
+  background-color: #F5F5F5 !important;
+}
+
+/* data table filter row */
+tr.v-data-table-filter {
+  background-color: #F5F5F5 !important;
+}
+
 /* highlight selected row in v-data-table */
 .v-data-table__selected {
   background: #ddd !important;
@@ -36,6 +46,6 @@ pre {
 }
 
 /* prevent hidden dropdowns */
-.handsontable .handsontableEditor {
-  /* position: fixed; */
-}
+/* .handsontable .handsontableEditor {
+  position: fixed;
+} */

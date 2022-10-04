@@ -10,11 +10,12 @@
       :headers="headers"
       :items="requests"
       :loading="loading"
-      :sort-by="['created_at']"
-      :sort-desc="[true]"
+      :sort-by.sync="sort.by"
+      :sort-desc.sync="sort.desc"
       :search="search"
       loading-text="Loading... Please wait"
       single-select
+      dense
       class="row-cursor-pointer"
       @click:row="select"
     >
@@ -68,6 +69,10 @@ export default {
     loading: false,
     error: null,
     search: '',
+    sort: {
+      by: ['created_at'],
+      desc: [true]
+    },
     requests: [],
     headers: [
       {

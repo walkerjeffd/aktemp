@@ -16,6 +16,7 @@
     <l-map
       ref="map"
       style="width:100%;height:100%"
+      :options="{ preferCanvas: true }"
       :center="[41,-100]"
       :zoom="3"
       @ready="$emit('ready', map)"
@@ -153,6 +154,7 @@ export default {
   mounted () {
     this.map = this.$refs.map.mapObject
     evt.$on('map:zoomToStation', this.zoomToStation)
+    evt.$on('map:fitToStations', this.fitToStations)
 
     this.ready = true
 
@@ -160,10 +162,11 @@ export default {
   },
   beforeDestroy () {
     evt.$off('map:zoomToStation', this.zoomToStation)
+    evt.$off('map:fitToStations', this.fitToStations)
   },
   watch: {
     stations (val, old) {
-      if (val !== old) this.fitToStations()
+      if (!old || old.length === 0) this.fitToStations()
     }
   },
   methods: {

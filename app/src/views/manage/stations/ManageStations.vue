@@ -5,14 +5,18 @@
     <v-row v-else>
       <v-col cols="12" xl="6">
         <v-data-table
+          v-model="selected"
           :headers="headers"
           :items="stations"
           :search="search"
-          :loading="status.loading"
-          :sort-by="['code']"
+          :loading="status.loading || deleting"
+          :sort-by.sync="sort.by"
+          :sort-desc.sync="sort.desc"
           @click:row="select"
           loading-text="Loading... Please wait"
           class="row-cursor-pointer elevation-2"
+          show-select
+          dense
         >
           <template v-slot:top>
             <v-toolbar flat>
@@ -39,7 +43,7 @@
             </v-toolbar>
             <div class="body-2 text--secondary mx-4 mb-2">
               <v-icon small>mdi-information-outline</v-icon>
-              Click on a row to edit or view data for a station
+              Click on a row to view and manage a station
             </div>
             <v-divider></v-divider>
           </template>
@@ -55,6 +59,18 @@
               disabled
             ></v-simple-checkbox>
           </template>
+          <template v-slot:footer.prepend>
+            <v-btn
+              outlined
+              color="error"
+              :disabled="selected.length === 0"
+              :loading="deleting"
+              @click="confirmDelete"
+            >
+              <v-icon left>mdi-delete</v-icon>
+              Delete Selected <span v-if="selected.length > 0">&nbsp;({{selected.length}})</span>
+            </v-btn>
+          </template>
         </v-data-table>
         <ManageStationForm ref="form"></ManageStationForm>
       </v-col>
@@ -66,6 +82,20 @@
         ></StationsMap>
       </v-col>
     </v-row>
+    <ConfirmDialog ref="confirmDelete">
+      <v-alert
+        type="error"
+        text
+        colored-border
+        border="left"
+        class="body-2 mb-0"
+      >
+        <div class="font-weight-bold body-1">Are you sure?</div>
+        <div>
+          These stations and all of their data will be permanently deleted. This action cannot be undone.
+        </div>
+      </v-alert>
+    </ConfirmDialog>
   </div>
 </template>
 
@@ -73,36 +103,42 @@
 import { mapGetters } from 'vuex'
 import StationsMap from '@/components/StationsMap'
 import ManageStationForm from '@/views/manage/stations/ManageStationForm'
+import evt from '@/events'
 
 export default {
   name: 'ManageStations',
   components: { ManageStationForm, StationsMap },
   data () {
     return {
+      deleting: false,
       search: '',
+      selected: [],
+      sort: {
+        by: ['code'],
+        desc: [false]
+      },
       headers: [
         {
           text: 'ID',
           value: 'id',
-          align: 'left',
           width: '80px'
         },
         {
           text: 'Code',
-          value: 'code',
-          align: 'left',
-          width: '200px'
+          value: 'code'
+        },
+        {
+          text: 'Waterbody Type',
+          value: 'waterbody_type'
         },
         {
           text: 'Waterbody Name',
-          value: 'waterbody_name',
-          align: 'left'
+          value: 'waterbody_name'
         },
         {
           text: 'Private',
           value: 'private',
-          align: 'center',
-          width: '100px'
+          align: 'center'
         }
       ]
     }
@@ -134,6 +170,39 @@ export default {
       if (station) {
         await this.fetch()
       }
+    },
+    async confirmDelete () {
+      const ok = await this.$refs.confirmDelete.open(
+        'Confirm Deletion',
+        { btnColor: 'error' }
+      )
+      if (ok) {
+        return await this.deleteStations()
+      }
+    },
+    async deleteStations () {
+      const stations = this.selected.slice()
+      this.deleting = true
+      for (let i = 0; i < stations.length; i++) {
+        const station = stations[i]
+        try {
+          await this.$http.restricted.delete(`/stations/${station.id}`)
+          this.$store.dispatch('manage/removeStationById', station.id)
+          this.unselectById(station.id)
+        } catch (err) {
+          console.error(err)
+          this.error = this.$errorMessage(err)
+          evt.$emit('notify', `Failed to delete station (${station.code})`, 'error')
+          this.deleting = false
+          return
+        }
+      }
+      this.fetch()
+      evt.$emit('notify', 'Selected stations have been deleted', 'success')
+      this.deleting = false
+    },
+    unselectById (id) {
+      this.selected = this.selected.filter(d => d.id !== id)
     }
   }
 }

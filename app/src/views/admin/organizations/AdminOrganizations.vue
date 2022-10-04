@@ -10,10 +10,12 @@
       :headers="headers"
       :items="organizations"
       :loading="status.loading"
-      :sort-by="['code']"
+      :sort-by.sync="sort.by"
+      :sort-desc.sync="sort.desc"
       :search="search"
       loading-text="Loading... Please wait"
       single-select
+      dense
       class="row-cursor-pointer"
       @click:row="select"
     >
@@ -69,6 +71,10 @@ export default {
   },
   data: () => ({
     search: '',
+    sort: {
+      by: ['code'],
+      desc: [false]
+    },
     headers: [
       {
         text: 'ID',

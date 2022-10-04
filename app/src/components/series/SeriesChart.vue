@@ -1,6 +1,6 @@
 <template>
   <div style="width:100%">
-    <Loading v-if="loading" :style="{ 'height': settings.height - 16 + 'px' }" class="pb-8"></Loading>
+    <Loading v-if="loading" style="height:500px"></Loading>
     <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data" class="mb-0">{{ error }}</Alert>
     <div v-show="!loading && !error">
       <highcharts :constructor-type="'stockChart'" :options="settings" ref="chart"></highcharts>
@@ -194,14 +194,8 @@ export default {
             showInNavigator: false,
             color: 'orangered',
             events: {
-              hide: () => {
-                console.log('flag-daily:hide')
-                this.showFlags = false
-              },
-              show: () => {
-                console.log('flag-daily:show')
-                this.showFlags = true
-              }
+              hide: () => { this.showFlags = false },
+              show: () => { this.showFlags = true }
             }
           },
           {
@@ -214,14 +208,8 @@ export default {
             showInNavigator: false,
             color: 'orangered',
             events: {
-              hide: () => {
-                console.log('flag-raw:hide')
-                this.showFlags = false
-              },
-              show: () => {
-                console.log('flag-raw:show')
-                this.showFlags = true
-              }
+              hide: () => { this.showFlags = false },
+              show: () => { this.showFlags = true }
             }
           }
         ],
@@ -322,9 +310,9 @@ export default {
       }
     },
     async fetchDaily () {
-      // console.log('fetchDaily')
       this.loading = true
       this.error = null
+      // this.chart.showLoading('Loading data from server...')
 
       try {
         this.dailySeries = await Promise.all(
@@ -346,6 +334,7 @@ export default {
             }
           })
         )
+        // this.chart.hideLoading()
       } catch (err) {
         this.error = this.$errorMessage(err)
       } finally {
@@ -355,6 +344,7 @@ export default {
     renderDaily () {
       // console.log('renderDaily')
       if (!this.chart) return
+      // this.chart.showLoading('Loading data from server...')
 
       // remove existing series
       this.chart.series.map(d => d.options.id)
@@ -429,8 +419,6 @@ export default {
       }
 
       this.updateNavigator()
-
-      this.loading = false
     },
     async fetchRaw (start, end) {
       // console.log('fetchRaw', start.toISOString(), end.toISOString())

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <Loading v-if="loading" :style="{ 'height': settings.height - 16 + 'px' }"></Loading>
-    <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data" class="mb-0">{{ error }}</Alert>
+    <Loading v-if="loading" style="height:500px"></Loading>
+    <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data" class="ma-4">{{ error }}</Alert>
     <div v-show="!loading && !error">
       <highcharts :constructor-type="'stockChart'" :options="settings" ref="chart"></highcharts>
       <div class="text--secondary overline ml-12">
@@ -38,7 +38,6 @@ export default {
           events: {
             load: async (e) => {
               this.chart = e.target
-              window.chart = this.chart
               await this.fetchDaily()
             },
             selection: this.onSelect
@@ -51,7 +50,7 @@ export default {
             showInNavigator: false,
             gapSize: 2,
             dataGrouping: {
-              enabled: false
+              enabled: true
             },
             states: {
               hover: {
@@ -137,7 +136,10 @@ export default {
             type: 'areaspline',
             visible: true,
             color: undefined,
-            data: []
+            data: [],
+            dataGrouping: {
+              enabled: true
+            }
           }
         },
         rangeSelector: {
@@ -196,11 +198,9 @@ export default {
             color: 'orangered',
             events: {
               hide: () => {
-                console.log('flag-daily:hide')
                 this.showFlags = false
               },
               show: () => {
-                console.log('flag-daily:show')
                 this.showFlags = true
               }
             }
@@ -216,11 +216,9 @@ export default {
             color: 'orangered',
             events: {
               hide: () => {
-                console.log('flag-raw:hide')
                 this.showFlags = false
               },
               show: () => {
-                console.log('flag-raw:show')
                 this.showFlags = true
               }
             }
@@ -251,26 +249,21 @@ export default {
       this.renderFlagPeriods()
     },
     series () {
-      console.log('watch:series')
       this.fetchDaily()
     },
     dailyValues () {
-      console.log('watch:dailyValues')
       this.renderDaily()
     },
     rawValues () {
-      console.log('watch:rawValues')
       this.renderRaw()
     },
     flags () {
       this.renderDaily()
     },
     showFlags () {
-      console.log('watch:showFlags')
       this.updateNavigator()
     },
     mode (value, old) {
-      console.log('watch:mode', value, old)
       if (!this.chart) return
 
       const redraw = true
@@ -315,7 +308,6 @@ export default {
       const start = this.$date(extremes.min)
       const end = this.$date(extremes.max)
       const durationDays = end.diff(start, 'day', true)
-      console.log('afterSetExtremes', start.toISOString(), end.toISOString(), durationDays)
 
       // remove existing raw series
       this.chart.series.map(d => d.options.id)
@@ -330,7 +322,6 @@ export default {
       }
     },
     async fetchDaily () {
-      console.log('fetchDaily')
       this.loading = true
       this.error = null
 
@@ -345,7 +336,6 @@ export default {
       }
     },
     renderDaily () {
-      console.log('renderDaily')
       if (!this.chart) return
 
       const { values, flags } = assignDailyFlags(this.dailyValues, this.flags)
@@ -356,9 +346,7 @@ export default {
         .forEach(id => this.chart.get(id).remove())
 
       // generate chart series for selected
-      // console.log(`renderDaily | series:${s.id}`)
       const flagSeries = flags.map((flag) => {
-        console.log(`renderDaily | series:${this.series.id}, flag:${flag.id}`, flag)
         const label = flagLabel(flag)
         return [
           {
@@ -433,7 +421,6 @@ export default {
       this.loading = false
     },
     async fetchRaw (start, end) {
-      // console.log('fetchRaw', start.toISOString(), end.toISOString())
       if (!this.chart) return
 
       this.chart.showLoading('Loading data from server...')
@@ -449,8 +436,6 @@ export default {
       }
     },
     renderRaw () {
-      console.log('renderRaw')
-
       if (!this.chart) return
 
       const { values, flags } = assignRawFlags(this.rawValues, this.flags)
@@ -500,7 +485,6 @@ export default {
       this.loading = false
     },
     renderFlagPeriods () {
-      console.log('renderFlagPeriods')
       let bands = this.flags.map(d => {
         let start = new Date(d.start_datetime)
         let end = new Date(d.end_datetime)
@@ -520,7 +504,6 @@ export default {
         }
       })
       if (this.flag) {
-        console.log(this.flag)
         if (this.flag.id) {
           bands = bands.filter(d => d.id !== this.flag.id)
         }
@@ -536,7 +519,10 @@ export default {
           label: {
             text: this.flag.id ? 'SELECTED' : 'NEW'
           },
-          color: '#FEEEEE'
+          color: '#FEEEEE',
+          events: {
+            click: () => this.$emit('click-flag')
+          }
         })
       }
       this.chart.xAxis[0].update({
@@ -544,7 +530,6 @@ export default {
       })
     },
     updateNavigator () {
-      console.log('updateNavigator')
       if (!this.chart) return
       let values = []
       if (this.showFlags) {

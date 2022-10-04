@@ -30,4 +30,11 @@ Object.defineProperties(Vue.prototype, {
   }
 })
 
-// window.dayjs = dayjs
+export function countDays (startTimestamp, endTimestamp, tz) {
+  if (!startTimestamp || !endTimestamp) return
+  const start = dayjs(startTimestamp).tz(tz)
+  const end = dayjs(endTimestamp).tz(tz)
+  return start.isValid() && end.isValid() ? end.diff(start, 'day') + 1 : 0
+}
+
+window.dayjs = dayjs

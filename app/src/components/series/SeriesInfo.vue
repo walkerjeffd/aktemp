@@ -3,12 +3,6 @@
     <v-simple-table dense>
       <tbody>
         <tr>
-          <td class="text-right grey--text text--darken-2">
-            Organization
-          </td>
-          <td class="font-weight-bold">{{ series.organization_code }}</td>
-        </tr>
-        <tr>
           <td class="text-right grey--text text--darken-2" style="width:100px">
             Series ID
           </td>
@@ -16,18 +10,9 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            File
+            Organization
           </td>
-          <td class="font-weight-bold">
-            <router-link :to="{
-              name: 'manageFile',
-              params: {
-                fileId: series.file_id
-              }
-            }">
-              {{ series.file_filename }}
-            </router-link>
-          </td>
+          <td class="font-weight-bold">{{ series.organization_code }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -41,6 +26,21 @@
               }
             }">
               {{ series.station_code }}
+            </router-link>
+          </td>
+        </tr>
+        <tr>
+          <td class="text-right grey--text text--darken-2">
+            File
+          </td>
+          <td class="font-weight-bold">
+            <router-link :to="{
+              name: 'manageFile',
+              params: {
+                fileId: series.file_id
+              }
+            }">
+              {{ series.file_filename }}
             </router-link>
           </td>
         </tr>
@@ -70,7 +70,7 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Depth Category
+            Depth Cat.
           </td>
           <td class="font-weight-bold">{{ series.depth_category }}</td>
         </tr>
@@ -90,13 +90,17 @@
           <td class="text-right grey--text text--darken-2">
             SOP Bath
           </td>
-          <td class="font-weight-bold">{{ series.sop_bath | formatBooleanOption }}</td>
+          <td class="font-weight-bold">
+            <v-simple-checkbox v-if="series.sop_bath !== null" :value="series.sop_bath" disabled></v-simple-checkbox>
+          </td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             Reviewed
           </td>
-          <td class="font-weight-bold">{{ series.reviewed | formatBooleanOption }}</td>
+          <td class="font-weight-bold">
+            <v-simple-checkbox :value="series.reviewed" disabled></v-simple-checkbox>
+          </td>
         </tr>
       </tbody>
     </v-simple-table>

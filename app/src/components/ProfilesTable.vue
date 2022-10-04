@@ -8,6 +8,7 @@
     :options="{ itemsPerPage: 5 }"
     @click:row="select"
     single-select
+    dense
     loading-text="Loading... Please wait"
     class="row-cursor-pointer elevation-2"
   >

@@ -48,18 +48,19 @@
                       download
                       class="mb-4"
                     ><v-icon left>mdi-download</v-icon> Download Template</v-btn>
-                    <p class="black--text">After you have filled out the table in the template, copy and paste your stations (excluding header row) from Excel into the table below.</p>
+                    <p class="black--text">After you have filled out the table in the template, copy and paste your stations (excluding header row) from Excel into the table below. Right-click to add/remove rows.</p>
                   </v-col>
                 </v-row>
 
                 <HotTable
-                  :data="stations"
-                  :colHeaders="true"
-                  :settings="settings"
                   ref="hot"
+                  :data="table.rows"
+                  :colHeaders="true"
+                  :settings="table.settings"
+                  class="elevation-2"
                 >
                   <HotColumn
-                    v-for="col in columns"
+                    v-for="col in table.columns"
                     :key="col.prop"
                     :data="col.prop"
                     :title="col.label"
@@ -72,54 +73,141 @@
                     :width="col.width"
                   ></HotColumn>
                 </HotTable>
+                  <div class="text-caption mt-2">Status: {{ message || 'Ready' }}</div>
                 <div class="text--secondary caption">
                   * = Required. Ctrl+c/Ctrl+v to copy/paste. Right-click to add/remove rows or undo/redo.
                 </div>
 
-                <Alert
-                  type="error"
-                  v-for="(d, i) in invalidCells.slice(0, maxInvalidCellErrors)"
-                  :key="i"
-                  :title="`Row ${ d.row + 1 }: Invalid ${d.column.label} (${ d.value || 'null' })`"
-                  style="max-width:800px"
-                >
-                  {{ d.column.rule }}
-                </Alert>
+                <div v-if="table.selected" class="max-width:800px">
+                  <Alert
+                    v-if="table.selected.status === 'INVALID'"
+                    type="error"
+                    title="Validation Failed"
+                  >
+                    <table class="mt-2">
+                      <tbody>
+                        <tr>
+                          <td class="text-right pr-2">Row:</td>
+                          <td class="font-weight-bold">{{ table.selected.table_row }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right pr-2">Code:</td>
+                          <td class="font-weight-bold">{{ table.selected.code || '(Missing)' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
 
-                <p v-if="invalidCells.length > maxInvalidCellErrors" class="body-1 font-italic black--text">
-                  and {{ invalidCells.length - maxInvalidCellErrors }} more...
-                </p>
-
-                <div v-if="error" class="pb-1">
-                  <v-divider class="mb-4"></v-divider>
-                  <Alert type="error" title="Error" class="my-4" style="max-width:800px">{{ error }}</Alert>
-                </div>
-
-                <div v-if="!loading && failedStations.length > 0" class="pb-1">
-                  <v-divider class="mb-4"></v-divider>
-                  <Alert type="error" title="Failed to Save Stations" class="my-4" style="max-width:800px">
-                    <p>One or more stations failed to be saved on the server. Fix the following errors and click Submit to try again.</p>
+                    <p class="mt-4">Please fix the following errors, then click Submit to try again</p>
                     <ul>
-                      <li v-for="(station, i) in failedStations" :key="'failed-' + i">
-                        <strong>Row {{ station.$row + 1 }}</strong>: {{ station.error }}
+                      <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
+                        <div v-html="err.error"></div>
+                        <div v-if="err.column && err.column.type === 'dropdown'">
+                          Allowed values: {{ err.column.source.map(d => `'${d}'`).join(', ') }}
+                        </div>
+                        <div v-if="err.details" v-html="err.details"></div>
                       </li>
                     </ul>
-                    <div v-if="stations.length > failedStations.length">
-                      <p class="mt-4">Stations marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been saved to the server and can be removed from the table above. Click the following button to remove them and focus on the remaining stations that were not saved.</p>
-                      <v-btn color="default" @click="removeSavedStations"><v-icon small left>mdi-delete</v-icon> Remove Saved Stations</v-btn>
-                    </div>
                   </Alert>
+                  <Alert
+                    v-else-if="table.selected.status === 'SUCCESS'"
+                    type="success"
+                    title="Station Created"
+                    style="max-width:800px"
+                  >
+                    <table class="mt-2">
+                      <tbody>
+                        <tr>
+                          <td class="text-right pr-2">Row:</td>
+                          <td class="font-weight-bold">{{ table.selected.table_row }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right pr-2">Code:</td>
+                          <td class="font-weight-bold">{{ table.selected.code }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div class="mt-4">This station has been successfully saved to the server.</div>
+                  </Alert>
+                  <Alert
+                    v-else-if="table.selected.status === 'FAILED'"
+                    type="error"
+                    title="Failed to Create Station"
+                    style="max-width:800px"
+                  >
+                    <table class="mt-2">
+                      <tbody>
+                        <tr>
+                          <td class="text-right pr-2">Row:</td>
+                          <td class="font-weight-bold">{{ table.selected.table_row }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right pr-2">Code:</td>
+                          <td class="font-weight-bold">{{ table.selected.code }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div class="body-1 font-weight-bold mt-4">Server Errors</div>
+                    <p>Please fix the following errors, then click Submit to try again</p>
+                    <ul>
+                      <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
+                        <div v-html="err.error"></div>
+                        <div v-if="err.details" v-html="err.details"></div>
+                      </li>
+                    </ul>
+                  </Alert>
+                </div>
+
+                <Alert
+                  v-if="table.failedCount > 0"
+                  type="warning"
+                  title="Table Contains Invalid Stations"
+                  style="max-width:800px"
+                  class="mb-0 mt-4"
+                >
+                  <p>
+                    {{ table.failedCount.toLocaleString() }} station(s) failed to be validated or saved to the server (marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span>). Click on the table row for more details.
+                  </p>
+                  <div v-if="table.rows.length > table.failedCount">
+                    <div>
+                      Stations marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been saved to the server and can be safely removed from the table above. Click the following button to remove them leaving only the remaining stations that failed to be saved.
+                    </div>
+                    <v-btn color="default" @click="removeSavedStations" class="mt-4">
+                      <v-icon small left>mdi-close</v-icon> Remove Saved Stations
+                    </v-btn>
+                  </div>
+                </Alert>
+
+                <div v-if="error">
+                  <v-divider class="my-4"></v-divider>
+                  <Alert type="error" title="Error" class="mb-0" style="max-width:800px">{{ error }}</Alert>
                 </div>
               </v-card-text>
 
               <v-divider></v-divider>
-              <v-card-actions class="py-4 pl-4">
-                <v-btn type="submit" color="primary" class="mr-4" :loading="loading">Submit</v-btn>
-                <v-btn color="default" text @click="initTable" :disabled="loading">Clear</v-btn>
+
+              <v-card-actions class="pa-4">
+                <v-btn
+                  type="submit"
+                  color="primary"
+                  class="mr-4"
+                  :loading="loading"
+                >Submit</v-btn>
+                <v-btn
+                  color="default"
+                  text
+                  @click="initTable"
+                  :disabled="loading || this.table.rows.length === 0"
+                >Clear</v-btn>
 
                 <v-spacer></v-spacer>
 
-                <v-btn color="default" text @click="$router.push({ name: 'manageFiles' })">Cancel</v-btn>
+                <v-btn
+                  color="default"
+                  text
+                  @click="$router.push({ name: 'manageStations' })"
+                >Cancel</v-btn>
               </v-card-actions>
             </v-form>
           </v-card>
@@ -133,173 +221,186 @@
 /* eslint-disable node/no-callback-literal */
 import Handsontable from 'handsontable'
 import { mapGetters } from 'vuex'
-import { timezoneOptions, placementOptions, waterbodyTypeOptions, booleanOptions, fieldConstraints } from '@/lib/constants'
-import { parseBooleanOption, isNumber } from '@/lib/utils'
+
 import evt from '@/events'
+import { timezoneOptions, placementOptions, waterbodyTypeOptions, booleanOptions, fieldConstraints } from '@/lib/constants'
+import { parseBooleanOption, isNumber, emptyStringToNull } from '@/lib/utils'
 
 export default {
   name: 'ManageStationsBatch',
   data () {
     return {
       loading: false,
-      error: false,
+      error: null,
+      message: '',
 
-      settings: {
-        height: 'auto',
-        licenseKey: 'non-commercial-and-evaluation',
-        contextMenu: ['row_above', 'row_below', 'remove_row', '---------', 'clear_column', '---------', 'undo', 'redo'],
-        minRows: 1,
-        fixedColumnsStart: 2,
-        manualColumnResize: true,
-        preventOverflow: 'horizontal',
-        dataSchema: {
-          status: '',
-          code: '',
-          description: '',
-          latitude: '',
-          longitude: '',
-          timezone: '',
-          placement: '',
-          waterbody_name: '',
-          waterbody_type: '',
-          active: '',
-          mixed: '',
-          reference: '',
-          private: ''
-        }
-      },
-      columns: [
-        {
-          prop: 'status',
-          label: ' ',
-          width: '30px',
-          renderer: function (instance, td, row, col, prop, value, cellProperties) {
-            td.className = 'htCenter'
-            if (value === 'SUCCESS') {
-              td.innerText = '✓'
-              td.style.color = 'white'
-              td.style.background = '#4caf50'
-            } else if (value === 'FAILED') {
-              td.innerText = '✕'
-              td.style.color = 'white'
-              td.style.background = '#ff5252'
-            } else {
-              td.innerText = ''
-              td.style.background = '#EEE'
-            }
-          },
-          readOnly: true
-        },
-        {
-          prop: 'code',
-          label: 'Code*',
-          allowEmpty: false,
-          validator: function (value, callback) {
-            callback(!!value && value.length <= fieldConstraints.station.code.maxLength)
-          },
-          rule: `Code must be unique and ${fieldConstraints.station.code.maxLength} or fewer characters`,
-          width: '100px'
-        },
-        {
-          prop: 'latitude',
-          label: 'Latitude*',
-          allowEmpty: false,
-          validator: function (value, callback) {
-            callback(!!value && isNumber(value) && +value > -90 && +value < 90)
-          },
-          rule: 'Latitude must be a decimal number between -90 and 90',
-          type: 'numeric',
-          width: '80px'
-        },
-        {
-          prop: 'longitude',
-          label: 'Longitude*',
-          allowEmpty: false,
-          validator: function (value, callback) {
-            callback(!!value && isNumber(value) && +value > -180 && +value < 180)
-          },
-          rule: 'Longitude must be a decimal number between -180 and 180',
-          type: 'numeric',
-          width: '80px'
-        },
-        {
-          prop: 'timezone',
-          label: 'Timezone*',
-          allowEmpty: false,
-          rule: `Timezone must be one of: [${timezoneOptions.map(d => `'${d.value}'`).join(', ')}]`,
-          source: timezoneOptions.map(d => d.value),
-          type: 'dropdown',
-          width: '100px'
-        },
-        {
-          prop: 'waterbody_type',
-          label: 'Waterbody Type',
-          rule: `Waterbody Type must be one of: [${waterbodyTypeOptions.map(d => `'${d.value}'`).join(', ')}]`,
-          source: waterbodyTypeOptions.map(d => d.value),
-          type: 'dropdown'
-        },
-        {
-          prop: 'waterbody_name',
-          label: 'Waterbody Name',
-          validator: function (value, callback) {
-            callback(!value || value.length <= fieldConstraints.station.waterbodyName.maxLength)
-          },
-          rule: `Waterbody Name must be ${fieldConstraints.station.waterbodyName.maxLength} characters or less`,
-          width: '150px'
-        },
-        {
-          prop: 'description',
-          label: 'Description',
-          validator: function (value, callback) {
-            callback(!value || value.length <= fieldConstraints.station.description.maxLength)
-          },
-          rule: `Description must be ${fieldConstraints.station.description.maxLength} characters or less`,
-          width: '150px'
-        },
-        {
-          prop: 'placement',
-          label: 'Placement',
-          rule: `Placement must be one of: [${placementOptions.map(d => `'${d.value}'`).join(', ')}]`,
-          source: placementOptions.map(d => d.value),
-          type: 'dropdown'
-        },
-        {
-          prop: 'active',
-          label: 'Active',
-          rule: `Active must be one of: [${booleanOptions.map(d => d.value).map(d => `'${d}'`).join(', ')}]`,
-          source: booleanOptions.map(d => d.value),
-          type: 'dropdown',
-          width: '80px'
-        },
-        {
-          prop: 'mixed',
-          label: 'Well-mixed',
-          rule: `Well-mixed must be one of: [${booleanOptions.map(d => d.value).map(d => `'${d}'`).join(', ')}]`,
-          source: booleanOptions.map(d => d.value),
-          type: 'dropdown'
-        },
-        {
-          prop: 'reference',
-          label: 'Reference URL',
-          width: '150px'
-        },
-        {
-          prop: 'private',
-          label: 'Private',
-          rule: `Private must be one of: [${booleanOptions.map(d => d.value).map(d => `'${d}'`).join(', ')}]`,
-          source: booleanOptions.map(d => d.value),
-          type: 'dropdown'
-        }
-      ],
       organization: {
         selected: null,
         rules: [
           v => !!v || 'Organization is required'
-        ]
+        ],
+        stations: []
       },
-      stations: [],
-      invalidCells: [],
-      maxInvalidCellErrors: 3
+
+      table: {
+        selected: null,
+        failedCount: 0,
+        rows: [],
+        columns: [
+          {
+            prop: 'status',
+            label: '✓',
+            width: '30px',
+            renderer: function (instance, td, row, col, prop, value, cellProperties) {
+              td.className = 'htCenter'
+              if (value === 'SUCCESS') {
+                td.innerText = '✓'
+                td.style.color = 'white'
+                td.style.background = '#4caf50'
+              } else if (value === 'FAILED' || value === 'INVALID') {
+                td.innerText = '✕'
+                td.style.color = 'white'
+                td.style.background = '#ff5252'
+              } else if (value === 'VALIDATING') {
+                td.innerText = '↺'
+                td.style.color = 'white'
+                td.style.background = '#1976d2'
+              } else if (value === 'UPLOADING') {
+                td.innerText = '⇧'
+                td.style.color = 'white'
+                td.style.background = '#fb8c00'
+              } else {
+                td.innerText = ''
+                td.style.background = '#EEE'
+              }
+            },
+            readOnly: true
+          },
+          {
+            prop: 'code',
+            label: 'Code*',
+            allowEmpty: false,
+            validate: (row) => row.code &&
+              !this.stationCodes.includes(row.code) &&
+              row.code.length <= fieldConstraints.station.code.maxLength,
+            rule: `<b>Code</b> is required, must be ${fieldConstraints.station.code.maxLength} or fewer characters, and must be unique within an organization.`,
+            width: '100px'
+          },
+          {
+            prop: 'latitude',
+            label: 'Latitude*',
+            allowEmpty: false,
+            validate: (row) => row.latitude && isNumber(row.latitude) && Number(row.latitude) >= 45 && Number(row.latitude) <= 75,
+            rule: '<b>Latitude</b> must be a decimal number between 45 and 75',
+            width: '80px'
+          },
+          {
+            prop: 'longitude',
+            label: 'Longitude*',
+            allowEmpty: false,
+            validate: (row) => row.longitude && isNumber(row.longitude) && Number(row.longitude) >= -180 && Number(row.longitude) <= -125,
+            rule: '<b>Longitude</b> must be a decimal number between -125 and -180',
+            width: '80px'
+          },
+          {
+            prop: 'timezone',
+            label: 'Timezone*',
+            validate: (row) => timezoneOptions.map(d => d.value).includes(row.timezone),
+            rule: '<b>Timezone</b> is required and must match an allowed value',
+            type: 'dropdown',
+            source: timezoneOptions.map(d => d.value),
+            width: '100px'
+          },
+          {
+            prop: 'waterbody_type',
+            label: 'Waterbody Type',
+            validate: (row) => !row.waterbody_type || waterbodyTypeOptions.map(d => d.value).includes(row.waterbody_type),
+            rule: '<b>Waterbody Type</b> must match an allowed value',
+            type: 'dropdown',
+            source: waterbodyTypeOptions.map(d => d.value)
+          },
+          {
+            prop: 'waterbody_name',
+            label: 'Waterbody Name',
+            validate: (row) => !row.waterbody_name || row.waterbody_name.length <= fieldConstraints.station.waterbodyName.maxLength,
+            rule: `<b>Waterbody Name</b> must be ${fieldConstraints.station.waterbodyName.maxLength} or fewer characters`,
+            width: '150px'
+          },
+          {
+            prop: 'description',
+            label: 'Description',
+            validate: (row) => !row.description || row.description.length <= fieldConstraints.station.description.maxLength,
+            rule: `<b>Description</b> must be ${fieldConstraints.station.description.maxLength} or fewer characters`,
+            width: '150px'
+          },
+          {
+            prop: 'placement',
+            label: 'Placement',
+            validate: (row) => !row.placement || placementOptions.map(d => d.value).includes(row.placement),
+            rule: '<b>Placement</b> must match an allowed value',
+            type: 'dropdown',
+            source: placementOptions.map(d => d.value)
+          },
+          {
+            prop: 'active',
+            label: 'Active',
+            validate: (row) => !row.active || booleanOptions.map(d => d.value).includes(row.active),
+            rule: '<b>Active</b> must match an allowed value',
+            type: 'dropdown',
+            source: booleanOptions.map(d => d.value),
+            width: '80px'
+          },
+          {
+            prop: 'mixed',
+            label: 'Well-mixed',
+            validate: (row) => !row.mixed || booleanOptions.map(d => d.value).includes(row.mixed),
+            rule: '<b>Well-mixed</b> must match an allowed value',
+            type: 'dropdown',
+            source: booleanOptions.map(d => d.value),
+            width: '80px'
+          },
+          {
+            prop: 'reference',
+            label: 'Reference URL',
+            width: '150px'
+          },
+          {
+            prop: 'private',
+            label: 'Private',
+            validate: (row) => !row.private || booleanOptions.map(d => d.value).includes(row.private),
+            rule: '<b>Private</b> must match an allowed value',
+            type: 'dropdown',
+            source: booleanOptions.map(d => d.value)
+          }
+        ],
+        settings: {
+          height: 270,
+          renderAllRows: true,
+          licenseKey: 'non-commercial-and-evaluation',
+          contextMenu: ['row_above', 'row_below', 'remove_row', '---------', 'clear_column', '---------', 'undo', 'redo'],
+          minRows: 1,
+          rowHeaders: true,
+          rowHeaderWidth: 40,
+          fixedColumnsStart: 3,
+          manualColumnResize: true,
+          preventOverflow: 'horizontal',
+          dataSchema: {
+            status: '',
+            code: '',
+            description: '',
+            latitude: '',
+            longitude: '',
+            timezone: '',
+            placement: '',
+            waterbody_name: '',
+            waterbody_type: '',
+            active: '',
+            mixed: '',
+            reference: '',
+            private: ''
+          }
+        }
+      }
     }
   },
   computed: {
@@ -307,145 +408,183 @@ export default {
       organizations: 'manage/organizations',
       defaultOrganization: 'manage/organization'
     }),
-    failedStations () {
-      const copy = this.stations.slice()
-      copy.forEach((d, i) => {
-        d.$row = i
-      })
-      return copy.filter(d => d.status === 'FAILED')
+    stationCodes () {
+      return this.organization.stations.map(d => d.code)
     }
   },
   watch: {
     defaultOrganization () {
       this.setDefaultOrganization()
+    },
+    'organization.selected' () {
+      this.fetchOrganizationStations()
     }
   },
   mounted () {
-    Handsontable.hooks.add('afterValidate', this.afterValidate, this.$refs.hot.hotInstance)
-    Handsontable.hooks.add('afterChange', this.afterChange, this.$refs.hot.hotInstance)
+    Handsontable.hooks.add('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
     this.setDefaultOrganization()
   },
   beforeDestroy () {
-    Handsontable.hooks.remove('afterValidate', this.afterValidate, this.$refs.hot.hotInstance)
-    Handsontable.hooks.remove('afterChange', this.afterChange, this.$refs.hot.hotInstance)
+    Handsontable.hooks.remove('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
   },
   methods: {
     setDefaultOrganization () {
-      this.organization.selected = this.defaultOrganization ? this.defaultOrganization : null
+      this.organization.selected = this.defaultOrganization || null
     },
-    afterValidate (isValid, value, row, prop) {
-      if (!isValid) {
-        if (!this.invalidCells.find(d => d.row === row && d.prop === prop)) {
-          this.invalidCells.unshift({ value, row, prop, column: this.columns.find(d => d.prop === prop) })
-        }
+    afterSelection (i) {
+      const row = this.table.rows[i]
+      this.table.selected = row
+    },
+    renderHot () {
+      if (this.$refs.hot) {
+        this.$refs.hot.hotInstance.render()
       }
     },
-    afterChange (changes, source) {
-      if (source === 'updateData') return
-      this.validateSync()
-    },
-    validateSync (changes, source) {
-      this.invalidCells = []
-      this.$refs.hot.hotInstance.validateCells()
-    },
-    validate () {
-      this.invalidCells = []
-      return new Promise((resolve, reject) => {
-        this.$refs.hot.hotInstance.validateCells((valid) => {
-          if (valid) {
-            return resolve(true)
-          } else {
-            return reject(new Error('Table contains validation errors'))
-          }
-        })
-      })
+    async fetchOrganizationStations () {
+      if (!this.organization.selected) {
+        this.organization.stations = []
+        return
+      }
+      try {
+        this.organization.stations = await this.$http.restricted
+          .get(`/organizations/${this.organization.selected.id}/stations`)
+          .then(d => d.data)
+      } catch (err) {
+        this.error = this.$errorMessage(err)
+      }
     },
     initTable () {
-      this.invalidCells = []
       this.error = null
-      this.stations.splice(0, this.stations.length)
+      this.table.rows.splice(0, this.table.rows.length)
+      this.table.selected = null
       this.renderHot()
     },
     async submit () {
       this.error = null
+      this.table.selected = null
 
+      // check form inputs (organization)
       if (!this.$refs.form.validate()) {
         this.error = 'Check form errors above'
         return
       }
 
-      try {
-        await this.validate()
-      } catch (err) {
-        return
-      }
-
-      if (this.stations.length === 0) {
-        this.error = 'No stations found in the table above'
-      }
-
-      this.loading = true
-
-      this.stations.forEach(d => {
-        d.status = d.status === 'FAILED' ? null : d.status
-        d.error = null
+      // reset status if failed or invalid
+      this.table.rows.forEach(d => {
+        d.status = d.status === 'FAILED' || d.status === 'INVALID' ? null : d.status
+        d.errors = []
       })
+      this.table.failedCount = 0
 
-      this.renderHot()
+      // validate and save
+      this.loading = true
+      let nonEmptyRows = 0
+      for (let i = 0; i < this.table.rows.length; i++) {
+        const row = this.table.rows[i]
 
-      for (let i = 0; i < this.stations.length; i++) {
-        if (this.$refs.hot.hotInstance.isEmptyRow(i)) {
-          continue
-        }
-        if (this.stations[i].status === 'SUCCESS') {
-          continue
-        }
-        this.stations[i].status = null
-        this.stations[i].error = null
+        // skip empty rows
+        if (this.$refs.hot.hotInstance.isEmptyRow(i)) continue
+
         try {
-          await this.createStation(this.stations[i])
-          this.stations[i].status = 'SUCCESS'
+          nonEmptyRows += 1
+          const isValid = await this.validateRow(row, i)
+          if (isValid) {
+            await this.createStation(row)
+          }
+          if (row.status === 'INVALID' || row.status === 'FAILED') {
+            this.table.failedCount += 1
+          }
         } catch (err) {
-          this.stations[i].status = 'FAILED'
-          this.stations[i].error = this.$errorMessage(err) || 'Unknown error'
+          console.log(err)
+          this.error = this.$errorMessage(err)
+          this.message = null
+          break
         }
-        this.renderHot()
       }
-      if (this.failedStations.length === 0) {
-        evt.$emit('notify', 'New stations have been successfully imported', 'success')
-        return this.$router.push({ name: 'manageStations' })
-      } else {
-        // if (this.failedStations.length > 0) {
-        //   this.error = `Failed to save ${this.failedStations.length} station(s). Fix the errors listed above, and click Submit again. Any stations that were successfully saved will be skipped in future attempts.`
-        // }
-      }
-
       this.loading = false
       this.renderHot()
-    },
-    renderHot () {
-      this.$refs.hot && this.$refs.hot.hotInstance.render()
-    },
-    async createStation (station) {
-      const organizationId = this.organization.selected.id
-      const payload = {
-        code: station.code.trim(),
-        description: station.description,
-        latitude: station.latitude,
-        longitude: station.longitude,
-        timezone: station.timezone,
-        placement: station.placement,
-        waterbody_name: station.waterbody_name,
-        waterbody_type: station.waterbody_type,
-        active: parseBooleanOption(station.active),
-        mixed: parseBooleanOption(station.mixed),
-        reference: station.reference,
-        private: station.private ? parseBooleanOption(station.private) : false
-      }
-      delete payload.status
-      delete payload.error
 
-      return await this.$http.restricted.post(`/organizations/${organizationId}/stations`, payload)
+      if (nonEmptyRows === 0) {
+        this.error = 'Table is empty'
+      } else if (!this.table.rows.some(d => d.status !== 'SUCCESS')) {
+        evt.$emit('notify', 'Stations have been successfully created', 'success')
+        return this.$router.push({ name: 'manageStations' })
+      }
+    },
+    async validateRow (row, i) {
+      if (row.status === 'SUCCESS') return true
+      const hot = this.$refs.hot.hotInstance
+      this.message = `Validating ${row.code}`
+      row.status = 'VALIDATING'
+      row.errors = []
+      this.renderHot()
+
+      try {
+        this.table.columns.forEach((column, j) => {
+          if (column.validate && !column.validate(row)) {
+            hot.setCellMeta(i, j, 'valid', false)
+            row.errors.push({
+              error: `${column.rule} (value: ${JSON.stringify(row[column.prop])})`,
+              column
+            })
+          } else {
+            hot.setCellMeta(i, j, 'valid', true)
+          }
+        })
+      } catch (err) {
+        console.error(err)
+        row.errors.push({
+          error: 'Unexpected error during validation',
+          details: this.$errorMessage(err)
+        })
+      }
+
+      if (row.errors.length > 0) {
+        row.status = 'INVALID'
+      } else {
+        row.status = 'READY'
+      }
+      this.renderHot()
+      this.message = null
+
+      return row.status === 'READY'
+    },
+    async createStation (row) {
+      if (row.status === 'SUCCESS' || row.status === 'INVALID') return
+
+      const organizationId = this.organization.selected.id
+
+      const payload = {
+        code: row.code.trim(),
+        description: emptyStringToNull(row.description),
+        latitude: row.latitude,
+        longitude: row.longitude,
+        timezone: row.timezone,
+        placement: emptyStringToNull(row.placement),
+        waterbody_name: emptyStringToNull(row.waterbody_name),
+        waterbody_type: emptyStringToNull(row.waterbody_type),
+        active: parseBooleanOption(row.active),
+        mixed: parseBooleanOption(row.mixed),
+        reference: emptyStringToNull(row.reference),
+        private: row.private ? parseBooleanOption(row.private) : false
+      }
+
+      row.status = 'UPLOADING'
+      this.renderHot()
+
+      try {
+        this.message = `Saving ${payload.code}`
+        await this.$http.restricted
+          .post(`/organizations/${organizationId}/stations`, payload)
+        row.status = 'SUCCESS'
+      } catch (err) {
+        console.log(err)
+        row.status = 'FAILED'
+        row.error = this.$errorMessage(err)
+      } finally {
+        this.message = null
+        this.renderHot()
+      }
     },
     removeSavedStations () {
       this.stations = this.stations.filter(d => d.status !== 'SUCCESS')

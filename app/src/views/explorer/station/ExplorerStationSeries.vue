@@ -15,6 +15,7 @@
         :loading="loading"
         :options="{ itemsPerPage: 5 }"
         show-select
+        dense
         loading-text="Loading... Please wait"
         @toggle-select-all="selectAll"
       >

@@ -66,7 +66,6 @@ export const formatBooleanOption = (value) => {
 
 export const formatAccuracy = (value) => {
   const item = sensorAccuracyOptions.find(d => d.value === value)
-  console.log(value, sensorAccuracyOptions, item)
   return item ? item.label : null
 }
 
@@ -187,4 +186,8 @@ export function parseTimestamp (timestamp, utcOffset = 0) {
 
 export function formatTimestamp (timestamp, format, timezone) {
   return timezone ? dayjs(timestamp).tz(timezone).format(format) : dayjs(timestamp).format(format)
+}
+
+export function emptyStringToNull (x) {
+  return x === '' ? null : x
 }

@@ -19,7 +19,6 @@
       </v-btn>
     </v-toolbar>
     <div v-if="!collapse">
-
       <v-divider></v-divider>
 
       <v-tabs
@@ -37,7 +36,7 @@
 
       <v-tabs-items v-model="tab">
         <!-- INFO -->
-        <v-tab-item class="pt-2">
+        <v-tab-item>
           <ExplorerMapStationInfo :station="station"></ExplorerMapStationInfo>
         </v-tab-item>
 
@@ -51,6 +50,22 @@
           <ExplorerMapStationProfiles :station="station"></ExplorerMapStationProfiles>
         </v-tab-item>
       </v-tabs-items>
+
+      <v-divider></v-divider>
+
+      <v-btn
+        block
+        tile
+        large
+        color="primary"
+        title="Explore station data in more detail"
+        :to="{ name: 'explorerStation', params: { stationId: station.id }}"
+      >
+        <!-- <v-icon left>mdi-chart-line</v-icon> -->
+        Explore Station Data
+        <v-icon right>mdi-chevron-right</v-icon>
+        <!-- <v-icon right>mdi-open-in-new</v-icon> -->
+      </v-btn>
     </div>
 
   </v-sheet>

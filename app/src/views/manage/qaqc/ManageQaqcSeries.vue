@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable vue/valid-v-slot -->
   <v-card elevation="4" class="pb-4">
     <v-toolbar dense flat color="grey lighten-3" height="40px">
       <v-toolbar-title>
@@ -23,122 +24,175 @@
           <SeriesInfo :series="series"></SeriesInfo>
         </v-col>
         <v-col cols="12" lg="8" xl="9">
-          <v-card>
-            <v-card-text>
-              <ManageQaqcSeriesChart
-                :series="series"
-                :flags="flags"
-                :flag="flag.selected"
-                :zoom="mode === 'zoom'"
-                :chart-loading="chartLoading"
-                @select="onSelect"
-                @click-flag="clickFlag"
-              ></ManageQaqcSeriesChart>
-              <v-row class="mt-4">
-                <v-col cols="12" xl="6">
-                  <v-card v-if="mode === 'create' || mode === 'edit'">
-                    <v-form ref="form" @submit.prevent="submit" :disabled="!!flag.loading || submitting">
-                      <v-card-text class="black--text">
-                        <div class="font-weight-bold text-h6 mb-4">
-                          <span v-if="mode === 'create'">New</span><span v-else>Edit</span> Flag
+          <v-sheet>
+            <v-row>
+              <v-col cols="12" xl="6" class="order-last order-xl-first">
+                <v-sheet elevation="2">
+                  <v-toolbar color="grey lighten-3" flat dense>
+                    <div class="text-overline">QAQC Flags</div>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      color="success"
+                      dense
+                      small
+                      @click="createNewFlag"
+                      class="mr-4"
+                    ><v-icon small left>mdi-plus</v-icon> New Flag</v-btn>
+                    <v-btn
+                      color="primary"
+                      dense
+                      small
+                      @click="submit()"
+                    ><v-icon small left>mdi-check</v-icon> Done</v-btn>
+                  </v-toolbar>
+                  <v-divider></v-divider>
+                  <v-data-table
+                    :value="selectedFlagArray"
+                    :loading="loading"
+                    :items="flags"
+                    :headers="table.headers"
+                    :sort-by.sync="table.sort.by"
+                    :sort-desc.sync="table.sort.desc"
+                    @click:row="onClickRow"
+                    single-select
+                    dense
+                    class="row-cursor-pointer"
+                  >
+                    <template v-slot:item.start_datetime="{ item }">
+                      {{ item.start_datetime | formatTimestamp('lll z', series.station_timezone) }}
+                    </template>
+                    <template v-slot:item.end_datetime="{ item }">
+                      {{ item.end_datetime | formatTimestamp('lll z', series.station_timezone) }}
+                    </template>
+
+                    <template v-slot:footer.prepend>
+                      <v-btn
+                        class="mr-2"
+                        color="error"
+                        outlined
+                        small
+                        @click="confirmDeleteAllFlags"
+                        :disabled="flags.length === 0"
+                      ><v-icon small left>mdi-delete</v-icon> Delete All</v-btn>
+                    </template>
+                  </v-data-table>
+                </v-sheet>
+              </v-col>
+              <v-col cols="12" xl="6">
+                <v-card v-if="showForm">
+                  <v-toolbar color="grey lighten-3" flat dense>
+                    <div class="text-overline"><span v-if="flag.selected.id === null">New</span><span v-else>Edit</span> Flag</div>
+                    <v-spacer></v-spacer>
+                  </v-toolbar>
+                  <v-form ref="form" @submit.prevent="submit" :disabled="!!flag.loading || submitting">
+                    <v-card-text class="black--text">
+                      <Alert v-if="!flag.selected.start_datetime" type="warning" class="mb-0" title="Select Period">
+                        Click and drag on the chart to select the start and end of the flag period.
+                      </Alert>
+
+                      <div v-else class="text-body-1">
+                        <v-divider></v-divider>
+                        <v-simple-table>
+                          <tbody>
+                            <tr>
+                              <td
+                                class="text-right grey--text text--darken-2"
+                                style="width:30px">
+                                Start
+                              </td>
+                              <td class="font-weight-bold text-left">
+                                {{ flag.selected.start_datetime | formatTimestamp('lll z', series.station_timezone) }}
+                              </td>
+                              <td
+                                class="text-right grey--text text--darken-2"
+                                style="width:30px">
+                                End
+                              </td>
+                              <td class="font-weight-bold text-left">{{ flag.selected.end_datetime | formatTimestamp('lll z', series.station_timezone) }}</td>
+                            </tr>
+                          </tbody>
+                        </v-simple-table>
+                        <v-divider class="mb-2"></v-divider>
+
+                        <div class="text--secondary caption">
+                          <v-icon small>mdi-information-outline</v-icon> Click and drag on the chart to change the flag period.
                         </div>
 
-                        <Alert v-if="mode === 'create' && !flag.selected.start_datetime" type="info" title="Define Flag Period" class="mb-0">
-                          Click and drag on the chart above to define the start and end of the flag period.
-                        </Alert>
-                        <Alert v-else-if="mode === 'edit' && !flag.selected.start_datetime" type="info" title="Select Flag" class="mb-0">
-                          Click on a flagged period in the chart above to select it.
-                        </Alert>
+                        <v-row class="mt-4 mb-n4">
+                          <v-col cols="12" lg="6">
+                            <v-select
+                              v-model="flag.selected.flag_type_id"
+                              :items="flag.form.flagType.options"
+                              :rules="flag.form.flagType.rules"
+                              label="Flag type"
+                              placeholder="Select..."
+                              item-text="description"
+                              item-value="id"
+                              outlined
+                            ></v-select>
+                          </v-col>
+                          <v-col cols="12" lg="6">
+                            <v-text-field
+                              v-if="flag.selected.flag_type_id === 'OTHER'"
+                              v-model="flag.selected.flag_type_other"
+                              :rules="flag.form.flagTypeOther.rules"
+                              label="Describe 'other' flag"
+                              outlined
+                            ></v-text-field>
+                          </v-col>
+                        </v-row>
+                      </div>
 
-                        <div v-else class="text-body-1">
-                          <div>
-                            Start: <strong>{{ flag.selected.start_datetime | formatTimestamp('lll z', series.station_timezone)}}</strong>
-                          </div>
-                          <div>
-                            End: <strong>{{ flag.selected.end_datetime | formatTimestamp('lll z', series.station_timezone)}}</strong>
-                          </div>
+                      <Alert type="error" v-if="flag.error" title="Error Occurred">
+                        {{ flag.error }}
+                      </Alert>
+                    </v-card-text>
 
-                          <div class="text--secondary caption">
-                            <v-icon x-small>mdi-information</v-icon> Click and drag on the chart to change the flag period.
-                          </div>
+                    <v-divider class="mb-2"></v-divider>
 
-                          <v-select
-                            v-model="flag.selected.flagType.selected"
-                            :items="flag.selected.flagType.options"
-                            :rules="flag.selected.flagType.rules"
-                            label="Select flag type"
-                            item-text="description"
-                            item-value="id"
-                            return-object
-                            class="mt-4"
-                          ></v-select>
-                          <v-text-field
-                            v-if="flag.selected.flagType.selected && flag.selected.flagType.selected.id === 'OTHER'"
-                            v-model="flag.selected.flagTypeOther.value"
-                            :rules="flag.selected.flagTypeOther.rules"
-                            label="Describe 'other' flag"
-                          ></v-text-field>
-                        </div>
-
-                        <Alert type="error" v-if="flag.error" title="Error Occurred">
-                          {{ flag.error }}
-                        </Alert>
-                      </v-card-text>
-
-                      <v-card-actions class="mx-2 pb-4">
-                        <v-btn
-                          color="primary"
-                          @click="saveFlag"
-                          class="mr-2"
-                          :disabled="!flag.selected.start_datetime || !!flag.loading"
-                          :loading="!!flag.loading && flag.loading !== 'delete'"
-                        ><v-icon left>mdi-check</v-icon> Save</v-btn>
-                        <v-btn
-                          v-if="mode === 'edit'"
-                          color="error"
-                          @click="deleteFlag"
-                          class="mr-2"
-                          :disabled="!flag.selected.start_datetime || !!flag.loading"
-                          :loading="flag.loading === 'delete'"
-                        ><v-icon left>mdi-delete</v-icon> Delete</v-btn>
-                        <v-spacer></v-spacer>
-                        <v-btn color="default" @click="setMode('zoom')" class="ml-2">Cancel</v-btn>
-                      </v-card-actions>
-                    </v-form>
-                  </v-card>
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-divider></v-divider>
-
-            <v-card-actions class="mx-2 py-4">
-              <v-btn
-                class="mr-2"
-                :depressed="mode === 'create'"
-                color="success"
-                @click="setMode('create')"
-              ><v-icon small left>mdi-plus</v-icon> New Flag</v-btn>
-              <v-btn
-                class="mx-2"
-                :depressed="mode === 'edit'"
-                color="info"
-                @click="setMode('edit')"
-              ><v-icon small left>mdi-pencil</v-icon> Edit Flag</v-btn>
-              <v-btn
-                class="ml-2"
-                color="error"
-                @click="confirmDeleteAllFlags"
-              ><v-icon small left>mdi-pencil</v-icon> Delete All</v-btn>
-              <v-spacer></v-spacer>
-              <v-btn
-                class="mr-2"
-                color="primary"
-                @click="submit"
-                :loading="submitting"
-              >Done</v-btn>
-            </v-card-actions>
-          </v-card>
+                    <v-card-actions class="mx-2 pb-4">
+                      <v-btn
+                        color="primary"
+                        @click="saveFlag"
+                        class="mr-2"
+                        :disabled="!flag.selected.start_datetime || !!flag.loading"
+                        :loading="!!flag.loading && flag.loading !== 'delete'"
+                      ><v-icon left>mdi-check</v-icon> Save</v-btn>
+                      <v-btn
+                        v-if="flag.selected.id !== null"
+                        color="error"
+                        @click="deleteFlag"
+                        class="mr-2"
+                        :disabled="!flag.selected.start_datetime || !!flag.loading"
+                        :loading="flag.loading === 'delete'"
+                      ><v-icon left>mdi-delete</v-icon> Delete</v-btn>
+                      <v-spacer></v-spacer>
+                      <v-btn text @click="selectFlag()" class="ml-2">Cancel</v-btn>
+                    </v-card-actions>
+                  </v-form>
+                </v-card>
+                <Alert v-else type="info" title="QAQC Instructions" class="mb-0 elevation-2">
+                  <p class="mt-4">To <b>add a new</b> flag, click the <code>New Flag</code> button.</p>
+                  <p>To <b>edit or delete a flag</b>, select it from the table.</p>
+                  <p class="mb-0">When finished, click the <code>Done</code> button to <b>mark timeseries as reviewed</b>.</p>
+                </Alert>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <ManageQaqcSeriesChart
+                  :series="series"
+                  :flags="flags"
+                  :flag="flag.selected"
+                  :chart-loading="chartLoading"
+                  :zoom="!showForm"
+                  @select="setRange"
+                  @click-flag="selectFlag"
+                  class="elevation-2 py-2 pr-2"
+                ></ManageQaqcSeriesChart>
+              </v-col>
+            </v-row>
+          </v-sheet>
         </v-col>
       </v-row>
     </v-container>
@@ -153,7 +207,7 @@
       >
         <div class="font-weight-bold body-1">Are you sure?</div>
         <div>
-          All flags will be permanently deleted. This action cannot be undone.
+          All flags for this timeseries will be permanently deleted. This action cannot be undone.
         </div>
       </v-alert>
     </ConfirmDialog>
@@ -179,7 +233,7 @@ export default {
       submitting: false,
       error: null,
       chartLoading: false,
-      mode: 'zoom',
+      showForm: false,
       series: null,
       station: null,
       flag: {
@@ -189,20 +243,47 @@ export default {
           id: null,
           start_datetime: null,
           end_datetime: null,
+          flag_type_id: null,
+          flag_type_other: null
+        },
+        form: {
           flagType: {
-            selected: null,
             options: flagTypeOptions,
             rules: [
               v => !!v || 'Flag type is required'
             ]
           },
           flagTypeOther: {
-            value: null,
             rules: []
           }
         }
       },
-      flags: []
+      flags: [],
+      table: {
+        sort: {
+          by: 'start_datetime',
+          desc: false
+        },
+        headers: [
+          {
+            text: 'Start',
+            value: 'start_datetime'
+          },
+          {
+            text: 'End',
+            value: 'end_datetime'
+          },
+          {
+            text: 'Flag',
+            value: 'flag_type_id'
+          }
+        ]
+      }
+    }
+  },
+  computed: {
+    selectedFlagArray () {
+      return this.flag.selected ? [this.flag.selected] : []
     }
   },
   watch: {
@@ -215,7 +296,7 @@ export default {
   },
   methods: {
     async fetch () {
-      console.log(`fetch(${this.$route.params.seriesId})`)
+      console.log('series:fetch')
       this.loading = true
       this.error = null
       try {
@@ -232,12 +313,13 @@ export default {
         this.$vuetify.goTo(document.body.scrollHeight)
       }
     },
-    async onSelect (start, end) {
-      this.flag.selected.start_datetime = start
-      this.flag.selected.end_datetime = end
+    async setRange (start, end) {
+      if (this.showForm) {
+        this.flag.selected.start_datetime = start
+        this.flag.selected.end_datetime = end
+      }
     },
     async saveFlag () {
-      // console.log('saveFlag', start.toString(), end.toString())
       this.flag.error = null
 
       if (!this.flag.selected.start_datetime || !this.flag.selected.end_datetime) {
@@ -254,21 +336,21 @@ export default {
       const payload = {
         start_datetime: this.flag.selected.start_datetime,
         end_datetime: this.flag.selected.end_datetime,
-        flag_type_id: this.flag.selected.flagType.selected.id,
-        flag_type_other: this.flag.selected.flagType.selected.id === 'OTHER'
-          ? this.flag.selected.flagTypeOther.value
-          : null
+        flag_type_id: this.flag.selected.flag_type_id,
+        flag_type_other: this.flag.selected.flag_type_other
+      }
+      if (this.flag.selected.id !== null) {
+        payload.id = this.flag.selected.id
       }
       try {
-        if (this.mode === 'create') {
+        if (payload.id === undefined) {
           await this.$http.restricted.post(`/series/${this.$route.params.seriesId}/flags`, payload)
-        } else if (this.mode === 'edit') {
-          payload.id = this.flag.selected.id
+        } else {
           await this.$http.restricted.put(`/series/${this.$route.params.seriesId}/flags/${payload.id}`, payload)
         }
         this.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)
           .then(d => d.data)
-        this.setMode('zoom')
+        this.selectFlag()
       } catch (err) {
         this.flag.error = this.$errorMessage(err)
       } finally {
@@ -289,7 +371,7 @@ export default {
         await this.$http.restricted.delete(`/series/${this.$route.params.seriesId}/flags/${id}`)
         this.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)
           .then(d => d.data)
-        this.setMode('zoom')
+        this.selectFlag()
       } catch (err) {
         this.flag.error = this.$errorMessage(err)
       } finally {
@@ -311,23 +393,25 @@ export default {
       try {
         await this.$http.restricted.delete(`/series/${this.$route.params.seriesId}/flags`)
         this.flags = []
+        this.selectFlag()
       } catch (err) {
         this.error = this.$errorMessage(err)
       } finally {
         this.chartLoading = false
       }
     },
-    async resetFlag () {
+    async resetForm () {
       this.flag.loading = false
       this.flag.error = null
-      this.flag.selected.id = null
-      this.flag.selected.start_datetime = null
-      this.flag.selected.end_datetime = null
-      this.flag.selected.flagType.selected = null
-      this.flag.selected.flagTypeOther.value = null
+      this.flag.selected = {
+        id: null,
+        start_datetime: null,
+        end_datetime: null,
+        flag_type_id: null,
+        flag_type_other: null
+      }
     },
     async submit () {
-      console.log('submit (mark as reviewed and go to next)')
       this.error = null
       this.submitting = true
 
@@ -340,20 +424,22 @@ export default {
         this.submitting = false
       }
     },
-    async clickFlag (flag) {
-      if (this.mode === 'edit') {
-        this.flag.selected.id = flag.id
-        this.flag.selected.start_datetime = flag.start_datetime
-        this.flag.selected.end_datetime = flag.end_datetime
-        this.flag.selected.flagType.selected = this.flag.selected.flagType.options.find(d => d.id === flag.flag_type_id)
-        this.flag.selected.flagTypeOther.value = flag.flag_type_other
+    async onClickRow (row) {
+      this.selectFlag(row)
+    },
+    async selectFlag (flag) {
+      console.log('selectFlag', flag)
+      if (!flag || (this.flag.selected && this.flag.selected.id === flag.id)) {
+        this.flag.selected = null
+        this.showForm = false
+      } else if (flag) {
+        this.showForm = true
+        this.flag.selected = flag
       }
     },
-    setMode (mode) {
-      if (this.mode === 'create' || this.mode === 'edit') {
-        this.resetFlag()
-      }
-      this.mode = mode
+    createNewFlag () {
+      this.resetForm()
+      this.showForm = true
     }
   }
 }

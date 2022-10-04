@@ -221,7 +221,7 @@ export default {
         rules: [
           v => !!v || 'Latitude is required',
           v => !isNaN(Number(v)) || 'Latitude must be a decimal number',
-          v => (Number(v) <= 90 && Number(v) >= -90) || 'Latitude must be between -90 and 90'
+          v => (Number(v) <= 75 && Number(v) >= 45) || 'Latitude must be between 45 and 75'
         ]
       },
       longitude: {
@@ -229,7 +229,7 @@ export default {
         rules: [
           v => !!v || 'Longitude is required',
           v => !isNaN(Number(v)) || 'Longitude must be a decimal number',
-          v => (Number(v) <= 180 && Number(v) >= -180) || 'Longitude must be between -180 and 180'
+          v => (Number(v) <= -125 && Number(v) >= -180) || 'Longitude must be between -125 and -180'
         ]
       },
       timezone: {

@@ -20,6 +20,7 @@
                   outlined
                   return-object
                   hide-details
+                  style="z-index:2000"
                 ></v-select>
               </div>
             </v-toolbar>
@@ -65,7 +66,6 @@ export default {
     }
   },
   mounted () {
-    console.log('manage:mounted')
     this.$store.dispatch('manage/fetchOrganizations')
     this.$store.dispatch('manage/fetchStations')
   }

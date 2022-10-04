@@ -72,9 +72,7 @@ const attachOrganization = async (req, res, next) => {
 router.route('/')
   .get((req, res, next) => res.status(200).json(res.locals.user))
 
-router.route('/organizations')
-  .get((req, res, next) => res.status(200).json(res.locals.user.organizations))
-
+router.use('/organizations', require('./organizations'))
 router.use('/organizations/:organizationId', asyncHandler(attachOrganization), require('./organization'))
 router.use('/files', require('./files'))
 router.use('/profiles', require('./profiles'))

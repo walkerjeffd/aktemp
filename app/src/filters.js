@@ -16,3 +16,5 @@ Vue.filter('boolean', (value) => {
 Vue.filter('accuracy', formatAccuracy)
 
 Vue.filter('seriesDepth', (v) => v.depth_category || (isFinite(v.depth_m) && v.depth_m !== null ? `${v.depth_m} m` : '') || '')
+
+Vue.filter('numberLocaleString', (v) => typeof v === 'number' ? v.toLocaleString() : '')

@@ -13,14 +13,18 @@
           <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in. Click <code>Flagged</code> in legend to hide/show flagged data.
         </div>
 
-        <v-btn x-small text @click="about = !about" class="mt-4">
-          About This Chart
-          <v-icon v-if="about" x-small right>mdi-chevron-up-circle-outline</v-icon>
-          <v-icon v-else x-small right>mdi-chevron-down-circle-outline</v-icon>
-        </v-btn>
+        <div class="text-right d-flex align-end my-4">
+          <v-btn x-small text @click="about = !about">
+            About This Chart
+            <v-icon v-if="about" x-small right>mdi-chevron-up-circle-outline</v-icon>
+            <v-icon v-else x-small right>mdi-chevron-down-circle-outline</v-icon>
+          </v-btn>
+          <v-spacer></v-spacer>
+          <DownloadButton @click="download" text="CSV" small />
+        </div>
 
         <div class="text--secondary caption ml-2" v-if="about">
-          This chart shows all available vertical profiles at this station. Click <code>Explore Data</code> below to view the individual profiles. Click <code>CSV</code> to download a file containing the profiles show above.
+          This chart shows all available vertical profiles at this station. Click <code>Explore Station Data</code> below to view the individual profiles. Click <code>CSV</code> to download a file containing the profiles show above.
         </div>
       </div>
 

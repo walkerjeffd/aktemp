@@ -9,7 +9,8 @@
     "lint": "vue-cli-service lint",
     "test": "NODE_ENV=test jest --runInBand",
     "test:watch": "npm test -- --watch",
-    "test:coverage": "npm test -- --coverage"
+    "test:coverage": "npm test -- --coverage",
+    "deploy:stage": "npm run stage && aws s3 sync dist/ s3://walkerenvres-aktemp-dev-website/ --delete"
   },
   "dependencies": {
     "@handsontable/vue": "^12.1.2",

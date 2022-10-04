@@ -16,31 +16,19 @@ i<template>
           <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in, shift+click to slide. Click <code>Flagged</code> in legend to hide/show flagged data (if any).
         </div>
 
-        <v-btn x-small text @click="about = !about" class="mt-4">
-          About This Chart
-          <v-icon v-if="about" x-small right>mdi-chevron-up-circle-outline</v-icon>
-          <v-icon v-else x-small right>mdi-chevron-down-circle-outline</v-icon>
-        </v-btn>
-
-        <div class="text--secondary caption ml-2" v-if="about">
-          This chart shows the daily mean and range over all available timeseries at this station. Click <code>Explore Data</code> below to view the individual timeseries, which may vary by depth, or to drill down into the raw data. Click <code>CSV</code> to download a file containing the daily values shown above.
+        <div class="text-right d-flex align-end mt-4">
+          <v-btn x-small text @click="about = !about">
+            About This Chart
+            <v-icon v-if="about" x-small right>mdi-chevron-up-circle-outline</v-icon>
+            <v-icon v-else x-small right>mdi-chevron-down-circle-outline</v-icon>
+          </v-btn>
+          <v-spacer></v-spacer>
+          <DownloadButton @click="download" text="CSV" small />
         </div>
-      </div>
 
-      <v-divider class="my-4"></v-divider>
-
-      <div class="text-right mx-4 d-flex">
-        <v-btn
-          color="info"
-          title="Explore station data in more detail"
-          :to="{ name: 'explorerStation', params: { stationId: station.id }}"
-        >
-          <v-icon left>mdi-chart-line</v-icon>
-          Explore Data
-          <!-- <v-icon right>mdi-chevron-right</v-icon> -->
-        </v-btn>
-        <v-spacer></v-spacer>
-        <DownloadButton @click="download" />
+        <div class="text--secondary caption ml-2 mt-4" v-if="about">
+          This chart shows the daily mean and range over all available timeseries at this station. Click <code>Explore Station Data</code> below to view the individual timeseries, which may vary by depth, or to drill down into the raw data. Click <code>CSV</code> to download a file containing the daily values shown above.
+        </div>
       </div>
     </div>
   </div>

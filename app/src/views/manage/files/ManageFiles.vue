@@ -8,12 +8,13 @@
       :items="files"
       :search="search"
       :loading="status.loading || deleting"
-      :sort-by="['created_at']"
-      :sort-desc="[true]"
+      :sort-by.sync="sort.by"
+      :sort-desc.sync="sort.desc"
       @click:row="select"
       loading-text="Loading... Please wait"
       class="row-cursor-pointer elevation-2"
       show-select
+      dense
       v-else
     >
       <template v-slot:top>
@@ -32,7 +33,7 @@
 
           <v-spacer></v-spacer>
           <v-btn color="success" :to="{ name: 'manageFileForm' }" class="mr-2">
-            <v-icon left>mdi-upload</v-icon> Upload File
+            <v-icon left>mdi-upload</v-icon> Upload
           </v-btn>
           <v-btn color="success" class="ml-2" :to="{ name: 'manageFilesBatch' }">
             <v-icon left>mdi-file-multiple-outline</v-icon> Batch Upload
@@ -42,7 +43,7 @@
         </v-toolbar>
         <div class="body-2 text--secondary mx-4 mb-2">
           <v-icon small>mdi-information-outline</v-icon>
-          Click on a row to view and manage data for each file
+          Click on a row to view and manage a file
         </div>
         <v-divider></v-divider>
       </template>
@@ -58,14 +59,13 @@
       <template v-slot:footer.prepend>
         <v-btn
           outlined
-          small
           color="error"
           :disabled="selected.length === 0"
           :loading="deleting"
           @click="confirmDelete"
         >
           <v-icon left>mdi-delete</v-icon>
-          Delete Selected
+          Delete Selected ({{selected.length}})
         </v-btn>
       </template>
     </v-data-table>
@@ -97,34 +97,33 @@ export default {
     return {
       deleting: false,
       search: '',
+      sort: {
+        by: ['created_at'],
+        desc: [true]
+      },
       selected: [],
       headers: [
         {
           text: 'ID',
           value: 'id',
-          align: 'left',
           width: '80px'
         },
         {
           text: 'Uploaded',
           value: 'created_at',
-          align: 'left',
           width: '200px'
         },
         {
           text: 'Filename',
-          value: 'filename',
-          align: 'left'
+          value: 'filename'
         },
         {
           text: 'Type',
-          value: 'type',
-          align: 'left'
+          value: 'type'
         },
         {
           text: 'Status',
           value: 'status',
-          align: 'left',
           width: '120px'
         }
       ]
@@ -162,13 +161,14 @@ export default {
       }
     },
     async deleteFiles () {
-      const files = this.selected
+      const files = this.selected.slice()
       this.deleting = true
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         try {
           await this.$http.restricted.delete(`/files/${file.id}`)
           this.$store.dispatch('manage/removeFileById', file.id)
+          this.unselectById(file.id)
         } catch (err) {
           console.error(err)
           this.error = this.$errorMessage(err)
@@ -177,8 +177,11 @@ export default {
         }
       }
       this.fetch()
-      evt.$emit('notify', 'Files have been deleted', 'success')
+      evt.$emit('notify', 'Selected files have been deleted', 'success')
       this.deleting = false
+    },
+    unselectById (id) {
+      this.selected = this.selected.filter(d => d.id !== id)
     }
   }
 }

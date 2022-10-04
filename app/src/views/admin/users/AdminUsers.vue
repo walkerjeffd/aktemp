@@ -10,11 +10,12 @@
       :headers="headers"
       :items="users"
       :loading="status.loading"
-      :sort-by="['created_at']"
-      :sort-desc="[true]"
+      :sort-by.sync="sort.by"
+      :sort-desc.sync="sort.desc"
       :search="search"
       loading-text="Loading... Please wait"
       single-select
+      dense
       class="row-cursor-pointer"
       @click:row="select"
     >
@@ -93,6 +94,10 @@ export default {
   },
   data: () => ({
     search: '',
+    sort: {
+      by: ['created_at'],
+      desc: [true]
+    },
     headers: [
       {
         text: 'ID',

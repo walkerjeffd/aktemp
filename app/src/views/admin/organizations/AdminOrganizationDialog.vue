@@ -33,7 +33,7 @@
                 style="width:140px">
                 Created
               </td>
-              <td class="font-weight-bold">{{ organization.created_at | formatTimestamp('lll z') }}</td>
+              <td class="font-weight-bold">{{ organization.created_at | timestamp('ff', 'local') }}</td>
             </tr>
             <tr>
               <td
@@ -41,7 +41,7 @@
                 style="width:140px">
                 Updated
               </td>
-              <td class="font-weight-bold">{{ organization.updated_at | formatTimestamp('lll z') }}</td>
+              <td class="font-weight-bold">{{ organization.updated_at | timestamp('ff', 'local') }}</td>
             </tr>
           </tbody>
         </v-simple-table>
@@ -98,7 +98,7 @@
         </v-form>
 
         <div v-if="organization" class="mb-8 mt-0 mx-4">
-          <div class="text-right">
+          <div class="d-flex justify-start">
             <v-btn
               color="error"
               outlined

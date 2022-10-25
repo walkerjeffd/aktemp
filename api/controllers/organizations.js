@@ -1,6 +1,6 @@
 const createError = require('http-errors')
 
-const { Organization } = require('../db/models')
+const { Organization } = require('aktemp-db/models')
 
 const attachOrganization = async (req, res, next) => {
   const row = await Organization.query()

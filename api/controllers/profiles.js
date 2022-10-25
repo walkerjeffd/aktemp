@@ -1,6 +1,6 @@
 const createError = require('http-errors')
 
-const { Profile, Station } = require('../db/models')
+const { Profile, Station } = require('aktemp-db/models')
 
 async function attachProfile (req, res, next) {
   const profile = await Profile.query()

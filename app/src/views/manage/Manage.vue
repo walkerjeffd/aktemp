@@ -20,26 +20,25 @@
                   outlined
                   return-object
                   hide-details
+                  :disabled="organizationsStatus.loading"
                   style="z-index:2000"
                 ></v-select>
               </div>
             </v-toolbar>
 
-            <v-tabs class="elevation-2" grow :vertical="$vuetify.breakpoint.mobile">
-              <v-tab :to="{ name: 'manageStations' }">
-                <v-icon left>mdi-map-marker-multiple</v-icon> Stations
-              </v-tab>
-              <v-tab :to="{ name: 'manageFiles' }">
-                <v-icon left>mdi-file-multiple-outline</v-icon> Files
-              </v-tab>
-              <v-tab :to="{ name: 'manageQaqc' }">
-                <v-icon left>mdi-tools</v-icon> QAQC
-              </v-tab>
-            </v-tabs>
-
-            <div class="mt-1 pa-4">
-              <router-view></router-view>
-            </div>
+            <v-sheet v-if="organizationsStatus.loading" height="400">
+              <Loading class="pt-8"/>
+            </v-sheet>
+            <v-card-text v-else-if="organizationStatus.error">
+              <Alert
+                type="error"
+                title="Error Loading Organization"
+                class="mb-0"
+              >
+                {{ organizationStatus.error }}
+              </Alert>
+            </v-card-text>
+            <router-view v-else></router-view>
           </v-card>
         </v-col>
       </v-row>
@@ -54,20 +53,67 @@ export default {
   name: 'Manage',
   computed: {
     ...mapGetters({
-      organizations: 'manage/organizations'
+      organizations: 'manage/organizations',
+      organizationsStatus: 'manage/organizationsStatus',
+      organizationStatus: 'manage/organizationStatus'
     }),
     organization: {
       get () {
         return this.$store.state.manage.organization
       },
       set (value) {
-        this.$store.dispatch('manage/setOrganization', value)
+        if (this.$route.params.organizationId) {
+          this.$router.push({
+            name: this.$route.name,
+            params: {
+              organizationId: value.id
+            }
+          })
+        } else {
+          this.$router.push({
+            name: 'manageOrganization',
+            params: {
+              organizationId: value.id
+            }
+          })
+        }
       }
     }
   },
   mounted () {
     this.$store.dispatch('manage/fetchOrganizations')
-    this.$store.dispatch('manage/fetchStations')
+    this.$store.dispatch('manage/fetchFlagTypes')
+  },
+  watch: {
+    '$route.params.organizationId' (value) {
+      if (value) {
+        this.setOrganizationFromRoute()
+      } else {
+        this.routeToOrganization()
+      }
+    },
+    organizations () {
+      this.routeToOrganization()
+    }
+  },
+  methods: {
+    routeToOrganization () {
+      if (this.organizationsStatus.loading || this.organizations.length === 0) return
+      if (!this.$route.params.organizationId) {
+        const organization = this.organization || this.organizations[0]
+        this.$router.push({
+          name: 'manageOrganization',
+          params: {
+            organizationId: organization.id
+          }
+        })
+      } else {
+        this.$store.dispatch('manage/setOrganizationById', this.$route.params.organizationId)
+      }
+    },
+    setOrganizationFromRoute () {
+      this.$store.dispatch('manage/setOrganizationById', this.$route.params.organizationId)
+    }
   }
 }
 </script>

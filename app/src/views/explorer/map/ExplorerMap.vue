@@ -42,7 +42,6 @@
           </v-list-item-icon>
           <v-list-item-title class="font-weight-bold">Map Options</v-list-item-title>
           <v-list-item-content>
-            test
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -54,11 +53,12 @@
 import { mapGetters } from 'vuex'
 
 import evt from '@/events'
-import { waterbodyTypeOptions } from '@/lib/constants'
 
 import StationsMap from '@/components/StationsMap'
 import ExplorerMapStationsTable from '@/views/explorer/map/components/ExplorerMapStationsTable'
 import ExplorerMapStation from '@/views/explorer/map/components/ExplorerMapStation'
+
+const { waterbodyTypeOptions } = require('aktemp-utils/constants')
 
 export default {
   name: 'Explorer',

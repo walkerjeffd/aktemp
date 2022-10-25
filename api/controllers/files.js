@@ -1,7 +1,7 @@
 const createError = require('http-errors')
 
 const { batch, createPresignedPostPromise } = require('../aws')
-const { File, Organization } = require('../db/models')
+const { File, Organization } = require('aktemp-db/models')
 
 async function attachFile (req, res, next) {
   let query = null
@@ -113,8 +113,9 @@ async function processFile (req, res, next) {
     containerOverrides: {
       command: [
         'node',
-        'process.js',
+        'index.js',
         'files',
+        'process',
         res.locals.file.id.toString()
       ]
     }

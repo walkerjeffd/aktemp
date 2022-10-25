@@ -15,43 +15,38 @@
       :search="search"
       loading-text="Loading... Please wait"
       single-select
-      dense
       class="row-cursor-pointer"
       @click:row="select"
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <div class="text-h6">Account Requests</div>
+          <v-toolbar-title class="text-h6">Account Requests</v-toolbar-title>
+          <v-divider inset vertical class="mx-4"></v-divider>
+          <v-text-field
+            v-model="search"
+            append-icon="mdi-magnify"
+            label="Search requests"
+            single-line
+            hide-details
+            clearable
+            dense
+          ></v-text-field>
+          <v-spacer></v-spacer>
+          <v-divider inset vertical class="ml-4"></v-divider>
           <RefreshButton :loading="loading" @click="fetch"></RefreshButton>
         </v-toolbar>
-        <v-row class="justify-space-between align-end px-4 mb-2">
-          <v-col cols="12" lg="4" xl="3">
-            <v-text-field
-              v-model="search"
-              append-icon="mdi-magnify"
-              label="Search requests"
-              single-line
-              hide-details
-              clearable
-              dense
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" lg="4" xl="3" class="body-2 text--secondary text-right">
-            <v-icon small>mdi-information-outline</v-icon>
-            Click on a row to approve a request
-          </v-col>
-        </v-row>
+        <div class="body-2 text--secondary mx-4 mb-2">
+          <v-icon small>mdi-information-outline</v-icon>
+          Click on a row to approve a request
+        </div>
         <v-divider></v-divider>
       </template>
 
       <template v-slot:item.created_at="{ item }">
-        {{ item.created_at | formatTimestamp('ll') }}
+        {{ item.created_at | timestamp('ff', 'local') }}
       </template>
       <template v-slot:item.pending="{ item }">
-        <v-simple-checkbox
-          v-model="item.pending"
-          disabled
-        ></v-simple-checkbox>
+        <Checkbox :value="item.pending"></Checkbox>
       </template>
     </v-data-table>
 

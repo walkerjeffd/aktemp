@@ -1,281 +1,247 @@
 <template>
-  <v-main>
-    <v-container>
-      <v-row justify="space-around">
-        <v-col cols="12">
-          <v-card elevation="4">
-            <v-toolbar flat dense color="grey lighten-3">
-              <v-toolbar-title v-if="!$vuetify.breakpoint.mobile">
-                <span class="text-h6">Batch File Upload</span>
-              </v-toolbar-title>
-              <v-spacer></v-spacer>
-              <v-btn text @click="$router.push({ name: 'manageFiles' })">
-                <v-icon left>mdi-chevron-left</v-icon> <span v-if="!$vuetify.breakpoint.mobile">Back to Files</span><span v-else>Back</span>
+  <v-card elevation="2">
+    <v-toolbar flat dense>
+      <v-toolbar-title>
+        <span class="text-h6">Batch File Upload</span>
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn text small @click="$router.push({ name: 'manageFiles' })">
+        <v-icon small left>mdi-chevron-left</v-icon> Back to Files
+      </v-btn>
+    </v-toolbar>
+    <v-divider></v-divider>
+
+    <v-form ref="form" @submit.prevent="submit" :disabled="loading">
+      <v-card-text>
+        <p class="black--text">Select one or more data files. Each file must be in comma-separated value (CSV) format.</p>
+        <v-row>
+          <v-col cols="12" md="6" class="pb-0">
+            <v-file-input
+              ref="filesInput"
+              v-model="files.selected"
+              :rules="files.rules"
+              placeholder="Select data files"
+              truncate-length="200"
+              prepend-icon="mdi-file-delimited-outline"
+              @change="initTable"
+              outlined
+              multiple
+              validate-on-blur
+            >
+            </v-file-input>
+          </v-col>
+        </v-row>
+
+        <div v-show="table.rows.length > 0">
+          <v-divider class="mb-4"></v-divider>
+
+          <div class="text-h6 mb-2">Files Table</div>
+
+          <p class="black--text"><strong>Need help getting started?</strong> Download the Excel template and follow the instructions on the README sheet. You can also download a list of existing stations for the selected Organization for reference.</p>
+          <v-btn
+            color="primary"
+            outlined
+            bloc
+            href="static/AKTEMP-files-template.xlsx"
+            download
+            class="mb-4"
+          ><v-icon left>mdi-download</v-icon> Download Template</v-btn>
+          <v-btn
+            color="primary"
+            outlined
+            bloc
+            class="ml-4 mb-4"
+            @click="downloadStationsFile"
+          ><v-icon left>mdi-download</v-icon> Download Stations</v-btn>
+          <p class="black--text">After you have filled out the table in the template, copy and paste the cells from Excel into the table below (excluding the header row).</p>
+
+          <HotTable
+            ref="hot"
+            :data="table.rows"
+            :colHeaders="true"
+            :settings="table.settings"
+            class="elevation-2"
+          >
+            <HotColumn
+              v-for="col in table.columns"
+              :key="col.prop"
+              :data="col.prop"
+              :title="col.label"
+              :settings="col"
+            ></HotColumn>
+          </HotTable>
+          <div class="text-caption mt-2">Status: {{ message || 'Ready' }}</div>
+          <div class="text--secondary caption mb-4">
+            * = Always Required, † = Conditionally Required. Ctrl+c/Ctrl+v to copy/paste. Right-click to undo/redo.
+          </div>
+
+          <div v-if="table.selected" style="max-width:800px">
+            <Alert
+              v-if="table.selected.status === 'INVALID'"
+              type="error"
+              :title="`Validation Failed on Row ${table.selected.row + 1}`"
+            >
+              <table class="mt-2">
+                <tbody>
+                  <tr>
+                    <td class="text-right pr-2">Row:</td>
+                    <td class="font-weight-bold">{{ table.selected.row + 1 }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2">Filename:</td>
+                    <td class="font-weight-bold">{{ table.selected.filename }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2"># Rows:</td>
+                    <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                    <td class="font-weight-bold">
+                      <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p class="mt-4">Please fix the following errors, then click Submit to try again</p>
+              <ul>
+                <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
+                  <div v-html="err.message"></div>
+                </li>
+              </ul>
+            </Alert>
+            <Alert
+              v-else-if="table.selected.status === 'SUCCESS'"
+              type="success"
+              :title="`File Uploaded on Row ${table.selected.row + 1}`"
+            >
+              <table class="mt-2">
+                <tbody>
+                  <tr>
+                    <td class="text-right pr-2">Row:</td>
+                    <td class="font-weight-bold">{{ table.selected.row + 1 }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2">Filename:</td>
+                    <td class="font-weight-bold">
+                      <router-link :to="{
+                        name: 'manageFile',
+                        params: {
+                          orgnizationId: this.$route.params.organizationId,
+                          fileId: table.selected.file.id
+                        }
+                      }">
+                        {{ table.selected.filename }}
+                      </router-link>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2"># Rows:</td>
+                    <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                    <td class="font-weight-bold">
+                      <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="mt-4">This file has been uploaded to the server and can be removed from the import table.</div>
+            </Alert>
+            <Alert
+              v-else-if="table.selected.status === 'FAILED'"
+              type="error"
+              :title="`Server Error on Row ${table.selected.row + 1}`"
+            >
+              <table class="mt-2">
+                <tbody>
+                  <tr>
+                    <td class="text-right pr-2">Row:</td>
+                    <td class="font-weight-bold">{{ table.selected.row + 1 }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2">Filename:</td>
+                    <td class="font-weight-bold">{{ table.selected.filename }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2"># Rows:</td>
+                    <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                    <td class="font-weight-bold">
+                      <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="body-1 font-weight-bold mt-4">Server Errors</div>
+              <p>Please fix the following errors, then click Submit to try again.</p>
+              <ul>
+                <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
+                  <div>{{ err.message }}</div>
+                </li>
+              </ul>
+            </Alert>
+          </div>
+
+          <Alert
+            v-if="table.failedCount > 0"
+            type="warning"
+            title="Table Contains Failed or Invalid Files"
+            style="max-width:800px"
+            class="mb-0 mt-4"
+          >
+            <p>
+              {{ table.failedCount.toLocaleString() }} file(s) were invalid or failed to be uploaded to the server. Click on any row marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span> for more details.
+            </p>
+            <div v-if="table.rows.length > table.failedCount" class="mt-4">
+              <div>
+                Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been uploaded to the server and can be safely removed from the table above. Click the following button to remove them leaving only the files that failed.
+              </div>
+              <v-btn color="default" @click="removeUploadedFiles" class="mt-4">
+                <v-icon small left>mdi-close</v-icon> Remove Uploaded Files
               </v-btn>
-            </v-toolbar>
+            </div>
+          </Alert>
+        </div>
 
-            <v-form ref="form" @submit.prevent="submit" :disabled="loading">
-              <v-card-text>
-                <!-- ORGANIZATION -->
-                <div>
-                  <div class="text-h6 mb-2">Organization</div>
-                  <p class="black--text">Select the organization for these files.</p>
-                  <v-row>
-                    <v-col cols="12" md="6" lg="4">
-                      <v-select
-                        v-model="organization.selected"
-                        :items="organizations"
-                        :rules="organization.rules"
-                        label="Organization"
-                        item-text="code"
-                        validate-on-blur
-                        outlined
-                        return-object
-                      ></v-select>
-                    </v-col>
-                  </v-row>
-                </div>
+        <div v-if="error">
+          <v-divider class="mb-4"></v-divider>
+          <Alert type="error" title="Error" class="mb-0" style="max-width:800px">{{ error }}</Alert>
+        </div>
+      </v-card-text>
 
-                <v-divider class="mb-4"></v-divider>
+      <v-divider></v-divider>
 
-                <!-- FILES -->
-                <div class="text-h6 mb-2">Select Data Files</div>
-                <p class="black--text">Each file must be in comma-separated value (CSV) format.</p>
-                <v-row>
-                  <v-col cols="12" md="6" class="pb-0">
-                    <v-file-input
-                      ref="filesInput"
-                      v-model="files.selected"
-                      :rules="files.rules"
-                      label="Select data files"
-                      truncate-length="200"
-                      @change="initTable"
-                      outlined
-                      multiple
-                      validate-on-blur
-                    >
-                    </v-file-input>
-                  </v-col>
-                </v-row>
+      <v-card-actions class="pa-4">
+        <v-btn
+          type="submit"
+          color="primary"
+          class="mr-4"
+          :loading="loading"
+        >Submit</v-btn>
+        <v-btn
+          color="default"
+          text
+          @click="clear"
+          :disabled="loading || this.table.rows.length === 0"
+        >Clear</v-btn>
 
-                <div v-show="table.rows.length > 0">
-                  <v-divider class="mb-4"></v-divider>
+        <v-spacer></v-spacer>
 
-                  <div class="text-h6 mb-2">Files Table</div>
-
-                  <p class="black--text"><strong>Need help getting started?</strong> Download the Excel template and follow the instructions on the README sheet. You can also download a list of existing stations for the selected Organization for reference.</p>
-                  <v-btn
-                    color="primary"
-                    outlined
-                    bloc
-                    href="static/AKTEMP-files-template.xlsx"
-                    download
-                    class="mb-4"
-                  ><v-icon left>mdi-download</v-icon> Download Template</v-btn>
-                  <v-btn
-                    color="primary"
-                    outlined
-                    bloc
-                    class="ml-4 mb-4"
-                    @click="downloadStationsFile"
-                  ><v-icon left>mdi-download</v-icon> Download Stations</v-btn>
-                  <p class="black--text">After you have filled out the table in the template, copy and paste the cells from Excel into the table below (excluding the header row).</p>
-
-                  <HotTable
-                    ref="hot"
-                    :data="table.rows"
-                    :colHeaders="true"
-                    :settings="table.settings"
-                    class="elevation-2"
-                  >
-                    <HotColumn
-                      v-for="col in table.columns"
-                      :key="col.prop"
-                      :data="col.prop"
-                      :title="col.label"
-                      :type="col.type"
-                      :source="col.source"
-                      :allow-empty="col.allowEmpty"
-                      :validator="col.validator"
-                      :read-only="col.readOnly"
-                      :renderer="col.renderer"
-                      :width="col.width"
-                    ></HotColumn>
-                  </HotTable>
-                  <div class="text-caption mt-2">Status: {{ message || 'Ready' }}</div>
-                  <div class="text--secondary caption mb-4">
-                    * = Required. Ctrl+c/Ctrl+v to copy/paste. Right-click to undo/redo.
-                  </div>
-
-                  <div v-if="table.selected">
-                    <Alert
-                      v-if="table.selected.status === 'INVALID'"
-                      type="error"
-                      title="Validation Failed"
-                      style="max-width:800px"
-                    >
-                      <table class="mt-2">
-                        <tbody>
-                          <tr>
-                            <td class="text-right pr-2">Row:</td>
-                            <td class="font-weight-bold">{{ table.selected.table_row }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2">Filename:</td>
-                            <td class="font-weight-bold">{{ table.selected.filename }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2"># Rows:</td>
-                            <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
-                            <td class="font-weight-bold">
-                              <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      <p class="mt-4">Please fix the following errors, then click Submit to try again</p>
-                      <ul>
-                        <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
-                          <div v-html="err.error"></div>
-                          <div v-if="err.column && err.column.type === 'dropdown'">
-                            Allowed values: {{ err.column.source.map(d => `'${d}'`).join(', ') }}
-                          </div>
-                          <div v-if="err.details" v-html="err.details"></div>
-                        </li>
-                      </ul>
-                    </Alert>
-                    <Alert
-                      v-else-if="table.selected.status === 'SUCCESS'"
-                      type="success"
-                      title="File Successfully Uploaded"
-                      style="max-width:800px"
-                    >
-                      <table class="mt-2">
-                        <tbody>
-                          <tr>
-                            <td class="text-right pr-2">Row:</td>
-                            <td class="font-weight-bold">{{ table.selected.table_row }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2">Filename:</td>
-                            <td class="font-weight-bold">{{ table.selected.filename }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2"># Rows:</td>
-                            <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
-                            <td class="font-weight-bold">
-                              <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      <div class="mt-4">This file has been uploaded to the server and queued for processing. Visit the <router-link :to="{ name: 'manageFiles' }">Manage Files</router-link> page to check on its status.</div>
-                    </Alert>
-                    <Alert
-                      v-else-if="table.selected.status === 'FAILED'"
-                      type="error"
-                      title="File Upload Failed"
-                      style="max-width:800px"
-                    >
-                      <table class="mt-2">
-                        <tbody>
-                          <tr>
-                            <td class="text-right pr-2">Row:</td>
-                            <td class="font-weight-bold">{{ table.selected.table_row }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2">Filename:</td>
-                            <td class="font-weight-bold">{{ table.selected.filename }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2"># Rows:</td>
-                            <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
-                            <td class="font-weight-bold">
-                              <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      <div class="body-1 font-weight-bold mt-4">Server Errors</div>
-                      <p>Please fix the following errors, then click Submit to try again</p>
-                      <ul>
-                        <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
-                          <div v-html="err.error"></div>
-                          <div v-if="err.details" v-html="err.details"></div>
-                        </li>
-                      </ul>
-                    </Alert>
-                  </div>
-
-                  <Alert
-                    v-if="table.failedCount > 0"
-                    type="warning"
-                    title="Table Contains Failed or Invalid Files"
-                    style="max-width:800px"
-                    class="mb-0"
-                  >
-                    <p>
-                      {{ table.failedCount.toLocaleString() }} file(s) failed to be validated or uploaded to the server (marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span>). Click on the table row for more details.
-                    </p>
-                    <div v-if="table.rows.length > table.failedCount">
-                      <div>
-                        Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been uploaded to the server and can be safely removed from the table above. Click the following button to remove them leaving only the remaining files that failed to upload.
-                      </div>
-                      <v-btn color="default" @click="removeUploadedFiles" class="mt-4">
-                        <v-icon small left>mdi-close</v-icon> Remove Uploaded Files
-                      </v-btn>
-                    </div>
-                  </Alert>
-                </div>
-
-                <div v-if="error">
-                  <v-divider class="mb-4"></v-divider>
-                  <Alert type="error" title="Error" class="mb-0" style="max-width:800px">{{ error }}</Alert>
-                </div>
-              </v-card-text>
-
-              <v-divider></v-divider>
-
-              <v-card-actions class="pa-4">
-                <v-btn
-                  type="submit"
-                  color="primary"
-                  class="mr-4"
-                  :loading="loading"
-                >Submit</v-btn>
-                <v-btn
-                  color="default"
-                  text
-                  @click="initTable"
-                  :disabled="loading || this.table.rows.length === 0"
-                >Clear</v-btn>
-
-                <v-spacer></v-spacer>
-
-                <v-btn
-                  color="default"
-                  text
-                  @click="$router.push({ name: 'manageFiles' })"
-                >Cancel</v-btn>
-              </v-card-actions>
-            </v-form>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
-  </v-main>
+        <v-btn
+          color="default"
+          text
+          @click="$router.push({ name: 'manageFiles' })"
+        >Cancel</v-btn>
+      </v-card-actions>
+    </v-form>
+  </v-card>
 </template>
 
 <script>
@@ -283,9 +249,24 @@ import Handsontable from 'handsontable'
 import { mapGetters } from 'vuex'
 
 import evt from '@/events'
-import { parseCsvFile, parseBooleanOption, isNumber, emptyStringToNull } from '@/lib/utils'
 import uploader from '@/lib/uploader'
-import { fileTypeOptions, timezoneModes, depthCategoryOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions, booleanOptions, utcOffsetOptions } from '@/lib/constants'
+
+const {
+  typeOptions,
+  intervalOptions,
+  fileTimezoneOptions,
+  depthCategoryOptions,
+  temperatureUnitsOptions,
+  sensorAccuracyOptions,
+  depthUnitsOptions,
+  booleanOptions
+} = require('aktemp-utils/constants')
+
+const {
+  validateFileConfig
+} = require('aktemp-utils/validators')
+
+const { parseCsvFile } = require('@/lib/utils')
 
 export default {
   name: 'ManageFilesBatch',
@@ -297,17 +278,8 @@ export default {
 
       files: {
         selected: [],
-        type: null,
         rules: [
           v => v.length > 0 || 'No files selected'
-        ]
-      },
-
-      organization: {
-        selected: null,
-        stations: [],
-        rules: [
-          v => !!v || 'Organization is required'
         ]
       },
 
@@ -352,145 +324,116 @@ export default {
             readOnly: true
           },
           {
-            prop: 'skip_lines',
-            label: 'Skip Lines*',
-            validate: (row) => isNumber(row.skip_lines),
-            rule: '<b>Skip Lines</b> is required and must be a number'
+            prop: 'file_skip',
+            label: 'Skip Lines'
           },
           {
-            prop: 'type',
+            prop: 'file_type',
             label: 'File Type*',
-            validate: (row) => fileTypeOptions.map(d => d.value).includes(row.type),
-            rule: '<b>File Type</b> is required and must match an allowed value',
-            type: 'dropdown',
-            source: fileTypeOptions.map(d => d.value),
+            type: 'autocomplete',
+            strict: false,
+            source: typeOptions.map(d => d.value),
+            width: '120px'
+          },
+          {
+            prop: 'interval',
+            label: 'Interval†',
+            type: 'autocomplete',
+            strict: false,
+            source: intervalOptions.map(d => d.value),
             width: '120px'
           },
           {
             prop: 'station_code',
-            label: 'Station Code',
-            validate: (row) => (row.station_code &&
-                                this.stationCodes.includes(row.station_code)) ||
-                                row.station_column,
-            rule: '<b>Station Code</b> must match an existing station for the selected organization (or be blank if file contains a column of station codes as specified by <b>Station Column</b>)'
+            label: 'Station Code†'
           },
           {
             prop: 'station_column',
-            label: 'Station Column',
-            validate: (row) => row.station_code || row.fields.includes(row.station_column),
-            rule: '<b>Station Column</b> must match a column name (or be blank if file contains data for a single station as specified by <b>Station Code</b>)'
+            label: 'Station Column†'
           },
           {
             prop: 'datetime_column',
-            label: 'Datetime/Date Column*',
-            validate: (row) => row.fields.includes(row.datetime_column),
-            rule: '<b>Datetime/Date Column</b> is required and must match a column name'
+            label: 'Datetime Column*'
           },
           {
             prop: 'time_column',
-            label: 'Time Column',
-            validate: (row) => !row.time_column || row.fields.includes(row.time_column),
-            rule: '<b>Time Column</b> must match a column name (or be blank if times are included in the <b>Datetime Column</b>)'
+            label: 'Time Column'
           },
           {
-            prop: 'timezone_mode',
+            prop: 'datetime_format',
+            label: 'Datetime Format*'
+          },
+          {
+            prop: 'timezone',
             label: 'Timezone Mode*',
-            validate: (row) => timezoneModes.map(d => d.value).includes(row.timezone_mode),
-            rule: '<b>Timezone Mode</b> is required and must match an allowed value',
-            type: 'dropdown',
-            source: timezoneModes.map(d => d.value)
-          },
-          {
-            prop: 'timezone_utcoffset',
-            label: 'UTC Offset',
-            validate: (row) => row.timezone_mode !== 'UTCOFFSET' || utcOffsetOptions.map(d => d.value).includes(row.timezone_utcoffset),
-            rule: '<b>UTC Offset</b> is required and must match an allowed value when <b>Timezone Mode</b>=<b>UTCOFFSET</b>',
-            type: 'dropdown',
-            source: utcOffsetOptions.map(d => d.value)
+            type: 'autocomplete',
+            strict: false,
+            source: fileTimezoneOptions.map(d => d.value)
           },
           {
             prop: 'timezone_column',
-            label: 'Timezone Column',
-            validate: (row) => row.timezone_mode !== 'COLUMN' || row.fields.includes(row.timezone_column),
-            rule: '<b>Timezone Column</b> is required when <b>Timezone Mode</b>=<b>COLUMN</b> and must match a column name'
+            label: 'Timezone Column†'
           },
           {
-            prop: 'value_column',
-            label: 'Temperature Column*',
-            validate: (row) => row.fields.includes(row.value_column),
-            rule: '<b>Temperature Column</b> is required and must match a column name'
+            prop: 'temperature_column',
+            label: 'Temperature Column*'
           },
           {
-            prop: 'value_units',
+            prop: 'temperature_units',
             label: 'Temperature Units*',
-            validate: (row) => temperatureUnitsOptions.map(d => d.value).includes(row.value_units),
-            rule: '<b>Temperature Units</b> is required and must be an allowed value',
-            type: 'dropdown',
+            type: 'autocomplete',
+            strict: false,
             source: temperatureUnitsOptions.map(d => d.value)
           },
           {
-            prop: 'value_missing',
+            prop: 'temperature_missing',
             label: 'Missing Values'
           },
           {
             prop: 'flag_column',
-            label: 'Flag Column',
-            validate: (row) => !row.flag_column || row.fields.includes(row.flag_column),
-            rule: '<b>Flag Column</b> must match a column name (or be blank if not flags are present)'
+            label: 'Flag Column'
           },
           {
             prop: 'depth_category',
             label: 'Depth Category',
-            validate: (row) => !row.depth_category || depthCategoryOptions.map(d => d.value).includes(row.depth_category),
-            rule: '<b>Depth Category</b> must be one of the allowed values (or blank if unknown)',
-            type: 'dropdown',
+            type: 'autocomplete',
+            strict: false,
             source: depthCategoryOptions.map(d => d.value)
           },
           {
             prop: 'depth_value',
-            label: 'Numeric Depth',
-            validate: (row) => row.depth_value === undefined ||
-              row.depth_value === null ||
-              row.depth_value === '' ||
-              isNumber(row.depth_value),
-            rule: '<b>Numeric Depth</b> must be numeric (or blank if unknown)'
-          },
-          {
-            prop: 'depth_units',
-            label: 'Depth Units',
-            validate: (row) => (!row.depth_column && !row.depth_value) || depthUnitsOptions.map(d => d.value).includes(row.depth_units),
-            rule: '<b>Depth Units</b> is required and must match an allowed value if either <b>Numeric Depth</b> or <b>Depth Column</b> is not blank',
-            type: 'dropdown',
-            source: depthUnitsOptions.map(d => d.value)
+            label: 'Numeric Depth'
           },
           {
             prop: 'depth_column',
-            label: 'Depth Column',
-            validate: (row) => !row.depth_column || row.fields.includes(row.depth_column),
-            rule: '<b>Depth Column</b> must match a column name (or be blank if unknown)'
+            label: 'Depth Column†'
+          },
+          {
+            prop: 'depth_units',
+            label: 'Depth Units†',
+            type: 'autocomplete',
+            strict: false,
+            source: depthUnitsOptions.map(d => d.value)
           },
           {
             prop: 'accuracy',
             label: 'Sensor Accuracy',
-            validate: (row) => !row.accuracy || sensorAccuracyOptions.map(d => d.value).includes(row.accuracy),
-            rule: '<b>Sensor Accuracy</b> must match an allowed value (or be blank if unknown)',
-            type: 'dropdown',
+            type: 'autocomplete',
+            strict: false,
             source: sensorAccuracyOptions.map(d => d.value)
           },
           {
             prop: 'sop_bath',
             label: 'SOP Bath',
-            validate: (row) => !row.sop_bath || sensorAccuracyOptions.map(d => d.value).includes(row.sop_bath),
-            rule: '<b>SOP Bath</b> must match an allowed value (or be blank if unknown)',
-            type: 'dropdown',
+            type: 'autocomplete',
+            strict: false,
             source: booleanOptions.map(d => d.value)
           },
           {
             prop: 'reviewed',
             label: 'Reviewed',
-            validate: (row) => !row.reviewed || booleanOptions.map(d => d.value).includes(row.reviewed),
-            rule: '<b>Reviewed</b> must match an allowed value (or be blank if unknown)',
-            type: 'dropdown',
+            type: 'autocomplete',
+            strict: false,
             source: booleanOptions.map(d => d.value)
           }
         ],
@@ -507,10 +450,9 @@ export default {
           preventOverflow: 'horizontal',
           dataSchema: {
             status: '',
-            table_row: '',
             filename: '',
-            skip_lines: '',
-            type: '',
+            file_skip: '',
+            file_type: '',
             station_code: '',
             station_column: '',
             datetime_column: '',
@@ -537,33 +479,19 @@ export default {
   computed: {
     ...mapGetters({
       organizations: 'manage/organizations',
-      defaultOrganization: 'manage/organization'
-    }),
-    stationCodes () {
-      return this.organization.stations
-        ? this.organization.stations.map(d => d.code)
-        : []
-    }
-  },
-  watch: {
-    defaultOrganization () {
-      this.setDefaultOrganization()
-    },
-    'organization.selected' () {
-      this.fetchOrganizationStations()
-    }
+      organization: 'manage/organization',
+      stations: 'manage/stations'
+    })
   },
   async mounted () {
     Handsontable.hooks.add('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
-    this.setDefaultOrganization()
   },
   beforeDestroy () {
-    Handsontable.hooks.remove('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
+    if (this.$refs.hot) {
+      Handsontable.hooks.remove('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
+    }
   },
   methods: {
-    setDefaultOrganization () {
-      this.organization.selected = this.defaultOrganization || null
-    },
     afterSelection (row) {
       this.table.selected = this.table.rows[row]
     },
@@ -572,18 +500,9 @@ export default {
         this.$refs.hot.hotInstance.render()
       }
     },
-    async fetchOrganizationStations () {
-      if (!this.organization.selected) {
-        this.organization.stations = []
-        return
-      }
-      try {
-        this.organization.stations = await this.$http.restricted
-          .get(`/organizations/${this.organization.selected.id}/stations`)
-          .then(d => d.data)
-      } catch (err) {
-        this.error = this.$errorMessage(err)
-      }
+    clear () {
+      this.files.selected = []
+      this.initTable()
     },
     initTable () {
       this.error = null
@@ -593,100 +512,16 @@ export default {
       this.files.selected.forEach((file, i) => {
         this.table.rows.push({
           status: 'READY',
-          table_row: i + 1,
+          row: i,
           file_index: i,
           file,
           filename: file.name,
-          skip_lines: '0',
+          file_skip: '0',
           fields: [],
           errors: []
         })
       })
       // this.renderHot()
-    },
-    findColumnIndex (prop) {
-      return this.table.columns.findIndex(d => d.prop === prop)
-    },
-    updateFailedCount () {
-      console.log('updateFailedCount')
-      this.table.failedCount = this.table.rows.filter(d => d.status === 'FAILED' || d.status === 'INVALID').length
-    },
-    createFileConfig (row) {
-      const config = {
-        file: {
-          filename: row.filename,
-          skipLines: row.skip_lines
-        },
-        station: {
-          mode: row.station_code
-            ? 'STATION'
-            : row.station_column
-              ? 'COLUMN'
-              : null
-        },
-        depth: {
-          category: emptyStringToNull(row.depth_category),
-          value: emptyStringToNull(row.depth_value),
-          column: emptyStringToNull(row.depth_column),
-          units: emptyStringToNull(row.depth_units)
-        },
-        timestamp: {
-          columns: [row.datetime_column],
-          timezone: {
-            mode: row.timezone_mode
-          }
-        },
-        value: {
-          column: row.value_column,
-          units: row.value_units,
-          missing: row.value_missing ? row.value_missing.split(',') : [],
-          flagColumn: emptyStringToNull(row.flag_column)
-        },
-        meta: {}
-      }
-
-      switch (row.type) {
-        case 'CONTINUOUS':
-          config.type = 'SERIES'
-          config.meta.interval = 'CONTINUOUS'
-          break
-        case 'DISCRETE':
-          config.type = 'SERIES'
-          config.meta.interval = 'DISCRETE'
-          break
-        case 'PROFILES':
-          config.type = 'PROFILES'
-          break
-      }
-
-      if (config.station.mode === 'STATION') {
-        const station = this.organization.stations.find(d => d.code === row.station_code)
-        if (!station) {
-          throw new Error(`Could not find station with code '${row.station_code}'`)
-        }
-        config.station.stationId = station.id
-      } else if (config.station.mode === 'COLUMN') {
-        config.station.column = row.station_column
-      }
-
-      if (row.time_column) {
-        config.timestamp.columns.push(row.time_column)
-      }
-
-      switch (row.timezone_mode) {
-        case 'UTCOFFSET':
-          config.timestamp.timezone.utcOffset = parseInt(row.timezone_utcoffset)
-          break
-        case 'COLUMN':
-          config.timestamp.timezone.column = row.timezone_column
-          break
-      }
-
-      config.meta.sop_bath = parseBooleanOption(row.sop_bath)
-      config.meta.accuracy = emptyStringToNull(row.accuracy)
-      config.meta.reviewed = row.reviewed ? parseBooleanOption(row.reviewed) : false
-
-      return config
     },
     async submit () {
       this.error = null
@@ -698,19 +533,17 @@ export default {
         return
       }
 
-      // reset status if failed or invalid
-      this.table.rows.forEach(d => {
-        d.status = d.status === 'FAILED' || d.status === 'INVALID' ? null : d.status
-        d.errors = []
-      })
-      this.table.failedCount = 0
-
       this.loading = true
+      this.table.failedCount = 0
       for (let i = 0; i < this.table.rows.length; i++) {
-        const row = this.table.rows[i]
+        let row = this.table.rows[i]
+
+        // skip empty rows
+        if (this.$refs.hot.hotInstance.isEmptyRow(i)) continue
+
         try {
-          const isValid = await this.validateRow(row, i)
-          if (isValid) {
+          row = await this.validateRow(row, i)
+          if (row.config) {
             await this.uploadFile(row, i)
           }
           if (row.status === 'INVALID' || row.status === 'FAILED') {
@@ -725,57 +558,69 @@ export default {
       }
 
       this.loading = false
-
       this.renderHot()
 
       if (!this.table.rows.some(d => d.status !== 'SUCCESS')) {
         evt.$emit('notify', 'Files have been uploaded', 'success')
-        this.$store.dispatch('manage/setOrganizationById', this.organization.selected.id)
-        this.$router.push({
-          name: 'manageFiles'
-        })
+        this.$router.push({ name: 'manageFiles' })
       }
     },
     async validateRow (row, i) {
-      if (row.status === 'SUCCESS') return true
+      // console.log('validateRow()', i, row)
       const hot = this.$refs.hot.hotInstance
+
+      if (row.status === 'SUCCESS') return row
+      if (hot.isEmptyRow(i)) return row
+
       this.message = `Validating ${row.filename}`
+
+      this.table.columns.forEach((column, j) => {
+        hot.setCellMeta(i, j, 'valid', true)
+      })
       row.status = 'VALIDATING'
       row.errors = []
+      row.row = i
+      row.config = undefined
+
       this.renderHot()
 
-      // read file
       try {
-        const parsed = await parseCsvFile(this.files.selected[i], Number(row.skip_lines))
+        const {
+          filename,
+          fields,
+          config,
+          status,
+          errors,
+          file_index, // eslint-disable-line
+          file,
+          n_rows, // eslint-disable-line
+          row: rowId,
+          ...value
+        } = row
+
+        const parsed = await parseCsvFile(this.files.selected[i], value.file_skip)
         row.n_rows = parsed.data.length
         row.fields = parsed.meta.fields.filter(d => d !== '')
-        hot.setCellMeta(i, this.findColumnIndex('filename'), 'valid', true)
+        row.config = validateFileConfig(value, row.fields, this.stations)
+        console.log(row)
       } catch (err) {
-        hot.setCellMeta(i, this.findColumnIndex('filename'), 'valid', false)
-        row.errors.push({
-          error: '<b>Failed to read file</b>',
-          details: this.$errorMessage(err)
-        })
-      }
-
-      if (row.errors.length === 0) {
-        try {
-          this.table.columns.forEach((column, j) => {
-            if (column.validate && !column.validate(row)) {
-              hot.setCellMeta(i, j, 'valid', false)
-              row.errors.push({
-                error: `${column.rule} (value: ${JSON.stringify(row[column.prop])})`,
-                column
-              })
-            } else {
-              hot.setCellMeta(i, j, 'valid', true)
+        if (!err.details) {
+          row.errors = [{
+            message: err.message || this.$errorMessage(err),
+            details: err
+          }]
+        } else {
+          row.errors = err.details
+          console.log(err.details)
+          row.errors.forEach(d => {
+            const prop = d.path[0]
+            let j = hot.propToCol(prop)
+            if (j === prop) j = hot.propToCol('filename')
+            const column = this.table.columns[j]
+            if (column.label) {
+              d.message = d.message.replace(`"${prop}"`, `<strong>${column.label}</strong>`)
             }
-          })
-        } catch (err) {
-          console.error(err)
-          row.errors.push({
-            error: 'Unexpected error during validation',
-            details: this.$errorMessage(err)
+            hot.setCellMeta(i, j, 'valid', false)
           })
         }
       }
@@ -788,14 +633,16 @@ export default {
       this.renderHot()
       this.message = null
 
-      return row.status === 'READY'
+      return row
     },
     async uploadFile (row, i) {
       if (row.status === 'SUCCESS' || row.status === 'INVALID') return
 
-      const organizationId = this.organization.selected.id
+      const organizationId = this.organization.id
       const file = this.files.selected[row.file_index]
-      const config = this.createFileConfig(row)
+      const config = row.config
+
+      if (!config) throw new Error(`File configuration object not found (row=${i + 1})`)
 
       row.status = 'UPLOADING'
       this.renderHot()
@@ -807,7 +654,9 @@ export default {
       } catch (err) {
         console.log(err)
         row.status = 'FAILED'
-        row.error = this.$errorMessage(err)
+        row.errors = [{
+          message: this.$errorMessage(err)
+        }]
       } finally {
         this.message = null
         this.renderHot()
@@ -816,8 +665,18 @@ export default {
     downloadStationsFile () {
       this.$download.csv(this.organization.stations, `AKTEMP-${this.organization.selected.code}-stations.csv`)
     },
-    removeUploadedFiles () {
-      this.table.rows = this.table.rows.filter(d => d.status !== 'SUCCESS')
+    async removeUploadedFiles () {
+      this.loading = true
+      const rowsToRemove = []
+      this.table.rows.forEach((d, i) => {
+        if (d.status === 'SUCCESS') rowsToRemove.push([i, 1])
+      })
+      this.$refs.hot.hotInstance.alter('remove_row', rowsToRemove)
+      this.table.rows.forEach((d, i) => {
+        d.row = i
+      })
+      this.loading = false
+      this.renderHot()
     }
   }
 }

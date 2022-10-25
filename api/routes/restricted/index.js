@@ -4,7 +4,7 @@ const basicAuth = require('express-basic-auth')
 const createError = require('http-errors')
 
 const { cognitoAuth } = require('../../middleware/auth')
-const { User, Organization } = require('../../db/models/index')
+const { User, Organization } = require('aktemp-db/models/index')
 
 const router = express.Router()
 
@@ -72,6 +72,7 @@ const attachOrganization = async (req, res, next) => {
 router.route('/')
   .get((req, res, next) => res.status(200).json(res.locals.user))
 
+router.use('/flag-types', require('./flag-types'))
 router.use('/organizations', require('./organizations'))
 router.use('/organizations/:organizationId', asyncHandler(attachOrganization), require('./organization'))
 router.use('/files', require('./files'))

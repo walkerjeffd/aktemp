@@ -48,13 +48,13 @@
           <td class="text-right grey--text text--darken-2">
             Start
           </td>
-          <td class="font-weight-bold">{{ series.start_datetime | formatTimestamp('lll z', series.station_timezone) }}</td>
+          <td class="font-weight-bold">{{ series.start_datetime | timestamp('ff ZZZZ', series.station_timezone) }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             End
           </td>
-          <td class="font-weight-bold">{{ series.end_datetime | formatTimestamp('lll z', series.station_timezone) }}</td>
+          <td class="font-weight-bold">{{ series.end_datetime | timestamp('ff ZZZZ', series.station_timezone) }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -84,14 +84,14 @@
           <td class="text-right grey--text text--darken-2">
             Accuracy
           </td>
-          <td class="font-weight-bold">{{ series.accuracy | accuracy }}</td>
+          <td class="font-weight-bold">{{ series.accuracy }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
             SOP Bath
           </td>
           <td class="font-weight-bold">
-            <v-simple-checkbox v-if="series.sop_bath !== null" :value="series.sop_bath" disabled></v-simple-checkbox>
+            <Checkbox :value="series.sop_bath"></Checkbox>
           </td>
         </tr>
         <tr>
@@ -99,7 +99,7 @@
             Reviewed
           </td>
           <td class="font-weight-bold">
-            <v-simple-checkbox :value="series.reviewed" disabled></v-simple-checkbox>
+            <Checkbox :value="series.reviewed"></Checkbox>
           </td>
         </tr>
       </tbody>

@@ -1,12 +1,14 @@
 import Papa from 'papaparse'
-import '../plugins/dayjs'
-import dayjs from 'dayjs'
-import * as chrono from 'chrono-node'
 
-import { sensorAccuracyOptions } from '@/lib/constants'
+const { flagLabel } = require('aktemp-utils/flags')
 
-export function isNumber (x) {
-  return !(isNaN(x) || x === null || (typeof x === 'string' && x.trim() === ''))
+export function readLocalFile (file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsText(file)
+  })
 }
 
 export function parseCsvFile (file, skipLines = 0) {
@@ -48,33 +50,6 @@ export const sleep = async (ms) => {
   await new Promise((resolve, reject) => setTimeout(resolve, 2000))
 }
 
-// bools ----------------------------------------------------
-
-export const parseBooleanOption = (value) => {
-  if (isString(value) && value.toLowerCase() === 'true') {
-    return true
-  } else if (isString(value) && value.toLowerCase() === 'false') {
-    return false
-  } else {
-    return null
-  }
-}
-export const formatBooleanOption = (value) => {
-  if (value === true) return 'TRUE'
-  else if (value === false) return 'FALSE'
-}
-
-export const formatAccuracy = (value) => {
-  const item = sensorAccuracyOptions.find(d => d.value === value)
-  return item ? item.label : null
-}
-
-// strings --------------------------------------------------
-
-function isString (value) {
-  return typeof value === 'string' || value instanceof String
-}
-
 export const trim = (x) => {
   if (typeof x === 'string') {
     return x.trim()
@@ -83,8 +58,6 @@ export const trim = (x) => {
 }
 
 export const joinStrings = x => x.map(d => `'${d}'`).join(', ')
-
-// flags ----------------------------------------------------
 
 export function assignDailyFlags (values, flags) {
   values = values.slice()
@@ -147,47 +120,4 @@ export function assignRawFlags (values, flags) {
   })
 
   return { values, flags }
-}
-
-export function flagLabel (flag) {
-  let label = flag.flag_type_id
-  if (flag.flag_type_id === 'OTHER') {
-    label += ` (${flag.flag_type_other || 'N/A'})`
-  }
-  return label
-}
-
-// timestamps -----------------------------------------------
-
-export function guessUtcOffset (timestamp, stationTimezone) {
-  const d = parseTimestamp(timestamp, 0).tz(stationTimezone)
-  if (!d.isValid()) {
-    throw new Error(`Failed to guess UTC offset for timestamp (${timestamp}) at time zone (${stationTimezone})`)
-  }
-  return d.utcOffset() / 60
-}
-
-export function parseTimestamp (timestamp, utcOffset = 0) {
-  // timestamp: string
-  // utcOffset: number (hours)
-  // returns dayjs object
-  let x = chrono.strict.parseDate(timestamp, { timezone: 'UTC' })
-  if (x === null) {
-    x = chrono.strict.parseDate(timestamp.replace('2:', '3:'), { timezone: 'UTC' })
-    if (x !== null) {
-      x = dayjs.utc().subtract(1, 'hour').toDate()
-    }
-  }
-  if (!x) {
-    throw new Error(`Failed parse timestamp (${timestamp})`)
-  }
-  return dayjs(x).subtract(utcOffset, 'hours')
-}
-
-export function formatTimestamp (timestamp, format, timezone) {
-  return timezone ? dayjs(timestamp).tz(timezone).format(format) : dayjs(timestamp).format(format)
-}
-
-export function emptyStringToNull (x) {
-  return x === '' ? null : x
 }

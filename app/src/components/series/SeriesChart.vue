@@ -14,8 +14,9 @@
 
 <script>
 import * as d3 from 'd3'
+import { assignDailyFlags, assignRawFlags } from '@/lib/utils'
 
-import { flagLabel, assignDailyFlags, assignRawFlags } from '@/lib/utils'
+const { flagLabel } = require('aktemp-utils/flags')
 
 export default {
   name: 'SeriesChart',
@@ -36,7 +37,9 @@ export default {
           animation: false,
           events: {
             load: async (e) => {
+              console.log('seriesChart:chart:load')
               this.chart = e.target
+              window.chart = this.chart
               await this.fetchDaily()
             }
           }
@@ -229,31 +232,31 @@ export default {
   },
   watch: {
     series () {
-      // console.log('watch:series')
+      console.log('seriesChart:watch:series')
       this.fetchDaily()
     },
     dailySeries () {
-      // console.log('watch:dailySeries')
+      console.log('seriesChart:watch:dailySeries')
       this.renderDaily()
     },
     rawSeries () {
-      // console.log('watch:rawSeries')
+      console.log('seriesChart:watch:rawSeries')
       this.renderRaw()
     },
     selected () {
-      // console.log('watch:selected')
+      console.log('seriesChart:watch:selected')
       this.renderDaily()
       // this.afterSetExtremes()
     },
     showFlags () {
-      // console.log('watch:showFlags')
+      console.log('seriesChart:watch:showFlags')
       this.updateNavigator()
     },
     mode (value, old) {
-      // console.log('watch:mode', value, old)
+      console.log('seriesChart:watch:mode', value, old)
       if (!this.chart) return
 
-      const redraw = true
+      const redraw = false
 
       this.chart.get(`flag-${value}`).update({
         showInLegend: true,
@@ -290,12 +293,13 @@ export default {
   },
   methods: {
     async afterSetExtremes () {
+      console.log('seriesChart:afterSetExtremes')
       if (!this.chart) return
       const extremes = this.chart.xAxis[0].getExtremes()
-      const start = this.$date(extremes.min)
-      const end = this.$date(extremes.max)
-      const durationDays = end.diff(start, 'day', true)
-      // console.log('afterSetExtremes', start.toISOString(), end.toISOString(), durationDays)
+      const start = this.$luxon.DateTime.fromMillis(extremes.min)
+      const end = this.$luxon.DateTime.fromMillis(extremes.max)
+      if (!start.isValid || !end.isValid) return
+      const durationDays = end.diff(start, 'days').as('days')
 
       // remove existing raw series
       this.chart.series.map(d => d.options.id)
@@ -303,13 +307,14 @@ export default {
         .forEach(id => this.chart.get(id).remove(false))
 
       if (durationDays <= 31) {
-        await this.fetchRaw(start.toDate(), end.toDate())
+        await this.fetchRaw(start.toJSDate(), end.toJSDate())
         this.mode = 'raw'
       } else if (this.mode === 'raw') {
         this.mode = 'daily'
       }
     },
     async fetchDaily () {
+      console.log('seriesChart:fetchDaily')
       this.loading = true
       this.error = null
       // this.chart.showLoading('Loading data from server...')
@@ -342,14 +347,14 @@ export default {
       }
     },
     renderDaily () {
-      // console.log('renderDaily')
+      console.log('seriesChart:renderDaily')
       if (!this.chart) return
       // this.chart.showLoading('Loading data from server...')
 
       // remove existing series
       this.chart.series.map(d => d.options.id)
         .filter(d => d.startsWith('daily-'))
-        .forEach(id => this.chart.get(id).remove())
+        .forEach(id => this.chart.get(id).remove(false))
 
       // generate chart series for selected
       this.selectedDailySeries.map(s => {
@@ -411,17 +416,17 @@ export default {
           ...flagSeries
         ]
       }).flat()
-        .forEach(d => this.chart.addSeries(d))
+        .forEach(d => this.chart.addSeries(d, false))
 
       const extremes = this.chart.xAxis[0].getExtremes()
       if (isFinite(extremes.dataMin) && isFinite(extremes.dataMax)) {
-        this.chart.xAxis[0].setExtremes(extremes.dataMin, extremes.dataMax)
+        this.chart.xAxis[0].setExtremes(extremes.dataMin, extremes.dataMax, false)
       }
 
       this.updateNavigator()
     },
     async fetchRaw (start, end) {
-      // console.log('fetchRaw', start.toISOString(), end.toISOString())
+      console.log('seriesChart:fetchRaw', start.toISOString(), end.toISOString())
       if (!this.chart) return
 
       this.chart.showLoading('Loading data from server...')
@@ -444,7 +449,7 @@ export default {
       this.chart.hideLoading()
     },
     renderRaw () {
-      // console.log('renderRaw')
+      console.log('seriesChart:renderRaw')
 
       if (!this.chart) return
 
@@ -487,7 +492,7 @@ export default {
         ]
       }).flat()
 
-      chartSeries.forEach(d => this.chart.addSeries(d, true))
+      chartSeries.forEach(d => this.chart.addSeries(d, false))
 
       this.chart.redraw()
       this.updateNavigator()
@@ -495,7 +500,7 @@ export default {
       this.loading = false
     },
     getNavigatorData () {
-      // console.log('getNavigatorData')
+      console.log('seriesChart:getNavigatorData')
       return Array.from(
         d3.rollup(
           this.selectedDailySeries
@@ -510,7 +515,7 @@ export default {
       ).sort((a, b) => d3.ascending(a[0], b[0]))
     },
     updateNavigator () {
-      // console.log('updateNavigator')
+      console.log('seriesChart:updateNavigator')
       if (!this.chart) return
       const navigatorData = this.getNavigatorData()
       this.chart.get('navigator')

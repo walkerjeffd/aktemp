@@ -5,7 +5,6 @@
     colored-border
     border="left"
     class="body-2"
-    :value="true"
     v-bind="$attrs"
   >
     <div class="font-weight-bold body-1">{{ title }}</div>

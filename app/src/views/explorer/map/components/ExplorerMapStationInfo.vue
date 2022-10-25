@@ -43,11 +43,7 @@
             Fully Mixed
           </td>
           <td class="font-weight-bold">
-            <v-simple-checkbox
-              v-if="station.mixed !== null"
-              :value="station.mixed"
-              disabled
-            ></v-simple-checkbox>
+            <Checkbox :value="station.mixed"></Checkbox>
           </td>
         </tr>
         <tr>
@@ -55,11 +51,7 @@
             Active
           </td>
           <td class="font-weight-bold">
-            <v-simple-checkbox
-              v-if="station.active !== null"
-              :value="station.active"
-              disabled
-            ></v-simple-checkbox>
+            <Checkbox :value="station.active"></Checkbox>
           </td>
         </tr>
         <tr>

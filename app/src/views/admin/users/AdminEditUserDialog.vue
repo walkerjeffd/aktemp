@@ -35,7 +35,7 @@
                   style="width:140px">
                   Created
                 </td>
-                <td class="font-weight-bold">{{ user.created_at | formatTimestamp('lll z') }}</td>
+                <td class="font-weight-bold">{{ user.created_at | timestamp('ff', 'local') }}</td>
               </tr>
               <tr>
                 <td
@@ -43,7 +43,7 @@
                   style="width:140px">
                   Updated
                 </td>
-                <td class="font-weight-bold">{{ user.updated_at | formatTimestamp('lll z') }}</td>
+                <td class="font-weight-bold">{{ user.updated_at | timestamp('ff', 'local') }}</td>
               </tr>
               <tr>
                 <td
@@ -72,10 +72,7 @@
                   Enabled
                 </td>
                 <td class="font-weight-bold">
-                  <v-simple-checkbox
-                    v-model="user.enabled"
-                    disabled
-                  ></v-simple-checkbox>
+                  <Checkbox :value="user.enabled"></Checkbox>
                 </td>
               </tr>
               <tr>
@@ -120,7 +117,7 @@
               @input="modified = true"
             ></v-autocomplete>
 
-            <div class="d-flex justify-end mt-4">
+            <div class="d-flex justify-center mt-4">
               <v-btn
                 v-if="!user.enabled"
                 color="success"

@@ -1,5 +1,4 @@
 const createError = require('http-errors')
-// const { getCurrentInvoke } = require('@vendia/serverless-express')
 const jwt = require('jsonwebtoken')
 const { isLambda } = require('../utils')
 

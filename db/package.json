@@ -1,0 +1,19 @@
+{
+  "name": "aktemp-db",
+  "version": "1.0.0",
+  "description": "> Jeffrey D Walker, PhD | Walker Environmental Research LLC   > Developed for Becky Shaftel and Marcus Geist | Univ. Alaska Anchorage with funding from US EPA",
+  "main": "knex.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1231.0",
+    "debug": "^4.3.4",
+    "dotenv-flow": "^3.2.0",
+    "knex": "^2.3.0",
+    "objection": "^3.0.1",
+    "pg": "^8.8.0"
+  }
+}

@@ -1,7 +1,7 @@
 const createError = require('http-errors')
 
 const { notify } = require('../aws')
-const { Request } = require('../db/models')
+const { Request } = require('aktemp-db/models')
 
 function newRequestMessage (params) {
   const d = new Date()

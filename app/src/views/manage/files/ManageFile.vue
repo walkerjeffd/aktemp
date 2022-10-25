@@ -1,89 +1,82 @@
 <template>
-  <v-main>
-    <v-container>
-      <v-row justify="space-around">
-        <v-col cols="12">
-          <v-card elevation="4">
-            <v-toolbar flat dense color="grey lighten-3">
-              <v-toolbar-title v-if="!$vuetify.breakpoint.mobile">
-                <span class="text-h6">Manage Data File</span>
-              </v-toolbar-title>
-              <v-spacer></v-spacer>
-              <v-btn text @click="$router.push({ name: 'manageFiles' })">
-                <v-icon left>mdi-chevron-left</v-icon> <span v-if="!$vuetify.breakpoint.mobile">Back to Files</span><span v-else>Back</span>
-              </v-btn>
-            </v-toolbar>
+  <v-card elevation="2">
+    <v-toolbar flat dense>
+      <v-toolbar-title>
+        <span class="text-h6">{{ file ? file.filename : '' }}</span>
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn text small @click="$router.push({ name: 'manageFiles' })">
+        <v-icon small left>mdi-chevron-left</v-icon> Back to Files
+      </v-btn>
+    </v-toolbar>
+    <v-divider></v-divider>
 
-            <v-card-text>
-              <Alert type="error" title="Failed to Load File" class="ma-4" v-if="error">{{ error }}</Alert>
-              <v-row v-else>
-                <v-col cols="12" lg="4" xl="3">
-                  <ManageFileInfo :file="file" :loading="loading" :refreshing="refreshing" @refresh="fetch(true)"></ManageFileInfo>
-                </v-col>
-                <v-col cols="12" lg="8" xl="9">
-                  <Loading v-if="loading" class="pb-8"></Loading>
-                  <Alert type="error" title="File Not Found" class="ma-4" v-else-if="!file">File was not found on server</Alert>
-                  <div v-else>
-                    <Alert type="error" title="File Created But Not Uploaded" v-if="file.status == 'CREATED'">File has been created in the database, but was not actually uploaded. This indicates a problem occurred with the upload form. Please delete this file and try again.</Alert>
-                    <Alert type="warning" title="File Is Being Uploaded" v-else-if="file.status === 'UPLOADING'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
-                    <Alert type="info" title="File Has Been Uploaded" v-else-if="file.status === 'UPLOADED'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
-                    <Alert type="info" title="File Is Queued for Processing" v-else-if="file.status === 'QUEUED'">If the status does not change within an hour, please delete this file and try to upload it again. It is safe to close the browser or navigate to another page, and then check back later.</Alert>
-                    <Alert type="warning" title="File Is Being Processed" v-else-if="file.status === 'PROCESSING'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
-                    <Alert type="error" title="Failed To Process File" v-else-if="file.status === 'FAILED'">
-                      <p>File was successfully uploaded, but failed to be processed. Please review the error below, fix the file, and try uploading again.</p>
-                      <div class="font-weight-bold">{{ file.error || 'Unknown error'}}</div>
-                    </Alert>
-                    <div v-else>
-                      <v-sheet v-if="file.type === 'SERIES'">
-                        <Alert
-                          v-if="series.error"
-                          type="error"
-                          title="Failed to Get Timeseries"
-                          class="elevation-2"
-                        >{{ series.error }}</Alert>
+    <v-card-text>
+      <Alert type="error" title="Failed to Load File" class="ma-4" v-if="error">{{ error }}</Alert>
+      <v-row v-else>
+        <v-col cols="12" lg="4" xl="3">
+          <ManageFileInfo :file="file" :loading="loading" :refreshing="refreshing" @refresh="fetch(true)"></ManageFileInfo>
+        </v-col>
+        <v-col cols="12" lg="8" xl="9">
+          <Loading v-if="loading" class="pb-8"></Loading>
+          <Alert type="error" title="File Not Found" class="ma-4" v-else-if="!file">File was not found on server</Alert>
+          <div v-else>
+            <Alert type="error" title="File Created But Not Uploaded" v-if="file.status == 'CREATED'">File has been created in the database, but was not actually uploaded. This indicates a problem occurred with the upload form. Please delete this file and try again.</Alert>
+            <Alert type="warning" title="File Is Being Uploaded" v-else-if="file.status === 'UPLOADING'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
+            <Alert type="info" title="File Has Been Uploaded" v-else-if="file.status === 'UPLOADED'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
+            <Alert type="info" title="File Is Queued for Processing" v-else-if="file.status === 'QUEUED'">If the status does not change within an hour, please delete this file and try to upload it again. It is safe to close the browser or navigate to another page, and then check back later.</Alert>
+            <Alert type="warning" title="File Is Being Processed" v-else-if="file.status === 'PROCESSING'">If the status does not change in the next few minutes, please delete this file and try to upload it again.</Alert>
+            <Alert type="error" title="Failed To Process File" v-else-if="file.status === 'FAILED'">
+              <p>File was successfully uploaded, but failed to be processed. Please review the error below, fix the file, and try uploading again.</p>
+              <div class="font-weight-bold">{{ file.error || 'Unknown error'}}</div>
+            </Alert>
+            <div v-else>
+              <v-sheet v-if="file.type === 'SERIES'">
+                <Alert
+                  v-if="series.error"
+                  type="error"
+                  title="Failed to Get Timeseries"
+                  class="elevation-2"
+                >{{ series.error }}</Alert>
 
-                        <SeriesTable
-                          v-else
-                          :series="file.series"
-                          :selected="series.selected"
-                          :columns="['id', 'start_datetime', 'end_datetime', 'reviewed']"
-                          @select="selectSeries"
-                        ></SeriesTable>
+                <SeriesTable
+                  v-else
+                  :series="file.series"
+                  :selected="series.selected"
+                  :columns="['id', 'start_datetime', 'end_datetime', 'reviewed']"
+                  @select="selectSeries"
+                ></SeriesTable>
 
-                        <SelectedSeriesCard
-                          v-if="series.selected"
-                          :series="series.selected"
-                          @close="selectSeries()"
-                          @delete="onDeleteSeries()"
-                        ></SelectedSeriesCard>
-                      </v-sheet>
-                      <v-sheet v-if="file.type === 'PROFILES'">
-                        <Alert
-                          v-if="profiles.error"
-                          type="error"
-                          title="Failed to Get Vertical Profiles"
-                          class="elevation-2"
-                        >{{ profiles.error }}</Alert>
-                        <ProfilesTable
-                          :profiles="file.profiles"
-                          :selected="profiles.selected"
-                          :columns="['id', 'date']"
-                          @select="selectProfile"
-                          v-else
-                        ></ProfilesTable>
+                <SelectedSeriesCard
+                  v-if="series.selected"
+                  :series="series.selected"
+                  @close="selectSeries()"
+                  @delete="onDeleteSeries()"
+                ></SelectedSeriesCard>
+              </v-sheet>
+              <v-sheet v-if="file.type === 'PROFILES'">
+                <Alert
+                  v-if="profiles.error"
+                  type="error"
+                  title="Failed to Get Vertical Profiles"
+                  class="elevation-2"
+                >{{ profiles.error }}</Alert>
+                <ProfilesTable
+                  :profiles="file.profiles"
+                  :selected="profiles.selected"
+                  :columns="['id', 'date']"
+                  @select="selectProfile"
+                  v-else
+                ></ProfilesTable>
 
-                        <Alert type="error" title="Not Implemented">Profiles chart not yet implemented</Alert>
-                      </v-sheet>
-                    </div>
-                  </div>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
+                <Alert type="error" title="Not Implemented">Profiles chart not yet implemented</Alert>
+              </v-sheet>
+            </div>
+          </div>
         </v-col>
       </v-row>
-    </v-container>
-  </v-main>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script>

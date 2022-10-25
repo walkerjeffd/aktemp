@@ -1,6 +1,6 @@
 const createError = require('http-errors')
 
-const { Series, Station } = require('../db/models')
+const { Series, Station } = require('aktemp-db/models')
 
 async function attachSeries (req, res, next) {
   const series = await Series.query()

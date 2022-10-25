@@ -44,8 +44,3 @@ pre {
 .text-monospace {
   font-family: monospace;
 }
-
-/* prevent hidden dropdowns */
-/* .handsontable .handsontableEditor {
-  position: fixed;
-} */

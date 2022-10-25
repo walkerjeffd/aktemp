@@ -7,7 +7,7 @@ const {
   ForeignKeyViolationError,
   CheckViolationError,
   DataError
-} = require('objection')
+} = require('aktemp-db/errors')
 
 function databaseErrorHandler (err, req, res, next) {
   if (err instanceof ValidationError) {
@@ -57,7 +57,7 @@ function databaseErrorHandler (err, req, res, next) {
   } else if (err instanceof UniqueViolationError) {
     if (err.constraint === 'stations_organization_id_code_unique') {
       res.status(409).send({
-        message: 'Station code already exists for this organization, must be unique.',
+        message: `Station code ('${req.body.code}') already exists for this organization.`,
         type: 'UniqueViolation',
         data: {
           columns: err.columns,

@@ -33,7 +33,7 @@
                       <v-divider></v-divider>
 
                       <div class="pa-4 text-right">
-                        <DownloadButton @click="downloadFile" small></DownloadButton>
+                        <DownloadButton @click="downloadStation" text="Download Station"></DownloadButton>
                       </div>
                     </v-sheet>
                   </v-col>
@@ -112,8 +112,8 @@ export default {
         this.status.loading = false
       }
     },
-    downloadFile () {
-      this.$download.csv([this.station], `station-${this.station.organization_code}-${this.station.code}.csv`, ['organization_code', 'code', 'description', 'waterbody_name', 'waterbody_type', 'latitude', 'longitude', 'placement', 'mixed', 'active', 'reference'])
+    downloadStation () {
+      this.$download.stations([this.station])
     }
   }
 }

@@ -4,14 +4,18 @@
     scrollable
     max-width="800"
     @keydown.esc="close"
-    style="z-index:2000"
+    style="z-index:5000"
   >
     <v-card>
-      <v-toolbar color="grey lighten-2">
+      <v-toolbar flat dense color="grey lighten-2">
         <v-toolbar-title class="text-h6">
           <span v-if="!station">Create Station</span>
           <span v-else>Edit Station</span>
         </v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon small @click="close" class="mr-0">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
       </v-toolbar>
 
       <v-card-text class="body-2 pa-4">
@@ -40,7 +44,7 @@
             :rules="code.rules"
             label="Station Code"
             counter
-            maxlength="50"
+            :maxlength="code.maxLength"
             hint="A short name or site code for this station (e.g. Browns Brook or BB001). Must be unique within organization."
             persistent-hint
             validate-on-blur
@@ -58,7 +62,6 @@
                 persistent-hint
                 validate-on-blur
                 outlined
-                clearable
               ></v-text-field>
             </v-col>
             <v-col cols="6">
@@ -71,7 +74,6 @@
                 persistent-hint
                 validate-on-blur
                 outlined
-                clearable
               ></v-text-field>
             </v-col>
           </v-row>
@@ -86,6 +88,29 @@
             outlined
             clearable
           ></v-select>
+          <v-text-field
+            v-model="description.value"
+            :rules="description.rules"
+            label="Description"
+            counter
+            :maxlength="description.maxLength"
+            hint="Description of station location (e.g., Browns Brook Downstream of Rt 1 Bridge)"
+            persistent-hint
+            validate-on-blur
+            outlined
+            clearable
+          ></v-text-field>
+          <v-text-field
+            v-model="waterbodyName.value"
+            :rules="waterbodyName.rules"
+            label="Waterbody Name"
+            counter
+            :maxlength="waterbodyName.maxLength"
+            persistent-hint
+            validate-on-blur
+            outlined
+            clearable
+          ></v-text-field>
           <v-select
             v-model="waterbodyType.value"
             :items="waterbodyType.options"
@@ -97,29 +122,6 @@
             outlined
             clearable
           ></v-select>
-          <v-text-field
-            v-model="waterbodyName.value"
-            :rules="waterbodyName.rules"
-            label="Waterbody Name"
-            counter
-            maxlength="100"
-            persistent-hint
-            validate-on-blur
-            outlined
-            clearable
-          ></v-text-field>
-          <v-text-field
-            v-model="description.value"
-            :rules="description.rules"
-            label="Description"
-            counter
-            maxlength="250"
-            hint="Description of station location (e.g., Browns Brook Downstream of Rt 1 Bridge)"
-            persistent-hint
-            validate-on-blur
-            outlined
-            clearable
-          ></v-text-field>
           <v-select
             v-model="placement.value"
             :items="placement.options"
@@ -167,7 +169,7 @@
 
       <v-divider></v-divider>
 
-      <Alert type="error" title="Failed to Save Station" v-if="error" class="ma-4">{{error}}</Alert>
+      <Alert type="error" title="Failed to Save Station" v-if="error" class="mt-4 mx-4 mb-0">{{error}}</Alert>
 
       <v-card-actions class="pa-4">
         <v-btn
@@ -186,9 +188,17 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { parseBooleanOption, formatBooleanOption, trim } from '@/lib/utils'
-import { timezoneOptions, placementOptions, waterbodyTypeOptions, booleanOptions, fieldConstraints } from '@/lib/constants'
+
 import evt from '@/events'
+
+const {
+  constraints,
+  stationTimezoneOptions,
+  placementOptions,
+  waterbodyTypeOptions,
+  booleanOptions
+} = require('aktemp-utils/constants')
+const { validateStation } = require('aktemp-utils/validators')
 
 export default {
   name: 'StationForm',
@@ -211,9 +221,11 @@ export default {
       },
       code: {
         value: '',
+        maxLength: constraints.station.code.maxLength,
         rules: [
           v => !!v || 'Code is required',
-          v => (!!v && v.trim().length <= fieldConstraints.station.code.maxLength) || `Code cannot exceed ${fieldConstraints.station.code.maxLength} characters`
+          v => (!!v && v.trim().length <= constraints.station.code.maxLength) ||
+            `Code cannot exceed ${constraints.station.code.maxLength} characters`
         ]
       },
       latitude: {
@@ -221,7 +233,9 @@ export default {
         rules: [
           v => !!v || 'Latitude is required',
           v => !isNaN(Number(v)) || 'Latitude must be a decimal number',
-          v => (Number(v) <= 75 && Number(v) >= 45) || 'Latitude must be between 45 and 75'
+          v => (Number(v) >= constraints.station.latitude.min &&
+                Number(v) <= constraints.station.latitude.max) ||
+            `Latitude must be between ${constraints.station.latitude.min} and ${constraints.station.latitude.max}`
         ]
       },
       longitude: {
@@ -229,20 +243,25 @@ export default {
         rules: [
           v => !!v || 'Longitude is required',
           v => !isNaN(Number(v)) || 'Longitude must be a decimal number',
-          v => (Number(v) <= -125 && Number(v) >= -180) || 'Longitude must be between -125 and -180'
+          v => (Number(v) >= constraints.station.longitude.min &&
+                Number(v) <= constraints.station.longitude.max) ||
+            `Longitude must be between ${constraints.station.longitude.min} and ${constraints.station.longitude.max}`
         ]
       },
       timezone: {
         value: null,
-        options: timezoneOptions,
+        options: stationTimezoneOptions,
         rules: [
           v => !!v || 'Timezone is required'
         ]
       },
       description: {
         value: '',
+        maxLength: constraints.station.description.maxLength,
         rules: [
-          v => !v || (!!v && v.trim().length <= fieldConstraints.station.description.maxLength) || `Description cannot exceed ${fieldConstraints.station.description.maxLength} characters`
+          v => !v ||
+            (!!v && v.trim().length <= constraints.station.description.maxLength) ||
+            `Description cannot exceed ${constraints.station.description.maxLength} characters`
         ]
       },
       placement: {
@@ -252,8 +271,11 @@ export default {
       },
       waterbodyName: {
         value: null,
+        maxLength: constraints.station.waterbody_name.maxLength,
         rules: [
-          v => !v || (!!v && v.trim().length <= fieldConstraints.station.waterbodyName.maxLength) || `Name cannot exceed ${fieldConstraints.station.waterbodyName.maxLength} characters`
+          v => !v ||
+            (!!v && v.trim().length <= constraints.station.waterbody_name.maxLength) ||
+            `Name cannot exceed ${constraints.station.waterbody_name.maxLength} characters`
         ]
       },
       waterbodyType: {
@@ -284,7 +306,7 @@ export default {
   computed: {
     ...mapGetters({
       organizations: 'manage/organizations',
-      defaultOrganization: 'manage/organization'
+      organization: 'manage/organization'
     })
   },
   methods: {
@@ -308,29 +330,39 @@ export default {
       }
 
       this.loading = true
-      const payload = {
+      const value = {
         organization_id: this.organizationId.value,
-        code: trim(this.code.value),
-        description: trim(this.description.value),
+        code: this.code.value,
         latitude: this.latitude.value,
         longitude: this.longitude.value,
-        placement: this.placement.value,
         timezone: this.timezone.value,
-        waterbody_name: trim(this.waterbodyName.value),
+        description: this.description.value,
+        waterbody_name: this.waterbodyName.value,
         waterbody_type: this.waterbodyType.value,
-        mixed: parseBooleanOption(this.mixed.value),
-        reference: trim(this.reference.value),
+        placement: this.placement.value,
+        mixed: this.mixed.value,
         active: this.active.value,
+        reference: this.reference.value,
         private: this.private_.value
+      }
+
+      let payload
+      try {
+        payload = validateStation(value)
+      } catch (err) {
+        this.error = err.toString()
+        return
       }
 
       try {
         let response
         if (this.station) {
-          response = await this.$http.restricted.put(`/organizations/${this.station.organization_id}/stations/${this.station.id}`, payload)
+          response = await this.$http.restricted
+            .put(`/organizations/${this.station.organization_id}/stations/${this.station.id}`, payload)
           evt.$emit('notify', `Station (${payload.code}) has been updated`, 'success')
         } else {
-          response = await this.$http.restricted.post(`/organizations/${payload.organization_id}/stations`, payload)
+          response = await this.$http.restricted
+            .post(`/organizations/${payload.organization_id}/stations`, payload)
           evt.$emit('notify', `Station (${payload.code}) has been saved`, 'success')
         }
 
@@ -363,17 +395,17 @@ export default {
         this.waterbodyName.value = this.station.waterbody_name
         this.waterbodyType.value = this.station.waterbody_type
         this.active.value = this.station.active
-        this.mixed.value = formatBooleanOption(this.station.mixed)
+        this.mixed.value = this.station.mixed
         this.reference.value = this.station.reference
         this.private_.value = this.station.private
       } else {
-        this.organizationId.value = this.defaultOrganization ? this.defaultOrganization.id : null
+        this.organizationId.value = this.organization ? this.organization.id : null
         this.code.value = null
         this.description.value = null
         this.latitude.value = null
         this.longitude.value = null
         this.placement.value = null
-        this.timezone.value = timezoneOptions[0].id
+        this.timezone.value = null
         this.waterbodyName.value = null
         this.waterbodyType.value = null
         this.active.value = null

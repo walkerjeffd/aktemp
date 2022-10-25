@@ -107,8 +107,8 @@
     <router-view/>
     <!-- </v-main> -->
 
-    <v-snackbar v-model="snackbar.show" :timeout="snackbar.timeout" :color="snackbar.color" :top="true" elevation="12" light outlined text style="z-index:1000">
-      <span class="font-weight-bold">{{ snackbar.text }}</span>
+    <v-snackbar v-model="snackbar.show" :timeout="snackbar.timeout" :color="snackbar.color" :top="true" elevation="12" light outlined text style="z-index:5000">
+      <span class="font-weight-bold" v-html="snackbar.text"></span>
       <template v-slot:action="{ attrs }">
         <v-btn :color="snackbar.color" icon text v-bind="attrs" @click="snackbar.show = false">
           <v-icon>mdi-close</v-icon>
@@ -143,6 +143,10 @@ export default {
   },
   beforeDestroy () {
     evt.$off('notify', this.notify)
+  },
+  errorCaptured (err) {
+    console.log(err)
+    evt.$emit('notify', `Unexpected error occurred<br><br>${this.$errorMessage(err)}`, 'error')
   },
   methods: {
     notify (text, color) {

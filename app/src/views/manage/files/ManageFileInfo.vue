@@ -26,8 +26,7 @@
               Uploaded
             </td>
             <td class="font-weight-bold">
-              {{ file.created_at | formatTimestamp('lll') }}<br>
-              ({{ file.created_at | timestampFromNow }})
+              {{ file.created_at | timestamp('ff', 'local') }}
             </td>
           </tr>
           <tr>

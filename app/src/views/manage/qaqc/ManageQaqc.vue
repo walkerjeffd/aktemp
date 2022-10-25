@@ -13,7 +13,6 @@
         :options="{ itemsPerPage: 10 }"
         @click:row="select"
         show-select
-        dense
         loading-text="Loading... Please wait"
         class="row-cursor-pointer elevation-2"
       >
@@ -25,14 +24,17 @@
           </v-toolbar>
           <div class="body-2 text--secondary mx-4 mb-2">
             <v-icon small>mdi-information-outline</v-icon>
-            Click on a row to review the timeseries
+            Click on a row to review the timeseries.<br>
+            Only timeseries that need to be reviewed are shown by default. Click the checkbox under <code>Reviewed</code> on the filter row (<v-icon small>mdi-filter-outline</v-icon>) to see reviewed timeseries.
           </div>
           <v-divider></v-divider>
         </template>
 
         <template v-slot:body.prepend>
           <tr class="v-data-table-filter">
-            <td></td>
+            <td>
+              <v-icon>mdi-filter-outline</v-icon>
+            </td>
             <td></td>
             <td></td>
             <td>
@@ -48,33 +50,32 @@
             </td>
             <td></td>
             <td></td>
-            <td></td>
-            <td></td>
+            <!-- <td></td>
+            <td></td> -->
             <td>
               <v-checkbox
                 v-model="filters.reviewed"
                 hide-details
                 label=""
-                append-icon="mdi-filter-outline"
                 class="mt-0"
               ></v-checkbox>
             </td>
           </tr>
         </template>
         <template v-slot:item.created_at="{ item }">
-          {{ item.created_at | formatTimestamp('lll') }}
+          {{ item.created_at | timestamp('ff', 'local') }}
         </template>
         <template v-slot:item.station_code="{ item }">
           {{ item.station_code | truncate(20) }}
         </template>
         <template v-slot:item.start_datetime="{ item }">
-          {{ item.start_datetime | formatTimestamp('ll', item.station_timezone) }}
+          {{ item.start_datetime | timestamp('DD', item.station_timezone) }}
         </template>
         <template v-slot:item.end_datetime="{ item }">
-          {{ item.end_datetime | formatTimestamp('ll', item.station_timezone) }}
+          {{ item.end_datetime | timestamp('DD', item.station_timezone) }}
         </template>
         <template v-slot:item.reviewed="{ item }">
-          <v-simple-checkbox :value="item.reviewed" disabled></v-simple-checkbox>
+          <Checkbox :value="item.reviewed"></Checkbox>
         </template>
         <template v-slot:footer.prepend>
           <v-btn
@@ -145,14 +146,14 @@ export default {
           text: 'End',
           value: 'end_datetime'
         },
-        {
-          text: 'Depth Category',
-          value: 'depth_category'
-        },
-        {
-          text: 'Depth (m)',
-          value: 'depth_m'
-        },
+        // {
+        //   text: 'Depth Category',
+        //   value: 'depth_category'
+        // },
+        // {
+        //   text: 'Depth (m)',
+        //   value: 'depth_m'
+        // },
         {
           text: 'Reviewed',
           value: 'reviewed',
@@ -201,7 +202,7 @@ export default {
       this.selectFromRoute()
     },
     selectFromRoute () {
-      console.log('selectFromRoute')
+      // console.log('selectFromRoute')
       if (this.$route.params.seriesId) {
         const row = this.series
           .find(d => d.id === parseInt(this.$route.params.seriesId))

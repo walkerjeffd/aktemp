@@ -23,10 +23,10 @@
           {{ item.station_code | truncate(20) }}
         </template>
         <template v-slot:item.start_datetime="{ item }">
-          {{ item.start_datetime | formatTimestamp('ll', item.station_timezone) }}
+          {{ item.start_datetime | timestamp('DD', item.station_timezone) }}
         </template>
         <template v-slot:item.end_datetime="{ item }">
-          {{ item.end_datetime | formatTimestamp('ll', item.station_timezone) }}
+          {{ item.end_datetime | timestamp('DD', item.station_timezone) }}
         </template>
       </v-data-table>
       <v-divider class="mb-4"></v-divider>

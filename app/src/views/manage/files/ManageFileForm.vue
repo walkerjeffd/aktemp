@@ -1,956 +1,1143 @@
 <template>
-  <v-main>
-    <v-container>
-      <v-row justify="space-around">
-        <v-col cols="12">
-          <v-card elevation="4">
-            <v-toolbar flat dense color="grey lighten-3">
-              <v-toolbar-title v-if="!$vuetify.breakpoint.mobile">
-                <span class="text-h6">Upload Data File</span>
-              </v-toolbar-title>
-              <v-spacer></v-spacer>
-              <v-btn text @click="$router.push({ name: 'manageFiles' })">
-                <v-icon left>mdi-chevron-left</v-icon> <span v-if="!$vuetify.breakpoint.mobile">Back to Files</span><span v-else>Back</span>
-              </v-btn>
-            </v-toolbar>
+  <v-card elevation="2">
+    <v-toolbar flat dense>
+      <v-toolbar-title>
+        <span class="text-h6">Upload Data File</span>
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn text small @click="$router.push({ name: 'manageFiles' })">
+        <v-icon small left>mdi-chevron-left</v-icon> Back to Files
+      </v-btn>
+    </v-toolbar>
+    <v-divider></v-divider>
 
-            <v-stepper v-model="step">
-              <v-stepper-header>
-                <v-stepper-step step="1" :complete="step > 1">
-                  Organization
-                </v-stepper-step>
+    <v-stepper v-model="step">
+      <v-stepper-header>
+        <v-stepper-step step="1" :complete="step > 1">
+          File
+        </v-stepper-step>
 
-                <v-divider></v-divider>
+        <v-divider></v-divider>
 
-                <v-stepper-step step="2" :complete="step > 2">
-                  File
-                </v-stepper-step>
+        <v-stepper-step step="2" :complete="step > 2">
+          Type
+        </v-stepper-step>
 
-                <v-divider></v-divider>
+        <v-divider></v-divider>
 
-                <v-stepper-step step="3" :complete="step > 3">
-                  Station
-                </v-stepper-step>
+        <v-stepper-step step="3" :complete="step > 3">
+          Station
+        </v-stepper-step>
 
-                <v-divider></v-divider>
+        <v-divider></v-divider>
 
-                <v-stepper-step step="4" :complete="step > 4">
-                  Timestamps
-                </v-stepper-step>
+        <v-stepper-step step="4" :complete="step > 4">
+          Timestamps
+        </v-stepper-step>
 
-                <v-divider></v-divider>
+        <v-divider></v-divider>
 
-                <v-stepper-step step="5" :complete="step > 5">
-                  Temperatures
-                </v-stepper-step>
+        <v-stepper-step step="5" :complete="step > 5">
+          Temperatures
+        </v-stepper-step>
 
-                <v-divider></v-divider>
+        <v-divider></v-divider>
 
-                <v-stepper-step step="6" :complete="step > 6">
-                  Depth
-                </v-stepper-step>
+        <v-stepper-step step="6" :complete="step > 6">
+          Depth
+        </v-stepper-step>
 
-                <v-divider></v-divider>
+        <v-divider></v-divider>
 
-                <v-stepper-step step="7" :complete="step > 7">
-                  Metadata
-                </v-stepper-step>
+        <v-stepper-step step="7" :complete="step > 7">
+          Metadata
+        </v-stepper-step>
 
-                <v-divider></v-divider>
+        <v-divider></v-divider>
 
-                <v-stepper-step step="8">
-                  Finish
-                </v-stepper-step>
-              </v-stepper-header>
+        <v-stepper-step step="8">
+          Finish
+        </v-stepper-step>
+      </v-stepper-header>
 
-              <v-stepper-items class="body-1">
-                <!-- ORGANIZATION -->
-                <v-stepper-content step="1">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="organizationForm">
-                        <div class="text-h6">Select Organization for File Upload</div>
-                        <p>All data in this file will belong to the selected organization</p>
+      <v-stepper-items class="body-1">
+        <!-- FILE -->
+        <v-stepper-content step="1">
+          <v-row justify="space-around">
+            <v-col cols="12" md="8" lg="6" xl="4">
+              <v-form ref="fileForm">
+                <div>
+                  <div class="text-h6 mb-4">Data File</div>
+                  <ul class="mb-8">
+                    <li>Must be in <strong>comma-separated values (CSV)</strong> format.</li>
+                    <li>May contain extra lines above the header row containing column names. If so, specify how many lines to skip when reading the file, but <strong>do not skip the column names.</strong></li>
+                  </ul>
+                  <v-file-input
+                    ref="fileInput"
+                    v-model="file.selected"
+                    label="Select Data File (CSV)"
+                    :rules="file.rules"
+                    truncate-length="200"
+                    prepend-icon="mdi-file-delimited-outline"
+                    hint="Must be in comma-separated values (CSV) format."
+                    persistent-hint
+                    @change="loadFile"
+                    class="mb-4"
+                    outlined
+                  >
+                  </v-file-input>
 
-                        <v-select
-                          v-model="organization.selected"
-                          :items="organizations"
-                          :rules="organization.rules"
-                          item-text="name"
-                          item-value="id"
-                          outlined
-                          return-object
-                        ></v-select>
+                  <v-text-field
+                    v-model="config.file_skip"
+                    label="# Lines to Skip"
+                    type="number"
+                    prepend-icon="mdi-table-row-height"
+                    hint="Number of lines above column names to skip when reading file."
+                    persistent-hint
+                    outlined
+                    @input="resetFile"
+                  ></v-text-field>
+                </div>
 
-                        <Alert type="error" title="Form Error" v-if="organization.status === 'ERROR'">
-                          {{ organization.error || 'Unknown error' }}
-                        </Alert>
+                <Alert v-if="file.error" type="error" title="File Error" class="mt-4">
+                  <table class="mt-4" v-if="file.selected">
+                    <tbody>
+                      <tr v-if="file.selected">
+                        <td class="text-right pr-2">Filename:</td>
+                        <td class="font-weight-bold">{{ file.selected.name }}</td>
+                      </tr>
+                      <tr v-if="file.selected">
+                        <td class="text-right pr-2">File Size:</td>
+                        <td class="font-weight-bold">{{ file.selected.size | prettyBytes(1) }}</td>
+                      </tr>
+                      <tr v-if="fileColumns.length > 0">
+                        <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                        <td class="font-weight-bold">
+                          {{ fileColumns.map(d => `"${d}"`).join(', ')}}
+                        </td>
+                      </tr>
+                      <tr v-if="file.parsed">
+                        <td class="text-right pr-2"># Rows:</td>
+                        <td class="font-weight-bold">{{ file.parsed.data.length.toLocaleString() }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="mt-4">{{ file.error }}</div>
+                </Alert>
 
-                        <v-row class="mt-8 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" :disabled="true">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="nextOrganization">
-                            Continue <v-icon right>mdi-chevron-right</v-icon>
-                          </v-btn>
+                <Alert
+                  v-if="!file.error && !file.loading && file.parsed"
+                  title="File Loaded Successfully"
+                  type="success"
+                  class="body-2 my-4"
+                >
+                  <table class="mt-4">
+                    <tbody>
+                      <tr>
+                        <td class="text-right pr-2">Filename:</td>
+                        <td class="font-weight-bold">{{ file.selected.name }}</td>
+                      </tr>
+                      <tr>
+                        <td class="text-right pr-2">File Size:</td>
+                        <td class="font-weight-bold">{{ file.selected.size | prettyBytes(1) }}</td>
+                      </tr>
+                      <tr>
+                        <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                        <td class="font-weight-bold">
+                          {{ fileColumns.map(d => `"${d}"`).join(', ')}}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="text-right pr-2"># Rows:</td>
+                        <td class="font-weight-bold">{{ file.parsed.data.length.toLocaleString() }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p class="mt-4 mb-0">
+                    Verify this information is correct then click <code>Continue</code>.
+                  </p>
+                </Alert>
 
-                          <v-spacer></v-spacer>
+                <v-row class="mt-12 mb-4 px-3">
+                  <v-btn text class="mr-4 px-4" @click="step -= 1">
+                    <v-icon left>mdi-chevron-left</v-icon> Previous
+                  </v-btn>
+                  <v-btn
+                    color="primary"
+                    class="mr-4 px-4"
+                    @click="nextFile"
+                  >
+                    Continue <v-icon right>mdi-chevron-right</v-icon>
+                  </v-btn>
 
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-                      </v-form>
+                  <v-spacer></v-spacer>
+
+                  <v-btn text @click="cancel">
+                    Cancel
+                  </v-btn>
+                </v-row>
+              </v-form>
+            </v-col>
+          </v-row>
+        </v-stepper-content>
+
+        <!-- TYPE -->
+        <v-stepper-content step="2">
+          <v-row justify="space-around">
+            <v-col cols="12" md="8" lg="6" xl="4">
+              <div class="text-h6">Dataset Type</div>
+              <p>What kind of data does this file contain?</p>
+              <ul class="my-4">
+                <li><strong>Timeseries</strong> reflect temperature <strong>changes over time</strong> at a fixed location and depth.</li>
+                <li><strong>Vertical profiles</strong> reflect temperature <strong>changes over depth</strong> at a fixed location and at a single point in time.</li>
+              </ul>
+              <v-btn-toggle v-model="config.file_type" class="mb-4" @change="resetType()">
+                <v-btn value="SERIES">
+                  <v-icon left>mdi-chart-line-variant</v-icon>
+                  Timeseries
+                </v-btn>
+                <v-btn value="PROFILES">
+                  <v-icon left>mdi-arrow-expand-down</v-icon>
+                  Profiles
+                </v-btn>
+              </v-btn-toggle>
+
+              <div v-if="config.file_type === 'SERIES'">
+                <div class="text-h6 mt-4">Timeseries Interval</div>
+                <p>What is the type of timeseries interval?</p>
+                <ul class="my-4">
+                  <li><strong>Continuous</strong> timeseries are at <strong>regular time (e.g. 15 minutes)</strong> intervals using a data logger.</li>
+                  <li><strong>Discrete</strong> timeseries are at <strong>irregular or semi-regular (e.g. weekly)</strong> intervals using a hand-held probe.</li>
+                </ul>
+                <v-btn-toggle v-model="config.interval" class="mb-4" @change="resetType()">
+                  <v-btn value="CONTINUOUS">
+                    <v-icon left>mdi-minus</v-icon>
+                    Continuous
+                  </v-btn>
+                  <v-btn value="DISCRETE">
+                    <v-icon left>mdi-dots-horizontal</v-icon>
+                    Discrete
+                  </v-btn>
+                </v-btn-toggle>
+              </div>
+
+              <Alert type="error" title="Dataset Type Error" v-if="type.error">
+                {{ type.error || 'Unknown error' }}
+              </Alert>
+
+              <v-row class="mt-8 mb-4 px-3">
+                <v-btn text class="mr-4 px-4" @click="step -= 1">
+                  <v-icon left>mdi-chevron-left</v-icon> Previous
+                </v-btn>
+                <v-btn color="primary" class="mr-4 px-4" @click="nextType">
+                  Continue <v-icon right>mdi-chevron-right</v-icon>
+                </v-btn>
+
+                <v-spacer></v-spacer>
+
+                <v-btn text @click="cancel">
+                  Cancel
+                </v-btn>
+              </v-row>
+            </v-col>
+          </v-row>
+        </v-stepper-content>
+
+        <!-- STATION -->
+        <v-stepper-content step="3">
+          <v-row justify="space-around">
+            <v-col cols="12" md="8" lg="6" xl="4">
+              <v-form ref="stationForm" @input="resetStation()">
+                <div class="text-h6">Station</div>
+
+                <div class="mb-8">
+                  <p>Does this file contain data from one station or multiple stations?</p>
+
+                  <v-btn-toggle v-model="station.mode" @change="resetStation()">
+                    <v-btn value="STATION">
+                      <v-icon left>mdi-map-marker</v-icon>
+                      One Station
+                    </v-btn>
+                    <v-btn value="COLUMN">
+                      <v-icon left>mdi-map-marker-multiple</v-icon>
+                      Multiple Stations
+                    </v-btn>
+                  </v-btn-toggle>
+                </div>
+
+                <div v-if="station.mode === 'STATION'">
+                  <div>
+                    <p>Which station does this file contain data for?</p>
+                    <v-autocomplete
+                      v-model="config.station_code"
+                      :items="stations"
+                      :rules="station.rules"
+                      item-text="code"
+                      item-value="code"
+                      placeholder="Select station"
+                      outlined
+                      clearable
+                    ></v-autocomplete>
+                  </div>
+                </div>
+                <div v-else-if="station.mode === 'COLUMN'">
+                  <p>Which column contains the station codes? Values must match codes <em>exactly</em> and are case sensitive.</p>
+                  <v-select
+                    v-model="config.station_column"
+                    :items="fileColumns"
+                    :rules="station.column.rules"
+                    placeholder="Select station column"
+                    outlined
+                    clearable
+                  ></v-select>
+                </div>
+
+                <Alert type="error" title="Station Error" v-if="station.error">
+                  {{ station.error || 'Unknown error' }}
+                </Alert>
+
+                <v-row class="mt-8 mb-4 px-3">
+                  <v-btn text class="mr-4 px-4" @click="step -= 1">
+                    <v-icon left>mdi-chevron-left</v-icon> Previous
+                  </v-btn>
+                  <v-btn color="primary" class="mr-4 px-4" @click="nextStation" :loading="station.loading">
+                    Continue <v-icon right>mdi-chevron-right</v-icon>
+                  </v-btn>
+
+                  <v-spacer></v-spacer>
+
+                  <v-btn text @click="cancel">
+                    Cancel
+                  </v-btn>
+                </v-row>
+              </v-form>
+            </v-col>
+          </v-row>
+        </v-stepper-content>
+
+        <!-- TIMESTAMP -->
+        <v-stepper-content step="4">
+          <v-row justify="space-around">
+            <v-col cols="12" md="8" lg="6" xl="4">
+              <v-form ref="timestampForm">
+                <!-- COLUMNS -->
+                <div class="text-h6">Timestamp Columns</div>
+                <div class="mb-8">
+                  <p>Are dates and times in the same column or separate columns?</p>
+
+                  <v-btn-toggle v-model="timestamp.columns.separate" @change="resetTimestamp()">
+                    <v-btn :value="false">
+                      <v-icon left>mdi-format-align-justify</v-icon>
+                      One Column (Date+Time)
+                    </v-btn>
+                    <v-btn :value="true">
+                      <v-icon left>mdi-format-columns</v-icon>
+                      Two Columns (Date, Time)
+                    </v-btn>
+                  </v-btn-toggle>
+                </div>
+
+                <div v-if="!timestamp.columns.separate">
+                  <div>
+                    <p>Which column contains the dates and times?</p>
+                    <v-select
+                      v-model="config.datetime_column"
+                      :items="fileColumns"
+                      :rules="timestamp.columns.date.rules"
+                      outlined
+                      @input="resetTimestamp()"
+                    ></v-select>
+                  </div>
+                </div>
+                <div v-else>
+                  <div>
+                    <p>Which column contains the dates?</p>
+                    <v-select
+                      v-model="config.datetime_column"
+                      :items="fileColumns"
+                      :rules="timestamp.columns.date.rules"
+                      outlined
+                      @input="resetTimestamp()"
+                    ></v-select>
+                  </div>
+                  <div>
+                    <p>Which column contains the times?</p>
+                    <v-select
+                      v-model="config.time_column"
+                      :items="fileColumns"
+                      :rules="timestamp.columns.time.rules"
+                      outlined
+                      @input="resetTimestamp()"
+                    ></v-select>
+                  </div>
+                </div>
+
+                <Alert
+                  v-if="timestampValue"
+                  type="success"
+                  title="Raw Timestamp"
+                >
+                  <p>Verify the raw value below matches the first timestamp in the file. If this is incorrect, select a different column or check your file.</p>
+                    <table dense class="text-monospace">
+                      <tbody>
+                        <tr>
+                          <td class="text-right">Raw:</td>
+                          <td class="pl-4">{{ timestampValue }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                </Alert>
+
+                <!-- FORMAT -->
+                <div v-if="timestampValue">
+                  <v-divider class="my-4"></v-divider>
+                  <div class="text-h6">Timestamp Format</div>
+                  <p>Specify the date and time format. If possible, the form will automatically guess the correct format. The same format must be used in all rows.</p>
+                  <v-checkbox
+                    v-model="timestamp.format.isISO"
+                    @change="resetTimestamp()"
+                  >
+                    <template v-slot:label>
+                      <div>Use ISO 8601 Format: <span class="text--secondary text-monospace">yyyy-MM-ddTHH:mm:ss.uZ</span></div>
+                    </template>
+                  </v-checkbox>
+                  <v-row>
+                    <v-col cols="12" lg="6">
+                      <v-text-field
+                        v-model="timestamp.format.date.value"
+                        :rules="timestamp.format.date.rules"
+                        label="Date Format"
+                        outlined
+                        :disabled="timestamp.format.isISO"
+                        @input="resetTimestamp()"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" lg="6">
+                      <v-text-field
+                        v-model="timestamp.format.time.value"
+                        :rules="timestamp.format.time.rules"
+                        label="Time Format"
+                        outlined
+                        :disabled="timestamp.format.isISO"
+                        @input="resetTimestamp()"
+                      ></v-text-field>
                     </v-col>
                   </v-row>
-                </v-stepper-content>
-
-                <!-- FILE -->
-                <v-stepper-content step="2">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="fileForm">
-                        <div>
-                          <div class="text-h6 mb-4">Select Data File</div>
-                          <p>Select the data file, which must be in comma-separate values (CSV) format. Then specify the number of lines above the header row containing the column names, and click <code>Load File</code>.</p>
-                          <v-file-input
-                            ref="fileInput"
-                            v-model="file.selected"
-                            label="Select CSV File"
-                            :rules="file.rules"
-                            truncate-length="200"
-                            @change="resetFile"
-                            class="mb-4"
-                          >
-                          </v-file-input>
-
-                          <v-text-field
-                            v-model="file.skipLines"
-                            label="# Lines to Skip"
-                            type="number"
-                            hint="Enter # of extra lines above header row (if any). Do not skip the header line with column names."
-                            persistent-hint
-                            outlined
-                          ></v-text-field>
-
-                          <v-btn
-                            color="primary"
-                            class="mt-4"
-                            :loading="file.loading"
-                            @click="loadFile"
-                          >
-                            Load File
-                          </v-btn>
-                        </div>
-
-                        <Alert v-if="file.status === 'ERROR'" type="error" title="Failed to Parse File" class="mt-4">
-                          <div v-html="file.error || 'Unknown error'"></div>
-                        </Alert>
-
-                        <Alert
-                          v-if="file.status === 'SUCCESS'"
-                          title="File Loaded Successfully"
-                          type="success"
-                          class="body-2 my-4"
-                        >
-                          <p class="body-1">
-                            Please verify this information looks correct before continuing.
-                          </p>
-                          <table>
-                            <tbody>
-                              <tr>
-                                <td class="text-right pr-2">Filename:</td>
-                                <td class="font-weight-bold">{{ file.selected.name }}</td>
-                              </tr>
-                              <tr>
-                                <td class="text-right pr-2">File Size:</td>
-                                <td class="font-weight-bold">{{ file.selected.size | prettyBytes(1) }}</td>
-                              </tr>
-                              <tr>
-                                <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
-                                <td class="font-weight-bold">
-                                  {{ fileColumns.map(d => `"${d}"`).join(', ')}}
-                                </td>
-                              </tr>
-                              <tr>
-                                <td class="text-right pr-2"># Rows:</td>
-                                <td class="font-weight-bold">{{ file.parsed.data.length.toLocaleString() }}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </Alert>
-
-                        <div class="mt-4" v-if="file.status === 'SUCCESS'">
-                          <v-divider class="my-4"></v-divider>
-                          <div class="text-h6">File Type</div>
-                          <p>What kind of data does this file contain?</p>
-                          <v-btn-toggle v-model="file.type">
-                            <v-btn value="SERIES_CONTINUOUS">
-                              <v-icon left>mdi-chart-line-variant</v-icon>
-                              Continuous
-                            </v-btn>
-                            <v-btn value="SERIES_DISCRETE">
-                              <v-icon left>mdi-chart-bubble</v-icon>
-                              Discrete
-                            </v-btn>
-                            <v-btn value="PROFILES">
-                              <v-icon left>mdi-arrow-expand-down</v-icon>
-                              Profiles
-                            </v-btn>
-                          </v-btn-toggle>
-
-                          <Alert v-if="file.type" type="info" class="mt-4 body-1">
-                            <div v-if="file.type === 'SERIES_CONTINUOUS'">
-                              <strong>Continuous temperature</strong> data are collected at regular time steps (e.g., every 15 minutes) at a fixed point in space, typically by a data logger.
-                            </div>
-                            <div v-else-if="file.type === 'SERIES_DISCRETE'">
-                              <strong>Discrete temperature</strong> data are collected at irregular or semi-regular time steps (e.g., weekly), typically using a hand-held probe.
-                            </div>
-                            <div v-else-if="file.type === 'PROFILES'">
-                              <strong>Vertical profiles</strong> are collected at a single point in time over multiple depths in lakes or other deep waterbodies, typically using a hand-help probe. The file must contain a column with the depth of each measurement.
-                            </div>
-                            <div v-else>
-                              Unknown data type ({{ file.type }}).
-                            </div>
-                          </Alert>
-                        </div>
-
-                        <v-row class="mt-12 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" @click="step -= 1">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn
-                            color="primary"
-                            class="mr-4 px-4"
-                            @click="nextFile"
-                            :disabled="!(file.status === 'SUCCESS' && file.type)"
-                          >
-                            Continue <v-icon right>mdi-chevron-right</v-icon>
-                          </v-btn>
-
-                          <v-spacer></v-spacer>
-
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-                      </v-form>
-                    </v-col>
-                  </v-row>
-                </v-stepper-content>
-
-                <!-- STATION -->
-                <v-stepper-content step="3">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="stationForm" @input="resetStation()">
-                        <div class="text-h6">Station</div>
-
-                        <div class="mb-8">
-                          <p>Does this file contain data from one station or multiple stations?</p>
-
-                          <v-btn-toggle v-model="station.mode" @change="resetStation()">
-                            <v-btn value="STATION">
-                              <v-icon left>mdi-map-marker</v-icon>
-                              One Station
-                            </v-btn>
-                            <v-btn value="COLUMN">
-                              <v-icon left>mdi-map-marker-multiple</v-icon>
-                              Multiple Stations
-                            </v-btn>
-                          </v-btn-toggle>
-                        </div>
-
-                        <div v-if="station.mode === 'STATION'">
-                          <div>
-                            <p>Which station does this file contain data for?</p>
-                            <v-select
-                              v-model="station.station.selected"
-                              :items="station.station.options"
-                              :rules="station.station.rules"
-                              item-text="code"
-                              item-value="id"
-                              outlined
-                              return-object
-                            ></v-select>
-                          </div>
-                        </div>
-                        <div v-else-if="station.mode === 'COLUMN'">
-                          <p>Which column contains the station codes? Values must match codes <em>exactly</em> (case-sensitive).</p>
-                          <v-select
-                            v-model="station.column.selected"
-                            :items="fileColumns"
-                            :rules="station.column.rules"
-                            outlined
-                          ></v-select>
-                        </div>
-
-                        <Alert type="error" title="Station Error" v-if="station.status === 'ERROR'">
-                          {{ station.error || 'Unknown error' }}
-                        </Alert>
-
-                        <v-row class="mt-8 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" @click="step -= 1">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="nextStation" :loading="station.loading">
-                            Continue <v-icon right>mdi-chevron-right</v-icon>
-                          </v-btn>
-
-                          <v-spacer></v-spacer>
-
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-                      </v-form>
-                    </v-col>
-                  </v-row>
-                </v-stepper-content>
-
-                <!-- TIMESTAMP -->
-                <v-stepper-content step="4">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="timestampForm" @input="resetTimestamp()">
-                        <div class="text-h6">Timestamp</div>
-
-                        <div class="mb-8">
-                          <p>Are dates and times in the same column or separate columns?</p>
-
-                          <v-btn-toggle v-model="timestamp.mode" @change="resetTimestamp()">
-                            <v-btn value="COMBINED">
-                              <v-icon left>mdi-format-align-justify</v-icon>
-                              One Column (Datetime)
-                            </v-btn>
-                            <v-btn value="SEPARATE">
-                              <v-icon left>mdi-format-columns</v-icon>
-                              Two Columns (Date, Time)
-                            </v-btn>
-                          </v-btn-toggle>
-                        </div>
-
-                        <div v-if="timestamp.mode === 'COMBINED'">
-                          <div>
-                            <p>Which column contains the timestamps (datetime)?</p>
-                            <v-select
-                              v-model="timestamp.combined.column.selected"
-                              :items="fileColumns"
-                              :rules="timestamp.combined.column.rules"
-                              outlined
-                              @input="resetTimestamp()"
-                            ></v-select>
-                          </div>
-                        </div>
-                        <div v-else-if="timestamp.mode === 'SEPARATE'">
-                          <div>
-                            <p>Which column contains the dates?</p>
-                            <v-select
-                              v-model="timestamp.separate.date.column.selected"
-                              :items="fileColumns"
-                              :rules="timestamp.separate.date.column.rules"
-                              outlined
-                              @input="resetTimestamp()"
-                            ></v-select>
-                          </div>
-                          <div>
-                            <p>Which column contains the times?</p>
-                            <v-select
-                              v-model="timestamp.separate.time.column.selected"
-                              :items="fileColumns"
-                              :rules="timestamp.separate.time.column.rules"
-                              outlined
-                              @input="resetTimestamp()"
-                            ></v-select>
-                          </div>
-                        </div>
-
-                        <div v-if="firstTimestamp">
-                          <p>
-                            How should the timestamps be converted to UTC (aka GMT)? (please select one)
-                          </p>
-                          <v-radio-group v-model="timestamp.timezone.mode" @change="updateExampleTimestamp()">
-                            <v-radio
-                              value="GUESS"
-                              label="UTC offset is not known (guess)"
-                            >
-                            </v-radio>
-                            <v-radio
-                              value="UTCOFFSET"
-                              label="Specify UTC offset of all timestamps (select below)"
-                            >
-                            </v-radio>
-                            <v-radio
-                              value="TIMESTAMP"
-                              label="Extract UTC offset from timestamp"
-                            >
-                            </v-radio>
-                            <v-radio
-                              value="COLUMN"
-                              label="Specify column containing UTC offset of each row (select below)"
-                            >
-                            </v-radio>
-                          </v-radio-group>
-
-                          <div v-if="timestamp.timezone.mode === 'GUESS'">
-                            <Alert :type="timestamp.timezone.example.error ? 'error' : 'success'" class="mt-4" title="Unknown UTC Offset">
-                              <p>
-                                When the exact UTC offset (e.g., AKST vs AKDT) is not known, then we assume the UTC offset for all timestamps is based on the timezone of the station (e.g., US/Alaska) and whether the first timestamp occurred during standard or daylight savings time.
-                              </p>
-                              <p>
-                                For example, if station timezone is US/Alaska and first timestamp in the file occurred in winter, then we assume all timestamps are in Alaska Standard Time (AKST) with UTC offset of -9 hours. If that timestamp occurred in summer, then all timestamps would be in Alaska Daylight Time (AKDT) with UTC offset of -8 hours.
-                              </p>
-                              <div v-if="timestamp.timezone.example.error">
-                                <strong>Failed to parse first timestamp ('{{ firstTimestamp }}').</strong><br>
-                                {{ timestamp.timezone.example.error }}
-                              </div>
-                              <div v-else-if="timestamp.timezone.example.parsed">
-                                <p>Verify that the first timestamp of the file was correctly parsed:</p>
-                                <div class="ml-8">
-                                  <div>
-                                    Station Timezone: <strong>{{ timestamp.timezone.example.tz }} ({{ timestamp.timezone.example.station.code }})</strong>
-                                  </div>
-                                  <div>
-                                    Raw Timestamp: <strong>'{{ timestamp.timezone.example.raw }}'</strong>
-                                  </div>
-                                  <div>
-                                    Assumed UTC Offset: <strong>{{ timestamp.timezone.example.utcOffset }} hours ({{ timestamp.timezone.example.parsed.tz(timestamp.timezone.example.tz).format('z') }})</strong>
-                                  </div>
-                                  <div>
-                                    Parsed Timestamp (as UTC): <strong>{{ timestamp.timezone.example.parsed.toISOString() }}</strong>
-                                  </div>
-                                  <div>
-                                    Parsed Timestamp (as Local Time): <strong>{{ timestamp.timezone.example.parsed.tz(timestamp.timezone.example.tz).format('lll z') }}</strong>
-                                  </div>
-                                </div>
-                              </div>
-                            </Alert>
-                          </div>
-                          <div v-else-if="timestamp.timezone.mode === 'UTCOFFSET'">
-                            <Alert :type="timestamp.timezone.example.error ? 'error' : 'success'" class="mt-4" title="Constant UTC Offset">
-                              <p>
-                                All timestamps are assumed to have the same UTC offset as selected below and should not automatically adjust for daylight savings time.
-                              </p>
-                              <p>
-                                The UTC offset is usually based on when the logger or probe clock was last synchronized with the computer. For example, if the logger was last synced during winter prior to deployment, then the timestamps are most likely in standard local time (e.g., AKST with UTC offset of -9 hours)
-                              </p>
-
-                              <v-select
-                                v-model="timestamp.timezone.utcOffset.selected"
-                                :items="timestamp.timezone.utcOffset.options"
-                                :rules="timestamp.timezone.utcOffset.rules"
-                                label="Select UTC Offset"
-                                item-text="label"
-                                item-value="value"
-                                outlined
-                                return-object
-                                clearable
-                                @change="updateExampleTimestamp"
-                              ></v-select>
-
-                              <div v-if="timestamp.timezone.example.error">
-                                <strong>Failed to parse first timestamp ('{{ firstTimestamp }}').</strong><br>
-                                {{ timestamp.timezone.example.error }}
-                              </div>
-                              <div v-else-if="timestamp.timezone.example.parsed">
-                                <p>Verify that the first timestamp of the file was correctly parsed:</p>
-                                <div class="ml-8">
-                                  <div>
-                                    Station Timezone: <strong>{{ timestamp.timezone.example.tz }} ({{ timestamp.timezone.example.station.code }})</strong>
-                                  </div>
-                                  <div>
-                                    Raw Timestamp: <strong>'{{ timestamp.timezone.example.raw }}'</strong>
-                                  </div>
-                                  <div>
-                                    Selected UTC Offset: <strong>{{ timestamp.timezone.example.utcOffset }} hours ({{ timestamp.timezone.example.parsed.tz(timestamp.timezone.example.tz).format('z') }})</strong>
-                                  </div>
-                                  <div>
-                                    Parsed Timestamp (as UTC): <strong>{{ timestamp.timezone.example.parsed.toISOString() }}</strong>
-                                  </div>
-                                  <div>
-                                    Parsed Timestamp (as Local Time): <strong>{{ timestamp.timezone.example.parsed.tz(timestamp.timezone.example.tz).format('lll z') }}</strong>
-                                  </div>
-                                </div>
-                              </div>
-                            </Alert>
-                          </div>
-                          <div v-else-if="timestamp.timezone.mode === 'TIMESTAMP'">
-                            <Alert :type="timestamp.timezone.example.error ? 'error' : 'success'" class="mt-4" title="Timestamp Contains UTC Offset">
-                              <p>
-                                Each timestamp should contain the UTC offset in <a href="https://en.wikipedia.org/wiki/ISO_8601#Time_offsets_from_UTC" target="_blank">ISO-8601 format</a> (i.e., ends in '-HHMM').
-                              </p>
-                              <p>
-                                For example, a timestamp in Alaska Daylight Time (UTC-8) should be written as: '2020-07-01 12:00:00<strong>-0800</strong>'.
-                              </p>
-                              <p>
-                                Because each timestamp specifies its UTC offset, the timestamps may adjust for daylight savings time.
-                              </p>
-
-                              <div v-if="timestamp.timezone.example.error">
-                                <strong>Failed to parse first timestamp ('{{ firstTimestamp }}').</strong><br>
-                                {{ timestamp.timezone.example.error }}
-                              </div>
-                              <div v-else-if="timestamp.timezone.example.parsed">
-                                <p>Verify that the first timestamp of the file was correctly parsed:</p>
-                                <div class="ml-8">
-                                  <div>
-                                    Station Timezone: <strong>{{ timestamp.timezone.example.tz }} ({{ timestamp.timezone.example.station.code }})</strong>
-                                  </div>
-                                  <div>
-                                    Raw Timestamp: <strong>'{{ timestamp.timezone.example.raw }}'</strong>
-                                  </div>
-                                  <div>
-                                    Parsed Timestamp (as UTC): <strong>{{ timestamp.timezone.example.parsed.toISOString() }}</strong>
-                                  </div>
-                                  <div>
-                                    Parsed Timestamp (as Local Time): <strong>{{ timestamp.timezone.example.parsed.tz(timestamp.timezone.example.tz).format('lll z') }}</strong>
-                                  </div>
-                                </div>
-                              </div>
-                              <div v-else>
-                                <strong>Error</strong>: Failed to parse timestamp ('${firstTimestamp}').
-                              </div>
-                            </Alert>
-                          </div>
-                          <div v-else-if="timestamp.timezone.mode === 'COLUMN'">
-                            <Alert :type="timestamp.timezone.example.error ? 'error' : 'success'" class="mt-4" title="Columns Contains UTC Offset">
-                              <p>
-                                The UTC offset of each timestamp is specified in the column selected below. This column should contain the offset in hours relative to UTC.
-                              </p>
-                              <p>
-                                For example, if the first timestamp is in Alaska Daylight Time (AKDT), which has an offset of -9 hours, then the first value in the UTC offset column should be '-9'.
-                              </p>
-
-                              <v-select
-                                v-model="timestamp.timezone.column.selected"
-                                :items="fileColumns"
-                                :rules="timestamp.timezone.column.rules"
-                                label="Select UTC Offset Column"
-                                outlined
-                                clearable
-                                @change="updateExampleTimestamp"
-                              ></v-select>
-
-                              <div v-if="timestamp.timezone.example.error">
-                                <strong>Failed to parse first timestamp ('{{ firstTimestamp }}').</strong><br>
-                                {{ timestamp.timezone.example.error }}
-                              </div>
-                              <div v-else-if="timestamp.timezone.example.parsed">
-                                <p>Verify that the first timestamp of the file was correctly parsed:</p>
-                                <div class="ml-8">
-                                  <div>
-                                    Station Timezone: <strong>{{ timestamp.timezone.example.tz }} ({{ timestamp.timezone.example.station.code }})</strong>
-                                  </div>
-                                  <div>
-                                    Raw Timestamp: <strong>'{{ timestamp.timezone.example.raw }}'</strong>
-                                  </div>
-                                  <div>
-                                    UTC Offset: <strong>{{ timestamp.timezone.example.utcOffset }} hours ({{ timestamp.timezone.example.parsed.tz(timestamp.timezone.example.tz).format('z') }})</strong>
-                                  </div>
-                                  <div>
-                                    Parsed Timestamp (as UTC): <strong>{{ timestamp.timezone.example.parsed.toISOString() }}</strong>
-                                  </div>
-                                  <div>
-                                    Parsed Timestamp (as Local Time): <strong>{{ timestamp.timezone.example.parsed.tz(timestamp.timezone.example.tz).format('lll z') }}</strong>
-                                  </div>
-                                </div>
-                              </div>
-                            </Alert>
-                          </div>
-                        </div>
-
-                        <Alert type="error" title="Timestamp Error" v-if="timestamp.status === 'ERROR'">
-                          {{ timestamp.error || 'Unknown error' }}
-                        </Alert>
-
-                        <v-row class="mt-8 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" @click="step -= 1">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="nextTimestamp" :loading="timestamp.loading">
-                            Continue <v-icon right>mdi-chevron-right</v-icon>
-                          </v-btn>
-
-                          <v-spacer></v-spacer>
-
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-                      </v-form>
-                    </v-col>
-                  </v-row>
-                </v-stepper-content>
-
-                <!-- VALUE -->
-                <v-stepper-content step="5">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="valueForm" @input="resetValue()">
-                        <div class="text-h6">Temperature Values</div>
-
-                        <!-- <ul class="mt-2 body-2">
-                          <li>Instructions...</li>
-                        </ul> -->
-
-                        <div>
-                          <p>Which column contains the temperature values?</p>
-                          <v-select
-                            v-model="value.column.selected"
-                            :items="fileColumns"
-                            :rules="value.column.rules"
-                            outlined
-                          ></v-select>
-                        </div>
-
-                        <div v-if="!!value.column.selected">
-                          <p>What are the units?</p>
-                          <v-select
-                            v-model="value.units.selected"
-                            :items="value.units.options"
-                            :rules="value.units.rules"
-                            item-text="label"
-                            item-value="value"
-                            outlined
-                          ></v-select>
-                        </div>
-
-                        <div v-if="!!value.column.selected && !!value.units.selected">
-                          <div>
-                            <p>
-                              What are the missing value indicators (e.g., 'N/A')? (Optional, leave blank if none)<br>
-                              <span class="text--secondary"></span>
-                            </p>
-                            <v-combobox
-                              v-model="value.missing.selected"
-                              :items="value.missing.options"
-                              label="Select or enter missing value indicators"
-                              hint="Select from the list, or type and press enter to add a custom value. Use backspace to delete."
-                              persistent-hint
-                              multiple
-                              outlined
-                              small-chips
-                              deletable-chips
-                              clearable
-                            ></v-combobox>
-                          </div>
-
-                          <div>
-                            <p>
-                              Which column (if any) contain QAQC flags? (Optional)
-                            </p>
-                            <div class="text-center">
-                              <v-select
-                                v-model="value.flagColumn.selected"
-                                :items="fileColumns"
-                                :rules="value.flagColumn.rules"
-                                outlined
-                                clearable
-                              ></v-select>
-                            </div>
-                          </div>
-
-                        </div>
-
-                        <Alert type="error" title="Temperature Values Error" v-if="value.status === 'ERROR'">
-                          {{ value.error || 'Unknown error' }}
-                        </Alert>
-
-                        <v-row class="mt-8 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" @click="step -= 1">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="nextValue" :loading="value.loading">
-                            Continue <v-icon right>mdi-chevron-right</v-icon>
-                          </v-btn>
-
-                          <v-spacer></v-spacer>
-
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-                      </v-form>
-                    </v-col>
-                  </v-row>
-                </v-stepper-content>
-
-                <!-- DEPTH -->
-                <v-stepper-content step="6">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="depthForm" @input="resetDepth()">
-                        <div class="text-h6">Depth</div>
-
-                        <div v-if="file.type !== 'PROFILES'">
-                          <p>Where in the water column were these measurements taken?</p>
-                          <v-btn-toggle v-model="depth.category.selected" class="mb-4">
-                            <v-btn value="SURFACE">
-                              <v-icon left>mdi-arrow-collapse-up</v-icon>
-                              Surface
-                            </v-btn>
-                            <v-btn value="MID-DEPTH">
-                              <v-icon left>mdi-arrow-expand-horizontal</v-icon>
-                              Mid-Depth
-                            </v-btn>
-                            <v-btn value="BOTTOM">
-                              <v-icon left>mdi-arrow-collapse-down</v-icon>
-                              Bottom
-                            </v-btn>
-                          </v-btn-toggle>
-
-                          <p>What was the numeric depth (approx., if known)?</p>
-                          <v-text-field
-                            v-model="depth.value.selected"
-                            :rules="depth.value.rules"
-                            type="number"
-                            hint="If depth varies, use depth at start of the deployment."
-                            persistent-hint
-                            outlined
-                          ></v-text-field>
-
-                          <p>
-                            Which file column contains time-varying depths (if any)?
-                          </p>
-                          <v-select
-                            v-model="depth.column.selected"
-                            :items="fileColumns"
-                            :rules="depth.column.rules"
-                            outlined
-                            clearable
-                          ></v-select>
-                        </div>
-                        <div v-else>
-                          <p>
-                            Which column contains the depth of each measurement?
-                          </p>
-                          <v-select
-                            v-model="depth.column.selected"
-                            :items="fileColumns"
-                            :rules="depth.column.rules"
-                            outlined
-                            clearable
-                          ></v-select>
-                        </div>
-
-                        <p>What are the depth units (applies to both numeric depth and depth column)?</p>
-                        <v-select
-                          v-model="depth.units.selected"
-                          :items="depth.units.options"
-                          :rules="depth.units.rules"
-                          item-text="label"
-                          item-value="value"
-                          outlined
-                          clearable
-                        ></v-select>
-
-                        <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
-                          {{ depth.error || 'Unknown error' }}
-                        </Alert>
-
-                        <v-row class="mt-8 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" @click="step -= 1">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="nextDepth" :loading="depth.loading">
-                            Continue <v-icon right>mdi-chevron-right</v-icon>
-                          </v-btn>
-
-                          <v-spacer></v-spacer>
-
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-                      </v-form>
-                    </v-col>
-                  </v-row>
-                </v-stepper-content>
-
-                <!-- METADATA -->
-                <v-stepper-content step="7">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="metaForm">
-                        <div class="text-h6">Metadata</div>
-
-                        <div v-if="file.type === 'SERIES_CONTINUOUS'">
-                          <p>Was the sensor checked using pre/post water baths?</p>
-                          <v-btn-toggle v-model="meta.sop_bath" class="mb-8">
-                            <v-btn value="TRUE">
-                              <v-icon left>mdi-check</v-icon>
-                              Yes
-                            </v-btn>
-                            <v-btn value="FALSE">
-                              <v-icon left>mdi-close</v-icon>
-                              No
-                            </v-btn>
-                          </v-btn-toggle>
-                        </div>
-
-                        <p>
-                          What was the sensor accuracy level?
-                        </p>
-                        <v-select
-                          v-model="meta.accuracy.selected"
-                          :items="meta.accuracy.options"
-                          :rules="meta.accuracy.rules"
-                          label="Select sensor accuracy"
-                          item-value="value"
-                          item-text="label"
-                          outlined
-                          clearable
-                        ></v-select>
-
-                        <p>
-                          Have these data already undergone a QAQC review?
-                        </p>
-                        <v-btn-toggle v-model="meta.reviewed" class="mb-4">
-                          <v-btn value="TRUE">
-                            <v-icon left>mdi-check</v-icon>
-                            Yes
-                          </v-btn>
-                          <v-btn value="FALSE">
-                            <v-icon left>mdi-close</v-icon>
-                            No
-                          </v-btn>
-                        </v-btn-toggle>
-
-                        <Alert v-if="meta.reviewed === 'TRUE'" type="info" title="QAQC Review Assumptions">
-                          <p>If a file has already undergone a QAQC review, then we assume either:</p>
-
-                          <ol>
-                            <li>The file contains a column of QAQC flags indicating invalid values (see 'Temperatures' step), or</li>
-                            <li>If no flag column is present, then all data are assumed to be valid.</li>
-                          </ol>
-                        </Alert>
-
-                        <Alert type="error" title="Metadata Error" v-if="!meta.status === 'ERROR'">
-                          {{ meta.error || 'Unknown error' }}
-                        </Alert>
-
-                        <v-row class="mt-8 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" @click="step -= 1">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="nextMeta" :loading="meta.loading">
-                            Continue <v-icon right>mdi-chevron-right</v-icon>
-                          </v-btn>
-
-                          <v-spacer></v-spacer>
-
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-                      </v-form>
-                    </v-col>
-                  </v-row>
-                </v-stepper-content>
-
-                <!-- UPLOAD -->
-                <v-stepper-content step="8">
-                  <v-row justify="space-around">
-                    <v-col cols="12" md="8" lg="6" xl="4">
-                      <v-form ref="uploadForm">
-                        <div class="text-h6">Ready to Upload</div>
-
-                        <p>The file is ready to upload. Do not close this browser tab until uploading is complete.</p>
-
-                        <!-- <ul class="mt-2 body-2">
-                          <li>Instructions...</li>
-                        </ul> -->
-
-                        <v-row class="mt-8 mb-4 px-3">
-                          <v-btn text class="mr-4 px-4" @click="step -= 1">
-                            <v-icon left>mdi-chevron-left</v-icon> Previous
-                          </v-btn>
-                          <v-btn color="primary" class="mr-4 px-4" @click="submit" :loading="upload.status === 'PENDING'">
-                            Submit <v-icon right>mdi-upload</v-icon>
-                          </v-btn>
-
-                          <v-spacer></v-spacer>
-
-                          <v-btn text @click="cancel">
-                            Cancel
-                          </v-btn>
-                        </v-row>
-
-                        <v-divider class="my-8" v-if="upload.status !== 'READY'"></v-divider>
-
-                        <div v-if="upload.status === 'PENDING'" ref="pending">
-                          <div class="mb-4 font-weight-bold">
-                            {{upload.message}}
-                          </div>
-                          <v-progress-linear
-                            :active="true"
-                            color="primary"
-                            height="8"
-                            :value="upload.progress"
-                            class="mb-8"
-                          ></v-progress-linear>
-
-                          <Alert type="warning" title="Upload in Progress">
-                            <div>
-                              Please leave this browser tab open until uploading is complete.
-                            </div>
-                          </Alert>
-                        </div>
-                        <Alert type="error" title="Failed to Upload File" v-else-if="upload.status === 'FAILED'">
-                          <div v-html="upload.error || 'Unknown error'"></div>
-                        </Alert>
-                        <Alert type="success" title="Upload Complete!" v-else-if="upload.status === 'DONE'">
-                          <div>
-                            The dataset has been uploaded and will now be queued for processing on the server.
-                          </div>
-                          <div class="mt-2">
-                            Redirecting you back to the station files table in 5 seconds, or <router-link :to="{name: 'manageFiles'}">click here</router-link>.
-                          </div>
-                        </Alert>
-                        <Alert type="error" title="Upload Cancelled" v-else-if="upload.status === 'CANCELLED'">
-                          <div>
-                            File upload has been cancelled. The file has been deleted from the server.
-                          </div>
-                          <div class="mt-2">
-                            <router-link :to="{name: 'manageFiles'}">Click here</router-link> to go back to your existing files.
-                          </div>
-                        </Alert>
-                      </v-form>
-                    </v-col>
-                  </v-row>
-                </v-stepper-content>
-              </v-stepper-items>
-            </v-stepper>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
-  </v-main>
+
+                  <Alert
+                    v-if="timestamp.format.unknown && !timestampParsed"
+                    type="warning"
+                    title="Unknown Timestamp Format"
+                  >
+                    The date and time format could not be automatically determined. See instructions below for specifying formats.
+                  </Alert>
+
+                  <Alert
+                    v-if="timestampParsed"
+                    type="success"
+                    title="Parsed Timestamp"
+                    dismissible
+                  >
+                    <p>Verify the raw timestamp was correctly parsed. The parsed value will be shown in ISO format, but may not be in the correct timezone (see next section).</p>
+                    <table dense class="text-monospace">
+                      <tbody>
+                        <tr>
+                          <td class="text-right">Raw:</td>
+                          <td class="pl-4">{{ timestampValue }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">Parsed:</td>
+                          <td class="pl-4">{{ timestampParsed | timestamp('ISO', 'UTC') }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </Alert>
+                  <Alert
+                    v-else
+                    type="error"
+                    title="Failed to Parse Timestamp"
+                  >
+                    <p>Unable to parse the first timestamp in the file using the specified date and time formats.</p>
+
+                    <table dense class="text-monospace">
+                      <tbody>
+                        <tr>
+                          <td class="text-right">Raw:</td>
+                          <td class="pl-4">{{ timestampValue }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">Format:</td>
+                          <td class="pl-4">{{ timestampFormat }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <p class="mt-4">First, check that the first timestamp in the file was correctly extracted using the selected column(s) above.</p>
+                    <p>If the raw timestamp is correct, then you will need to specify the date and time formats. See the <a href="https://moment.github.io/luxon/#/parsing?id=table-of-tokens" target="_blank">luxon documentation</a> for a table of format tokens (capitalization is important). Alternatively, you can reformat the timestamps in this file using a more common format and try again.</p>
+                    <p>Here are some common date and time formats:<br><i>Note: this is not an exhaustive list, see the link above for all available tokens</i></p>
+                    <v-simple-table dense class="ml-n4">
+                      <thead class="font-weight-bold text-left">
+                        <tr>
+                          <td style="width:50%">Date String</td>
+                          <td>Date Format</td>
+                        </tr>
+                      </thead>
+                      <tbody class="text-monospace">
+                        <tr>
+                          <td>10/2/2022</td>
+                          <td>M/d/yyyy</td>
+                        </tr>
+                        <tr>
+                          <td>10/2/22</td>
+                          <td>M/d/yy</td>
+                        </tr>
+                        <tr>
+                          <td>October 2, 2022</td>
+                          <td>MMMM d, yyyy</td>
+                        </tr>
+                        <tr>
+                          <td>Oct 2, 2022</td>
+                          <td>MMM d, yyyy</td>
+                        </tr>
+                        <tr>
+                          <td>2-Oct-22</td>
+                          <td>d-MMM-yy</td>
+                        </tr>
+                      </tbody>
+                    </v-simple-table>
+                    <v-simple-table dense class="ml-n4 mt-4">
+                      <thead class="font-weight-bold text-left">
+                        <tr>
+                          <td style="width:50%">Time String</td>
+                          <td>Time Format</td>
+                        </tr>
+                      </thead>
+                      <tbody class="text-monospace">
+                        <tr>
+                          <td>3:52</td>
+                          <td>H:mm</td>
+                        </tr>
+                        <tr>
+                          <td>3:52:00</td>
+                          <td>H:mm:ss</td>
+                        </tr>
+                        <tr>
+                          <td>03:52:00.000</td>
+                          <td>HH:mm:ss.u</td>
+                        </tr>
+                        <tr>
+                          <td>3:52 PM</td>
+                          <td>h:mm a</td>
+                        </tr>
+                        <tr>
+                          <td>3:52:00 PM</td>
+                          <td>h:mm:ss a</td>
+                        </tr>
+                      </tbody>
+                    </v-simple-table>
+                  </Alert>
+                </div>
+
+                <div v-if="timestampParsed">
+                  <v-divider class="my-4"></v-divider>
+                  <div class="text-h6">Timezone Adjustment</div>
+
+                  <p>
+                    How should the timezone of the timestamps be determined?
+                  </p>
+                  <v-radio-group v-model="timestamp.timezone.mode" @change="resetTimestamp()">
+                    <v-radio
+                      value="NONE"
+                    >
+                      <template v-slot:label>
+                        <span>All timestamps are either in <strong>UTC or contain UTC offset</strong> (e.g. end in '-0800')</span>
+                      </template>
+
+                    </v-radio>
+                    <v-radio
+                      value="LOCAL"
+                    >
+                      <template v-slot:label>
+                        <span>All timestamps are in either <strong>local daylight or standard time</strong> of the associated station</span>
+                      </template>
+                    </v-radio>
+                    <v-radio
+                      value="FIXED"
+                    >
+                      <template v-slot:label>
+                        <span>All timestamps have the same <strong>fixed UTC offset</strong> (choose from list below)</span>
+                      </template>
+                    </v-radio>
+                    <v-radio
+                      value="COLUMN"
+                      label=""
+                    >
+                      <template v-slot:label>
+                        <span>UTC offset provided in a <strong>separate column</strong> (choose from list below)</span>
+                      </template>
+                    </v-radio>
+                  </v-radio-group>
+
+                  <Alert
+                    v-if="timestamp.timezone.mode === 'LOCAL'"
+                    type="warning"
+                    title="Local Timezone Adjustment"
+                  >
+                    <p>
+                      Timestamps will be adjusted to the local daylight or standard time of the associated station <strong>at the time of the first timestamp</strong>.
+                    </p>
+                    <p>
+                      If the first timestamp occurs during daylight savings time then <strong>all subsequent timestamps will be adjusted by the same UTC offset</strong> (e.g. UTC-8 for AKDT). This assumes the logger clock was set just prior to deployment. This adjustment <strong>does not</strong> account for daylight savings time shifts (which is true for most data loggers).
+                    </p>
+                    <p class="mb-0">
+                      If the logger clock was not correctly set to the local daylight savings or standard time at the start of the deployment, then choose the <strong>fixed UTC offset</strong> option above and then select the correct offset.
+                    </p>
+                  </Alert>
+
+                  <v-select
+                    v-if="timestamp.timezone.mode === 'FIXED'"
+                    v-model="timestamp.timezone.utcOffset.selected"
+                    :items="timestamp.timezone.utcOffset.options"
+                    :rules="timestamp.timezone.utcOffset.rules"
+                    placeholder="Select UTC Offset"
+                    item-text="label"
+                    item-value="value"
+                    hint="All timestamps must have the same UTC offset"
+                    persistent-hint
+                    outlined
+                    clearable
+                    class="mb-4"
+                    @change="resetTimestamp()"
+                  ></v-select>
+
+                  <v-select
+                    v-if="timestamp.timezone.mode === 'COLUMN'"
+                    v-model="timestamp.timezone.column.selected"
+                    :items="fileColumns"
+                    :rules="timestamp.timezone.column.rules"
+                    placeholder="Select UTC Offset Column"
+                    hint="Column must contain UTC offset in hours (e.g., '-9' for AKST)"
+                    persistent-hint
+                    outlined
+                    clearable
+                    class="mb-4"
+                    @change="resetTimestamp()"
+                  ></v-select>
+
+                  <Alert
+                    v-if="timestamp.timezone.mode === 'COLUMN'"
+                    type="warning"
+                    title="UTC Offset Column"
+                  >
+                    This column should contain the UTC offset indicating the number of hours relative to UTC (e.g., UTC-8 for AKDT). Each value in this column should be an integer (e.g., '-8'), and may also include the 'UTC' prefix (e.g. 'UTC-8').
+                  </Alert>
+                </div>
+
+                <div v-if="timestampUtc">
+                  <v-divider class="my-4"></v-divider>
+                  <Alert
+                    type="success"
+                    title="Verify Final Timestamps"
+                  >
+                    Verify that the first <code>raw</code> timestamp in the file was correctly <code>parsed</code> and <code>adjusted</code>. The <code>final</code> values in both ISO and local formats should show the correct date and time in the timezone of the associated station. If these are incorrect, check the selected options above.
+                    <table dense class="text-monospace mt-4">
+                      <tbody>
+                        <tr>
+                          <td class="text-right">Raw:</td>
+                          <td class="pl-4">{{ timestampValue }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">Format:</td>
+                          <td class="pl-4">{{ timestampFormat }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">Parsed:</td>
+                          <td class="pl-4">{{ timestampParsed | timestamp('ISO', 'UTC') }}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="2"><v-divider></v-divider></td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">UTC Offset:</td>
+                          <td class="pl-4">{{ timestampUtcOffset === 'UTC' ? 'None' : timestampUtcOffset }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">Adjusted:</td>
+                          <td class="pl-4">{{ timestampUtc | timestamp('ISO', 'UTC') }}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="2"><v-divider></v-divider></td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">Timezone:</td>
+                          <td class="pl-4">{{ timestamp.timezone.station.timezone }} (Station: {{ timestamp.timezone.station.code }})</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">Final (ISO):</td>
+                          <td class="pl-4">{{ timestampUtc | timestamp('ISO', timestamp.timezone.station.timezone) }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-right">Final (Local):</td>
+                          <td class="pl-4">{{ timestampUtc | timestamp('ff ZZZZ', timestamp.timezone.station.timezone) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </Alert>
+                </div>
+
+                <Alert type="error" title="Timestamp Error" v-if="timestamp.error">
+                  <div v-html="timestamp.error || 'Unknown error'"></div>
+                </Alert>
+
+                <v-row class="mt-8 mb-4 px-3">
+                  <v-btn text class="mr-4 px-4" @click="step -= 1">
+                    <v-icon left>mdi-chevron-left</v-icon> Previous
+                  </v-btn>
+                  <v-btn color="primary" class="mr-4 px-4" @click="nextTimestamp" :loading="timestamp.loading">
+                    Continue <v-icon right>mdi-chevron-right</v-icon>
+                  </v-btn>
+
+                  <v-spacer></v-spacer>
+
+                  <v-btn text @click="cancel">
+                    Cancel
+                  </v-btn>
+                </v-row>
+              </v-form>
+            </v-col>
+          </v-row>
+        </v-stepper-content>
+
+        <!-- TEMPERATURE -->
+        <v-stepper-content step="5">
+          <v-row justify="space-around">
+            <v-col cols="12" md="8" lg="6" xl="4">
+              <v-form ref="temperatureForm" @input="resetTemperature()">
+                <div class="text-h6">Temperature Values</div>
+
+                <!-- <ul class="mt-2 body-2">
+                  <li>Instructions...</li>
+                </ul> -->
+
+                <div>
+                  <p>Which column contains the temperature values?</p>
+                  <v-select
+                    v-model="config.temperature_column"
+                    :items="fileColumns"
+                    :rules="temperature.column.rules"
+                    outlined
+                  ></v-select>
+                </div>
+
+                <p>What are the units?</p>
+                <v-select
+                  v-model="config.temperature_units"
+                  :items="temperature.units.options"
+                  :rules="temperature.units.rules"
+                  item-text="label"
+                  item-value="value"
+                  outlined
+                ></v-select>
+
+                <div>
+                  <p>
+                    What are the missing value indicators? (Optional)<br>
+                    <span class="text--secondary"></span>
+                  </p>
+                  <v-combobox
+                    v-model="temperature.missing.selected"
+                    :items="temperature.missing.options"
+                    label="Select or enter missing value indicators"
+                    hint="Value not in the list? Type it in and press enter."
+                    persistent-hint
+                    multiple
+                    outlined
+                    small-chips
+                    deletable-chips
+                    clearable
+                  ></v-combobox>
+                </div>
+
+                <div class="mt-2">
+                  <p>
+                    Which column contain QAQC flags? (Optional)
+                  </p>
+                  <div class="text-center">
+                    <v-select
+                      v-model="config.flag_column"
+                      :items="fileColumns"
+                      :rules="temperature.flagColumn.rules"
+                      outlined
+                      hint="Flags should only indicate inaccurate or erroneous values."
+                      persistent-hint
+                      clearable
+                    ></v-select>
+                  </div>
+                </div>
+
+                <Alert v-if="temperature.error" type="error" title="Temperatures Error" class="mt-4">
+                  {{ temperature.error || 'Unknown error' }}
+                </Alert>
+
+                <v-row class="mt-8 mb-4 px-3">
+                  <v-btn text class="mr-4 px-4" @click="step -= 1">
+                    <v-icon left>mdi-chevron-left</v-icon> Previous
+                  </v-btn>
+                  <v-btn color="primary" class="mr-4 px-4" @click="nextTemperature" :loading="temperature.loading">
+                    Continue <v-icon right>mdi-chevron-right</v-icon>
+                  </v-btn>
+
+                  <v-spacer></v-spacer>
+
+                  <v-btn text @click="cancel">
+                    Cancel
+                  </v-btn>
+                </v-row>
+              </v-form>
+            </v-col>
+          </v-row>
+        </v-stepper-content>
+
+        <!-- DEPTH -->
+        <v-stepper-content step="6">
+          <v-row justify="space-around">
+            <v-col cols="12" md="8" lg="6" xl="4">
+              <v-form ref="depthForm" @change="resetDepth()">
+                <div v-if="config.file_type === 'SERIES'">
+                  <div class="text-h6">Depth</div>
+                  <p>If the file contains multiple timeseries at one or more stations, then either:</p>
+
+                  <ol class="mb-4">
+                    <li>Specify the <strong>depth category</strong> and/or <strong>numeric depth</strong>, which will be applied to all timeseries within the file, or</li>
+                    <li>Specify a <strong>column</strong> containing the depth of each timeseries.</li>
+                  </ol>
+
+                  <div class="text-subtitle-1 font-weight-bold">Category</div>
+                  <p>Where in the water column were the measurements taken? (Optional)</p>
+                  <v-btn-toggle v-model="config.depth_category" class="mb-4">
+                    <v-btn value="SURFACE">
+                      <v-icon left>mdi-arrow-collapse-up</v-icon>
+                      Surface
+                    </v-btn>
+                    <v-btn value="MID-DEPTH">
+                      <v-icon left>mdi-arrow-collapse-horizontal</v-icon>
+                      Mid-Depth
+                    </v-btn>
+                    <v-btn value="BOTTOM">
+                      <v-icon left>mdi-arrow-collapse-down</v-icon>
+                      Bottom
+                    </v-btn>
+                  </v-btn-toggle>
+
+                  <div class="text-subtitle-1 font-weight-bold">Numeric</div>
+                  <p>
+                    What was the approximate depth (e.g. 5 meters) at which the measurements were collected? (Optional)
+                  </p>
+                  <v-text-field
+                    v-model="config.depth_value"
+                    :rules="depth.value.rules"
+                    type="number"
+                    hint="If depth varies, use depth at start of the timeseries."
+                    persistent-hint
+                    outlined
+                  ></v-text-field>
+
+                  <Alert
+                    v-if="config.depth_value !== null && config.depth_value !== '' && !!config.depth_column"
+                    type="warning"
+                    title="Numeric Depth Will Be Ignored"
+                    class="mt-4"
+                  >
+                    If both a numeric depth and depth column are specified, only the values in the column will be used and the numeric depth will be ignored.
+                  </Alert>
+                </div>
+
+                <div class="text-subtitle-1 font-weight-bold">Depth Column</div>
+                <p v-if="config.file_type === 'SERIES'">
+                  If file contains multiple timeseries at different depths, which column contains the depth of each timeseries? (Optional)
+                </p>
+                <p v-else-if="config.file_type === 'PROFILES'">
+                  Which column contains the depth of each measurement?
+                </p>
+                <v-select
+                  v-model="config.depth_column"
+                  :items="fileColumns"
+                  :rules="depth.column.rules"
+                  outlined
+                  clearable
+                ></v-select>
+
+                <Alert
+                  v-if="config.file_type === 'SERIES' && config.depth_column"
+                  type="warning"
+                  title="Time-varying Depths Not Supported"
+                >
+                  <p>
+                    For each station in this file, rows will be grouped by depth into separate timeseries, one for <strong>each unique depth</strong> found in this column.
+                  </p>
+                  <p>
+                    For example, if the file contains three separate timeseries of measurements collected at 0, 5, and 10 m depths, then the depth column should contain '0' for all measurements at 0 m, '5' for all at 5 m, and '10' for all at 10 m.
+                  </p>
+                  <p class="mb-0">
+                    A depth column is typically used when the file contains multiple stations with a different depth for each station, or when the file contains paired surface/bottom timeseries or a lake array using multiple loggers deployed at different depths but at the same location.
+                  </p>
+                </Alert>
+
+                <div class="text-subtitle-1 font-weight-bold">Units</div>
+                <p>What are the depth units? <span v-if="config.file_type === 'SERIES'">(Required if either numeric depth or depth column is set)</span></p>
+                <v-select
+                  v-model="config.depth_units"
+                  :items="depth.units.options"
+                  :rules="depth.units.rules"
+                  item-text="label"
+                  item-value="value"
+                  hint="All depths will be converted to meters."
+                  persistent-hint
+                  outlined
+                  clearable
+                ></v-select>
+
+                <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
+                  {{ depth.error || 'Unknown error' }}
+                </Alert>
+
+                <v-row class="mt-8 mb-4 px-3">
+                  <v-btn text class="mr-4 px-4" @click="step -= 1">
+                    <v-icon left>mdi-chevron-left</v-icon> Previous
+                  </v-btn>
+                  <v-btn color="primary" class="mr-4 px-4" @click="nextDepth" :loading="depth.loading">
+                    Continue <v-icon right>mdi-chevron-right</v-icon>
+                  </v-btn>
+
+                  <v-spacer></v-spacer>
+
+                  <v-btn text @click="cancel">
+                    Cancel
+                  </v-btn>
+                </v-row>
+              </v-form>
+            </v-col>
+          </v-row>
+        </v-stepper-content>
+
+        <!-- METADATA -->
+        <v-stepper-content step="7">
+          <v-row justify="space-around">
+            <v-col cols="12" md="8" lg="6" xl="4">
+              <v-form ref="metaForm">
+                <div v-if="config.file_type === 'SERIES' && config.interval === 'CONTINUOUS'">
+                  <div class="text-h6">SOP Compliance</div>
+                  <p>Was the sensor checked using pre/post water baths?</p>
+                  <v-btn-toggle v-model="config.sop_bath" class="mb-8">
+                    <v-btn :value="true">
+                      <v-icon left>mdi-check</v-icon>
+                      Yes
+                    </v-btn>
+                    <v-btn :value="false">
+                      <v-icon left>mdi-close</v-icon>
+                      No
+                    </v-btn>
+                  </v-btn-toggle>
+                </div>
+
+                <div class="text-h6">Sensor Accuracy</div>
+                <p>
+                  What was the sensor accuracy level? (Optional)
+                </p>
+                <v-select
+                  v-model="config.accuracy"
+                  :items="meta.accuracy.options"
+                  :rules="meta.accuracy.rules"
+                  placeholder="Select sensor accuracy"
+                  item-value="value"
+                  item-text="label"
+                  outlined
+                  clearable
+                ></v-select>
+
+                <div class="text-h6">QAQC Review</div>
+                <p>
+                  Have these data already undergone a QAQC review? (Optional)
+                </p>
+                <v-btn-toggle v-model="config.reviewed" class="mb-4">
+                  <v-btn :value="true">
+                    <v-icon left>mdi-check</v-icon>
+                    Yes
+                  </v-btn>
+                  <v-btn :value="false">
+                    <v-icon left>mdi-close</v-icon>
+                    No
+                  </v-btn>
+                </v-btn-toggle>
+
+                <Alert v-if="meta.reviewed === 'TRUE'" type="info" title="QAQC Review Assumptions">
+                  <p>If a file has already undergone a QAQC review, then we assume either:</p>
+
+                  <ol>
+                    <li>The file contains a column of QAQC flags indicating invalid values (see 'Temperatures' step), or</li>
+                    <li>If no flag column is present, then all data are assumed to be valid.</li>
+                  </ol>
+                </Alert>
+
+                <Alert type="error" title="Metadata Error" v-if="!meta.status === 'ERROR'">
+                  {{ meta.error || 'Unknown error' }}
+                </Alert>
+
+                <v-row class="mt-8 mb-4 px-3">
+                  <v-btn text class="mr-4 px-4" @click="step -= 1">
+                    <v-icon left>mdi-chevron-left</v-icon> Previous
+                  </v-btn>
+                  <v-btn color="primary" class="mr-4 px-4" @click="nextMeta" :loading="meta.loading">
+                    Continue <v-icon right>mdi-chevron-right</v-icon>
+                  </v-btn>
+
+                  <v-spacer></v-spacer>
+
+                  <v-btn text @click="cancel">
+                    Cancel
+                  </v-btn>
+                </v-row>
+              </v-form>
+            </v-col>
+          </v-row>
+        </v-stepper-content>
+
+        <!-- UPLOAD -->
+        <v-stepper-content step="8">
+          <v-row justify="space-around">
+            <v-col cols="12" md="8" lg="6" xl="4">
+              <v-form ref="uploadForm">
+                <div class="text-h6">Ready to Upload</div>
+
+                <p>The file is ready to upload. Do not close this browser tab until uploading is complete.</p>
+
+                <!-- <ul class="mt-2 body-2">
+                  <li>Instructions...</li>
+                </ul> -->
+
+                <v-row class="mt-8 mb-4 px-3">
+                  <v-btn text class="mr-4 px-4" @click="step -= 1">
+                    <v-icon left>mdi-chevron-left</v-icon> Previous
+                  </v-btn>
+                  <v-btn color="primary" class="mr-4 px-4" @click="submit" :loading="upload.status === 'PENDING'">
+                    Submit <v-icon right>mdi-upload</v-icon>
+                  </v-btn>
+
+                  <v-spacer></v-spacer>
+
+                  <v-btn text @click="cancel">
+                    Cancel
+                  </v-btn>
+                </v-row>
+
+                <v-divider class="my-8" v-if="upload.status !== 'READY'"></v-divider>
+
+                <div v-if="upload.status === 'PENDING'" ref="pending">
+                  <div class="mb-4 font-weight-bold">
+                    {{upload.message}}
+                  </div>
+                  <v-progress-linear
+                    :active="true"
+                    color="primary"
+                    height="8"
+                    :value="upload.progress"
+                    class="mb-8"
+                  ></v-progress-linear>
+
+                  <Alert type="warning" title="Upload in Progress">
+                    <div>
+                      Please leave this browser tab open until uploading is complete.
+                    </div>
+                  </Alert>
+                </div>
+                <Alert type="error" title="Failed to Upload File" v-else-if="upload.status === 'FAILED'">
+                  <div v-html="upload.error || 'Unknown error'"></div>
+                </Alert>
+                <Alert type="success" title="Upload Complete!" v-else-if="upload.status === 'DONE'">
+                  <div>
+                    The dataset has been uploaded and will now be queued for processing on the server.
+                  </div>
+                  <div class="mt-2">
+                    Redirecting you back to the station files table in 5 seconds, or <router-link :to="{name: 'manageFiles'}">click here</router-link>.
+                  </div>
+                </Alert>
+                <Alert type="error" title="Upload Cancelled" v-else-if="upload.status === 'CANCELLED'">
+                  <div>
+                    File upload has been cancelled. The file has been deleted from the server.
+                  </div>
+                  <div class="mt-2">
+                    <router-link :to="{name: 'manageFiles'}">Click here</router-link> to go back to your existing files.
+                  </div>
+                </Alert>
+              </v-form>
+            </v-col>
+          </v-row>
+        </v-stepper-content>
+      </v-stepper-items>
+    </v-stepper>
+    <!-- <pre>{{ config }}</pre> -->
+  </v-card>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-
-import { utcOffsetOptions, temperatureUnitsOptions, sensorAccuracyOptions, depthUnitsOptions, depthCategoryOptions } from '@/lib/constants'
 import evt from '@/events'
-import { parseBooleanOption, parseCsvFile, guessUtcOffset, parseTimestamp } from '@/lib/utils'
+
+import { readLocalFile, sleep } from '@/lib/utils'
+
+const {
+  temperatureUnitsOptions,
+  sensorAccuracyOptions,
+  depthUnitsOptions,
+  depthCategoryOptions,
+  utcOffsetOptions
+} = require('aktemp-utils/constants')
+
+const {
+  parseCsv,
+  parseUtcOffset
+} = require('aktemp-utils/parsers')
+
+const {
+  getTimestampString,
+  parseTimestampString,
+  guessDatetimeFormat,
+  adjustTimestampToUtc,
+  getLocalUtcOffsetTimezone
+} = require('aktemp-utils/time')
+
+const { validateFileConfig } = require('aktemp-utils/validators')
 
 export default {
   name: 'ManageFileForm',
   data () {
     return {
       step: 1,
-      organization: {
-        status: 'READY',
-        error: null,
-        selected: null,
-        // selected: (this.organizations.length === 1 ? this.organizations[0].id : null),
-        rules: [
-          v => !!v || 'Organization is required'
-        ]
+      config: {
+        file_skip: '0',
+        file_type: null,
+        interval: null,
+        station_code: null,
+        station_column: null,
+        datetime_column: null,
+        time_column: null,
+        datetime_format: null,
+        timezone: null,
+        timezone_column: null,
+        temperature_column: null,
+        temperature_units: 'C',
+        temperature_missing: null,
+        flag_column: null,
+        depth_category: null,
+        depth_value: null,
+        depth_column: null,
+        depth_units: null,
+        sop_bath: null,
+        accuracy: null,
+        reviewed: null
       },
       file: {
-        status: 'READY',
+        error: null,
         loading: false,
         rules: [
           v => {
@@ -962,24 +1149,22 @@ export default {
             return true
           }
         ],
-        type: null,
         selected: null,
-        skipLines: 0,
         parsed: null
       },
+      type: {
+        error: null
+      },
       station: {
-        status: 'READY',
+        error: null,
         loading: false,
-        mode: null, // station, column
-        station: {
-          selected: null,
-          options: [],
-          rules: [
-            v => !!v ||
-              this.station.mode !== 'STATION' ||
-              'Station is required'
-          ]
-        },
+        mode: 'STATION',
+        selected: null,
+        rules: [
+          v => !!v ||
+            this.station.mode !== 'STATION' ||
+            'Station is required'
+        ],
         column: {
           selected: null,
           rules: [
@@ -989,74 +1174,51 @@ export default {
           ]
         }
       },
-      depth: {
-        status: 'READY',
-        loading: false,
-        category: {
-          selected: null,
-          options: depthCategoryOptions,
-          rules: []
-        },
-        value: {
-          selected: null,
-          rules: []
-        },
-        column: {
-          selected: null,
-          rules: [
-            () => this.file.type !== 'PROFILES' ||
-              'Depth column is required'
-          ]
-        },
-        units: {
-          selected: null,
-          options: depthUnitsOptions,
-          rules: [
-            v => (
-              (this.depth.value.selected === null || this.depth.value.selected === '') &&
-              !this.depth.column.selected
-            ) || !!v || 'Units are required'
-          ]
-        }
-      },
       timestamp: {
-        status: 'READY',
+        error: null,
         loading: false,
-        mode: null, // combined, separate
-        combined: {
-          column: {
+        columns: {
+          separate: false,
+          date: {
             selected: null,
+            options: [],
             rules: [
               v => !!v ||
-                this.timestamp.mode !== 'COMBINED' ||
-                'Datetime column is required'
+                `${this.timestamp.columns.separate ? 'Date' : 'Datetime'} column is required`
+            ]
+          },
+          time: {
+            selected: null,
+            options: [],
+            rules: [
+              v => !!v ||
+                !this.timestamp.columns.separate ||
+                'Time column is required'
             ]
           }
         },
-        separate: {
+        format: {
+          unknown: false,
+          isISO: false,
           date: {
-            column: {
-              selected: null,
-              rules: [
-                v => !!v ||
-                  this.timestamp.mode !== 'SEPARATE' ||
-                  'Date column is required'
-              ]
-            }
+            value: '',
+            rules: [
+              v => !!v ||
+                this.timestamp.format.isISO ||
+                'Date format is required'
+            ]
           },
           time: {
-            column: {
-              selected: null,
-              rules: [
-                v => !!v ||
-                  this.timestamp.mode !== 'SEPARATE' ||
-                  'Time column is required'
-              ]
-            }
+            value: '',
+            rules: [
+              v => !!v ||
+                this.timestamp.format.isISO ||
+                'Time format is required'
+            ]
           }
         },
         timezone: {
-          mode: null, // COLUMN, UTCOFFSET, TIMESTAMP, GUESS
+          mode: null,
           column: {
             selected: null,
             rules: [
@@ -1070,27 +1232,23 @@ export default {
             options: utcOffsetOptions,
             rules: [
               v => !!v ||
-                this.timestamp.timezone.mode !== 'UTCOFFSET' ||
+                this.timestamp.timezone.mode !== 'FIXED' ||
                 'UTC offset is required'
             ]
           },
-          example: {
-            station: null
-          }
+          station: null
         }
       },
-      value: {
-        status: 'READY',
+      temperature: {
+        error: null,
         loading: false,
         column: {
-          selected: null,
           rules: [
             v => !!v ||
-              'Temperature values column is required'
+              'Temperature column is required'
           ]
         },
         units: {
-          selected: 'C',
           options: temperatureUnitsOptions,
           rules: [
             v => !!v ||
@@ -1098,25 +1256,50 @@ export default {
           ]
         },
         missing: {
-          mode: null,
           selected: [],
-          options: ['N/A', '#N/A', 'NA', '-99', '-9999', '-99.99', 'missing']
+          options: ['N/A', '#N/A', 'NA', '-99', '-9999', '-99.99', 'missing'],
+          rules: []
         },
         flagColumn: {
-          selected: null,
           rules: []
         }
       },
-      meta: {
-        status: 'READY',
+      depth: {
+        error: null,
         loading: false,
-        sop_bath: null,
-        accuracy: {
-          selected: null,
-          options: sensorAccuracyOptions,
+        category: {
+          options: depthCategoryOptions,
           rules: []
         },
-        reviewed: null
+        value: {
+          rules: []
+        },
+        column: {
+          rules: [
+            () => !!this.config.depth_column ||
+              this.config.file_type !== 'PROFILES' ||
+              'Depth column is required'
+          ]
+        },
+        units: {
+          options: depthUnitsOptions,
+          rules: [
+            v => !!v ||
+              (
+                (this.config.depth_value === null || this.config.depth_value === '') &&
+                !this.config.depth_column
+              ) ||
+              'Units are required'
+          ]
+        }
+      },
+      meta: {
+        loading: false,
+        error: null,
+        accuracy: {
+          options: sensorAccuracyOptions,
+          rules: []
+        }
       },
       upload: {
         status: 'READY',
@@ -1131,311 +1314,428 @@ export default {
   computed: {
     ...mapGetters({
       organizations: 'manage/organizations',
-      defaultOrganization: 'manage/organization'
+      organization: 'manage/organization',
+      stations: 'manage/stations'
     }),
     fileColumns () {
-      return this.file.parsed && this.file.parsed.meta ? this.file.parsed.meta.fields : []
+      // return [
+      //   'datetime_iso_T_z',
+      //   'datetime_iso_T_tz',
+      //   'datetime_iso_space_z',
+      //   'datetime_iso_space_tz',
+      //   'utcOffset',
+      //   'utcOffsetInvalid',
+      //   'date_iso',
+      //   'date',
+      //   'time',
+      //   'datetime',
+      //   'value',
+      //   'depth_m'
+      // ]
+      if (!(this.file.parsed && this.file.parsed.meta && this.file.parsed.meta.fields)) return []
+      return this.file.parsed.meta.fields.filter(d => !!d.trim())
     },
-    fileConfig () {
-      return this.createFileConfig()
+    firstRow () {
+      if (!this.file.parsed || this.file.parsed.data.length === 0) return null
+      return this.file.parsed.data[0]
+      // return {
+      //   datetime_iso_T_z: '2022-06-01T19:05:00.000Z',
+      //   datetime_iso_T_tz: '2022-06-01T19:05:00.000-09:00',
+      //   datetime_iso_space_z: '2022-06-01 19:05:00.000Z',
+      //   datetime_iso_space_tz: '2022-06-01 19:05:00.000-09',
+      //   datetime: '1/2/2022 19:05',
+      //   date_iso: '2022-06-01',
+      //   date: '02-Jan-22',
+      //   time: '19:05',
+      //   value: 10.5,
+      //   utcOffset: -8,
+      //   utcOffsetInvalid: 'INVALID'
+      // }
     },
-    firstTimestamp () {
-      if (!this.file.parsed || this.file.parsed.data.length === 0 || !this.timestamp.mode) return null
-      const row = this.file.parsed.data[0]
-      if (this.timestamp.mode === 'COMBINED') {
-        if (!this.timestamp.combined.column.selected) return null
-        return row[this.timestamp.combined.column.selected]
-      } else if (this.timestamp.mode === 'SEPARATE') {
-        if (!this.timestamp.separate.date.column.selected || !this.timestamp.separate.time.column.selected) return null
-        return `${row[this.timestamp.separate.date.column.selected]} ${row[this.timestamp.separate.time.column.selected]}`
+    timestampValue () {
+      if (!this.firstRow ||
+          !this.config.datetime_column ||
+          (this.timestamp.columns.separate && !this.config.time_column)) {
+        return null
+      }
+      // return '2022-01-02T12:05:00.000Z'
+      const timeColumn = this.timestamp.columns.separate ? this.config.time_column : null
+      return getTimestampString(this.firstRow, this.config.datetime_column, timeColumn)
+    },
+    timestampFormat () {
+      if (!this.timestampValue) return null
+      else if (this.timestamp.format.isISO) return 'ISO'
+      else if (!this.timestamp.format.time.value) return this.timestamp.format.date.value
+      else return [this.timestamp.format.date.value, this.timestamp.format.time.value].join(' ')
+    },
+    timestampParsed () {
+      if (!this.timestampValue || !this.timestampFormat) return null
+      try {
+        const parsed = parseTimestampString(this.timestampValue, this.timestampFormat)
+        return parsed.isValid ? parsed : null
+      } catch (err) {
+        console.log(err)
+        return null
+      }
+    },
+    timestampUtcOffset () {
+      if (!this.timestampParsed || !this.timestamp.timezone.mode) return null
+
+      if (this.timestamp.timezone.mode === 'NONE') {
+        return 'UTC'
+      } else if (this.timestamp.timezone.mode === 'LOCAL') {
+        const tz = this.timestamp.timezone.station.timezone
+        return getLocalUtcOffsetTimezone(this.timestampValue, this.timestampFormat, tz)
+      } else if (this.timestamp.timezone.mode === 'FIXED') {
+        if (!this.timestamp.timezone.utcOffset.selected) return null
+        return this.timestamp.timezone.utcOffset.selected
+      } else if (this.timestamp.timezone.mode === 'COLUMN') {
+        if (!this.timestamp.timezone.column.selected) return null
+        return this.parseUtcOffset(this.firstRow, this.timestamp.timezone.column.selected)
       }
       return null
+    },
+    timestampUtc () {
+      if (!this.timestampParsed || !this.timestampUtcOffset) return null
+
+      return adjustTimestampToUtc(this.timestampParsed, this.timestampUtcOffset)
     }
   },
   watch: {
-    async 'organization.selected' () {
-      this.station.station.selected = null
-      this.resetStation()
-      await this.fetchStations()
-    },
-    defaultOrganization () {
-      this.setDefaultOrganization()
+    timestampValue () {
+      this.guessTimestampFormat()
     }
   },
-  async mounted () {
-    this.setDefaultOrganization()
-  },
   methods: {
-    setDefaultOrganization () {
-      this.organization.selected = this.defaultOrganization || null
-    },
-    nextOrganization () {
-      this.organization.error = null
-      this.organization.status = 'PENDING'
-
-      if (!this.$refs.organizationForm.validate()) {
-        this.organization.status = 'ERROR'
-        this.organization.error = 'Form is incomplete or contains an error'
-        return
-      }
-      this.step += 1
-    },
-    async fetchStations () {
-      if (!this.organization.selected) return
-      // this.loading = true
-      // this.error = null
-
-      try {
-        const response = await this.$http.restricted.get(`/organizations/${this.organization.selected.id}/stations`)
-        this.station.station.options = response.data
-      } catch (err) {
-        alert('Failed to load stations, see console log')
-        console.error(err)
-      } finally {
-        // this.loading = false
-      }
-    },
+    // FILE
     resetFile () {
-      this.file.status = 'READY'
       this.file.error = null
-      this.file.parsed = null
-    },
-    loadFile () {
-      this.file.error = null
+      this.file.loading = false
       this.file.parsed = null
 
-      if (!this.$refs.fileForm.validate()) {
-        this.file.status = 'ERROR'
-        this.file.error = 'Fix the validation errors above.'
-        return
-      }
+      // this.config.file_skip = 0
+      this.config.file_type = null
+      this.config.interval = null
+
+      this.config.station_code = null
+      this.config.station_column = null
+
+      this.config.datetime_column = null
+      this.config.time_column = null
+      this.config.datetime_format = null
+      this.config.timezone = null
+      this.config.timezone_column = null
+
+      this.config.temperature_column = null
+      this.config.temperature_units = 'C'
+      this.config.temperature_missing = null
+      this.config.flag_column = null
+
+      this.config.depth_category = null
+      this.config.depth_value = null
+      this.config.depth_column = null
+      this.config.depth_units = null
+
+      this.config.accuracy = null
+      this.config.reviewed = null
+      this.config.sop_bath = null
+
+      this.station.mode = 'STATION'
+      this.timestamp.columns.separate = false
+      this.timestamp.timezone.mode = null
+      this.timestamp.timezone.column.selected = null
+      this.timestamp.timezone.utcOffset.selected = null
+      this.timestamp.timezone.station = null
+      this.temperature.missing.selected = []
+
+      this.resetType()
+      this.resetStation()
+      this.resetTimestamp()
+      this.resetTemperature()
+      this.resetDepth()
+      this.resetMeta()
+    },
+    async loadFile () {
+      this.resetFile()
 
       if (!this.file.selected) {
-        this.file.status = 'ERROR'
         this.file.error = 'No file selected.'
         return
       }
 
-      this.file.status = 'PENDING'
+      const fileExtension = this.file.selected.name.split('.').pop().toLowerCase()
+      if (fileExtension !== 'csv') {
+        this.file.error = 'Invalid file type, must be a comma-separated value (CSV) file with extension \'.csv\''
+        return
+      }
+
+      if (!this.$refs.fileForm.validate()) {
+        this.file.error = 'Fix the validation errors above.'
+        return
+      }
+
       this.file.loading = true
 
-      parseCsvFile(this.file.selected, this.file.skipLines)
-        .then(results => {
-          this.$refs.fileInput.blur()
-
-          if (results.errors.length > 0) {
-            this.file.status = 'ERROR'
-            const errors = results.errors.map(d => {
-              const row = d.row ? ` (row ${results.errors[0].row})` : ''
-              return `${d.message}${row}`
-            })
-            if (errors.length > 5) {
-              this.file.error = `${errors.slice(0, 5).join(', ')}, and ${errors.length - 5} more...`
-            } else {
-              this.file.error = errors.join(', ')
-            }
-          } else if (!results.meta.fields.every(d => d.length > 0)) {
-            this.file.status = 'ERROR'
-            const index = results.meta.fields.findIndex(d => d.length === 0) + 1
-            this.file.error = `File is missing column name at index ${index}. Found the following column names:<br><br><pre class='ml-4'>${results.meta.fields.map((d, i) => `Col ${i + 1}: '${d}'`).join('<br>')}</pre><br>Please remove the unnamed column or add a header name to the file and try again.`
-          } else {
-            this.file.status = 'SUCCESS'
-            this.file.parsed = results
-          }
-        })
-        .catch((e) => {
-          console.error(e)
-          this.file.status = 'ERROR'
-          this.file.error = this.$errorMessage(e.message)
-        })
-        .finally(() => {
-          this.file.loading = false
-        })
-    },
-    nextFile () {
-      if (this.file.error) return
-
-      if (!this.file.type) {
-        this.file.status = 'ERROR'
-        this.file.error = 'File type not selected'
-        return
-      } else if (!this.file.selected) {
-        this.file.status = 'ERROR'
-        this.file.error = 'No file selected'
-        return
-      } else if (!this.$refs.fileForm.validate()) {
-        this.file.status = 'ERROR'
-        this.file.error = 'Invalid file'
-        return
-      }
-
-      this.step += 1
-    },
-    resetStation () {
-      this.station.status = 'READY'
-      this.station.error = null
-      if (this.$refs.stationForm) this.$refs.stationForm.resetValidation()
-    },
-    async nextStation () {
-      this.station.error = null
-      this.timestamp.timezone.example.station = null
-
-      if (!this.station.mode ||
-          !this.$refs.stationForm.validate()) {
-        this.station.status = 'ERROR'
-        this.station.error = 'Form is incomplete or contains an error'
-        return
-      }
-
-      if (this.station.mode === 'STATION') {
-        this.timestamp.timezone.example.station = this.station.station.selected
-      } else if (this.station.mode === 'COLUMN') {
-        if (!this.file.parsed || this.file.parsed.data.length === 0) {
-          this.station.status = 'ERROR'
-          this.station.error = 'Unable to get timezone of first row. File appears to be empty.'
-          return
-        }
-
-        // check all stationCodes exist
-        const existingStationCodes = this.station.station.options.map(d => d.code)
-        const fileStationCodes = new Set(this.file.parsed.data.map(d => d[this.station.column.selected]))
-        for (const x of fileStationCodes) {
-          if (!existingStationCodes.includes(x)) {
-            this.station.status = 'ERROR'
-            this.station.error = `File contains unknown station code ${JSON.stringify(x)} in column ${JSON.stringify(this.station.column.selected)}.`
-            return
-          }
-        }
-
-        // get first station
-        const firstStationCode = this.file.parsed.data[0][this.station.column.selected]
-        const station = this.station.station.options.find(d => d.code === firstStationCode)
-        if (!station) {
-          this.station.status = 'ERROR'
-          this.station.error = `Could not find station with code (${JSON.stringify(firstStationCode)}) extracted from the first row of the file (column: '${this.station.column.selected}').`
-          return
-        }
-        this.timestamp.timezone.example.station = station
-      } else {
-        this.timestamp.timezone.example.station = null
-        this.station.status = 'ERROR'
-        this.station.error = 'Failed to find timezone of first row in file.'
-        return
-      }
-
-      this.step += 1
-    },
-    resetDepth () {
-      this.depth.status = 'READY'
-      this.depth.error = null
-      if (this.$refs.depthForm) this.$refs.depthForm.resetValidation()
-    },
-    nextDepth () {
-      this.depth.error = null
-
-      if (!this.$refs.depthForm.validate()) {
-        this.depth.status = 'ERROR'
-        this.depth.error = 'Form is incomplete or contains an error'
-        return
-      }
-
-      this.step += 1
-    },
-    resetTimestamp () {
-      this.timestamp.status = 'READY'
-      this.timestamp.error = null
-      if (this.$refs.timestampForm) this.$refs.timestampForm.resetValidation()
-      this.updateExampleTimestamp()
-    },
-    updateExampleTimestamp () {
-      if (!this.timestamp.timezone.mode || !this.firstTimestamp) return
-
-      const station = this.timestamp.timezone.example.station
-      const tz = station.timezone
-      const raw = this.firstTimestamp
-      let utcOffset = 0
-      let parsed, error
-
       try {
-        if (this.timestamp.timezone.mode === 'GUESS') {
-          utcOffset = guessUtcOffset(raw, tz)
-          parsed = parseTimestamp(raw, utcOffset)
-        } else if (this.timestamp.timezone.mode === 'UTCOFFSET') {
-          if (this.timestamp.timezone.utcOffset.selected) {
-            utcOffset = this.timestamp.timezone.utcOffset.selected.value
-            parsed = parseTimestamp(raw, utcOffset)
+        const csv = await readLocalFile(this.file.selected)
+        const results = parseCsv(csv, this.config.file_skip, true)
+        this.$refs.fileInput.blur()
+        this.file.parsed = results
+        if (results.errors.length > 0) {
+          const err = results.errors[0]
+          if (err.code === 'TooManyFields') {
+            this.file.error = `Too many values found on row ${err.row + 1}. The number of values in each row must equal the number of columns found in the header line.`
+          } else if (err.code === 'TooFewFields') {
+            this.file.error = `Too few values found on row ${err.row + 1}. The number of values in each row must equal the number of columns found in the header line.`
+          } else {
+            this.file.error = `${err.message} (row ${err.row + 1})`
           }
-        } else if (this.timestamp.timezone.mode === 'TIMESTAMP') {
-          parsed = parseTimestamp(raw)
-        } else if (this.timestamp.timezone.mode === 'COLUMN') {
-          if (this.timestamp.timezone.column.selected) {
-            const column = this.timestamp.timezone.column.selected
-            utcOffset = this.file.parsed.data[0][column]
-            parsed = parseTimestamp(raw, utcOffset)
-          }
-        }
-
-        if (parsed && !parsed.isValid()) {
-          throw new Error(`Failed to parse timestamp ('${raw}') with utcOffset=${utcOffset}`)
+        } else if (results.data.length === 0) {
+          this.file.error = 'File is empty'
         }
       } catch (err) {
         console.error(err)
-        error = err.toString()
+        this.file.error = this.$errorMessage(err.message)
+      } finally {
+        this.file.loading = false
+      }
+    },
+    nextFile () {
+      if (!this.file.parsed || this.file.error) {
+        return this.loadFile()
       }
 
-      this.timestamp.timezone.example = {
-        station,
-        tz,
-        raw,
-        utcOffset,
-        parsed,
-        error
+      this.step += 1
+    },
+
+    // TYPE
+    resetType () {
+      this.type.error = null
+    },
+    validateType () {
+      if (!this.config.file_type) {
+        throw new Error('Dataset type is required')
+      } else if (this.config.file_type === 'SERIES' && !this.config.interval) {
+        throw new Error('Timeseries interval type is required')
       }
+    },
+    nextType () {
+      this.type.error = null
+      try {
+        this.validateType()
+        this.step += 1
+      } catch (err) {
+        this.type.error = err.toString()
+      }
+    },
+
+    // STATION
+    resetStation () {
+      this.station.error = null
+      if (this.$refs.stationForm) this.$refs.stationForm.resetValidation()
+    },
+    validateStation () {
+      if (!this.station.mode ||
+          !this.$refs.stationForm.validate()) {
+        throw new Error('Form is incomplete or contains an error')
+      }
+
+      if (this.station.mode === 'STATION') {
+        const station = this.stations.find(d => d.code === this.config.station_code)
+        if (!station) throw new Error(`Unable to find station (code='${this.config.station_code}').`)
+        this.timestamp.timezone.station = station
+      } else if (this.station.mode === 'COLUMN') {
+        if (!this.file.parsed || this.file.parsed.data.length === 0) throw new Error('Unable to find first station code. File appears to be empty.')
+
+        // check all stationCodes exist
+        const existingStationCodes = this.stations.map(d => d.code)
+        this.file.parsed.data.forEach((d, i) => {
+          const code = d[this.config.station_column]
+          if (!existingStationCodes.includes(code)) {
+            throw new Error(`File contains unknown station code ('${code}') in row ${i + 1}, column '${this.config.station_column}'.`)
+          }
+        })
+
+        // get first station
+        const code = this.file.parsed.data[0][this.config.station_column]
+        const station = this.stations.find(d => d.code === code)
+        if (!station) throw new Error(`Could not find station (code='${code}') in row 1, column '${this.config.station_column}'.`)
+
+        this.timestamp.timezone.station = station
+      } else {
+        throw new Error('Station mode not found, expected single station or station column')
+      }
+    },
+    nextStation () {
+      this.station.error = null
+      this.station.loading = true
+      this.timestamp.timezone.station = null
+
+      try {
+        this.validateStation()
+        this.step += 1
+      } catch (err) {
+        this.station.error = err.toString()
+      } finally {
+        this.station.loading = false
+      }
+    },
+
+    // TIMESTAMP
+    parseUtcOffset (row, column) {
+      try {
+        return parseUtcOffset(row, column)
+      } catch (err) {
+        this.timestamp.error = `Failed to parse first UTC offset ('${row[column]}') in column '${column}'.<br><br>Value must be the number of hours relative to UTC (e.g., '-8' for UTC-8/AKDT).<br><br>Only negative integers between -7 and -10 are accepted.`
+      }
+      return null
+    },
+    adjustTimestamp () {
+      this.timestamp.error = null
+      try {
+        return adjustTimestampToUtc(this.timestampParsed, this.timestampUtcOffset)
+      } catch (err) {
+        console.log(err)
+        this.timestamp.error = this.$errorMessage(err)
+      }
+    },
+    guessTimestampFormat () {
+      const value = this.timestampValue
+      if (!value) return
+
+      this.timestamp.format.unknown = false
+      this.timestamp.format.isISO = false
+      this.timestamp.format.date.value = ''
+      this.timestamp.format.time.value = ''
+      const format = guessDatetimeFormat(value)
+      // console.log(`guessTimestampFormat('${value}') = ${format}`)
+      if (format === 'ISO') {
+        this.timestamp.format.isISO = true
+      } else if (Array.isArray(format)) {
+        this.timestamp.format.date.value = format[0]
+        this.timestamp.format.time.value = format[1]
+      } else {
+        this.timestamp.format.unknown = true
+      }
+    },
+    resetTimestamp () {
+      this.timestamp.error = null
+      this.config.datetime_format = null
+      this.config.timezone = null
+      this.config.timezone_column = null
+      if (this.$refs.timestampForm) this.$refs.timestampForm.resetValidation()
+    },
+    validateTimestamps () {
+      if (!this.$refs.timestampForm.validate()) {
+        throw new Error('Form is incomplete or contains an error')
+      }
+
+      if (!this.timestampUtc) throw new Error('Unexpected Error: Failed to parse first timestamp')
+
+      if (!this.file.parsed) throw new Error('Parsed file not found')
+
+      const timeColumn = this.timestamp.columns.separate ? this.config.time_column : null
+      this.file.parsed.data.map((d, i) => {
+        try {
+          const raw = getTimestampString(d, this.config.datetime_column, timeColumn)
+          const parsed = parseTimestampString(raw, this.timestampFormat)
+          return adjustTimestampToUtc(parsed, this.timestampUtcOffset)
+        } catch (err) {
+          throw new Error(`Invalid timestamp at row ${i + 1}<br><br>${err.toString()}`)
+        }
+      })
     },
     nextTimestamp () {
       this.timestamp.error = null
+      this.timestamp.loading = true
+      try {
+        this.validateTimestamps()
 
-      if (!this.timestamp.mode ||
-          !this.$refs.timestampForm.validate() ||
-          !this.timestamp.timezone.mode ||
-          this.timestamp.timezone.example.error) {
-        this.timestamp.status = 'ERROR'
-        this.timestamp.error = 'Form is incomplete or contains an error'
-        return
+        this.config.datetime_format = this.timestampFormat
+        switch (this.timestamp.timezone.mode) {
+          case 'NONE':
+            this.config.timezone = 'UTC'
+            break
+          case 'LOCAL':
+            this.config.timezone = 'LOCAL'
+            break
+          case 'FIXED':
+            this.config.timezone = this.timestamp.timezone.utcOffset.selected
+            break
+          case 'COLUMN':
+            this.config.timezone = 'COLUMN'
+            this.config.timezone_column = this.timestamp.timezone.column.selected
+            break
+        }
+        this.step += 1
+      } catch (err) {
+        this.timestamp.error = err.toString().replace('Error: ', '')
+      } finally {
+        this.timestamp.loading = false
       }
-
-      this.step += 1
     },
-    resetValue () {
-      this.value.status = 'READY'
-      this.value.error = null
-      if (this.$refs.valueForm) this.$refs.valueForm.resetValidation()
-    },
-    nextValue () {
-      this.value.error = null
 
-      if (!this.$refs.valueForm.validate()) {
-        this.value.status = 'ERROR'
-        this.value.error = 'Form is incomplete or contains an error'
-        return
+    resetTemperature () {
+      this.temperature.error = null
+      this.config.temperature_missing = ''
+      if (this.$refs.temperatureForm) this.$refs.temperatureForm.resetValidation()
+    },
+    validateTemperature () {
+      if (!this.$refs.temperatureForm.validate()) {
+        throw new Error('Form is incomplete or contains an error')
       }
-      this.step += 1
     },
+    nextTemperature () {
+      this.temperature.error = null
+      try {
+        this.validateTemperature()
+        this.config.temperature_missing = this.temperature.missing.selected.join(',')
+        this.step += 1
+      } catch (err) {
+        this.temperature.error = err.toString()
+      }
+    },
+
+    // DEPTH
+    resetDepth () {
+      this.depth.error = null
+      if (this.$refs.depthForm) this.$refs.depthForm.resetValidation()
+    },
+    validateDepth () {
+      if (!this.$refs.depthForm.validate()) {
+        throw new Error('Form is incomplete or contains an error')
+      }
+    },
+    nextDepth () {
+      this.depth.error = null
+      try {
+        this.validateDepth()
+        this.step += 1
+      } catch (err) {
+        this.depth.error = err.toString()
+      }
+    },
+
+    // META
     resetMeta () {
-      this.meta.status = 'READY'
       this.meta.error = null
       if (this.$refs.metaForm) this.$refs.metaForm.resetValidation()
     },
+    validateMeta () {
+      if (!this.$refs.metaForm.validate()) {
+        throw new Error('Form is incomplete or contains an error')
+      }
+    },
     nextMeta () {
       this.meta.error = null
-
-      if (!this.$refs.metaForm.validate()) {
-        this.meta.status = 'ERROR'
-        this.meta.error = 'Form is incomplete or contains an error'
-        return
+      try {
+        this.validateMeta()
+        this.step += 1
+      } catch (err) {
+        this.meta.error = err.toString()
       }
-      this.step += 1
     },
+
     async submit () {
       this.upload.status = 'PENDING'
       this.upload.message = 'Starting upload...'
@@ -1503,120 +1803,30 @@ export default {
       this.upload.message = 'Upload complete'
 
       evt.$emit('notify', `File ${this.upload.file.filename} has been uploaded`, 'success')
-      this.$store.dispatch('manage/setOrganizationById', this.upload.file.organization_id)
       this.$router.push({
         name: 'manageFile',
         params: {
+          organizationId: this.upload.file.organization_id,
           fileId: this.upload.file.id
         }
       })
     },
-    createFileConfig () {
-      const config = {
-        type: null,
-        file: {
-          filename: this.file.selected.name,
-          skipLines: this.file.skipLines || 0
-        },
-        station: {
-          mode: this.station.mode
-        },
-        depth: {
-          category: this.depth.category.selected,
-          value: this.depth.value.selected,
-          column: this.depth.column.selected,
-          units: this.depth.units.selected
-        },
-        timestamp: {
-          timezone: {}
-        },
-        value: {
-          column: this.value.column.selected,
-          units: this.value.units.selected,
-          missing: this.value.missing.selected,
-          flagColumn: this.value.flagColumn.selected
-        },
-        meta: {}
-      }
-
-      switch (this.file.type) {
-        case 'PROFILES':
-          config.type = 'PROFILES'
-          break
-        case 'SERIES_CONTINUOUS':
-          config.type = 'SERIES'
-          config.meta.interval = 'CONTINUOUS'
-          break
-        case 'SERIES_DISCRETE':
-          config.type = 'SERIES'
-          config.meta.interval = 'DISCRETE'
-          break
-        default:
-          config.type = null
-      }
-
-      switch (this.station.mode) {
-        case 'STATION':
-          config.station.stationId = this.station.station.selected.id
-          break
-        case 'COLUMN':
-          config.station.column = this.station.column.selected
-          break
-      }
-
-      switch (this.timestamp.mode) {
-        case 'COMBINED':
-          config.timestamp.columns = [
-            this.timestamp.combined.column.selected
-          ]
-          break
-        case 'SEPARATE':
-          config.timestamp.columns = [
-            this.timestamp.separate.date.column.selected,
-            this.timestamp.separate.time.column.selected
-          ]
-          break
-      }
-
-      switch (this.timestamp.mode) {
-        case 'COMBINED':
-          config.timestamp.columns = [
-            this.timestamp.combined.column.selected
-          ]
-          break
-        case 'SEPARATE':
-          config.timestamp.columns = [
-            this.timestamp.separate.date.column.selected,
-            this.timestamp.separate.time.column.selected
-          ]
-          break
-      }
-
-      config.timestamp.timezone.mode = this.timestamp.timezone.mode
-      switch (this.timestamp.timezone.mode) {
-        case 'COLUMN':
-          config.timestamp.timezone.column = this.timestamp.timezone.column.selected
-          break
-        case 'UTCOFFSET':
-          config.timestamp.timezone.utcOffset = this.timestamp.timezone.utcOffset.selected.value
-          break
-      }
-
-      config.meta.sop_bath = parseBooleanOption(this.meta.sop_bath)
-      config.meta.accuracy = this.meta.accuracy.selected
-      config.meta.reviewed = parseBooleanOption(this.meta.reviewed)
-
-      return config
-    },
     async createFile () {
       if (!this.file.selected) throw new Error('File not found')
-      const organizationId = this.organization.selected.id
+      const organizationId = this.organization.id
       const filename = this.file.selected.name
-      const config = this.createFileConfig()
+
+      let config
+      try {
+        config = validateFileConfig(this.config, this.fileColumns, this.stations)
+      } catch (err) {
+        this.error = err.toString()
+        return
+      }
 
       const response = await this.$http.restricted.post(`/organizations/${organizationId}/files`, {
         filename,
-        type: config.type,
+        type: config.file_type,
         config
       })
 

@@ -82,7 +82,7 @@ aktemp files import -o UAA -d r/export/uaa/files -c r/export/uaa/config.json r/e
 Run batch processor
 
 ```sh
-node batch/process.js files --all
+aktemp files process --all
 ```
 
 ### API Dev Server
@@ -97,6 +97,31 @@ npm run start
 ```
 cd app
 npm run serve
+```
+
+## Docker
+
+Docker deployment
+
+```bash
+# load env (REGION, AWS_REPO)
+source .env.docker.local
+
+# log in
+aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${AWS_REPO}
+
+# build image (Intel chip)
+docker build -t ${AWS_REPO} .
+
+# build image (Mac M1 chip)
+# https://stackoverflow.com/questions/67361936/exec-user-process-caused-exec-format-error-in-aws-fargate-service
+docker buildx build --platform=linux/amd64 -t ${AWS_REPO} .
+
+# push to ecr repo
+docker push ${AWS_REPO}
+
+# run docker locally, pass in env variables and AWS credentials
+docker run -it --rm --env-file .env.development.local -v $HOME/.aws/:/home/node/.aws ${AWS_REPO} node index.js help
 ```
 
 ## Web Application

@@ -26,13 +26,13 @@
       {{ item.station_code | truncate(20) }}
     </template>
     <template v-slot:item.start_datetime="{ item }">
-      {{ item.start_datetime | formatTimestamp('ll', item.station_timezone) }}
+      {{ item.start_datetime | timestamp('DD', item.station_timezone) }}
     </template>
     <template v-slot:item.end_datetime="{ item }">
-      {{ item.end_datetime | formatTimestamp('ll', item.station_timezone) }}
+      {{ item.end_datetime | timestamp('DD', item.station_timezone) }}
     </template>
     <template v-slot:item.reviewed="{ item }">
-      <v-simple-checkbox :value="item.reviewed" disabled />
+      <Checkbox :value="item.reviewed"></Checkbox>
     </template>
   </v-data-table>
 </template>

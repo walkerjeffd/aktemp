@@ -1,6 +1,6 @@
 /* eslint-env jest */
 const app = require('../app')
-const knex = require('../db/knex')
+const knex = require('aktemp-db')
 
 const request = require('supertest')
 
@@ -120,7 +120,7 @@ describe('restricted api', () => {
         .auth('user', 'user')
         .send(station)
       expect(response.statusCode).toBe(409)
-      expect(response.body.message).toBe('Station code already exists for this organization, must be unique.')
+      expect(response.body.message).toBe('Station code (\'Test Station\') already exists for this organization.')
     })
     test('GET /organizations/:id/stations (unauthorized 401)', async () => {
       const response = await request(app)

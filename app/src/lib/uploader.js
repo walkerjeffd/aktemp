@@ -5,7 +5,7 @@ async function createFile (file, config, organizationId) {
   const filename = file.name
   const response = await restrictedApi.post(`/organizations/${organizationId}/files`, {
     filename,
-    type: config.type,
+    type: config.file_type,
     config
   })
 
@@ -40,7 +40,7 @@ async function uploadFileToS3 (file, dbFile) {
   const response = await externalApi.post(dbFile.presignedUrl.url, formData)
 
   const payload = {
-    url: `https://${dbFile.s3.Bucket}.s3.amazonaws.com/${dbFile.s3.Key}`,
+    url: response.Location,
     s3: response.data.s3
   }
 

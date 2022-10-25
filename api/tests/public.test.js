@@ -1,6 +1,6 @@
 /* eslint-env jest */
 const app = require('../app')
-const knex = require('../db/knex')
+const knex = require('aktemp-db')
 
 const request = require('supertest')
 

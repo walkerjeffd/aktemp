@@ -1,7 +1,7 @@
 const createError = require('http-errors')
 
 const { cognito } = require('../../aws')
-const { User } = require('../../db/models')
+const { User } = require('aktemp-db/models')
 
 const userPoolId = process.env.USER_POOL_ID
 

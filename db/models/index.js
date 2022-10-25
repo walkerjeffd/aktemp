@@ -1,5 +1,5 @@
 exports.File = require('./File')
-exports.Flag = require('./Flag')
+exports.FlagType = require('./FlagType')
 exports.Organization = require('./Organization')
 exports.Profile = require('./Profile')
 exports.ProfileValue = require('./ProfileValue')

@@ -1,6 +1,6 @@
 const createError = require('http-errors')
 const { raw } = require('objection')
-const { Station } = require('../db/models')
+const { Station } = require('aktemp-db/models')
 
 const getStations = async (req, res, next) => {
   let query
@@ -28,7 +28,10 @@ const attachStation = async (req, res, next) => {
     query = Station.query()
       .findById(req.params.stationId)
   }
-  const station = await query.modify('organizationCode')
+  const station = await query
+    .modify('organizationCode')
+    .modify('seriesSummary')
+    .modify('profilesSummary')
 
   if (!station) {
     throw createError(404, `Station (id=${req.params.stationId}) not found`)

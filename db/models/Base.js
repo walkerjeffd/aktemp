@@ -1,5 +1,5 @@
 const { Model } = require('objection')
-const knex = require('../knex')
+const knex = require('../index')
 
 Model.knex(knex)
 

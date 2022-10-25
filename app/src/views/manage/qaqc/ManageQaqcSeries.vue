@@ -59,10 +59,10 @@
                     class="row-cursor-pointer"
                   >
                     <template v-slot:item.start_datetime="{ item }">
-                      {{ item.start_datetime | formatTimestamp('lll z', series.station_timezone) }}
+                      {{ item.start_datetime | timestamp('ff ZZZZ', series.station_timezone) }}
                     </template>
                     <template v-slot:item.end_datetime="{ item }">
-                      {{ item.end_datetime | formatTimestamp('lll z', series.station_timezone) }}
+                      {{ item.end_datetime | timestamp('ff ZZZZ', series.station_timezone) }}
                     </template>
 
                     <template v-slot:footer.prepend>
@@ -91,6 +91,10 @@
                       </Alert>
 
                       <div v-else class="text-body-1">
+                        <div class="body-2 mb-4">
+                          Click and drag on the chart to change the flag period.
+                        </div>
+
                         <v-divider></v-divider>
                         <v-simple-table>
                           <tbody>
@@ -101,28 +105,24 @@
                                 Start
                               </td>
                               <td class="font-weight-bold text-left">
-                                {{ flag.selected.start_datetime | formatTimestamp('lll z', series.station_timezone) }}
+                                {{ flag.selected.start_datetime | timestamp('ff ZZZZ', series.station_timezone) }}
                               </td>
                               <td
                                 class="text-right grey--text text--darken-2"
                                 style="width:30px">
                                 End
                               </td>
-                              <td class="font-weight-bold text-left">{{ flag.selected.end_datetime | formatTimestamp('lll z', series.station_timezone) }}</td>
+                              <td class="font-weight-bold text-left">{{ flag.selected.end_datetime | timestamp('ff ZZZZ', series.station_timezone) }}</td>
                             </tr>
                           </tbody>
                         </v-simple-table>
                         <v-divider class="mb-2"></v-divider>
 
-                        <div class="text--secondary caption">
-                          <v-icon small>mdi-information-outline</v-icon> Click and drag on the chart to change the flag period.
-                        </div>
-
                         <v-row class="mt-4 mb-n4">
                           <v-col cols="12" lg="6">
                             <v-select
                               v-model="flag.selected.flag_type_id"
-                              :items="flag.form.flagType.options"
+                              :items="flagTypes"
                               :rules="flag.form.flagType.rules"
                               label="Flag type"
                               placeholder="Select..."
@@ -215,10 +215,11 @@
 </template>
 
 <script>
-import { flagTypeOptions } from '@/lib/constants'
+// import { flagTypeOptions } from '@/lib/constants'
 import StationsMap from '@/components/StationsMap'
 import SeriesInfo from '@/components/series/SeriesInfo'
 import ManageQaqcSeriesChart from '@/views/manage/qaqc/components/ManageQaqcSeriesChart'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ManageQaqcSeries',
@@ -248,7 +249,7 @@ export default {
         },
         form: {
           flagType: {
-            options: flagTypeOptions,
+            // options: flagTypeOptions,
             rules: [
               v => !!v || 'Flag type is required'
             ]
@@ -282,12 +283,16 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({
+      organization: 'manage/organization',
+      flagTypes: 'manage/flagTypes'
+    }),
     selectedFlagArray () {
       return this.flag.selected ? [this.flag.selected] : []
     }
   },
   watch: {
-    '$route.params.seriesId' () {
+    '$route.params' () {
       this.fetch()
     }
   },
@@ -302,6 +307,12 @@ export default {
       try {
         this.series = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}`)
           .then(d => d.data)
+        console.log(this.organization.id, this.series)
+        if (this.series.organization_id !== this.organization.id) {
+          return this.$router.push({
+            name: 'manageQaqc'
+          })
+        }
         this.station = await this.$http.restricted.get(`/stations/${this.series.station_id}`)
           .then(d => d.data)
         this.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)

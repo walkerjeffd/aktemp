@@ -70,14 +70,18 @@
           class="text-right grey--text text--darken-2">
           Active
         </td>
-        <td class="font-weight-bold">{{ station.active | boolean }}</td>
+        <td class="font-weight-bold">
+          <Checkbox :value="station.active"></Checkbox>
+        </td>
       </tr>
       <tr>
         <td
           class="text-right grey--text text--darken-2">
           Mixed
         </td>
-        <td class="font-weight-bold">{{ station.mixed | boolean }}</td>
+        <td class="font-weight-bold">
+          <Checkbox :value="station.mixed"></Checkbox>
+        </td>
       </tr>
       <tr>
         <td
@@ -92,7 +96,7 @@
           Private
         </td>
         <td class="font-weight-bold">
-          {{ station.private | boolean }}
+          <Checkbox :value="station.private"></Checkbox>
         </td>
       </tr>
     </tbody>

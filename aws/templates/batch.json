@@ -232,12 +232,18 @@
           ],
           "Command": [
             "node",
-            "process.js"
+            "index.js",
+            "files",
+            "process"
           ],
           "NetworkConfiguration": {
             "AssignPublicIp": "ENABLED"
           },
           "Environment": [
+            {
+              "Name": "DEBUG",
+              "Value": "aktemp-*"
+            },
             {
               "Name": "REGION",
               "Value": { "Ref": "AWS::Region" }

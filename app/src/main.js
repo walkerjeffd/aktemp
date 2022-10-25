@@ -10,8 +10,7 @@ import './filters'
 
 import './plugins/amplify'
 import './plugins/axios'
-import './plugins/chrono'
-import './plugins/dayjs'
+import './plugins/luxon'
 import './plugins/error-message'
 import './plugins/file-saver'
 import './plugins/highcharts'
@@ -22,12 +21,14 @@ import './plugins/pretty-bytes'
 import '@/assets/styles.css'
 
 import Alert from '@/components/Alert'
+import Checkbox from '@/components/Checkbox'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import DownloadButton from '@/components/DownloadButton'
 import Loading from '@/components/Loading'
 import RefreshButton from '@/components/RefreshButton'
 import StatusChip from '@/components/StatusChip'
 Vue.component('Alert', Alert)
+Vue.component('Checkbox', Checkbox)
 Vue.component('ConfirmDialog', ConfirmDialog)
 Vue.component('DownloadButton', DownloadButton)
 Vue.component('Loading', Loading)

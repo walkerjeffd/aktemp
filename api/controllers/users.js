@@ -1,6 +1,6 @@
 const createError = require('http-errors')
 
-const { User } = require('../db/models')
+const { User } = require('aktemp-db/models')
 
 const attachUser = async (req, res, next) => {
   const row = await User.query()

@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 require('dotenv-flow').config({
   default_node_env: 'development',
-  path: '..',
-  silent: true
+  path: '..'
 })
 
 const app = require('./app')
 const http = require('http')
+const debug = require('debug')('aktemp-api')
 
+debug('env:', process.env.NODE_ENV)
 const port = normalizePort(process.env.PORT || '3000')
 app.set('port', port)
 
@@ -64,8 +65,5 @@ function onError (error) {
 
 function onListening () {
   const addr = server.address()
-  const bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port
-  console.log('listening on ' + bind)
+  debug('listening:', addr)
 }

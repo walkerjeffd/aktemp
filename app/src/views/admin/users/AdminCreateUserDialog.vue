@@ -20,7 +20,7 @@
           <div v-if="request">
             <div class="font-weight-bold body-1">User Request</div>
             <pre class="d-block ml-4 mb-4">
-              Submitted: {{ request.created_at | formatTimestamp('lll z') }}
+              Submitted: {{ request.created_at | timestamp('ff', 'local') }}
               Name: {{ request.name }}
               Email: {{ request.email }}
               Organization: {{ request.organization }}

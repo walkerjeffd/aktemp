@@ -1,6 +1,6 @@
 <template>
   <!-- eslint-disable vue/valid-v-slot -->
-  <div class="aktemp-explorer-map-stations-table-container elevation-20">
+  <div class="aktemp-explorer-map-stations-table elevation-20">
     <v-toolbar color="grey darken-2" dark flat dense>
       <div class="text-h6">Stations Table</div>
       <v-spacer></v-spacer>
@@ -31,7 +31,9 @@
       >
         <template v-slot:body.prepend>
           <tr class="v-data-table-filter">
-            <td></td>
+            <td>
+              <v-icon>mdi-filter-outline</v-icon>
+            </td>
             <td>
               <v-autocomplete
                 :items="organizationCodeOptions"
@@ -158,18 +160,18 @@
         </template>
         <template v-slot:item.series_period="{ item }">
           <span v-if="item.series_start_datetime && item.series_end_datetime">
-            {{ item.series_start_datetime | formatTimestamp('ll', item.timezone) }} -
-            {{ item.series_end_datetime | formatTimestamp('ll', item.timezone) }}
+            {{ item.series_start_datetime | timestamp('DD', item.timezone) }} -
+            {{ item.series_end_datetime | timestamp('DD', item.timezone) }}
           </span>
         </template>
         <template v-slot:item.series_start_datetime="{ item }">
           <span v-if="item.series_start_datetime">
-            {{ item.series_start_datetime | formatTimestamp('ll', item.timezone) }}
+            {{ item.series_start_datetime | timestamp('DD', item.timezone) }}
           </span>
         </template>
         <template v-slot:item.series_end_datetime="{ item }">
           <span v-if="item.series_end_datetime">
-            {{ item.series_end_datetime | formatTimestamp('ll', item.timezone) }}
+            {{ item.series_end_datetime | timestamp('DD', item.timezone) }}
           </span>
         </template>
         <template v-slot:item.series_count_days="{ item }">
@@ -182,18 +184,10 @@
           {{ item.profiles_count | numberLocaleString }}
         </template>
         <template v-slot:item.mixed="{ item }">
-          <v-simple-checkbox
-            v-if="item.mixed !== null"
-            :value="item.mixed"
-            disabled
-          ></v-simple-checkbox>
+          <Checkbox :value="item.mixed"></Checkbox>
         </template>
         <template v-slot:item.active="{ item }">
-          <v-simple-checkbox
-            v-if="item.active !== null"
-            :value="item.active"
-            disabled
-          ></v-simple-checkbox>
+          <Checkbox :value="item.active"></Checkbox>
         </template>
         <template v-slot:footer.prepend>
           <v-menu
@@ -201,8 +195,8 @@
             top
             offset-y
             :close-on-content-click="false"
-            transition="scale-transition"
-            min-width="400" nudge-top="10"
+            min-width="400"
+            nudge-top="10"
           >
             <template v-slot:activator="{ on, attrs }">
               <v-btn
@@ -213,7 +207,7 @@
                 v-on="on"
               >
                 <v-icon left>mdi-filter</v-icon>
-                Filters<span v-if="advancedFilterCount > 0">&nbsp;({{ advancedFilterCount }})</span>
+                More Filters<span v-if="advancedFilterCount > 0">&nbsp;({{ advancedFilterCount }})</span>
               </v-btn>
             </template>
 
@@ -283,8 +277,9 @@
           </v-btn>
           <DownloadButton
             @click="download"
+            title="Download stations"
             :disabled="loading"
-            :text="`CSV${ selectedRows.length > 0 ? ' (' + selectedRows.length + ')' : ''}`"
+            :text="`CSV ${ selectedRows.length > 0 ? ' (' + selectedRows.length + ')' : ''}`"
           />
         </template>
       </v-data-table>
@@ -294,7 +289,7 @@
 
 <script>
 import evt from '@/events'
-import { waterbodyTypeOptions, placementOptions } from '@/lib/constants'
+import { waterbodyTypeOptions, placementOptions } from 'aktemp-utils/constants'
 
 export default {
   name: 'ExplorerMapStationsTable',
@@ -341,47 +336,49 @@ export default {
         {
           text: 'Station',
           value: 'code',
-          filter: value => !this.filters.code || (value + '').toLowerCase().includes(this.filters.code.toLowerCase())
+          filter: value => !this.filters.code ||
+            (value + '').toLowerCase().includes(this.filters.code.toLowerCase())
         },
         {
           text: 'Waterbody',
           value: 'waterbody_name',
-          filter: value => !this.filters.waterbodyName || (value + '').toLowerCase().includes(this.filters.waterbodyName.toLowerCase())
+          filter: value => !this.filters.waterbodyName ||
+            (value + '').toLowerCase().includes(this.filters.waterbodyName.toLowerCase())
         },
         {
           text: 'Start',
           value: 'series_start_datetime',
           filter: (value, search, item) => {
-            const start = this.$date(item.series_start_datetime).tz(item.timezone)
-            const end = this.$date(item.series_end_datetime).tz(item.timezone)
+            const start = this.$luxon.DateTime.fromISO(item.series_start_datetime, { zone: item.timezone })
+            const end = this.$luxon.DateTime.fromISO(item.series_end_datetime, { zone: item.timezone })
             const after = this.filters.after.value
             const before = this.filters.before.value
-            if (!start.isValid() || !end.isValid()) {
+            if (!start.isValid || !end.isValid) {
               return !after && !before
             } else if (after > before) {
               return false
             }
-            return (!before || start.format('YYYY-MM-DD') <= before) && (!after || end.format('YYYY-MM-DD') >= after)
+            return (!before || start.toISODate() <= before) &&
+              (!after || end.toISODate() >= after)
           }
         },
         {
           text: 'End',
           value: 'series_end_datetime',
-          filter: (value, search, item) => {
-            // console.log(value, this.filters.after.value, this.filters.before.value)
-            return true
-          }
+          filter: () => true
         },
         {
           text: '# Days',
           value: 'series_count_days',
-          filter: value => !this.filters.seriesCountDays || value >= parseInt(this.filters.seriesCountDays),
+          filter: value => !this.filters.seriesCountDays ||
+            value >= parseInt(this.filters.seriesCountDays),
           width: '120px'
         },
         {
           text: '# Profiles',
           value: 'profiles_count',
-          filter: value => !this.filters.profilesCount || value >= parseInt(this.filters.profilesCount),
+          filter: value => !this.filters.profilesCount ||
+            value >= parseInt(this.filters.profilesCount),
           width: '120px'
         }
       ]
@@ -436,7 +433,7 @@ export default {
       } else {
         stations = this.$refs.table.$children[0].filteredItems
       }
-      this.$download.csv(stations, 'AKTEMP-stations.csv')
+      this.$download.stations(stations)
     },
     fitToStations () {
       evt.$emit('map:fitToStations')
@@ -446,7 +443,7 @@ export default {
 </script>
 
 <style scoped>
-.aktemp-explorer-map-stations-table-container {
+.aktemp-explorer-map-stations-table {
   position: absolute;
   transform: translate(-50%, 0);
   left: 50%;
@@ -454,6 +451,6 @@ export default {
   width: 90%;
   background-color: white;
   pointer-events: autocomplete;
-  z-index: 3000;
+  z-index: 1000;
 }
 </style>

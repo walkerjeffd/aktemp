@@ -1,0 +1,10 @@
+app/
+aws/
+node_modules/
+r/
+trigger/
+worker/
+
+db/node_modules/
+cli/node_modules/
+utils/node_modules/

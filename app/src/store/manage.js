@@ -1,12 +1,16 @@
 import { restrictedApi } from '@/plugins/axios'
 import { errorMessage } from '@/plugins/error-message'
-import { countDays } from '@/plugins/dayjs'
+import { countDays } from 'aktemp-utils/time'
 
 export default {
   namespaced: true,
   state: () => ({
     status: {
       organizations: {
+        loading: false,
+        error: null
+      },
+      organization: {
         loading: false,
         error: null
       },
@@ -25,6 +29,10 @@ export default {
       profiles: {
         loading: false,
         error: null
+      },
+      flagTypes: {
+        loading: false,
+        error: null
       }
     },
     organizations: [],
@@ -32,7 +40,8 @@ export default {
     stations: [],
     files: [],
     series: [],
-    profiles: []
+    profiles: [],
+    flagTypes: []
   }),
   getters: {
     organizations: state => state.organizations,
@@ -41,11 +50,13 @@ export default {
     files: state => state.files,
     series: state => state.series,
     profiles: state => state.profiles,
+    organizationStatus: state => state.status.organization,
     organizationsStatus: state => state.status.organizations,
     stationsStatus: state => state.status.stations,
     filesStatus: state => state.status.files,
     seriesStatus: state => state.status.series,
-    profilesStatus: state => state.status.profiles
+    profilesStatus: state => state.status.profiles,
+    flagTypes: state => state.flagTypes
   },
   mutations: {
     SET_ORGANIZATIONS (state, organizations) {
@@ -66,18 +77,29 @@ export default {
     SET_PROFILES (state, profiles) {
       state.profiles = profiles
     },
+    SET_FLAG_TYPES (state, flagTypes) {
+      state.flagTypes = flagTypes
+    },
     SET_STATUS (state, [collection, loading, error]) {
       state.status[collection].loading = loading
       state.status[collection].error = errorMessage(error)
     }
   },
   actions: {
-    async setOrganization ({ commit }, organization) {
+    async setOrganization ({ commit, dispatch }, organization) {
       commit('SET_ORGANIZATION', organization)
+      dispatch('fetchStations')
     },
-    async setOrganizationById ({ commit, state }, organizationId) {
-      const organization = state.organizations.find(d => d.id === organizationId)
-      commit('SET_ORGANIZATION', organization)
+    async setOrganizationById ({ commit, state, dispatch }, organizationId) {
+      commit('SET_STATUS', ['organization', true, null])
+      const organization = state.organizations.find(d => d.id === +organizationId)
+      if (!organization) {
+        commit('SET_STATUS', ['organization', false, new Error(`Organization (id=${organizationId}) not found`)])
+        dispatch('setOrganization', null)
+      } else {
+        commit('SET_STATUS', ['organization', false, null])
+        dispatch('setOrganization', organization)
+      }
     },
     async fetchOrganizations ({ commit, state }) {
       commit('SET_STATUS', ['organizations', true, null])
@@ -87,17 +109,17 @@ export default {
           .then(d => d.data)
         commit('SET_ORGANIZATIONS', data)
         commit('SET_STATUS', ['organizations', false, null])
-        if (data.length > 0) {
-          // set default if
-          //   1. not already set
-          //   2. already set, but no longer available
-          if (!state.organization || (state.organization && !data.map(d => d.id).includes(state.organization.id))) {
-            commit('SET_ORGANIZATION', data[0])
-          }
-        } else if (state.organization) {
-          // no organizations, set selected to null
-          commit('SET_ORGANIZATION')
-        }
+        // if (data.length > 0) {
+        //   // set default if
+        //   //   1. not already set
+        //   //   2. already set, but no longer available
+        //   if (!state.organization || (state.organization && !data.map(d => d.id).includes(state.organization.id))) {
+        //     commit('SET_ORGANIZATION', data[0])
+        //   }
+        // } else if (state.organization) {
+        //   // no organizations, set selected to null
+        //   commit('SET_ORGANIZATION')
+        // }
         return data
       } catch (err) {
         commit('SET_STATUS', ['organizations', false, err])
@@ -115,9 +137,10 @@ export default {
         })
         commit('SET_STATIONS', data)
         commit('SET_STATUS', ['stations', false, null])
-        return data
+        return { stations: data }
       } catch (err) {
         commit('SET_STATUS', ['stations', false, err])
+        return { error: err }
       }
     },
     removeStationById ({ commit, state }, id) {
@@ -168,6 +191,19 @@ export default {
         return data
       } catch (err) {
         commit('SET_STATUS', ['profiles', false, err])
+      }
+    },
+    async fetchFlagTypes ({ commit, state }) {
+      commit('SET_STATUS', ['flagTypes', true, null])
+      try {
+        const data = await restrictedApi
+          .get('/flag-types')
+          .then(d => d.data)
+        commit('SET_FLAG_TYPES', data)
+        commit('SET_STATUS', ['flagTypes', false, null])
+        return data
+      } catch (err) {
+        commit('SET_STATUS', ['flagTypes', false, err])
       }
     }
   }

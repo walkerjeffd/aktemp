@@ -1,0 +1,7 @@
+﻿filename,file_skip,file_type,interval,station_code,station_column,datetime_column,time_column,datetime_format,timezone,timezone_column,temperature_column,temperature_units,temperature_missing,flag_column,depth_category,depth_value,depth_units,depth_column,sop_bath,accuracy,reviewed
+profiles,0,PROFILES,,TEST,,datetime,,ISO,NONE,,temp,C,,,,,m,depth,,,
+profiles-station-column-one,0,PROFILES,,,stations,datetime,,ISO,NONE,,temp,C,,,,,m,depth,,,
+profiles-station-column-two,0,PROFILES,,,stations,datetime,,ISO,NONE,,temp,C,,,,,m,depth,,,
+profiles-timestamp-time-column,0,PROFILES,,TEST,,date,time,M/d/yy H:mm,NONE,,temp,C,,,,,ft,depth,,,
+profiles-timestamp-timezone-local,0,PROFILES,,TEST,,datetime,,M/d/yy H:mm,LOCAL,,temp,C,,,,,,,,,
+profiles-depth-units,0,PROFILES,,TEST,,datetime,,ISO,NONE,,temp,C,,,,,ft,depth,,,

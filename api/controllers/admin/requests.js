@@ -1,4 +1,4 @@
-// const { Account } = require('../../db/models')
+// const { Account } = require('aktemp-db/models')
 
 async function getRequests (req, res, next) {
   // const rows = await Account.query()

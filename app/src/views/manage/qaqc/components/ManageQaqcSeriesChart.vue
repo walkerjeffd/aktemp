@@ -16,7 +16,8 @@
 /* eslint-disable no-unused-vars, no-unreachable */
 import * as d3 from 'd3'
 
-import { flagLabel, assignDailyFlags, assignRawFlags } from '@/lib/utils'
+import { assignDailyFlags, assignRawFlags } from '@/lib/utils'
+const { flagLabel } = require('aktemp-utils/flags')
 
 export default {
   name: 'ManageQaqcSeriesChart',
@@ -305,9 +306,10 @@ export default {
     async afterSetExtremes () {
       if (!this.chart) return
       const extremes = this.chart.xAxis[0].getExtremes()
-      const start = this.$date(extremes.min)
-      const end = this.$date(extremes.max)
-      const durationDays = end.diff(start, 'day', true)
+      const start = this.$luxon.DateTime.fromMillis(extremes.min)
+      const end = this.$luxon.DateTime.fromMillis(extremes.max)
+      if (!start.isValid || !end.isValid) return
+      const durationDays = end.diff(start, 'days').as('days')
 
       // remove existing raw series
       this.chart.series.map(d => d.options.id)
@@ -315,7 +317,7 @@ export default {
         .forEach(id => this.chart.get(id).remove(false))
 
       if (durationDays <= 31) {
-        await this.fetchRaw(start.toDate(), end.toDate())
+        await this.fetchRaw(start.toJSDate(), end.toJSDate())
         this.mode = 'raw'
       } else if (this.mode === 'raw') {
         this.mode = 'daily'
@@ -482,9 +484,12 @@ export default {
       this.chart.redraw()
       this.updateNavigator()
 
+      this.$nextTick(() => this.renderFlagPeriods())
+
       this.loading = false
     },
     renderFlagPeriods () {
+      console.log('renderFlagPeriods', this.mode)
       let bands = this.flags.map(d => {
         let start = new Date(d.start_datetime)
         let end = new Date(d.end_datetime)
@@ -503,15 +508,16 @@ export default {
           }
         }
       })
+      console.log(bands)
       if (this.flag) {
         if (this.flag.id) {
           bands = bands.filter(d => d.id !== this.flag.id)
         }
-        let start = new Date(this.flag.start_datetime)
-        let end = new Date(this.flag.end_datetime)
+        let start = this.$luxon.DateTime.fromISO(this.flag.start_datetime, { zone: 'UTC' })
+        let end = this.$luxon.DateTime.fromISO(this.flag.end_datetime, { zone: 'UTC' })
         if (this.mode === 'daily') {
-          start = this.$date(start).startOf('day').toDate()
-          end = this.$date(end).endOf('day').toDate()
+          start = start.startOf('day')
+          end = end.endOf('day')
         }
         bands.push({
           from: start.valueOf(),
@@ -544,13 +550,14 @@ export default {
     onSelect (event) {
       if (this.zoom) return
       event.preventDefault()
-      let start = new Date(event.xAxis[0].min)
-      let end = new Date(event.xAxis[0].max)
+      console.log(event.xAxis[0].min)
+      let start = this.$luxon.DateTime.fromMillis(event.xAxis[0].min)
+      let end = this.$luxon.DateTime.fromMillis(event.xAxis[0].max)
       if (this.mode === 'daily') {
-        start = this.$date(start).startOf('day').toDate()
-        end = this.$date(end).endOf('day').add(1, 'day').toDate()
+        start = start.startOf('day')
+        end = end.endOf('day').plus(1, 'day')
       }
-      this.$emit('select', start, end)
+      this.$emit('select', start.toISO(), end.toISO())
     }
   }
 }

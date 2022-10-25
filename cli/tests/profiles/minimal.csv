@@ -1,0 +1,2 @@
+﻿filename,file_skip,file_type,interval,station_code,station_column,datetime_column,time_column,datetime_format,timezone,timezone_column,temperature_column,temperature_units,temperature_missing,flag_column,depth_category,depth_value,depth_units,depth_column,sop_bath,accuracy,reviewed
+profiles.csv,0,PROFILES,,,station_code,date_iso,time,yyyy-MM-dd HH:mm,LOCAL,,temp_c,C,,,,,m,depth_m,,1,TRUE

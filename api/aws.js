@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk')
+const debug = require('./debug')
 
 const sns = new AWS.SNS({
   apiVersion: '2010-03-31',
@@ -10,15 +11,18 @@ exports.cognito = new AWS.CognitoIdentityServiceProvider({
 })
 
 exports.notify = async (subject, message) => {
+  if (!process.env.NOTIFY_TOPIC) {
+    debug('aws.notify(): no topic')
+    return
+  }
   const params = {
-    TopicArn: process.env.NOTIFY_TOPIC_ARN,
+    TopicArn: process.env.NOTIFY_TOPIC,
     Subject: `[AKTEMP] ${subject}`,
     Message: message
   }
-  console.log(`notify: start(TopicArn=${params.TopicArn}, subject="${subject}")`)
+  debug(`aws.notify(): start(TopicArn=${params.TopicArn}, subject="${subject}")`)
 
   const response = await sns.publish(params).promise()
-  console.log(`notify: done(MessageId=${response.MessageId})`)
 
   return response
 }

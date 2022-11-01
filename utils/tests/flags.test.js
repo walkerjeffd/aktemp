@@ -14,9 +14,9 @@ describe('flagLabel()', () => {
     ${''}        | ${''}       | ${''}
     ${null}      | ${''}       | ${''}
     ${'OOW'}     | ${''}       | ${'OOW'}
-    ${'OTHER'}   | ${'custom'} | ${'OTHER (custom)'}
-    ${'OTHER'}   | ${''}       | ${'OTHER (N/A)'}
-    ${'OTHER'}   | ${null}     | ${'OTHER (N/A)'}
+    ${'OTHER'}   | ${'custom'} | ${'OTHER [custom]'}
+    ${'OTHER'}   | ${''}       | ${'OTHER [N/A]'}
+    ${'OTHER'}   | ${null}     | ${'OTHER [N/A]'}
   `('[\'$type\', \'$other\'] is \'$label\'', ({ type, other, expected }) => {
     expect(flagLabel({ flag_type_id: type, flag_type_other: other })).toEqual(expected)
   })

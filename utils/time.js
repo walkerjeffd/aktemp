@@ -75,7 +75,7 @@ const parseTimestampString = exports.parseTimestampString = function (value, for
   if (!parsed || !parsed.isValid) {
     throw new Error(`Failed to parse timestamp ('${value}', format='${format}')`)
   } else if (parsed > DateTime.now()) {
-    throw new Error(`Parsed timestamp ('${value}', format='${format}') is in the future`)
+    throw new Error(`Parsed timestamp ('${value}', format='${format}') is in the future ('${parsed.toISO()}')`)
   }
   return parsed
 }

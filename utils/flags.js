@@ -5,7 +5,7 @@ exports.flagLabel = function (d) {
   if (!d || !d.flag_type_id) return ''
   let label = d.flag_type_id
   if (d.flag_type_id === 'OTHER') {
-    label += ` (${d.flag_type_other || 'N/A'})`
+    label += ` [${d.flag_type_other || 'N/A'}]`
   }
   return label
 }

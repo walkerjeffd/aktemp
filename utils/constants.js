@@ -19,7 +19,7 @@ module.exports.depthCategoryOptions = [
   { value: 'SURFACE', label: 'Surface' },
   { value: 'MID-DEPTH', label: 'Mid-Depth' },
   { value: 'BOTTOM', label: 'Bottom' },
-  { value: 'HYPORHEIC', label: 'Hypoheic Zone' }
+  { value: 'HYPORHEIC', label: 'Hyporheic Zone' }
 ]
 
 module.exports.temperatureUnitsOptions = [
@@ -34,9 +34,9 @@ module.exports.sensorAccuracyOptions = [
 ]
 
 module.exports.stationTimezoneOptions = [
-  { value: 'US/Aleutian', label: 'US/Aleutian (UTC-10,UTC-9)' },
-  { value: 'US/Alaska', label: 'US/Alaska (UTC-9,UTC-8)' },
-  { value: 'US/Pacific', label: 'US/Pacific (UTC-8,UTC-7)' }
+  { value: 'US/Aleutian', label: 'US/Aleutian (UTC-10 / UTC-9)' },
+  { value: 'US/Alaska', label: 'US/Alaska (UTC-9 / UTC-8)' },
+  { value: 'US/Pacific', label: 'US/Pacific (UTC-8 / UTC-7)' }
 ]
 
 const utcOffsetOptions = module.exports.utcOffsetOptions = [
@@ -47,10 +47,9 @@ const utcOffsetOptions = module.exports.utcOffsetOptions = [
 ]
 
 module.exports.fileTimezoneOptions = [
-  { value: 'NONE', label: 'None' },
   { value: 'LOCAL', label: 'Local Timezone at Station' },
   { value: 'COLUMN', label: 'Timezone Column' },
-  { value: 'UTC', label: 'UTC (GMT)' },
+  { value: 'UTC', label: 'UTC (or timestamp includes offset)' },
   ...utcOffsetOptions
 ]
 
@@ -70,9 +69,9 @@ module.exports.intervalOptions = [
 ]
 
 module.exports.waterbodyTypeOptions = [
-  { value: 'STREAM', label: 'Stream/River' },
-  { value: 'LAKE', label: 'Lake' },
-  { value: 'OTHER', label: 'Other' }
+  { value: 'STREAM', label: 'Free-flowing stream or river' },
+  { value: 'LAKE', label: 'Lake, pond, or reservoir' },
+  { value: 'OTHER', label: 'Other (wetlands, man-made channel)' }
 ]
 
 module.exports.booleanOptions = [

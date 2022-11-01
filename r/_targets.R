@@ -1,6 +1,6 @@
 library(targets)
 
-invisible(sapply(list.files("R", pattern = ".R$", full.names = TRUE), source))
+invisible(sapply(list.files("R", recursive = TRUE, pattern = ".R$", full.names = TRUE), source))
 
 options(tidyverse.quiet = TRUE)
 tar_option_set(packages = c("tidyverse", "lubridate", "sf", "janitor", "glue", "jsonlite"))
@@ -12,7 +12,8 @@ if (interactive()) {
 
 list(
   targets_gis,
-  targets_demo,
+  # targets_demo,
   targets_nps,
-  targets_uaa
+  targets_uaa,
+  targets_test_series
 )

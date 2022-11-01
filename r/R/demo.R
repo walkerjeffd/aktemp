@@ -49,8 +49,7 @@ targets_demo <- list(
       mutate(station_code = if_else(id <= 5, "SITE_01", "SITE_02")) %>%
       unnest(data) %>%
       mutate(
-        date_iso = as.character(date),
-        date_local = format(date, "%m/%d/%Y")
+        date_local = format(date, "%m/%d/%Y"), .before = "date"
       ) %>%
       write_csv(filename, na = "")
     filename

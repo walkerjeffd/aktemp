@@ -97,7 +97,11 @@ function parseDepth (d, config) {
   const parsed = parseFloat(value)
 
   if (!isNumber(parsed)) {
-    throw new Error(`Invalid depth value ('${value}') at row ${d.$row} `)
+    if (config.file_type === 'PROFILES') {
+      throw new Error(`Invalid depth value ('${value}') at row ${d.$row} `)
+    } else {
+      return null
+    }
   }
 
   return convertDepthUnits(parsed, config.depth_units)
@@ -128,8 +132,13 @@ function parseRows (rows, config) {
       : []
   }
 
-  return rows.map(d => parseRow(d, config))
-    .filter(d => d.value !== null)
+  const parsed = rows.map(d => parseRow(d, config))
+  let filtered = parsed.filter(d => d.datetime !== null && d.value !== null && d.station_code !== null)
+  if (config.file_type === 'PROFILES') {
+    filtered = filtered.filter(d => d.depth_m !== null)
+  }
+
+  return filtered
 }
 
 function parseCsv (csv, skipLines = 0, ignoreErrors = false) {
@@ -211,6 +220,7 @@ function parseSeriesFile (rows, config, stations) {
     s.station_id = station.id
 
     if (config.timezone === 'LOCAL' && s.values.length > 0) {
+      debug(`parseSeriesFile(): getting local utc offset of first timestamp ('${s.values[0].datetime}') for station ('${station.code}', tz=${station.timezone})`)
       const timezone = getLocalUtcOffsetTimezone(s.values[0].datetime, 'ISO', station.timezone)
       debug(`parseSeriesFile(): adjust timestamps to local tz (${timezone}) for station ('${station.code}', tz=${station.timezone})`)
       s.values.forEach(v => {

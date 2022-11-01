@@ -37,7 +37,8 @@ const createFileSchema = (fields, stations) => {
       .valid(...intervalOptions.map(d => d.value))
       .when('file_type', {
         is: 'SERIES',
-        then: Joi.required()
+        then: Joi.required(),
+        otherwise: Joi.forbidden()
       }),
     // STATION
     station_code: validStationCodes
@@ -45,7 +46,7 @@ const createFileSchema = (fields, stations) => {
       .empty(['', null])
       .when('station_column', {
         is: Joi.exist(),
-        then: Joi.optional(),
+        then: Joi.forbidden(),
         otherwise: Joi.required()
       }),
     station_column: validFields
@@ -64,17 +65,20 @@ const createFileSchema = (fields, stations) => {
       .uppercase()
       .trim()
       .valid(...fileTimezoneOptions.map(d => d.value))
+      .allow(null)
       .empty(['', null])
+      .default('NONE')
       .when('datetime_format', {
         is: Joi.not('ISO'),
         then: Joi.required()
       }),
     timezone_column: validFields
+      .allow(null)
       .empty(['', null])
       .when('timezone', {
-        is: 'FIXED',
+        is: 'COLUMN',
         then: Joi.required(),
-        otherwise: Joi.allow(null).optional()
+        otherwise: Joi.forbidden()
       }),
     // TEMPERATURE
     temperature_column: validFields.required(),
@@ -89,23 +93,39 @@ const createFileSchema = (fields, stations) => {
       .empty(['', null]),
     flag_column: validFields
       .allow(null)
-      .empty(['', null]),
+      .empty(['', null])
+      .when('file_type', {
+        is: 'SERIES',
+        then: Joi.optional(),
+        otherwise: Joi.forbidden()
+      }),
     // DEPTH
     depth_category: Joi.string()
       .uppercase()
       .trim()
       .valid(...depthCategoryOptions.map(d => d.value))
       .allow(null)
-      .empty(['', null]),
+      .empty(['', null])
+      .when('file_type', {
+        is: 'SERIES',
+        then: Joi.optional(),
+        otherwise: Joi.forbidden()
+      }),
     depth_value: Joi.number()
       .allow('', null)
-      .empty(['', null]),
+      .empty(['', null])
+      .when('file_type', {
+        is: 'SERIES',
+        then: Joi.optional(),
+        otherwise: Joi.forbidden()
+      }),
     depth_column: validFields
       .allow(null)
       .empty(['', null])
       .when('file_type', {
-        is: 'PROFILES',
-        then: Joi.required()
+        is: 'SERIES',
+        then: Joi.optional(),
+        otherwise: Joi.required()
       }),
     depth_units: Joi
       .when('depth_value', {
@@ -125,7 +145,12 @@ const createFileSchema = (fields, stations) => {
     sop_bath: Joi.boolean()
       .allow('', null)
       .empty(['', null])
-      .optional(),
+      .optional()
+      .when('file_type', {
+        is: 'SERIES',
+        then: Joi.optional(),
+        otherwise: Joi.forbidden()
+      }),
     accuracy: Joi.string()
       .valid(...sensorAccuracyOptions.map(d => d.value))
       .empty(['', null])

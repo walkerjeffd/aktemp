@@ -33,7 +33,7 @@ describe('validateFileFields()', () => {
 })
 
 describe('validateFileConfig()', () => {
-  const fields = ['stationCode', 'datetime', 'time', 'utcOffset', 'temp_c', 'flag', 'depth_m']
+  const fields = ['stationCode', 'datetime', 'date', 'time', 'utcOffset', 'temp_c', 'flag', 'depth_m']
   const stations = [{ code: 'TEST' }]
 
   let rows = readCsvFile(path.join(__dirname, './files/validateFile/files.csv'))

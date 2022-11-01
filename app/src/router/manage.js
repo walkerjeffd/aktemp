@@ -16,6 +16,8 @@ import ManageFile from '@/views/manage/files/ManageFile.vue'
 import ManageQaqc from '@/views/manage/qaqc/ManageQaqc.vue'
 import ManageQaqcSeries from '@/views/manage/qaqc/ManageQaqcSeries.vue'
 
+import ManageExport from '@/views/manage/export/ManageExport.vue'
+
 export default [
   {
     path: '/manage',
@@ -91,6 +93,11 @@ export default [
                 component: ManageQaqcSeries
               }
             ]
+          },
+          {
+            path: 'export',
+            name: 'manageExport',
+            component: ManageExport
           }
         ]
       }

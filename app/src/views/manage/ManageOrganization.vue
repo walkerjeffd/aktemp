@@ -10,6 +10,9 @@
       <v-tab :to="{ name: 'manageQaqc' }">
         <v-icon left>mdi-tools</v-icon> QAQC
       </v-tab>
+      <v-tab :to="{ name: 'manageExport' }">
+        <v-icon left>mdi-download</v-icon> Export
+      </v-tab>
     </v-tabs>
 
     <div class="mt-1 pa-4">

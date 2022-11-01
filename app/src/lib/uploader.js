@@ -37,14 +37,7 @@ async function uploadFileToS3 (file, dbFile) {
   })
   formData.append('file', file)
 
-  const response = await externalApi.post(dbFile.presignedUrl.url, formData)
-
-  const payload = {
-    url: response.Location,
-    s3: response.data.s3
-  }
-
-  return await updateFile(dbFile, payload)
+  return await externalApi.post(dbFile.presignedUrl.url, formData)
 }
 
 export default async function (file, config, organizationId) {

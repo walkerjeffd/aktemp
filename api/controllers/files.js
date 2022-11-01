@@ -72,11 +72,13 @@ async function postFiles (req, res, next) {
       },
       Expires: 60 * 60 * 1 // one hour
     })
+    const s3 = {
+      Bucket: presignedUrl.fields.bucket,
+      Key: presignedUrl.fields.key
+    }
     row = await row.$query().patchAndFetch({
-      s3: {
-        Bucket: presignedUrl.fields.bucket,
-        Key: presignedUrl.fields.key
-      }
+      s3,
+      url: `https://${s3.Bucket}.s3.amazonaws.com/${s3.Key}`
     })
     row.presignedUrl = presignedUrl
   }

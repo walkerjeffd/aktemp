@@ -159,7 +159,7 @@
                 </Alert>
 
                 <v-row class="mt-12 mb-4 px-3">
-                  <v-btn text class="mr-4 px-4" @click="step -= 1">
+                  <v-btn text class="mr-4 px-4" disabled>
                     <v-icon left>mdi-chevron-left</v-icon> Previous
                   </v-btn>
                   <v-btn
@@ -1084,6 +1084,7 @@ import { mapGetters } from 'vuex'
 import evt from '@/events'
 
 import { readLocalFile, sleep } from '@/lib/utils'
+import uploader from '@/lib/uploader'
 
 const {
   temperatureUnitsOptions,
@@ -1193,6 +1194,7 @@ export default {
             rules: [
               v => !!v ||
                 !this.timestamp.columns.separate ||
+                this.config.file_type === 'PROFILES' ||
                 'Time column is required'
             ]
           }
@@ -1213,6 +1215,7 @@ export default {
             rules: [
               v => !!v ||
                 this.timestamp.format.isISO ||
+                this.config.file_type === 'PROFILES' ||
                 'Time format is required'
             ]
           }
@@ -1355,7 +1358,7 @@ export default {
     timestampValue () {
       if (!this.firstRow ||
           !this.config.datetime_column ||
-          (this.timestamp.columns.separate && !this.config.time_column)) {
+          (this.timestamp.columns.separate && this.config.file_type === 'SERIES' && !this.config.time_column)) {
         return null
       }
       // return '2022-01-02T12:05:00.000Z'
@@ -1741,18 +1744,9 @@ export default {
       this.upload.message = 'Starting upload...'
       this.upload.error = null
       this.upload.loading = true
+      this.upload.progress = 0
 
       this.$nextTick(() => this.$vuetify.goTo(this.$refs.pending))
-
-      try {
-        this.upload.file = await this.createFile()
-      } catch (err) {
-        console.error(err)
-        this.upload.status = 'FAILED'
-        this.upload.message = 'Failed to save file to database'
-        this.upload.error = this.$errorMessage(err)
-        return
-      }
 
       const file = this.file.selected
 
@@ -1762,43 +1756,69 @@ export default {
         this.upload.error = 'Selected file could not be found. Return to step 2 and select a file.'
       }
 
-      this.upload.message = `Uploading ${file.name}...`
       this.upload.progress = 0.25
-
+      this.upload.message = `Validating ${file.name}...`
+      let config
       try {
-        await this.uploadFile(this.upload.file, file)
+        config = validateFileConfig(this.config, this.fileColumns, this.stations)
       } catch (err) {
-        console.log(err.response || err)
-
-        if (this.upload.status === 'CANCELLED') return
-
+        console.error(err)
         this.upload.status = 'FAILED'
-        this.upload.message = `Failed to upload file: ${file.name}.`
+        this.upload.message = 'Failed to validate file configuration'
         this.upload.error = this.$errorMessage(err)
-
-        this.deleteFile(this.upload.file)
         return
       }
 
-      this.upload.progress = 0.75
-
+      this.upload.progress = 0.5
+      this.upload.message = `Uploading ${file.name}...`
       try {
-        await this.processFile(this.upload.file)
+        this.upload.file = await uploader(file, config, this.organization.id)
       } catch (err) {
-        console.log(err.response || err)
-
-        if (this.upload.status === 'CANCELLED') return
-
+        console.error(err)
         this.upload.status = 'FAILED'
-        this.upload.error = 'Failed to start processing file. The file has been saved to the server, but will need to be manually processed. Please contact us for help, or delete it and try uploading again.<br><br>'
-        this.upload.error += this.$errorMessage(err)
-
-        this.deleteFile(this.upload.file)
+        this.upload.message = 'Failed to save file to database'
+        this.upload.error = this.$errorMessage(err)
         return
       }
+
+      // this.upload.message = `Uploading ${file.name}...`
+      // this.upload.progress = 0.25
+
+      // try {
+      //   await this.uploadFile(this.upload.file, file)
+      // } catch (err) {
+      //   console.log(err.response || err)
+
+      //   if (this.upload.status === 'CANCELLED') return
+
+      //   this.upload.status = 'FAILED'
+      //   this.upload.message = `Failed to upload file: ${file.name}.`
+      //   this.upload.error = this.$errorMessage(err)
+
+      //   this.deleteFile(this.upload.file)
+      //   return
+      // }
+
+      // this.upload.progress = 0.75
+
+      // try {
+      //   await this.processFile(this.upload.file)
+      // } catch (err) {
+      //   console.log(err.response || err)
+
+      //   if (this.upload.status === 'CANCELLED') return
+
+      //   this.upload.status = 'FAILED'
+      //   this.upload.error = 'Failed to start processing file. The file has been saved to the server, but will need to be manually processed. Please contact us for help, or delete it and try uploading again.<br><br>'
+      //   this.upload.error += this.$errorMessage(err)
+
+      //   this.deleteFile(this.upload.file)
+      //   return
+      // }
+
+      // this.upload.progress = 1
 
       this.upload.progress = 1
-
       this.upload.status = 'DONE'
       this.upload.message = 'Upload complete'
 

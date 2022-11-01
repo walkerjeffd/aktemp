@@ -111,6 +111,7 @@ import SeriesTable from '@/components/series/SeriesTable'
 import ProfilesTable from '@/components/ProfilesTable'
 import ManageStationInfo from '@/views/manage/stations/ManageStationInfo'
 import SelectedSeriesCard from '@/components/series/SelectedSeriesCard.vue'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ManageStation',
@@ -140,6 +141,21 @@ export default {
         error: false,
         data: [],
         selected: null
+      }
+    }
+  },
+  computed: {
+    ...mapGetters({
+      organization: 'manage/organization'
+    })
+  },
+  watch: {
+    organization () {
+      if (!this.station.data || !this.organization) return
+      if (this.station.data.organization_id !== this.organization.id) {
+        this.$router.push({
+          name: 'manageStations'
+        })
       }
     }
   },

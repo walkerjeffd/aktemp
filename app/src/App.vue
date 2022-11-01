@@ -5,7 +5,7 @@
       color="#00573d"
       dark
       clipped-left
-      style="z-index:5000"
+      style="z-index:1000"
     >
       <v-toolbar-title>AKTEMP</v-toolbar-title>
 

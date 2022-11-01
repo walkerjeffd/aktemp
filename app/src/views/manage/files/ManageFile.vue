@@ -84,6 +84,7 @@ import ManageFileInfo from '@/views/manage/files/ManageFileInfo'
 import SeriesTable from '@/components/series/SeriesTable'
 import ProfilesTable from '@/components/ProfilesTable'
 import SelectedSeriesCard from '@/components/series/SelectedSeriesCard.vue'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ManageFile',
@@ -110,6 +111,21 @@ export default {
         selected: null
       },
       timeout: null
+    }
+  },
+  computed: {
+    ...mapGetters({
+      organization: 'manage/organization'
+    })
+  },
+  watch: {
+    organization () {
+      if (!this.file || !this.organization) return
+      if (this.file.organization_id !== this.organization.id) {
+        this.$router.push({
+          name: 'manageFiles'
+        })
+      }
     }
   },
   mounted () {

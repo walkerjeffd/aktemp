@@ -6,7 +6,7 @@
       This station does not have any timeseries data.
     </Alert>
     <div v-else>
-      <SeriesChart :series="series" :selected="selected"></SeriesChart>
+      <SeriesChart :series="series" :selected="selected" :timezone="station.timezone"></SeriesChart>
       <v-divider class="my-4"></v-divider>
       <v-data-table
         v-model="selected"

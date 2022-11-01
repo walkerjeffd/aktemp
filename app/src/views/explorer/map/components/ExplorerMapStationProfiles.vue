@@ -10,7 +10,7 @@
         <!-- <div class="text--secondary caption"><v-icon x-small>mdi-information</v-icon> Click+drag to zoom in. Shift+click to slide.</div> -->
 
         <div class="text--secondary caption ml-2">
-          <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in. Click <code>Flagged</code> in legend to hide/show flagged data.
+          <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in.
         </div>
 
         <div class="text-right d-flex align-end my-4">
@@ -24,7 +24,7 @@
         </div>
 
         <div class="text--secondary caption ml-2" v-if="about">
-          This chart shows all available vertical profiles at this station. Click <code>Explore Station Data</code> below to view the individual profiles. Click <code>CSV</code> to download a file containing the profiles show above.
+          This chart shows all available vertical profiles at this station. Click <code>Explore Data</code> below to view the individual profiles. Click <code>Download</code> to download a file containing the profiles shown above.
         </div>
       </div>
 
@@ -48,12 +48,14 @@
 </template>
 
 <script>
+import { ascending } from 'd3'
 export default {
   name: 'StationDetailProfiles',
   props: ['station'],
   data () {
     return {
       loading: true,
+      about: false,
       profiles: [],
       chart: {
         chart: {
@@ -68,13 +70,13 @@ export default {
           enabled: false
         },
         tooltip: {
-          pointFormat: 'Temperature: <b>{point.x} °C</b>',
+          pointFormat: 'Depth: <b>{point.y}</b> m<br />Temperature: <b>{point.x} °C</b>',
           valueDecimals: 1
         },
         xAxis: {
           title: {
             text: 'Temperature (degC)',
-            align: 'high',
+            align: 'low',
             margin: 14
           },
           opposite: true,
@@ -109,7 +111,7 @@ export default {
       this.loading = true
       const response = await this.$http.public.get(`/stations/${this.station.id}/profiles/values`)
       const profiles = response.data
-      this.profiles = profiles
+      this.profiles = Object.freeze(profiles)
       this.chart.series = profiles.map(p => ({
         name: p.date.substr(0, 10),
         zIndex: 1,
@@ -118,7 +120,7 @@ export default {
           symbol: 'circle',
           radius: 3
         },
-        data: p.values.map(v => {
+        data: p.values.sort((a, b) => ascending(a.depth_m, b.depth_m)).map(v => {
           return [
             v.value,
             v.depth_m

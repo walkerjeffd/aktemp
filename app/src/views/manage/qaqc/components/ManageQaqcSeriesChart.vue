@@ -115,6 +115,12 @@ export default {
             color: '#303030'
           }
         },
+        time: {
+          getTimezoneOffset: (timestamp) => {
+            if (!timestamp) return 0
+            return -1 * this.$luxon.DateTime.fromMillis(timestamp).setZone(this.timezone).offset
+          }
+        },
         legend: {
           enabled: true,
           align: 'right'
@@ -229,6 +235,12 @@ export default {
           enabled: false
         }
       }
+    }
+  },
+  computed: {
+    timezone () {
+      if (!this.series) return null
+      return this.series.station_timezone
     }
   },
   watch: {
@@ -489,7 +501,6 @@ export default {
       this.loading = false
     },
     renderFlagPeriods () {
-      console.log('renderFlagPeriods', this.mode)
       let bands = this.flags.map(d => {
         let start = new Date(d.start_datetime)
         let end = new Date(d.end_datetime)
@@ -508,7 +519,6 @@ export default {
           }
         }
       })
-      console.log(bands)
       if (this.flag) {
         if (this.flag.id) {
           bands = bands.filter(d => d.id !== this.flag.id)

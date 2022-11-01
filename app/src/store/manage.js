@@ -1,3 +1,4 @@
+import { ascending } from 'd3'
 import { restrictedApi } from '@/plugins/axios'
 import { errorMessage } from '@/plugins/error-message'
 import { countDays } from 'aktemp-utils/time'
@@ -193,13 +194,16 @@ export default {
         commit('SET_STATUS', ['profiles', false, err])
       }
     },
-    async fetchFlagTypes ({ commit, state }) {
+    async fetchFlagTypes ({ commit }) {
       commit('SET_STATUS', ['flagTypes', true, null])
       try {
         const data = await restrictedApi
           .get('/flag-types')
           .then(d => d.data)
-        commit('SET_FLAG_TYPES', data)
+        data.sort((a, b) => ascending(a.id, b.id))
+        const other = data.splice(data.findIndex(d => d.id === 'OTHER'), 1)
+
+        commit('SET_FLAG_TYPES', [...data, ...other])
         commit('SET_STATUS', ['flagTypes', false, null])
         return data
       } catch (err) {

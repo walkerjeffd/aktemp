@@ -371,7 +371,6 @@ export default {
         try {
           nonEmptyRows += 1
           row = await this.createStation(row, i)
-          console.log('row', row)
           if (row.status === 'INVALID' || row.status === 'FAILED') {
             this.table.failedCount += 1
           }
@@ -393,7 +392,7 @@ export default {
       }
     },
     async validateRow (row, i) {
-      console.log('validateRow()', i, row)
+      // console.log('validateRow()', i, row)
       const hot = this.$refs.hot.hotInstance
 
       if (row.status === 'SUCCESS') return true
@@ -413,7 +412,7 @@ export default {
 
       try {
         const { status, errors, row: rowId, station, ...value } = row
-        console.log('validateStation', value)
+        // console.log('validateStation', value)
         row.station = validateStation(value)
       } catch (err) {
         console.log('err', err.details)
@@ -445,7 +444,7 @@ export default {
       return row
     },
     async createStation (row, i) {
-      console.log('createStation()', i, row)
+      // console.log('createStation()', i, row)
       if (row.status === 'SUCCESS') return
 
       const organizationId = this.organization.id

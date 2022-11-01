@@ -13,24 +13,45 @@
 
     <v-form ref="form" @submit.prevent="submit" :disabled="loading">
       <v-card-text>
-        <p class="black--text">Select one or more data files. Each file must be in comma-separated value (CSV) format.</p>
-        <v-row>
-          <v-col cols="12" md="6" class="pb-0">
-            <v-file-input
-              ref="filesInput"
-              v-model="files.selected"
-              :rules="files.rules"
-              placeholder="Select data files"
-              truncate-length="200"
-              prepend-icon="mdi-file-delimited-outline"
-              @change="initTable"
-              outlined
-              multiple
-              validate-on-blur
-            >
-            </v-file-input>
-          </v-col>
-        </v-row>
+        <div>
+          <div class="font-weight-bold text-subtitle-1" @change="initTable">Dataset Type</div>
+          <p class="mb-2">What kind of data do you want to upload? All files must contain the same type of data.</p>
+          <ul class="mb-4">
+            <li><strong>Timeseries</strong> reflect temperature <strong>changes over time</strong> at a fixed location and depth.</li>
+            <li><strong>Vertical profiles</strong> reflect temperature <strong>changes over depth</strong> at a fixed location and at a single point in time.</li>
+          </ul>
+          <v-btn-toggle v-model="files.type" mandatory class="mb-4">
+            <v-btn value="SERIES">
+              <v-icon left>mdi-chart-line-variant</v-icon>
+              Timeseries
+            </v-btn>
+            <v-btn value="PROFILES">
+              <v-icon left>mdi-arrow-expand-down</v-icon>
+              Vertical Profiles
+            </v-btn>
+          </v-btn-toggle>
+        </div>
+        <div>
+          <div class="font-weight-bold text-subtitle-1">Select Files</div>
+          <p class="black--text">Select one or more data files. Each file must be in comma-separated value (CSV) format.</p>
+          <v-row>
+            <v-col cols="12" md="6" class="pb-0">
+              <v-file-input
+                ref="filesInput"
+                v-model="files.selected"
+                :rules="files.rules"
+                placeholder="Select data files"
+                truncate-length="200"
+                prepend-icon="mdi-file-delimited-outline"
+                @change="initTable"
+                outlined
+                multiple
+                validate-on-blur
+              >
+              </v-file-input>
+            </v-col>
+          </v-row>
+        </div>
 
         <div v-show="table.rows.length > 0">
           <v-divider class="mb-4"></v-divider>
@@ -56,14 +77,31 @@
           <p class="black--text">After you have filled out the table in the template, copy and paste the cells from Excel into the table below (excluding the header row).</p>
 
           <HotTable
-            ref="hot"
+            ref="hotSeries"
             :data="table.rows"
             :colHeaders="true"
             :settings="table.settings"
             class="elevation-2"
+            v-show="files.type === 'SERIES'"
           >
             <HotColumn
-              v-for="col in table.columns"
+              v-for="col in seriesColumns"
+              :key="col.prop"
+              :data="col.prop"
+              :title="col.label"
+              :settings="col"
+            ></HotColumn>
+          </HotTable>
+          <HotTable
+            ref="hotProfiles"
+            :data="table.rows"
+            :colHeaders="true"
+            :settings="table.settings"
+            class="elevation-2"
+            v-show="files.type === 'PROFILES'"
+          >
+            <HotColumn
+              v-for="col in profilesColumns"
               :key="col.prop"
               :data="col.prop"
               :title="col.label"
@@ -84,10 +122,6 @@
               <table class="mt-2">
                 <tbody>
                   <tr>
-                    <td class="text-right pr-2">Row:</td>
-                    <td class="font-weight-bold">{{ table.selected.row + 1 }}</td>
-                  </tr>
-                  <tr>
                     <td class="text-right pr-2">Filename:</td>
                     <td class="font-weight-bold">{{ table.selected.filename }}</td>
                   </tr>
@@ -98,7 +132,7 @@
                   <tr>
                     <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
                     <td class="font-weight-bold">
-                      <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
+                      {{ table.selected.fields.map(d => `'${d}'`).join(', ') }}
                     </td>
                   </tr>
                 </tbody>
@@ -143,7 +177,7 @@
                   <tr>
                     <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
                     <td class="font-weight-bold">
-                      <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
+                      {{ table.selected.fields.map(d => `'${d}'`).join(', ') }}
                     </td>
                   </tr>
                 </tbody>
@@ -173,7 +207,7 @@
                   <tr>
                     <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
                     <td class="font-weight-bold">
-                      <div v-for="field in table.selected.fields" :key="field">'{{ field }}'</div>
+                      {{ table.selected.fields.map(d => `'${d}'`).join(', ') }}
                     </td>
                   </tr>
                 </tbody>
@@ -196,7 +230,7 @@
             style="max-width:800px"
             class="mb-0 mt-4"
           >
-            <p>
+            <p class="mb-0">
               {{ table.failedCount.toLocaleString() }} file(s) were invalid or failed to be uploaded to the server. Click on any row marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span> for more details.
             </p>
             <div v-if="table.rows.length > table.failedCount" class="mt-4">
@@ -250,6 +284,7 @@ import { mapGetters } from 'vuex'
 
 import evt from '@/events'
 import uploader from '@/lib/uploader'
+import { getTimestampString, parseTimestampString } from 'aktemp-utils/time'
 
 const {
   typeOptions,
@@ -277,6 +312,7 @@ export default {
       message: null,
 
       files: {
+        type: 'SERIES',
         selected: [],
         rules: [
           v => v.length > 0 || 'No files selected'
@@ -328,20 +364,13 @@ export default {
             label: 'Skip Lines'
           },
           {
-            prop: 'file_type',
-            label: 'File Type*',
-            type: 'autocomplete',
-            strict: false,
-            source: typeOptions.map(d => d.value),
-            width: '120px'
-          },
-          {
             prop: 'interval',
-            label: 'Interval†',
+            label: 'Interval*',
             type: 'autocomplete',
             strict: false,
             source: intervalOptions.map(d => d.value),
-            width: '120px'
+            width: '120px',
+            excludeProfiles: true
           },
           {
             prop: 'station_code',
@@ -353,7 +382,7 @@ export default {
           },
           {
             prop: 'datetime_column',
-            label: 'Datetime Column*'
+            label: 'Date/time Column*'
           },
           {
             prop: 'time_column',
@@ -361,11 +390,11 @@ export default {
           },
           {
             prop: 'datetime_format',
-            label: 'Datetime Format*'
+            label: 'Date/time Format*'
           },
           {
             prop: 'timezone',
-            label: 'Timezone Mode*',
+            label: 'Timezone*',
             type: 'autocomplete',
             strict: false,
             source: fileTimezoneOptions.map(d => d.value)
@@ -391,18 +420,21 @@ export default {
           },
           {
             prop: 'flag_column',
-            label: 'Flag Column'
+            label: 'Flag Column',
+            excludeProfiles: true
           },
           {
             prop: 'depth_category',
             label: 'Depth Category',
             type: 'autocomplete',
             strict: false,
-            source: depthCategoryOptions.map(d => d.value)
+            source: depthCategoryOptions.map(d => d.value),
+            excludeProfiles: true
           },
           {
             prop: 'depth_value',
-            label: 'Numeric Depth'
+            label: 'Numeric Depth',
+            excludeProfiles: true
           },
           {
             prop: 'depth_column',
@@ -427,7 +459,8 @@ export default {
             label: 'SOP Bath',
             type: 'autocomplete',
             strict: false,
-            source: booleanOptions.map(d => d.value)
+            source: booleanOptions.map(d => d.value),
+            excludeProfiles: true
           },
           {
             prop: 'reviewed',
@@ -453,6 +486,7 @@ export default {
             filename: '',
             file_skip: '',
             file_type: '',
+            interval: '',
             station_code: '',
             station_column: '',
             datetime_column: '',
@@ -481,14 +515,30 @@ export default {
       organizations: 'manage/organizations',
       organization: 'manage/organization',
       stations: 'manage/stations'
-    })
+    }),
+    profilesColumns () {
+      return this.table.columns.filter(d => !d.excludeProfiles)
+    },
+    seriesColumns () {
+      return this.table.columns
+    },
+    hot () {
+      if (!this.$refs) return null
+      if (this.files.type === 'SERIES') {
+        return this.$refs.hotSeries.hotInstance
+      } else {
+        return this.$refs.hotProfiles.hotInstance
+      }
+    }
   },
   async mounted () {
-    Handsontable.hooks.add('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
+    Handsontable.hooks.add('afterSelection', this.afterSelection, this.$refs.hotSeries.hotInstance)
+    Handsontable.hooks.add('afterSelection', this.afterSelection, this.$refs.hotProfiles.hotInstance)
   },
   beforeDestroy () {
     if (this.$refs.hot) {
-      Handsontable.hooks.remove('afterSelection', this.afterSelection, this.$refs.hot.hotInstance)
+      Handsontable.hooks.remove('afterSelection', this.afterSelection, this.$refs.hotSeries.hotInstance)
+      Handsontable.hooks.remove('afterSelection', this.afterSelection, this.$refs.hotProfiles.hotInstance)
     }
   },
   methods: {
@@ -496,9 +546,7 @@ export default {
       this.table.selected = this.table.rows[row]
     },
     renderHot () {
-      if (this.$refs.hot) {
-        this.$refs.hot.hotInstance.render()
-      }
+      this.hot && this.hot.render()
     },
     clear () {
       this.files.selected = []
@@ -516,12 +564,13 @@ export default {
           file_index: i,
           file,
           filename: file.name,
+          file_type: this.files.type,
           file_skip: '0',
           fields: [],
           errors: []
         })
       })
-      // this.renderHot()
+      this.renderHot()
     },
     async submit () {
       this.error = null
@@ -539,7 +588,7 @@ export default {
         let row = this.table.rows[i]
 
         // skip empty rows
-        if (this.$refs.hot.hotInstance.isEmptyRow(i)) continue
+        if (this.hot.isEmptyRow(i)) continue
 
         try {
           row = await this.validateRow(row, i)
@@ -567,15 +616,15 @@ export default {
     },
     async validateRow (row, i) {
       // console.log('validateRow()', i, row)
-      const hot = this.$refs.hot.hotInstance
 
       if (row.status === 'SUCCESS') return row
-      if (hot.isEmptyRow(i)) return row
+      if (this.hot.isEmptyRow(i)) return row
 
       this.message = `Validating ${row.filename}`
 
-      this.table.columns.forEach((column, j) => {
-        hot.setCellMeta(i, j, 'valid', true)
+      const columns = this.hot.getSettings().columns
+      columns.forEach((column, j) => {
+        this.hot.setCellMeta(i, j, 'valid', true)
       })
       row.status = 'VALIDATING'
       row.errors = []
@@ -599,10 +648,24 @@ export default {
         } = row
 
         const parsed = await parseCsvFile(this.files.selected[i], value.file_skip)
+        if (parsed.data.length === 0) throw new Error('File is empty')
         row.n_rows = parsed.data.length
         row.fields = parsed.meta.fields.filter(d => d !== '')
         row.config = validateFileConfig(value, row.fields, this.stations)
-        console.log(row)
+        parsed.data.forEach((d, i) => {
+          try {
+            const value = getTimestampString(d, row.config.datetime_column, row.config.time_column)
+            parseTimestampString(value, row.config.datetime_format)
+          } catch (err) {
+            err.name = ''
+            const error = new Error('InvalidTimestamp')
+            error.details = [{
+              path: ['datetime_format'],
+              message: `<strong>Invalid Timestamp</strong>: ${err.toString()} at file row ${i + 1}`
+            }]
+            throw error
+          }
+        })
       } catch (err) {
         if (!err.details) {
           row.errors = [{
@@ -614,13 +677,14 @@ export default {
           console.log(err.details)
           row.errors.forEach(d => {
             const prop = d.path[0]
-            let j = hot.propToCol(prop)
-            if (j === prop) j = hot.propToCol('filename')
-            const column = this.table.columns[j]
-            if (column.label) {
-              d.message = d.message.replace(`"${prop}"`, `<strong>${column.label}</strong>`)
+            const j = this.hot.propToCol(prop)
+            if (typeof j === 'number') {
+              const column = columns[j]
+              if (column.label) {
+                d.message = d.message.replace(`"${prop}"`, `<strong>${column.label.replace('†', '').replace('*', '')}</strong>`)
+              }
+              this.hot.setCellMeta(i, j, 'valid', false)
             }
-            hot.setCellMeta(i, j, 'valid', false)
           })
         }
       }
@@ -663,7 +727,7 @@ export default {
       }
     },
     downloadStationsFile () {
-      this.$download.csv(this.organization.stations, `AKTEMP-${this.organization.selected.code}-stations.csv`)
+      this.$download.csv(this.stations, `AKTEMP-${this.organization.code}-stations.csv`)
     },
     async removeUploadedFiles () {
       this.loading = true
@@ -671,7 +735,7 @@ export default {
       this.table.rows.forEach((d, i) => {
         if (d.status === 'SUCCESS') rowsToRemove.push([i, 1])
       })
-      this.$refs.hot.hotInstance.alter('remove_row', rowsToRemove)
+      this.hot.alter('remove_row', rowsToRemove)
       this.table.rows.forEach((d, i) => {
         d.row = i
       })

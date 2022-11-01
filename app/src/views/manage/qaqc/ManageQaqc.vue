@@ -199,6 +199,7 @@ export default {
   methods: {
     async fetch () {
       await this.$store.dispatch('manage/fetchSeries')
+      this.selected = []
       this.selectFromRoute()
     },
     selectFromRoute () {

@@ -127,7 +127,8 @@ export default {
           shared: true
         },
         xAxis: {
-          type: 'datetime'
+          type: 'datetime',
+          ordinal: false
         },
         yAxis: {
           title: {

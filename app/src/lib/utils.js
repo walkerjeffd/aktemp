@@ -101,14 +101,14 @@ export function assignRawFlags (values, flags) {
     if (new Date(flag.end_datetime) >= new Date(values[0].datetime) && // flag ends after first value
         new Date(flag.start_datetime) <= new Date(values[values.length - 1].datetime)) { // flag starts before last value
       const startIndex = values.findIndex(d => new Date(d.datetime) >= new Date(flag.start_datetime))
-      const endIndex = values.findIndex(d => new Date(d.datetime) >= new Date(flag.end_datetime))
+      const endIndex = values.findIndex(d => new Date(d.datetime) > new Date(flag.end_datetime))
 
       if (startIndex < 0 && endIndex >= 0) {
         flagValues = values.splice(0, values.length - endIndex + 1)
       } else if (startIndex >= 0 && endIndex < 0) {
         flagValues = values.splice(startIndex, values.length - startIndex)
       } else {
-        flagValues = values.splice(startIndex, endIndex - startIndex + 1)
+        flagValues = values.splice(startIndex, endIndex - startIndex)
       }
     }
 

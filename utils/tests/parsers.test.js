@@ -9,12 +9,8 @@ const {
   parseDepth,
   parseFlag,
   parseBoolean,
-  parseCsv,
-  parseProfilesFile
+  parseCsv
 } = require('../parsers')
-const {
-  validateFileConfig
-} = require('../validators')
 
 describe('parseUtcOffset()', () => {
   test.each`
@@ -240,106 +236,5 @@ describe('parseCsv()', () => {
     const filepath = path.join(__dirname, 'files/parseCsv', file)
     const csv = readFileSync(filepath, { encoding: 'utf8' }).toString()
     expect(() => parseCsv(csv, skipLines)).toThrow()
-  })
-})
-
-describe('parseProfilesFile()', () => {
-  const filepath = 'files/parseProfilesFile/profiles.csv'
-  const nRows = 151
-  let parsed = null
-  const stations = [
-    { id: 1, code: 'SITE_01', timezone: 'US/Alaska' },
-    { id: 2, code: 'SITE_02', timezone: 'US/Pacific' }
-  ]
-  const defaultConfig = {
-    file_type: 'PROFILES',
-    station_code: 'SITE_01',
-    datetime_column: 'date',
-    time_column: 'time',
-    datetime_format: 'yyyy-MM-dd HH:mm',
-    timezone: 'LOCAL',
-    temperature_column: 'temp_c',
-    temperature_units: 'C',
-    depth_column: 'depth_m',
-    depth_units: 'm'
-  }
-  beforeAll(async () => {
-    const csv = readFileSync(path.join(__dirname, filepath), { encoding: 'utf8' }).toString()
-    parsed = parseCsv(csv)
-  })
-
-  test('file was loaded', () => {
-    expect(parsed.data).toHaveLength(nRows)
-  })
-
-  test('minimal', () => {
-    const config = validateFileConfig(defaultConfig, parsed.meta.fields, stations)
-    const profiles = parseProfilesFile(parsed.data, config, stations)
-    expect(profiles).toHaveLength(10)
-    expect(profiles[0]).toMatchObject({
-      station_id: stations[0].id,
-      date: '2015-06-04',
-      accuracy: undefined,
-      reviewed: false
-    })
-    expect(profiles[0].values).toHaveLength(19)
-    expect(profiles[0].values[0]).toHaveProperty('datetime', '2015-06-05T01:00:00.000Z')
-    expect(profiles[0].values[0].depth_m).toBeCloseTo(1.4298)
-    expect(profiles[0].values[0].value).toBeCloseTo(14.56947)
-  })
-
-  describe('station_column', () => {
-    test('station_code', () => {
-      const config = validateFileConfig({
-        ...defaultConfig,
-        station_code: undefined,
-        station_column: 'station_code'
-      }, parsed.meta.fields, stations)
-      const profiles = parseProfilesFile(parsed.data, config, stations)
-      expect(profiles).toHaveLength(10)
-      expect(profiles[0]).toMatchObject({
-        station_id: stations[0].id,
-        date: '2015-06-04',
-        accuracy: undefined,
-        reviewed: false
-      })
-      expect(profiles[0].values).toHaveLength(19)
-      expect(profiles[0].values[0]).toHaveProperty('datetime', '2015-06-05T01:00:00.000Z')
-      expect(profiles[0].values[0].depth_m).toBeCloseTo(1.4298)
-      expect(profiles[0].values[0].value).toBeCloseTo(14.56947)
-
-      expect(profiles[5]).toMatchObject({
-        station_id: stations[1].id,
-        date: '2019-09-20',
-        accuracy: undefined,
-        reviewed: false
-      })
-      expect(profiles[5].values).toHaveLength(15)
-      expect(profiles[5].values[0]).toHaveProperty('datetime', '2019-09-20T13:00:00.000Z')
-      expect(profiles[5].values[0].depth_m).toBeCloseTo(1.6632)
-      expect(profiles[5].values[0].value).toBeCloseTo(14.21176)
-    })
-  })
-
-  describe('temperature', () => {
-    test('units=F', () => {
-      const config = validateFileConfig({
-        ...defaultConfig,
-        temperature_units: 'F'
-      }, parsed.meta.fields, stations)
-      const profiles = parseProfilesFile(parsed.data, config, stations)
-      expect(profiles[0].values[0].value).toBeCloseTo((14.56947 - 32) * 5 / 9)
-    })
-  })
-
-  describe('depth', () => {
-    test('units=ft', () => {
-      const config = validateFileConfig({
-        ...defaultConfig,
-        depth_units: 'ft'
-      }, parsed.meta.fields, stations)
-      const profiles = parseProfilesFile(parsed.data, config, stations)
-      expect(profiles[0].values[0].depth_m).toBeCloseTo(1.4298 * 0.3048)
-    })
   })
 })

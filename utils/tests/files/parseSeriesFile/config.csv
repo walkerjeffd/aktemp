@@ -1,5 +1,5 @@
 test_group,test_name,expected,filename,file_skip,file_type,interval,station_code,station_column,datetime_column,time_column,datetime_format,timezone,timezone_column,temperature_column,temperature_units,temperature_missing,flag_column,depth_category,depth_value,depth_column,depth_units,sop_bath,accuracy,reviewed
-skip,s1d1,series-s1d1.json,series-s1d1.csv,1,SERIES,CONTINUOUS,"",station_code,datetime_utc_iso,"",ISO,UTC,"",temp_c,C,-99.99,flag,"","",depth_m,m,"","",""
+skip,s1d1-skip,series-s1d1.json,series-s1d1-skip.csv,1,SERIES,CONTINUOUS,"",station_code,datetime_utc_iso,"",ISO,UTC,"",temp_c,C,-99.99,flag,"","",depth_m,m,"","",""
 minimal,1_s1d1,series-s1d1.json,series-s1d1.csv,0,SERIES,CONTINUOUS,"",station_code,datetime_utc_iso,"",ISO,UTC,"",temp_c,C,-99.99,flag,"","",depth_m,m,"","",""
 minimal,2_s1d2,series-s1d2.json,series-s1d2.csv,0,SERIES,CONTINUOUS,"",station_code,datetime_utc_iso,"",ISO,UTC,"",temp_c,C,-99.99,flag,"","",depth_m,m,"","",""
 minimal,3_s2d2,series-s2d2.json,series-s2d2.csv,0,SERIES,CONTINUOUS,"",station_code,datetime_utc_iso,"",ISO,UTC,"",temp_c,C,-99.99,flag,"","",depth_m,m,"","",""

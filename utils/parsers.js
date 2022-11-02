@@ -117,7 +117,8 @@ function parseRow (d, config) {
     result.datetime = parseTimestamp(d, config)
     result.flag = parseFlag(d, config)
   } else if (config.file_type === 'PROFILES') {
-    result.datetime = getTimestampString(d, config.datetime_column, config.time_column)
+    result.datetime = parseTimestamp(d, config)
+    // result.datetime = getTimestampString(d, config.datetime_column, config.time_column)
   }
   return result
 }
@@ -274,24 +275,31 @@ function parseProfilesFile (rows, config, stations) {
     const station = stations.find(d => d.code === p.station_code)
     if (!station) throw new Error(`Station not found (code=${p.station_code})`)
 
-    debug(`parseProfilesFile(): setting timestamps to local tz of station ('${station.code}', tz=${station.timezone})`)
+    if (config.timezone === 'LOCAL' && p.values.length > 0) {
+      debug(`parseProfilesFile(): adjusting timestamps to local tz of station ('${station.code}', tz=${station.timezone})`)
+      p.values.forEach((v, i) => {
+        const local = luxon.DateTime.fromISO(v.datetime).setZone(station.timezone, { keepLocalTime: true })
+        if (i === 0) {
+          debug(local)
+        }
+        if (!local.isValid) {
+          throw new Error(`Failed to convert timestamp ('${v.datetime}', format='${config.datetime_format}') to station timezone ('${station.timezone}')`)
+        }
+        v.datetime = local.toUTC().toISO()
+      })
+    }
+
+    debug('parseProfilesFile(): setting date property based on local timezone')
     p.values.forEach((v, i) => {
-      const local = luxon.DateTime
-        .fromFormat(v.datetime, config.datetime_format, { zone: station.timezone })
-      if (i === 0) {
-        debug(local)
-      }
-      if (!local.isValid) {
-        throw new Error(`Failed to parse timestamp ('${v.datetime}', format='${config.datetime_format}')`)
-      }
+      const local = luxon.DateTime.fromISO(v.datetime).setZone(station.timezone)
       v.date = local.toFormat('yyyy-MM-dd')
-      v.datetime = local.toUTC().toISO()
     })
 
     return Array.from(
       d3.group(p.values, d => d.date),
       ([key, value]) => ({
         station_id: station.id,
+        station_code: station.code,
         date: key,
         accuracy: config.accuracy,
         reviewed: config.reviewed,

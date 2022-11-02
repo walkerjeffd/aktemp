@@ -15,5 +15,6 @@ list(
   # targets_demo,
   targets_nps,
   targets_uaa,
-  targets_test_series
+  targets_test_series,
+  targets_test_profiles
 )

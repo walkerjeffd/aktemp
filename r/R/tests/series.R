@@ -233,6 +233,54 @@ targets_test_series <- list(
     )
     filename
   }),
+  tar_target(test_series_s1d1_date_missing_csv, {
+    x <- read_csv(
+      file.path(test_series_root, glue("csv/series-s1d1.csv")),
+      col_types = cols(
+        .default = col_character()
+      )
+    )
+    filename <- file.path(test_series_root, glue("csv/series-s1d1-date-missing.csv"))
+    x %>%
+      mutate(
+        datetime_utc_iso = if_else(row_number() == 5, NA_character_, datetime_utc_iso)
+      ) %>%
+      select(station_code, datetime_utc_iso, depth_m, temp_c) %>%
+      write_csv(filename, na = "")
+    filename
+  }),
+  tar_target(test_series_s1d1_date_future_csv, {
+    x <- read_csv(
+      file.path(test_series_root, glue("csv/series-s1d1.csv")),
+      col_types = cols(
+        .default = col_character()
+      )
+    )
+    filename <- file.path(test_series_root, glue("csv/series-s1d1-date-future.csv"))
+    x %>%
+      mutate(
+        datetime_utc_iso = if_else(row_number() == 5, '2050-10-30T18:00:00Z', datetime_utc_iso)
+      ) %>%
+      select(station_code, datetime_utc_iso, depth_m, temp_c) %>%
+      write_csv(filename, na = "")
+    filename
+  }),
+  tar_target(test_series_s1d1_date_invalid_csv, {
+    x <- read_csv(
+      file.path(test_series_root, glue("csv/series-s1d1.csv")),
+      col_types = cols(
+        .default = col_character()
+      )
+    )
+    filename <- file.path(test_series_root, glue("csv/series-s1d1-date-invalid.csv"))
+    x %>%
+      mutate(
+        datetime_utc_iso = if_else(row_number() == 5, 'INVALID', datetime_utc_iso)
+      ) %>%
+      select(station_code, datetime_utc_iso, depth_m, temp_c) %>%
+      write_csv(filename, na = "")
+    filename
+  }),
 
   tar_target(test_series_config_default, {
     list(
@@ -261,9 +309,9 @@ targets_test_series <- list(
   }),
   tar_target(test_series_config_skip, {
     tibble(
-      test_name = "s1d1",
-      expected = glue("series-{test_name}.json"),
-      filename = glue("series-{test_name}.csv"),
+      test_name = "s1d1-skip",
+      expected = glue("series-s1d1.json"),
+      filename = glue("series-s1d1-skip.csv"),
       config = list(as_tibble(modifyList(test_series_config_default, list(file_skip = "1"))))
     ) %>%
     unnest(config)

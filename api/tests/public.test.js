@@ -31,14 +31,14 @@ describe('public api', () => {
     const response = await request(app).get('/public/stations')
     expect(response.statusCode).toBe(200)
     expect(Array.isArray(response.body)).toBeTruthy()
-    expect(response.body).toHaveLength(1)
+    expect(response.body).toHaveLength(3)
   })
 
   test('GET /stations/:id', async () => {
     const response = await request(app).get('/public/stations/1')
     expect(response.statusCode).toBe(200)
     expect(response.body).toBeTruthy()
-    expect(response.body.code).toBe('UAA_001')
+    expect(response.body.code).toBe('SITE_01')
   })
 
   test('GET /stations/:id (404)', async () => {

@@ -59,7 +59,7 @@ describe('restricted api', () => {
         .get('/restricted/organizations/1/stations')
         .auth('user', 'user')
       expect(response.statusCode).toBe(200)
-      expect(response.body).toHaveLength(1)
+      expect(response.body).toHaveLength(3)
     })
 
     test('GET /organizations/:id/stations/:id', async () => {

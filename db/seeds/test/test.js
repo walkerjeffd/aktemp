@@ -28,6 +28,20 @@ exports.seed = async knex => {
   const stations = await knex('stations').insert([
     {
       organization_id: organizations[0].id,
+      code: 'SITE_01',
+      longitude: 44,
+      latitude: -70,
+      timezone: 'US/Alaska',
+      private: false
+    }, {
+      organization_id: organizations[0].id,
+      code: 'SITE_02',
+      longitude: 44,
+      latitude: -70,
+      timezone: 'US/Alaska',
+      private: false
+    }, {
+      organization_id: organizations[0].id,
       code: 'UAA_001',
       longitude: 44,
       latitude: -70,

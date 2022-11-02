@@ -512,5 +512,27 @@ targets_test_series <- list(
     test_series_config %>%
       write_csv(filename, na = "")
     filename
+  }, format = "file"),
+
+  tar_target(test_series_cli_csv, {
+    from <- file.path(test_series_root, "csv/series-s2d2.csv")
+    to <- file.path("../cli/tests/files/series/csv/series.csv")
+    file.copy(from, to)
+    to
+  }, format = "file"),
+  tar_target(test_series_cli_json, {
+    from <- file.path(test_series_root, "json/series-s2d2.json")
+    to <- file.path("../cli/tests/files/series/json/series.json")
+    file.copy(from, to)
+    to
+  }, format = "file"),
+  tar_target(test_series_cli_config_csv, {
+    filename <- "../cli/tests/files/series/config.csv"
+    test_series_config_minimal %>%
+      filter(test_name == "3_s2d2") %>%
+      select(-test_name, -expected) %>%
+      mutate(filename = "series.csv") %>%
+      write_csv(filename, na = "")
+    filename
   }, format = "file")
 )

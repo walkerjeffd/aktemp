@@ -1,0 +1,2 @@
+filename,file_skip,file_type,station_code,station_column,datetime_column,time_column,datetime_format,timezone,timezone_column,temperature_column,temperature_units,temperature_missing,depth_column,depth_units,accuracy,reviewed
+profiles.csv,0,PROFILES,"",station_code,datetime_utc_iso,"",ISO,UTC,"",temp_c,C,-99.99,depth_m,m,"",""

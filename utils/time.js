@@ -1,4 +1,4 @@
-const debug = require('./debug')
+// const debug = require('./debug')
 const luxon = require('luxon')
 
 const { DateTime, Settings } = luxon
@@ -67,7 +67,7 @@ exports.getTimestampString = function (row, datetimeColumn, timeColumn) {
 }
 
 const parseTimestampString = exports.parseTimestampString = function (value, format) {
-  debug('parseTimestampString()', value, format)
+  // debug('parseTimestampString()', value, format)
   let parsed
   if (format === 'ISO') {
     parsed = DateTime.fromISO(value.replace(' ', 'T'), { zone: 'UTC' })

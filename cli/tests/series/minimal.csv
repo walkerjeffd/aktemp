@@ -1,2 +1,0 @@
-﻿filename,file_skip,file_type,interval,station_code,station_column,datetime_column,time_column,datetime_format,timezone,timezone_column,temperature_column,temperature_units,temperature_missing,flag_column,depth_category,depth_value,depth_units,depth_column,sop_bath,accuracy,reviewed
-series.csv,0,SERIES,CONTINUOUS,SITE_01,,datetime_iso_z,,ISO,,,temp_c,C,,,,,,,,,

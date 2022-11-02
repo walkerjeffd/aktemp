@@ -479,5 +479,27 @@ targets_test_profiles <- list(
     test_profiles_config %>%
       write_csv(filename, na = "")
     filename
+  }, format = "file"),
+
+  tar_target(test_profiles_cli_csv, {
+    from <- file.path(test_profiles_root, "csv/profiles-s2d2.csv")
+    to <- file.path("../cli/tests/files/profiles/csv/profiles.csv")
+    file.copy(from, to)
+    to
+  }, format = "file"),
+  tar_target(test_profiles_cli_json, {
+    from <- file.path(test_profiles_root, "json/profiles-s2d2.json")
+    to <- file.path("../cli/tests/files/profiles/json/profiles.json")
+    file.copy(from, to)
+    to
+  }, format = "file"),
+  tar_target(test_profiles_cli_config_csv, {
+    filename <- "../cli/tests/files/profiles/config.csv"
+    test_profiles_config_minimal %>%
+      filter(test_name == "3_s2d2") %>%
+      select(-test_name, -expected) %>%
+      mutate(filename = "profiles.csv") %>%
+      write_csv(filename, na = "")
+    filename
   }, format = "file")
 )

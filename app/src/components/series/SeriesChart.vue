@@ -15,7 +15,6 @@
 <script>
 import * as d3 from 'd3'
 import { assignDailyFlags, assignRawFlags } from '@/lib/utils'
-
 const { flagLabel } = require('aktemp-utils/flags')
 
 export default {
@@ -37,9 +36,7 @@ export default {
           animation: false,
           events: {
             load: async (e) => {
-              console.log('seriesChart:chart:load')
               this.chart = e.target
-              window.chart = this.chart
               await this.fetchDaily()
             }
           }
@@ -93,14 +90,6 @@ export default {
             },
             tooltip: {
               pointFormat: null
-            },
-            states: {
-              hover: {
-                enabled: false
-              },
-              select: {
-                enabled: false
-              }
             }
           }
         },
@@ -142,10 +131,10 @@ export default {
             type: 'areaspline',
             visible: true,
             color: undefined,
-            data: []
-            // dataGrouping: {
-            //   enabled: false
-            // }
+            data: [],
+            dataGrouping: {
+              enabled: false
+            }
           }
         },
         rangeSelector: {
@@ -242,28 +231,27 @@ export default {
   },
   watch: {
     series () {
-      console.log('seriesChart:watch:series')
+      // console.log('seriesChart:watch:series')
       this.fetchDaily()
     },
     dailySeries () {
-      console.log('seriesChart:watch:dailySeries')
+      // console.log('seriesChart:watch:dailySeries')
       this.renderDaily()
     },
     rawSeries () {
-      console.log('seriesChart:watch:rawSeries')
+      // console.log('seriesChart:watch:rawSeries')
       this.renderRaw()
     },
     selected () {
-      console.log('seriesChart:watch:selected')
+      // console.log('seriesChart:watch:selected')
       this.renderDaily()
-      // this.afterSetExtremes()
     },
     showFlags () {
-      console.log('seriesChart:watch:showFlags')
+      // console.log('seriesChart:watch:showFlags')
       this.updateNavigator()
     },
     mode (value, old) {
-      console.log('seriesChart:watch:mode', value, old)
+      // console.log('seriesChart:watch:mode', value, old)
       if (!this.chart) return
 
       const redraw = false
@@ -303,26 +291,24 @@ export default {
   },
   methods: {
     async afterSetExtremes () {
-      console.log('seriesChart:afterSetExtremes')
-      // if (!this.chart) return
-      // const extremes = this.chart.xAxis[0].getExtremes()
-      // if (extremes.min === undefined || extremes.max === undefined) return
-      // const start = this.$luxon.DateTime.fromMillis(extremes.min)
-      // const end = this.$luxon.DateTime.fromMillis(extremes.max)
-      // if (!start.isValid || !end.isValid) return
-      // const durationDays = end.diff(start, 'days').as('days')
+      if (!this.chart) return
+      const extremes = this.chart.xAxis[0].getExtremes()
+      if (extremes.min === undefined || extremes.max === undefined) return
+      const start = this.$luxon.DateTime.fromMillis(extremes.min)
+      const end = this.$luxon.DateTime.fromMillis(extremes.max)
+      if (!start.isValid || !end.isValid) return
+      const durationDays = end.diff(start, 'days').as('days')
+      // console.log('seriesChart:afterSetExtremes', durationDays, [start.toJSDate(), end.toJSDate()])
 
-      // // remove existing raw series
-      // this.chart.series.map(d => d.options.id)
-      //   .filter(d => d.startsWith('raw-'))
-      //   .forEach(id => this.chart.get(id).remove(false))
-
-      // if (durationDays <= 31) {
-      //   await this.fetchRaw(start.toJSDate(), end.toJSDate())
-      //   this.mode = 'raw'
-      // } else if (this.mode === 'raw') {
-      //   this.mode = 'daily'
-      // }
+      if (durationDays <= 31) {
+        await this.fetchRaw(start.toJSDate(), end.toJSDate())
+        this.mode = 'raw'
+      } else if (this.mode === 'raw') {
+        this.mode = 'daily'
+      }
+    },
+    parseDatetime (x) {
+      return this.$luxon.DateTime.fromISO(x, { zone: this.timezone })
     },
     async fetchDaily () {
       console.log('seriesChart:fetchDaily')
@@ -380,7 +366,7 @@ export default {
               seriesId: s.id,
               flag: true,
               type: 'line',
-              data: flag.values.map(d => [this.$luxon.DateTime.fromISO(d.date, { zone: this.timezone }).valueOf(), d.mean]),
+              data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
               tooltip: {
                 pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (Flag: <b>${label}</b>)`
               },
@@ -398,17 +384,18 @@ export default {
               seriesId: s.id,
               flag: true,
               type: 'arearange',
-              data: flag.values.map(d => [this.$luxon.DateTime.fromISO(d.date, { zone: this.timezone }).valueOf(), d.min, d.max]),
+              data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
               linkedTo: 'flag-daily'
             }
           ]
         }).flat()
+
         return [
           {
             id: `daily-mean-${s.id}`,
             seriesId: s.id,
             type: 'line',
-            data: s.values.unflagged.map(d => [this.$luxon.DateTime.fromISO(d.date, { zone: this.timezone }).valueOf(), d.mean]),
+            data: s.values.unflagged.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
             visible: true,
             showInNavigator: false,
             tooltip: {
@@ -420,7 +407,7 @@ export default {
             name: `series-${s.id}`,
             seriesId: s.id,
             type: 'arearange',
-            data: s.values.unflagged.map(d => [this.$luxon.DateTime.fromISO(d.date, { zone: this.timezone }).valueOf(), d.min, d.max]),
+            data: s.values.unflagged.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
             visible: true,
             linkedTo: ':previous'
           },
@@ -464,12 +451,17 @@ export default {
 
       if (!this.chart) return
 
+      // remove existing raw series
+      this.chart.series.map(d => d.options.id)
+        .filter(d => d.startsWith('raw-'))
+        .forEach(id => this.chart.get(id).remove(false))
+
       // generate chart series for selected
       const chartSeries = this.rawSeries.map(s => {
         const flagSeries = s.flags.map(flag => {
           const label = flagLabel(flag)
           const data = flag.values
-            .map(d => [this.$luxon.DateTime.fromISO(d.date, { zone: this.timezone }).valueOf(), d.value])
+            .map(d => [this.parseDatetime(d.datetime).valueOf(), d.value])
           return {
             id: `raw-${s.id}-flag-${flag.id}`,
             name: `series-${s.id}-flag`,
@@ -492,8 +484,7 @@ export default {
         })
 
         const data = s.values.unflagged
-          .map(d => [this.$luxon.DateTime.fromISO(d.date, { zone: this.timezone }).valueOf(), d.value])
-        console.log(data[0])
+          .map(d => [this.parseDatetime(d.datetime).valueOf(), d.value])
         return [
           {
             id: `raw-${s.id}`,
@@ -512,6 +503,7 @@ export default {
 
       this.chart.redraw()
       this.updateNavigator()
+      this.chart.hideLoading()
 
       this.loading = false
     },

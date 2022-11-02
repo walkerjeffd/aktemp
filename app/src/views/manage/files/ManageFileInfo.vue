@@ -33,7 +33,7 @@
             <td class="text-right grey--text text--darken-2">
               Filename
             </td>
-            <td class="font-weight-bold">{{ file.filename | truncate(30) }}</td>
+            <td class="font-weight-bold">{{ file.filename | truncate(28) }}</td>
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">
@@ -55,7 +55,7 @@
       <div class="mx-4 pb-2">
         <div class="my-4">
           <v-btn color="primary" outlined block :disabled="!file.url" :href="file.url" download>
-            <v-icon left>mdi-download</v-icon> Download File
+            <v-icon left>mdi-download</v-icon> Download Raw File
           </v-btn>
           <v-btn
             v-if="userIsAdmin"
@@ -66,7 +66,7 @@
             @click="processFile"
             :loading="statusLoading.process"
           >
-            <v-icon left>mdi-refresh</v-icon>Process File (Admin Only)
+            <v-icon left>mdi-refresh</v-icon>Re-Process File
           </v-btn>
           <v-btn
             color="error"

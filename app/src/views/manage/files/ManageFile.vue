@@ -43,7 +43,7 @@
                   v-else
                   :series="file.series"
                   :selected="series.selected"
-                  :columns="['id', 'start_datetime', 'end_datetime', 'reviewed']"
+                  :columns="['id', 'station_code', 'start_datetime', 'end_datetime', 'depth_m', 'reviewed']"
                   @select="selectSeries"
                 ></SeriesTable>
 
@@ -69,7 +69,7 @@
                   v-else
                 ></ProfilesTable>
 
-                <Alert type="error" title="Not Implemented">Profiles chart not yet implemented</Alert>
+                <Alert type="error" title="Under Development" class="my-4 elevation-2">Profile chart is under development</Alert>
               </v-sheet>
             </div>
           </div>

@@ -109,24 +109,44 @@
 
     <div class="mx-4 pb-2">
       <div class="my-4">
-        <v-btn color="primary" outlined block download disabled>
+        <v-btn
+          color="primary"
+          class="my-4"
+          outlined
+          block
+          download
+          disabled
+        >
           <v-icon left>mdi-download</v-icon> Download
         </v-btn>
         <v-btn
-          color="error"
+          color="primary"
+          class="my-4"
           outlined
           block
-          class="mt-4"
           disabled
         >
           <v-icon left>mdi-pencil</v-icon>
           Edit Series
         </v-btn>
         <v-btn
-          color="error"
+          color="primary"
+          class="my-4"
           outlined
           block
+          :to="{
+            name: 'manageQaqcSeries',
+            params: { seriesId: series.id }
+          }"
+        >
+          <v-icon left>mdi-tools</v-icon>
+          QAQC
+        </v-btn>
+        <v-btn
+          color="error"
           class="mt-4"
+          outlined
+          block
           @click="confirmDelete"
           :loading="deleteStatus.loading"
         >

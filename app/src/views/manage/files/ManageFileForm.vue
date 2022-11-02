@@ -579,7 +579,7 @@
                   </v-radio-group>
 
                   <Alert
-                    v-if="timestamp.timezone.mode === 'LOCAL'"
+                    v-if="timestamp.timezone.mode === 'LOCAL' && config.file_type === 'SERIES' && config.interval === 'CONTINUOUS'"
                     type="warning"
                     title="Local Timezone Adjustment"
                   >

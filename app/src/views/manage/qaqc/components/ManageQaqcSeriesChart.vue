@@ -13,9 +13,7 @@
 </template>
 
 <script>
-/* eslint-disable no-unused-vars, no-unreachable */
 import * as d3 from 'd3'
-
 import { assignDailyFlags, assignRawFlags } from '@/lib/utils'
 const { flagLabel } = require('aktemp-utils/flags')
 
@@ -51,7 +49,7 @@ export default {
             showInNavigator: false,
             gapSize: 2,
             dataGrouping: {
-              enabled: true
+              enabled: false
             },
             states: {
               hover: {
@@ -66,11 +64,16 @@ export default {
             zIndex: 1,
             lineWidth: 1,
             marker: {
-              enabled: false
+              enabled: false,
+              symbol: 'circle'
             },
             states: {
               hover: {
-                lineWidthPlus: 0
+                enabled: true,
+                lineWidthPlus: 0,
+                marker: {
+                  radius: 3
+                }
               }
             }
           },
@@ -94,14 +97,6 @@ export default {
             tooltip: {
               pointFormat: 'Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>',
               valueDecimals: 1
-            },
-            states: {
-              hover: {
-                enabled: false
-              },
-              select: {
-                enabled: false
-              }
             }
           }
         },
@@ -145,7 +140,7 @@ export default {
             color: undefined,
             data: [],
             dataGrouping: {
-              enabled: true
+              enabled: false
             }
           }
         },
@@ -204,12 +199,8 @@ export default {
             showInNavigator: false,
             color: 'orangered',
             events: {
-              hide: () => {
-                this.showFlags = false
-              },
-              show: () => {
-                this.showFlags = true
-              }
+              hide: () => { this.showFlags = false },
+              show: () => { this.showFlags = true }
             }
           },
           {
@@ -222,12 +213,8 @@ export default {
             showInNavigator: false,
             color: 'orangered',
             events: {
-              hide: () => {
-                this.showFlags = false
-              },
-              show: () => {
-                this.showFlags = true
-              }
+              hide: () => { this.showFlags = false },
+              show: () => { this.showFlags = true }
             }
           }
         ],
@@ -318,15 +305,11 @@ export default {
     async afterSetExtremes () {
       if (!this.chart) return
       const extremes = this.chart.xAxis[0].getExtremes()
+      if (extremes.min === undefined || extremes.max === undefined) return
       const start = this.$luxon.DateTime.fromMillis(extremes.min)
       const end = this.$luxon.DateTime.fromMillis(extremes.max)
       if (!start.isValid || !end.isValid) return
       const durationDays = end.diff(start, 'days').as('days')
-
-      // remove existing raw series
-      this.chart.series.map(d => d.options.id)
-        .filter(d => d.startsWith('raw-'))
-        .forEach(id => this.chart.get(id).remove(false))
 
       if (durationDays <= 31) {
         await this.fetchRaw(start.toJSDate(), end.toJSDate())
@@ -334,6 +317,9 @@ export default {
       } else if (this.mode === 'raw') {
         this.mode = 'daily'
       }
+    },
+    parseDatetime (x) {
+      return this.$luxon.DateTime.fromISO(x, { zone: this.timezone })
     },
     async fetchDaily () {
       this.loading = true
@@ -357,7 +343,7 @@ export default {
       // remove existing series
       this.chart.series.map(d => d.options.id)
         .filter(d => d.startsWith('daily-'))
-        .forEach(id => this.chart.get(id).remove())
+        .forEach(id => this.chart.get(id).remove(false))
 
       // generate chart series for selected
       const flagSeries = flags.map((flag) => {
@@ -369,7 +355,7 @@ export default {
             seriesId: this.series.id,
             flag: true,
             type: 'line',
-            data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.mean]),
+            data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
             tooltip: {
               pointFormat: 'Mean: <b>{point.y}</b> °C<br/>'
             },
@@ -387,7 +373,7 @@ export default {
             seriesId: this.series.id,
             flag: true,
             type: 'arearange',
-            data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.min, d.max]),
+            data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
             tooltip: {
               pointFormat: `Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>Flag: ${label}`,
               valueDecimals: 1
@@ -401,7 +387,7 @@ export default {
         {
           id: `daily-mean-${this.series.id}`,
           type: 'line',
-          data: values.map(d => [(new Date(d.date)).valueOf(), d.mean]),
+          data: values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
           visible: true,
           showInNavigator: false,
           tooltip: {
@@ -413,7 +399,7 @@ export default {
           name: `series-${this.series.id}`,
           seriesId: this.series.id,
           type: 'arearange',
-          data: values.map(d => [(new Date(d.date)).valueOf(), d.min, d.max]),
+          data: values.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
           visible: true,
           tooltip: {
             pointFormat: 'Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>'
@@ -422,11 +408,11 @@ export default {
         },
         ...flagSeries
       ]
-      newSeries.forEach(d => this.chart.addSeries(d))
+      newSeries.forEach(d => this.chart.addSeries(d, false))
 
       const extremes = this.chart.xAxis[0].getExtremes()
       if (isFinite(extremes.dataMin) && isFinite(extremes.dataMax)) {
-        this.chart.xAxis[0].setExtremes(extremes.dataMin, extremes.dataMax)
+        this.chart.xAxis[0].setExtremes(extremes.dataMin, extremes.dataMax, false)
       }
 
       this.renderFlagPeriods()
@@ -454,6 +440,11 @@ export default {
 
       const { values, flags } = assignRawFlags(this.rawValues, this.flags)
 
+      // remove existing raw series
+      this.chart.series.map(d => d.options.id)
+        .filter(d => d.startsWith('raw-'))
+        .forEach(id => this.chart.get(id).remove(false))
+
       // generate chart series for selected
       const flagSeries = flags.map(flag => {
         const label = flagLabel(flag)
@@ -463,7 +454,7 @@ export default {
           seriesId: this.series.id,
           flag: true,
           type: 'line',
-          data: flag.values.map(d => [(new Date(d.datetime)).valueOf(), d.value]),
+          data: flag.values.map(d => [this.parseDatetime(d.datetime).valueOf(), d.value]),
           tooltip: {
             pointFormat: `Temperature: <b>{point.y}</b> °C<br/>Flag: <b>${label}</b>`
           },
@@ -483,7 +474,7 @@ export default {
           id: `raw-${this.series.id}`,
           seriesId: this.series.id,
           type: 'line',
-          data: values.map(d => [(new Date(d.datetime)).valueOf(), d.value]),
+          data: values.map(d => [this.parseDatetime(d.datetime).valueOf(), d.value]),
           tooltip: {
             pointFormat: 'Temperature: <b>{point.y}</b> °C<br/>'
           }
@@ -502,11 +493,11 @@ export default {
     },
     renderFlagPeriods () {
       let bands = this.flags.map(d => {
-        let start = new Date(d.start_datetime)
-        let end = new Date(d.end_datetime)
+        let start = this.parseDatetime(d.start_datetime)
+        let end = this.parseDatetime(d.end_datetime)
         if (this.mode === 'daily') {
-          start = new Date(d.start_date)
-          end = new Date(d.end_date)
+          start = this.parseDatetime(d.start_date)
+          end = this.parseDatetime(d.end_date)
         }
         return {
           id: d.id,
@@ -555,7 +546,7 @@ export default {
         values = unflaggedValues
       }
       this.chart.get('navigator')
-        .setData(values.map(d => [(new Date(d.date)).valueOf(), d.mean]))
+        .setData(values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]))
     },
     onSelect (event) {
       if (this.zoom) return

@@ -19,7 +19,15 @@ const getOrganizations = async (req, res, next) => {
   return res.status(200).json(organizations)
 }
 
+const getUserOrganizations = async (req, res, next) => {
+  const organizations = !res.locals.user || !res.locals.user.organizations
+    ? []
+    : res.locals.user.organizations
+  return res.status(200).json(organizations)
+}
+
 module.exports = {
   attachOrganization,
-  getOrganizations
+  getOrganizations,
+  getUserOrganizations
 }

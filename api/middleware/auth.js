@@ -116,7 +116,7 @@ const requireOrganizationAccessOrAdmin = (req, res, next) => {
   }
 
   // auth user does not have access to requested organization
-  if (res.locals.user.organizations.map(d => d.id).includes(req.params.organizationId)) {
+  if (!res.locals.user.organizations.map(d => d.id).includes(+req.params.organizationId)) {
     return next(createError(401, 'Unauthorized'))
   }
 

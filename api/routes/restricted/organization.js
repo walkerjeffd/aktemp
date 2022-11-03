@@ -22,7 +22,7 @@ const {
 const { getOrganizationSeries } = require('../../controllers/series')
 const { getOrganizationProfiles } = require('../../controllers/profiles')
 
-const router = express.Router()
+const router = express.Router({ mergeParams: true })
 
 router.use(asyncHandler(requireOrganizationAccessOrAdmin))
 

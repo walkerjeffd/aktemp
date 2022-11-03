@@ -11,7 +11,7 @@ async function attachFile (req, res, next) {
   } else {
     query = File.query()
       .withGraphFetched('series(stationOrganization,filename)')
-      .withGraphFetched('profiles(stationOrganization,filename)')
+      .withGraphFetched('profiles(stationOrganization,valuesSummary,filename).values')
       .findById(req.params.fileId)
   }
   const file = await query.modify('organizationCode')

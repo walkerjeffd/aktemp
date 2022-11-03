@@ -51,7 +51,8 @@ const postStations = async (req, res, next) => {
 const getStation = (req, res, next) => res.status(200).json(res.locals.station)
 
 const getStationSeries = async (req, res, next) => {
-  const series = await res.locals.station.$relatedQuery('series')
+  const series = await res.locals.station
+    .$relatedQuery('series')
     .modify('stationOrganization')
     .modify('filename')
   return res.status(200).json(series)
@@ -78,7 +79,11 @@ const getStationSeriesFlags = async (req, res, next) => {
 }
 
 const getStationProfiles = async (req, res, next) => {
-  const profiles = await res.locals.station.$relatedQuery('profiles')
+  const profiles = await res.locals.station
+    .$relatedQuery('profiles')
+    .modify('stationOrganization')
+    .modify('filename')
+    .withGraphFetched('values')
   return res.status(200).json(profiles)
 }
 

@@ -32,11 +32,11 @@ describe('validateFileFields()', () => {
   })
 })
 
-describe('validateFileConfig()', () => {
+describe.only('validateFileConfig()', () => {
   const fields = ['stationCode', 'datetime', 'date', 'time', 'utcOffset', 'temp_c', 'flag', 'depth_m']
   const stations = [{ code: 'TEST' }]
 
-  let rows = readCsvFile(path.join(__dirname, './files/validateFile/files.csv'))
+  let rows = readCsvFile(path.join(__dirname, './files/validateFileConfig/files.csv'))
   rows = rows.map(({ valid, ...value }, i) => {
     valid = parseBoolean(valid, false)
     return {

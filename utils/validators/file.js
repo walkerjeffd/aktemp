@@ -108,7 +108,11 @@ const createFileSchema = (fields, stations) => {
       .empty(['', null])
       .when('file_type', {
         is: 'SERIES',
-        then: Joi.optional(),
+        then: Joi.when('interval', {
+          is: 'CONTINUOUS',
+          then: Joi.optional(),
+          otherwise: Joi.forbidden()
+        }),
         otherwise: Joi.forbidden()
       }),
     depth_value: Joi.number()
@@ -116,7 +120,11 @@ const createFileSchema = (fields, stations) => {
       .empty(['', null])
       .when('file_type', {
         is: 'SERIES',
-        then: Joi.optional(),
+        then: Joi.when('interval', {
+          is: 'CONTINUOUS',
+          then: Joi.optional(),
+          otherwise: Joi.forbidden()
+        }),
         otherwise: Joi.forbidden()
       }),
     depth_column: validFields
@@ -124,7 +132,11 @@ const createFileSchema = (fields, stations) => {
       .empty(['', null])
       .when('file_type', {
         is: 'SERIES',
-        then: Joi.optional(),
+        then: Joi.when('interval', {
+          is: 'CONTINUOUS',
+          then: Joi.optional(),
+          otherwise: Joi.forbidden()
+        }),
         otherwise: Joi.required()
       }),
     depth_units: Joi
@@ -148,7 +160,11 @@ const createFileSchema = (fields, stations) => {
       .optional()
       .when('file_type', {
         is: 'SERIES',
-        then: Joi.optional(),
+        then: Joi.when('interval', {
+          is: 'CONTINUOUS',
+          then: Joi.optional(),
+          otherwise: Joi.forbidden()
+        }),
         otherwise: Joi.forbidden()
       }),
     accuracy: Joi.string()

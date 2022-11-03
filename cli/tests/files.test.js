@@ -26,53 +26,104 @@ describe('files', () => {
     await knex.destroy()
   })
 
-  test('series', async () => {
-    const options = { directory: path.join(__dirname, 'files/series/csv') }
-    const filepath = path.join(__dirname, 'files/series/config.csv')
-    const stations = await findStations('TEST')
+  describe('series', () => {
+    test('continuous', async () => {
+      const options = { directory: path.join(__dirname, 'files/series/csv') }
+      const filepath = path.join(__dirname, 'files/series/config-series.csv')
+      const stations = await findStations('TEST')
 
-    const imported = await importFiles(organization.code, filepath, options)
-    expect(imported).toHaveLength(1)
-    const importedFile = imported[0]
-    expect(importedFile).toHaveProperty('id')
-    expect(importedFile).toHaveProperty('error', null)
-    expect(importedFile).toHaveProperty('uuid')
-    expect(importedFile).toHaveProperty('url')
-    expect(importedFile.url).not.toBeNull()
-    expect(importedFile).toHaveProperty('status', 'UPLOADED')
+      const imported = await importFiles(organization.code, filepath, options)
+      expect(imported).toHaveLength(1)
+      const importedFile = imported[0]
+      expect(importedFile).toHaveProperty('id')
+      expect(importedFile).toHaveProperty('error', null)
+      expect(importedFile).toHaveProperty('uuid')
+      expect(importedFile).toHaveProperty('url')
+      expect(importedFile.url).not.toBeNull()
+      expect(importedFile).toHaveProperty('status', 'UPLOADED')
 
-    const expected = readJsonFile('files/series/json/series.json')
-    expected.forEach((series, i) => {
-      const station = stations.find(d => d.code === series.station_code)
-      delete series.station_code
-      series.station_id = station.id
-      series.start_datetime = new Date(series.start_datetime)
-      series.end_datetime = new Date(series.end_datetime)
-      series.flags.forEach((d, j) => {
-        d.start_datetime = new Date(d.start_datetime)
-        d.end_datetime = new Date(d.end_datetime)
+      const expected = readJsonFile('files/series/json/series.json')
+      expected.forEach((series, i) => {
+        const station = stations.find(d => d.code === series.station_code)
+        delete series.station_code
+        series.station_id = station.id
+        series.start_datetime = new Date(series.start_datetime)
+        series.end_datetime = new Date(series.end_datetime)
+        series.flags.forEach((d, j) => {
+          d.start_datetime = new Date(d.start_datetime)
+          d.end_datetime = new Date(d.end_datetime)
+        })
+        series.values.forEach((d, j) => {
+          if (typeof d.value === 'number') {
+            d.value = expect.closeTo(d.value, 3)
+          }
+          d.datetime = new Date(d.datetime)
+        })
       })
-      series.values.forEach((d, j) => {
-        if (typeof d.value === 'number') {
-          d.value = expect.closeTo(d.value, 3)
-        }
-        d.datetime = new Date(d.datetime)
-      })
+
+      const processedFile = await processFile(importedFile.id, {})
+      expect(processedFile).toHaveProperty('status', 'DONE')
+      expect(processedFile).toHaveProperty('error', null)
+
+      for (let i = 0; i < processedFile.series.length; i++) {
+        processedFile.series[i].values = await Series.relatedQuery('values')
+          .for(processedFile.series[i].id)
+          .orderBy('datetime')
+        processedFile.series[i].flags = await Series.relatedQuery('flags')
+          .for(processedFile.series[i].id)
+          .orderBy('start_datetime')
+      }
+      expect(processedFile.series).toMatchObject(expected)
     })
 
-    const processedFile = await processFile(importedFile.id, {})
-    expect(processedFile).toHaveProperty('status', 'DONE')
-    expect(processedFile).toHaveProperty('error', null)
+    test('discrete', async () => {
+      const options = { directory: path.join(__dirname, 'files/series/csv') }
+      const filepath = path.join(__dirname, 'files/series/config-discrete.csv')
+      const stations = await findStations('TEST')
 
-    for (let i = 0; i < processedFile.series.length; i++) {
-      processedFile.series[i].values = await Series.relatedQuery('values')
-        .for(processedFile.series[i].id)
-        .orderBy('datetime')
-      processedFile.series[i].flags = await Series.relatedQuery('flags')
-        .for(processedFile.series[i].id)
-        .orderBy('start_datetime')
-    }
-    expect(processedFile.series).toMatchObject(expected)
+      const imported = await importFiles(organization.code, filepath, options)
+      expect(imported).toHaveLength(1)
+      const importedFile = imported[0]
+      expect(importedFile).toHaveProperty('id')
+      expect(importedFile).toHaveProperty('error', null)
+      expect(importedFile).toHaveProperty('uuid')
+      expect(importedFile).toHaveProperty('url')
+      expect(importedFile.url).not.toBeNull()
+      expect(importedFile).toHaveProperty('status', 'UPLOADED')
+
+      const expected = readJsonFile('files/series/json/discrete.json')
+      expected.forEach((series, i) => {
+        const station = stations.find(d => d.code === series.station_code)
+        delete series.station_code
+        series.station_id = station.id
+        series.start_datetime = new Date(series.start_datetime)
+        series.end_datetime = new Date(series.end_datetime)
+        series.flags.forEach((d, j) => {
+          d.start_datetime = new Date(d.start_datetime)
+          d.end_datetime = new Date(d.end_datetime)
+        })
+        series.values.forEach((d, j) => {
+          if (typeof d.value === 'number') {
+            d.value = expect.closeTo(d.value, 3)
+          }
+          d.datetime = new Date(d.datetime)
+        })
+      })
+
+      const processedFile = await processFile(importedFile.id, {})
+      expect(processedFile).toHaveProperty('status', 'DONE')
+      expect(processedFile).toHaveProperty('error', null)
+
+      for (let i = 0; i < processedFile.series.length; i++) {
+        processedFile.series[i].values = await Series.relatedQuery('values')
+          .for(processedFile.series[i].id)
+          .orderBy('datetime')
+        processedFile.series[i].flags = await Series.relatedQuery('flags')
+          .for(processedFile.series[i].id)
+          .orderBy('start_datetime')
+      }
+      expect(processedFile.series).toMatchObject(expected)
+    })
   })
 
   test('profiles', async () => {

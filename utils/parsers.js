@@ -221,12 +221,28 @@ function parseSeriesFile (rows, config, stations) {
     s.station_id = station.id
 
     if (config.timezone === 'LOCAL' && s.values.length > 0) {
-      debug(`parseSeriesFile(): getting local utc offset of first timestamp ('${s.values[0].datetime}') for station ('${station.code}', tz=${station.timezone})`)
-      const timezone = getLocalUtcOffsetTimezone(s.values[0].datetime, 'ISO', station.timezone)
-      debug(`parseSeriesFile(): adjust timestamps to local tz (${timezone}) for station ('${station.code}', tz=${station.timezone})`)
-      s.values.forEach(v => {
-        v.datetime = adjustTimestampToUtc(parseTimestampString(v.datetime, 'ISO'), timezone).toUTC().toISO()
-      })
+      if (config.interval === 'CONTINUOUS') {
+        debug(`parseSeriesFile(): getting local utc offset of first timestamp ('${s.values[0].datetime}') for station ('${station.code}', tz=${station.timezone})`)
+        const timezone = getLocalUtcOffsetTimezone(s.values[0].datetime, 'ISO', station.timezone)
+        debug(`parseSeriesFile(): adjust timestamps to local tz (${timezone}) for station ('${station.code}', tz=${station.timezone})`)
+        s.values.forEach(v => {
+          v.datetime = adjustTimestampToUtc(parseTimestampString(v.datetime, 'ISO'), timezone).toUTC().toISO()
+        })
+      } else if (config.interval === 'DISCRETE' && s.values.length > 0) {
+        debug(`parseSeriesFile(): adjusting timestamps to local tz of station ('${station.code}', tz=${station.timezone})`)
+        s.values.forEach((v, i) => {
+          const local = luxon.DateTime.fromISO(v.datetime).setZone(station.timezone, { keepLocalTime: true })
+          if (i === 0) {
+            debug(local)
+          }
+          if (!local.isValid) {
+            throw new Error(`Failed to convert timestamp ('${v.datetime}', format='${config.datetime_format}') to station timezone ('${station.timezone}')`)
+          }
+          v.datetime = local.toUTC().toISO()
+        })
+      } else if (s.values.length > 0) {
+        throw new Error('Unexpected error: missing or invalid `interval` (expected \'CONTINUOUS\' or \'DISCRETE\')')
+      }
     }
     s.flags = extractFlags(s.values)
     s.values = s.values.map(({ flag, ...d }) => d)

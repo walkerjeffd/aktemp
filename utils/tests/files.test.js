@@ -21,51 +21,97 @@ function readJsonFile (filepath) {
 }
 
 describe('parseSeriesFile()', () => {
-  const configRows = readCsvFile('files/parseSeriesFile/config.csv').data
   const stations = [
     { id: 1, code: 'SITE_01', timezone: 'US/Alaska' },
     { id: 2, code: 'SITE_02', timezone: 'US/Alaska' }
   ]
 
-  test.each(configRows)('$test_group:$test_name passes', ({ test_group, test_name, filename, expected, ...row }) => {
-    const filepath = path.join('files/parseSeriesFile/csv', filename)
-    const parsed = readCsvFile(filepath, row.file_skip)
-    const config = validateFileConfig(row, parsed.meta.fields, stations)
-    const series = parseSeriesFile(parsed.data, config, stations)
-    expected = readJsonFile(path.join('files/parseSeriesFile/json', expected))
-    expected.forEach((series, i) => {
-      if (typeof series.depth_m === 'number') {
-        series.depth_m = expect.closeTo(series.depth_m, 3)
-      }
-      series.values.forEach((d, j) => {
-        if (typeof d.value === 'number') {
-          d.value = expect.closeTo(d.value, 3)
+  describe('continuous', () => {
+    const configRows = readCsvFile('files/parseSeriesFile/config-series.csv').data
+    test.each(configRows)('$test_group:$test_name passes', ({ test_group, test_name, filename, expected, ...row }) => {
+      const filepath = path.join('files/parseSeriesFile/csv', filename)
+      const parsed = readCsvFile(filepath, row.file_skip)
+      const config = validateFileConfig(row, parsed.meta.fields, stations)
+      const series = parseSeriesFile(parsed.data, config, stations)
+      expected = readJsonFile(path.join('files/parseSeriesFile/json', expected))
+      expected.forEach((series, i) => {
+        if (typeof series.depth_m === 'number') {
+          series.depth_m = expect.closeTo(series.depth_m, 3)
         }
+        series.values.forEach((d, j) => {
+          if (typeof d.value === 'number') {
+            d.value = expect.closeTo(d.value, 3)
+          }
+        })
       })
+      expect(series).toMatchObject(expected)
     })
-    expect(series).toMatchObject(expected)
+
+    test.each`
+      filename
+      ${'series-s1d1-date-missing.csv'}
+      ${'series-s1d1-date-future.csv'}
+      ${'series-s1d1-date-invalid.csv'}
+    `('$filename throws', ({ filename }) => {
+      const filepath = path.join('files/parseSeriesFile/csv', filename)
+      const parsed = readCsvFile(filepath, 0)
+      const config = validateFileConfig({
+        file_skip: '0',
+        file_type: 'SERIES',
+        interval: 'CONTINUOUS',
+        station_code: 'SITE_01',
+        datetime_column: 'datetime_utc_iso',
+        datetime_format: 'ISO',
+        timezone: 'UTC',
+        temperature_column: 'temp_c',
+        temperature_units: 'C'
+      }, parsed.meta.fields, stations)
+      expect(() => { parseSeriesFile(parsed.data, config, stations) }).toThrow()
+    })
   })
 
-  test.each`
-    filename
-    ${'series-s1d1-date-missing.csv'}
-    ${'series-s1d1-date-future.csv'}
-    ${'series-s1d1-date-invalid.csv'}
-  `('$filename throws', ({ filename }) => {
-    const filepath = path.join('files/parseSeriesFile/csv', filename)
-    const parsed = readCsvFile(filepath, 0)
-    const config = validateFileConfig({
-      file_skip: '0',
-      file_type: 'SERIES',
-      interval: 'CONTINUOUS',
-      station_code: 'SITE_01',
-      datetime_column: 'datetime_utc_iso',
-      datetime_format: 'ISO',
-      timezone: 'UTC',
-      temperature_column: 'temp_c',
-      temperature_units: 'C'
-    }, parsed.meta.fields, stations)
-    expect(() => { parseSeriesFile(parsed.data, config, stations) }).toThrow()
+  describe('discrete', () => {
+    const configRows = readCsvFile('files/parseSeriesFile/config-discrete.csv').data
+    test.each(configRows)('$test_group:$test_name passes', ({ test_group, test_name, filename, expected, ...row }) => {
+      const filepath = path.join('files/parseSeriesFile/csv', filename)
+      const parsed = readCsvFile(filepath, row.file_skip)
+      const config = validateFileConfig(row, parsed.meta.fields, stations)
+      const series = parseSeriesFile(parsed.data, config, stations)
+      expected = readJsonFile(path.join('files/parseSeriesFile/json', expected))
+      expected.forEach((series, i) => {
+        if (typeof series.depth_m === 'number') {
+          series.depth_m = expect.closeTo(series.depth_m, 3)
+        }
+        series.values.forEach((d, j) => {
+          if (typeof d.value === 'number') {
+            d.value = expect.closeTo(d.value, 3)
+          }
+        })
+      })
+      expect(series).toMatchObject(expected)
+    })
+
+    test.each`
+      filename
+      ${'discrete-s1-date-missing.csv'}
+      ${'discrete-s1-date-future.csv'}
+      ${'discrete-s1-date-invalid.csv'}
+    `('$filename throws', ({ filename }) => {
+      const filepath = path.join('files/parseSeriesFile/csv', filename)
+      const parsed = readCsvFile(filepath, 0)
+      const config = validateFileConfig({
+        file_skip: '0',
+        file_type: 'SERIES',
+        interval: 'DISCRETE',
+        station_code: 'SITE_01',
+        datetime_column: 'datetime_utc_iso',
+        datetime_format: 'ISO',
+        timezone: 'UTC',
+        temperature_column: 'temp_c',
+        temperature_units: 'C'
+      }, parsed.meta.fields, stations)
+      expect(() => { parseSeriesFile(parsed.data, config, stations) }).toThrow()
+    })
   })
 })
 

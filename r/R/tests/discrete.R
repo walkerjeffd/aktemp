@@ -1,58 +1,43 @@
-targets_test_series <- list(
-  tar_target(test_series_root, "../utils/tests/files/parseSeriesFile"),
-  tar_target(test_series_flags, {
+targets_test_discrete <- list(
+  tar_target(test_discrete_root, "../utils/tests/files/parseSeriesFile"),
+  tar_target(test_discrete_flags, {
     tribble(
-      ~station_code, ~depth_m, ~start_datetime,       ~end_datetime,          ~flag,
-      "SITE_01",     2,        "2020-11-02T00:00:00Z","2020-11-02T23:00:00Z", "X",
-      "SITE_02",     3,        "2020-11-12T00:00:00Z","2020-11-12T11:30:00Z", "X",
-      "SITE_02",     3,        "2020-11-12T12:00:00Z","2020-11-13T12:00:00Z", "Y",
-      "SITE_02",     3,        "2020-11-14T00:00:00Z","2020-11-14T08:30:00Z", "Z"
+      ~station_code, ~start_datetime,       ~end_datetime,          ~flag,
+      "SITE_01",     "2021-07-04T21:00:00Z","2021-07-18T21:00:00Z", "X"
     ) %>%
       mutate(
         across(ends_with("_datetime"), ymd_hms)
       )
   }),
-  tar_target(test_series_values, {
+  tar_target(test_discrete_values, {
     x <- uaa_data$values %>%
       filter(
         station_code == "Little Su 1",
         logger_sn == 20431757
       ) %>%
       transmute(
-        timestamp_utc = datetime + hours(8) - months(7),
+        timestamp_utc = datetime + hours(8),
         temp_c
       ) %>%
       filter(
-        as_date(with_tz(timestamp_utc, "US/Alaska")) >= ymd(20201030),
-        as_date(with_tz(timestamp_utc, "US/Alaska")) <= ymd(20201103)
+        format(with_tz(timestamp_utc, "US/Alaska"), "%w") == "0",
+        hour(with_tz(timestamp_utc, "US/Alaska")) == 13,
+        minute(with_tz(timestamp_utc, "US/Alaska")) == 0,
+        as_date(timestamp_utc) >= ymd(20210501)
       ) %>%
       arrange(timestamp_utc)
 
     y <- bind_rows(
-      SITE_01 = bind_rows(
-        x %>%
-          filter(minute(timestamp_utc) == 0) %>%
-          mutate(
-            depth_m = 1,
-            temp_c = if_else(
-              timestamp_utc >= ymd_hms("2020-10-30 16:00:00") & timestamp_utc <= ymd_hms("2020-10-30 20:00:00"),
-              NA_real_,
-              temp_c
-            )
-          ),
-        x %>%
-          filter(minute(timestamp_utc) == 0) %>%
-          mutate(depth_m = 2, temp_c = temp_c + 1)
-      ),
-      SITE_02 = bind_rows(
-        x %>%
-          filter(minute(timestamp_utc) == 0) %>%
-          mutate(depth_m = NA_real_, temp_c = temp_c + 2),
-        x %>%
-          mutate(depth_m = 0, temp_c = temp_c + 3)
-      ) %>%
-        mutate(timestamp_utc = timestamp_utc + days(10) + hours(1)) %>%
-        filter(timestamp_utc < ymd_hms("2020-11-14 00:00:00", tz = "US/Alaska")),
+      SITE_01 = x %>%
+        mutate(
+          temp_c = if_else(
+            row_number() == 5,
+            NA_real_,
+            temp_c
+          )
+        ),
+      SITE_02 = x %>%
+        mutate(timestamp_utc = timestamp_utc + days(50) + hours(1), temp_c = temp_c + 2),
       .id = "station_code"
     ) %>%
       mutate(
@@ -70,12 +55,11 @@ targets_test_series <- list(
         datetime_akst_mdyhm = format(timestamp_akst, format = "%m/%d/%Y %H:%M"),
 
         temp_c = round(temp_c, 2),
-        temp_f = 32 + temp_c * 9 / 5,
-        depth_ft = depth_m / 0.3048
+        temp_f = 32 + temp_c * 9 / 5
       ) %>%
-      group_by(station_code, depth_m) %>%
+      group_by(station_code) %>%
       mutate(
-        timestamp_local = timestamp_utc + hours(first(timezone_int)),
+        timestamp_local = timestamp_tz,
         datetime_local_mdyhm = format(timestamp_local, format = "%m/%d/%Y %H:%M"),
         datetime_local_dmyhm = format(timestamp_local, format = "%d-%b-%Y %H:%M"),
         date_local_mdy = format(timestamp_local, format = "%m/%d/%Y"),
@@ -84,58 +68,50 @@ targets_test_series <- list(
       ungroup()
 
     z <- y %>%
-      select(station_code, depth_m, timestamp_utc) %>%
+      select(station_code, timestamp_utc) %>%
       fuzzyjoin::fuzzy_inner_join(
-        test_series_flags,
+        test_discrete_flags,
         by = c(
           "station_code" = "station_code",
-          "depth_m" = "depth_m",
           "timestamp_utc" = "start_datetime",
           "timestamp_utc" = "end_datetime"
         ),
-        match_fun = list(`==`, `==`, `>=`, `<=`)
+        match_fun = list(`==`, `>=`, `<=`)
       ) %>%
       select(
         station_code = station_code.x,
-        depth_m = depth_m.x,
         timestamp_utc,
         flag
       )
 
     y %>%
-      left_join(z, by = c("station_code", "depth_m", "timestamp_utc"))
+      left_join(z, by = c("station_code", "timestamp_utc"))
   }),
-  tar_target(test_series_values_plot, {
-    test_series_values %>%
+  tar_target(test_discrete_values_plot, {
+    test_discrete_values %>%
       ggplot(aes(with_tz(timestamp_utc, "US/Alaska"), temp_c)) +
       geom_line() +
+      geom_point() +
       geom_point(data = . %>% filter(!is.na(flag)), aes(color = flag)) +
-      facet_wrap(vars(station_code, depth_m), labeller = label_both)
+      facet_wrap(vars(station_code), labeller = label_both)
   }),
 
-  tar_target(test_series, {
-    x <- test_series_values %>%
-      nest_by(station_code, depth_m, .key = "values", .keep = TRUE) %>%
+  tar_target(test_discrete, {
+    x <- test_discrete_values %>%
+      nest_by(station_code, .key = "values", .keep = TRUE) %>%
       mutate(
         start_datetime = min(values$timestamp_utc),
-        end_datetime = max(values$timestamp_utc),
-        frequency = median(
-          as.numeric(difftime(values$timestamp_utc, lag(values$timestamp_utc), units = "min")),
-          na.rm = TRUE
-        )
+        end_datetime = max(values$timestamp_utc)
       ) %>%
       mutate(
         station_id = parse_number(station_code),
-        interval = "CONTINUOUS",
-        depth_category = NULL,
-        accuracy = NULL,
-        sop_bath = NULL,
+        interval = "DISCRETE",
         reviewed = FALSE
       ) %>%
       left_join(
-        test_series_flags %>%
-          nest_by(station_code, depth_m, .key = "flags"),
-        by = c("station_code", "depth_m")
+        test_discrete_flags %>%
+          nest_by(station_code, .key = "flags"),
+        by = c("station_code")
       ) %>%
       ungroup() %>%
       mutate(
@@ -147,22 +123,20 @@ targets_test_series <- list(
       relocate(values, .after = last_col())
 
     bind_rows(
-      s1d1 = x %>%
-        filter(station_code == "SITE_01", depth_m == 1),
-      s1d2 = x %>%
+      s1 = x %>%
         filter(station_code == "SITE_01"),
-      s2d2 = x,
+      s2 = x,
       .id = "name"
     )
   }),
-  tar_target(test_series_csv, {
-    test_series %>%
+  tar_target(test_discrete_csv, {
+    test_discrete %>%
       select(name, values) %>%
       unnest(values) %>%
       nest_by(name, .key = "values") %>%
       mutate(
         filename = list({
-          filename <- file.path(test_series_root, glue("csv/series-{name}.csv"))
+          filename <- file.path(test_discrete_root, glue("csv/discrete-{name}.csv"))
           values %>%
             select(-starts_with("timestamp")) %>%
             mutate(
@@ -176,12 +150,12 @@ targets_test_series <- list(
       pull(filename) %>%
       unlist()
   }, format = "file"),
-  tar_target(test_series_json, {
-    test_series %>%
+  tar_target(test_discrete_json, {
+    test_discrete %>%
       nest_by(name) %>%
       mutate(
         filename = list({
-          filename <- file.path(test_series_root, glue("json/series-{name}.json"))
+          filename <- file.path(test_discrete_root, glue("json/discrete-{name}.json"))
 
           data %>%
             mutate(
@@ -211,15 +185,15 @@ targets_test_series <- list(
       pull(filename) %>%
       unlist()
   }, format = "file"),
-  tar_target(test_series_s1d1_csv, file.path(test_series_root, glue("csv/series-s1d1.csv")), format = "file"),
-  tar_target(test_series_s1d1_skip_csv, {
+  tar_target(test_discrete_s1_csv, file.path(test_discrete_root, glue("csv/discrete-s1.csv")), format = "file"),
+  tar_target(test_discrete_s1_skip_csv, {
     x <- read_csv(
-      test_series_s1d1_csv,
+      test_discrete_s1_csv,
       col_types = cols(
         .default = col_character()
       )
     )
-    filename <- file.path(test_series_root, glue("csv/series-s1d1-skip.csv"))
+    filename <- file.path(test_discrete_root, glue("csv/discrete-s1-skip.csv"))
     write_file(
       "# skip\n",
       file = filename
@@ -234,62 +208,62 @@ targets_test_series <- list(
     )
     filename
   }),
-  tar_target(test_series_s1d1_date_missing_csv, {
+  tar_target(test_discrete_s1_date_missing_csv, {
     x <- read_csv(
-      test_series_s1d1_csv,
+      test_discrete_s1_csv,
       col_types = cols(
         .default = col_character()
       )
     )
-    filename <- file.path(test_series_root, glue("csv/series-s1d1-date-missing.csv"))
+    filename <- file.path(test_discrete_root, glue("csv/discrete-s1-date-missing.csv"))
     x %>%
       mutate(
         datetime_utc_iso = if_else(row_number() == 5, NA_character_, datetime_utc_iso)
       ) %>%
-      select(station_code, datetime_utc_iso, depth_m, temp_c) %>%
+      select(station_code, datetime_utc_iso, temp_c) %>%
       write_csv(filename, na = "")
     filename
   }),
-  tar_target(test_series_s1d1_date_future_csv, {
-    z <- test_series
+  tar_target(test_discrete_s1_date_future_csv, {
+    z <- test_discrete
     x <- read_csv(
-      test_series_s1d1_csv,
+      test_discrete_s1_csv,
       col_types = cols(
         .default = col_character()
       )
     )
-    filename <- file.path(test_series_root, glue("csv/series-s1d1-date-future.csv"))
+    filename <- file.path(test_discrete_root, glue("csv/discrete-s1-date-future.csv"))
     x %>%
       mutate(
         datetime_utc_iso = if_else(row_number() == 5, '2050-10-30T18:00:00Z', datetime_utc_iso)
       ) %>%
-      select(station_code, datetime_utc_iso, depth_m, temp_c) %>%
+      select(station_code, datetime_utc_iso, temp_c) %>%
       write_csv(filename, na = "")
     filename
   }),
-  tar_target(test_series_s1d1_date_invalid_csv, {
-    z <- test_series
+  tar_target(test_discrete_s1_date_invalid_csv, {
+    z <- test_discrete
     x <- read_csv(
-      test_series_s1d1_csv,
+      test_discrete_s1_csv,
       col_types = cols(
         .default = col_character()
       )
     )
-    filename <- file.path(test_series_root, glue("csv/series-s1d1-date-invalid.csv"))
+    filename <- file.path(test_discrete_root, glue("csv/discrete-s1-date-invalid.csv"))
     x %>%
       mutate(
         datetime_utc_iso = if_else(row_number() == 5, 'INVALID', datetime_utc_iso)
       ) %>%
-      select(station_code, datetime_utc_iso, depth_m, temp_c) %>%
+      select(station_code, datetime_utc_iso, temp_c) %>%
       write_csv(filename, na = "")
     filename
   }),
 
-  tar_target(test_series_config_default, {
+  tar_target(test_discrete_config_default, {
     list(
       file_skip = "0",
       file_type = "SERIES",
-      interval = "CONTINUOUS",
+      interval = "DISCRETE",
       station_code = "",
       station_column = "station_code",
       datetime_column = "datetime_utc_iso",
@@ -303,38 +277,38 @@ targets_test_series <- list(
       flag_column = "flag",
       depth_category = "",
       depth_value = "",
-      depth_column = "depth_m",
-      depth_units = "m",
+      depth_column = "",
+      depth_units = "",
       sop_bath = "",
       accuracy = "",
       reviewed = ""
     )
   }),
-  tar_target(test_series_config_skip, {
+  tar_target(test_discrete_config_skip, {
     tibble(
-      test_name = "s1d1-skip",
-      expected = glue("series-s1d1.json"),
-      filename = glue("series-s1d1-skip.csv"),
-      config = list(as_tibble(modifyList(test_series_config_default, list(file_skip = "1"))))
+      test_name = "s1-skip",
+      expected = glue("discrete-s1.json"),
+      filename = glue("discrete-s1-skip.csv"),
+      config = list(as_tibble(modifyList(test_discrete_config_default, list(file_skip = "1"))))
     ) %>%
-    unnest(config)
+      unnest(config)
   }),
-  tar_target(test_series_config_minimal, {
-    test_series %>%
+  tar_target(test_discrete_config_minimal, {
+    test_discrete %>%
       distinct(name) %>%
       rename(test_name = name) %>%
       rowwise() %>%
       mutate(
-        expected = glue("series-{test_name}.json"),
-        filename = glue("series-{test_name}.csv"),
-        config = list(as_tibble(test_series_config_default))
+        expected = glue("discrete-{test_name}.json"),
+        filename = glue("discrete-{test_name}.csv"),
+        config = list(as_tibble(test_discrete_config_default))
       ) %>%
       unnest(config) %>%
       mutate(
         test_name = str_c(row_number(), test_name, sep = "_")
       )
   }),
-  tar_target(test_series_config_timestamp, {
+  tar_target(test_discrete_config_timestamp, {
     list(
       datetime_utc_iso = list(
         datetime_column = "datetime_utc_iso",
@@ -392,36 +366,36 @@ targets_test_series <- list(
       mutate(
         test_name = str_c(row_number(), test_name, sep = "_")
       ) %>%
-      crossing(test_file = unique(test_series$name)) %>%
+      crossing(test_file = unique(test_discrete$name)) %>%
       rowwise() %>%
       mutate(test_name = glue("{test_file}:{test_name}")) %>%
       mutate(
-        filename = glue("series-{test_file}.csv"),
-        expected = glue("series-{test_file}.json"),
-        config = list(as_tibble(modifyList(test_series_config_default, value)))
+        filename = glue("discrete-{test_file}.csv"),
+        expected = glue("discrete-{test_file}.json"),
+        config = list(as_tibble(modifyList(test_discrete_config_default, value)))
       ) %>%
       select(-value, -test_file) %>%
       unnest(config) %>%
       ungroup()
   }),
-  tar_target(test_series_config_stations, {
+  tar_target(test_discrete_config_stations, {
     list(
       stations_code = list(
-        filename = "series-s1d2.csv",
-        expected = "series-s1d2.json",
+        filename = "discrete-s1.csv",
+        expected = "discrete-s1.json",
         station_code = "SITE_01",
         station_column = ""
       ),
       stations_column = list(
-        filename = "series-s1d2.csv",
-        expected = "series-s1d2.json",
+        filename = "discrete-s1.csv",
+        expected = "discrete-s1.json",
         station_column = "station_code"
       )
     ) %>%
       enframe(name = "test_name") %>%
       rowwise() %>%
       mutate(
-        config = list(as_tibble(modifyList(test_series_config_default, value)))
+        config = list(as_tibble(modifyList(test_discrete_config_default, value)))
       ) %>%
       select(-value) %>%
       unnest(config) %>%
@@ -430,7 +404,7 @@ targets_test_series <- list(
         test_name = str_c(row_number(), test_name, sep = "_")
       )
   }),
-  tar_target(test_series_config_temperature, {
+  tar_target(test_discrete_config_temperature, {
     list(
       units_c = list(
         temperature_column = "temp_c",
@@ -445,98 +419,56 @@ targets_test_series <- list(
       mutate(
         test_name = str_c(row_number(), test_name, sep = "_")
       ) %>%
-      crossing(test_file = unique(test_series$name)) %>%
+      crossing(test_file = unique(test_discrete$name)) %>%
       rowwise() %>%
       mutate(test_name = glue("{test_file}:{test_name}")) %>%
       mutate(
-        filename = glue("series-{test_file}.csv"),
-        expected = glue("series-{test_file}.json"),
-        config = list(as_tibble(modifyList(test_series_config_default, value)))
+        filename = glue("discrete-{test_file}.csv"),
+        expected = glue("discrete-{test_file}.json"),
+        config = list(as_tibble(modifyList(test_discrete_config_default, value)))
       ) %>%
       select(-value, -test_file) %>%
       unnest(config) %>%
       ungroup()
   }),
-  tar_target(test_series_config_depth, {
-    list(
-      depth_value_m = list(
-        filename = "series-s1d1.csv",
-        expected = "series-s1d1.json",
-        depth_column = "",
-        depth_value = "1",
-        depth_units = "m"
-      ),
-      depth_value_ft = list(
-        filename = "series-s1d1.csv",
-        expected = "series-s1d1.json",
-        depth_column = "",
-        depth_value = "3.28084",
-        depth_units = "ft"
-      ),
-      depth_column_m = list(
-        filename = "series-s2d2.csv",
-        expected = "series-s2d2.json",
-        depth_column = "depth_m",
-        depth_units = "m"
-      ),
-      depth_column_ft = list(
-        filename = "series-s2d2.csv",
-        expected = "series-s2d2.json",
-        depth_column = "depth_ft",
-        depth_units = "ft"
-      )
-    ) %>%
-      enframe(name = "test_name") %>%
-      rowwise() %>%
-      mutate(
-        config = list(as_tibble(modifyList(test_series_config_default, value)))
-      ) %>%
-      select(-value) %>%
-      unnest(config) %>%
-      ungroup() %>%
-      mutate(
-        test_name = str_c(row_number(), test_name, sep = "_")
-      )
-  }),
 
-  tar_target(test_series_config, {
+  tar_target(test_discrete_config, {
     bind_rows(
-      skip = test_series_config_skip,
-      minimal = test_series_config_minimal,
-      timestamp = test_series_config_timestamp,
-      stations = test_series_config_stations,
-      temperature = test_series_config_temperature,
-      depth = test_series_config_depth,
+      skip = test_discrete_config_skip,
+      minimal = test_discrete_config_minimal,
+      timestamp = test_discrete_config_timestamp,
+      stations = test_discrete_config_stations,
+      temperature = test_discrete_config_temperature,
       .id = "test_group"
     )
   }),
-  tar_target(test_series_config_csv, {
-    filename <- file.path(test_series_root, "config-series.csv")
-    test_series_config %>%
+  tar_target(test_discrete_config_csv, {
+    filename <- file.path(test_discrete_root, "config-discrete.csv")
+    test_discrete_config %>%
       write_csv(filename, na = "")
     filename
   }, format = "file"),
 
-  tar_target(test_series_s2d2_csv, file.path(test_series_root, "csv/series-s2d2.csv"), format = "file"),
-  tar_target(test_series_cli_csv, {
-    from <- test_series_s2d2_csv
-    to <- file.path("../cli/tests/files/series/csv/series.csv")
+  tar_target(test_discrete_s2_csv, file.path(test_discrete_root, "csv/discrete-s2.csv"), format = "file"),
+  tar_target(test_discrete_cli_csv, {
+    from <- test_discrete_s2_csv
+    to <- file.path("../cli/tests/files/series/csv/discrete.csv")
     file.copy(from, to)
     to
   }, format = "file"),
-  tar_target(test_series_s2d2_json, file.path(test_series_root, "json/series-s2d2.json"), format = "file"),
-  tar_target(test_series_cli_json, {
-    from <- test_series_s2d2_json
-    to <- file.path("../cli/tests/files/series/json/series.json")
+  tar_target(test_discrete_s2_json, file.path(test_discrete_root, "json/discrete-s2.json"), format = "file"),
+  tar_target(test_discrete_cli_json, {
+    from <- test_discrete_s2_json
+    to <- file.path("../cli/tests/files/series/json/discrete.json")
     file.copy(from, to)
     to
   }, format = "file"),
-  tar_target(test_series_cli_config_csv, {
-    filename <- "../cli/tests/files/series/config-series.csv"
-    test_series_config_minimal %>%
-      filter(test_name == "3_s2d2") %>%
+  tar_target(test_discrete_cli_config_csv, {
+    filename <- "../cli/tests/files/series/config-discrete.csv"
+    test_discrete_config_minimal %>%
+      filter(test_name == "2_s2") %>%
       select(-test_name, -expected) %>%
-      mutate(filename = "series.csv") %>%
+      mutate(filename = "discrete.csv") %>%
       write_csv(filename, na = "")
     filename
   }, format = "file")

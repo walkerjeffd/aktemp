@@ -95,7 +95,6 @@ describe('files', () => {
       const station = stations.find(d => d.code === profile.station_code)
       delete profile.station_code
       profile.station_id = station.id
-      profile.date = new Date(`${profile.date}T00:00:00`)
       profile.values.forEach((d, j) => {
         if (typeof d.value === 'number') {
           d.value = expect.closeTo(d.value, 3)

@@ -8,7 +8,10 @@ require('dotenv-flow').config({
   silent: true
 })
 
-// console.log(process.env.DB_SECRET)
+// override date parser to prevent fields of type `date` from being converted to JS Date()
+// https://github.com/brianc/node-postgres/issues/1844
+const types = require('pg').types
+types.setTypeParser(types.builtins.DATE, (val) => val)
 
 async function getConnectionFromSecret () {
   const secretsmanager = new AWS.SecretsManager({
@@ -28,7 +31,8 @@ async function getConnection () {
     port: process.env.DB_PORT,
     database: process.env.DB_DATABASE || 'postgres',
     user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD
+    password: process.env.DB_PASSWORD,
+    timezone: 'UTC'
   }
   if (!!process.env.DB_SECRET && process.env.NODE_ENV !== 'test') {
     // https://github.com/knex/knex/pull/3364

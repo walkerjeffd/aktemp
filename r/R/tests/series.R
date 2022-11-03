@@ -49,7 +49,7 @@ targets_test_series <- list(
           filter(minute(timestamp_utc) == 0) %>%
           mutate(depth_m = NA_real_, temp_c = temp_c + 2),
         x %>%
-          mutate(depth_m = 3, temp_c = temp_c + 3)
+          mutate(depth_m = 0, temp_c = temp_c + 3)
       ) %>%
         mutate(timestamp_utc = timestamp_utc + days(10) + hours(1)) %>%
         filter(timestamp_utc < ymd_hms("2020-11-14 00:00:00", tz = "US/Alaska")),
@@ -211,9 +211,10 @@ targets_test_series <- list(
       pull(filename) %>%
       unlist()
   }, format = "file"),
+  tar_target(test_series_s1d1_csv, file.path(test_series_root, glue("csv/series-s1d1.csv")), format = "file"),
   tar_target(test_series_s1d1_skip_csv, {
     x <- read_csv(
-      file.path(test_series_root, glue("csv/series-s1d1.csv")),
+      test_series_s1d1_csv,
       col_types = cols(
         .default = col_character()
       )
@@ -235,7 +236,7 @@ targets_test_series <- list(
   }),
   tar_target(test_series_s1d1_date_missing_csv, {
     x <- read_csv(
-      file.path(test_series_root, glue("csv/series-s1d1.csv")),
+      test_series_s1d1_csv,
       col_types = cols(
         .default = col_character()
       )
@@ -250,8 +251,9 @@ targets_test_series <- list(
     filename
   }),
   tar_target(test_series_s1d1_date_future_csv, {
+    z <- test_series
     x <- read_csv(
-      file.path(test_series_root, glue("csv/series-s1d1.csv")),
+      test_series_s1d1_csv,
       col_types = cols(
         .default = col_character()
       )
@@ -266,8 +268,9 @@ targets_test_series <- list(
     filename
   }),
   tar_target(test_series_s1d1_date_invalid_csv, {
+    z <- test_series
     x <- read_csv(
-      file.path(test_series_root, glue("csv/series-s1d1.csv")),
+      test_series_s1d1_csv,
       col_types = cols(
         .default = col_character()
       )

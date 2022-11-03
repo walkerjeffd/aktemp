@@ -147,9 +147,10 @@ targets_test_profiles <- list(
       pull(filename) %>%
       unlist()
   }, format = "file"),
+  tar_target(test_profiles_s1d1_csv, file.path(test_profiles_root, glue("csv/profiles-s1d1.csv")), format = "file"),
   tar_target(test_profiles_s1d1_skip_csv, {
     x <- read_csv(
-      file.path(test_profiles_root, glue("csv/profiles-s1d1.csv")),
+      test_profiles_s1d1_csv,
       col_types = cols(
         .default = col_character()
       )
@@ -171,7 +172,7 @@ targets_test_profiles <- list(
   }),
   tar_target(test_profiles_s1d1_depth_missing_csv, {
     x <- read_csv(
-      file.path(test_profiles_root, glue("csv/profiles-s1d1.csv")),
+      test_profiles_s1d1_csv,
       col_types = cols(
         .default = col_character()
       )
@@ -187,7 +188,7 @@ targets_test_profiles <- list(
   }),
   tar_target(test_profiles_s1d1_date_missing_csv, {
     x <- read_csv(
-      file.path(test_profiles_root, glue("csv/profiles-s1d1.csv")),
+      test_profiles_s1d1_csv,
       col_types = cols(
         .default = col_character()
       )
@@ -203,7 +204,7 @@ targets_test_profiles <- list(
   }),
   tar_target(test_profiles_s1d1_date_future_csv, {
     x <- read_csv(
-      file.path(test_profiles_root, glue("csv/profiles-s1d1.csv")),
+      test_profiles_s1d1_csv,
       col_types = cols(
         .default = col_character()
       )
@@ -481,14 +482,16 @@ targets_test_profiles <- list(
     filename
   }, format = "file"),
 
+  tar_target(test_profiles_s2d2_csv, file.path(test_profiles_root, "csv/profiles-s2d2.csv"), format = "file"),
   tar_target(test_profiles_cli_csv, {
-    from <- file.path(test_profiles_root, "csv/profiles-s2d2.csv")
+    from <- test_profiles_s2d2_csv
     to <- file.path("../cli/tests/files/profiles/csv/profiles.csv")
     file.copy(from, to)
     to
   }, format = "file"),
+  tar_target(test_profiles_s2d2_json, file.path(test_profiles_root, "json/profiles-s2d2.json"), format = "file"),
   tar_target(test_profiles_cli_json, {
-    from <- file.path(test_profiles_root, "json/profiles-s2d2.json")
+    from <- test_profiles_s2d2_json
     to <- file.path("../cli/tests/files/profiles/json/profiles.json")
     file.copy(from, to)
     to

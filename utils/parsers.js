@@ -86,7 +86,7 @@ function parseFlag (d, config) {
 
 function parseDepth (d, config) {
   if (!config.depth_column) {
-    if (config.depth_value) {
+    if (isNumber(config.depth_value)) {
       return convertDepthUnits(config.depth_value, config.depth_units)
     } else {
       return null

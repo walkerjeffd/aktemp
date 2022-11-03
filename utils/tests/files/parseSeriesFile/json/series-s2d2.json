@@ -982,33 +982,14 @@
   },
   {
     "station_code": "SITE_02",
-    "depth_m": 3,
+    "depth_m": 0,
     "start_datetime": "2020-11-09T09:00:00.000Z",
     "end_datetime": "2020-11-14T08:30:00.000Z",
     "frequency": 30,
     "station_id": 2,
     "interval": "CONTINUOUS",
     "reviewed": false,
-    "flags": [
-      {
-        "start_datetime": "2020-11-12T00:00:00.000Z",
-        "end_datetime": "2020-11-12T11:30:00.000Z",
-        "flag_type_id": "OTHER",
-        "flag_type_other": "X"
-      },
-      {
-        "start_datetime": "2020-11-12T12:00:00.000Z",
-        "end_datetime": "2020-11-13T12:00:00.000Z",
-        "flag_type_id": "OTHER",
-        "flag_type_other": "Y"
-      },
-      {
-        "start_datetime": "2020-11-14T00:00:00.000Z",
-        "end_datetime": "2020-11-14T08:30:00.000Z",
-        "flag_type_id": "OTHER",
-        "flag_type_other": "Z"
-      }
-    ],
+    "flags": [],
     "values": [
       {
         "datetime": "2020-11-09T09:00:00.000Z",

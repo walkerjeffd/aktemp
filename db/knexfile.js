@@ -44,11 +44,6 @@ async function getConnection () {
     con.user = secretCon.username
     con.password = secretCon.password
   }
-  if (process.env.DB_PROXY_HOST) {
-    debug(`proxy: ${process.env.DB_PROXY_HOST}:${process.env.DB_PROXY_PORT}`)
-    con.host = process.env.DB_PROXY_HOST
-    con.port = process.env.DB_PROXY_PORT
-  }
 
   debug(`connection: host=${con.host} port=${con.port} dbname=${con.database} user=${con.user}`)
   return con

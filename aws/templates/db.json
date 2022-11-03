@@ -163,104 +163,6 @@
           }
         ]
       }
-    },
-    "DBProxy": {
-      "Type": "AWS::RDS::DBProxy",
-      "Properties": {
-        "Auth": [{
-          "IAMAuth": "DISABLED",
-          "AuthScheme": "SECRETS",
-          "SecretArn": { "Ref": "DBInstanceSecret" }
-        }],
-        "DBProxyName": {
-          "Fn::Join": [
-            "-",
-            [
-              {
-                "Ref": "appName"
-              },
-              {
-                "Ref": "env"
-              },
-              "proxy"
-            ]
-          ]
-        },
-        "EngineFamily": "POSTGRESQL",
-        "RequireTLS": false,
-        "RoleArn": { "Fn::GetAtt": [ "DBProxyRole", "Arn" ] },
-        "VpcSecurityGroupIds": { "Ref": "vpcSecurityGroupIds" },
-        "VpcSubnetIds": { "Ref": "subnetIds" }
-      }
-    },
-    "DBProxyRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "rds.amazonaws.com"
-              },
-              "Action": "sts:AssumeRole"
-            }
-          ]
-        },
-        "Policies": [
-          {
-            "PolicyName": {
-              "Fn::Join": [
-                "-",
-                [
-                  {
-                    "Ref": "appName"
-                  },
-                  {
-                    "Ref": "env"
-                  },
-                  "db-proxy-policy"
-                ]
-              ]
-            },
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "secretsmanager:GetSecretValue"
-                  ],
-                  "Resource": {
-                    "Ref": "DBInstanceSecret"
-                  }
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "kms:Decrypt"
-                  ],
-                  "Resource": "*"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    "DBProxyTargetGroup": {
-      "Type": "AWS::RDS::DBProxyTargetGroup",
-      "Properties": {
-        "DBProxyName": { "Ref": "DBProxy" },
-        "DBInstanceIdentifiers": [{ "Ref": "DBInstance" }],
-        "TargetGroupName": "default",
-        "ConnectionPoolConfigurationInfo": {
-          "MaxConnectionsPercent": 100,
-          "MaxIdleConnectionsPercent": 50,
-          "ConnectionBorrowTimeout": 60
-        }
-      }
     }
   },
   "Outputs": {
@@ -297,15 +199,6 @@
         "Fn::GetAtt": [
           "DBInstance",
           "Endpoint.Port"
-        ]
-      }
-    },
-    "ProxyEndpoint": {
-      "Description": "Proxy endpoint address",
-      "Value": {
-        "Fn::GetAtt": [
-          "DBProxy",
-          "Endpoint"
         ]
       }
     }

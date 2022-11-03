@@ -31,14 +31,6 @@
       "Description": "Name of secret for database credentials",
       "Type": "String"
     },
-    "dbProxyHost": {
-      "Description": "Database proxy host address",
-      "Type": "String"
-    },
-    "dbProxyPort": {
-      "Description": "Database proxy port",
-      "Type": "String"
-    },
     "storageBucketName": {
       "Description": "Name of storage bucket",
       "Type": "String"
@@ -149,12 +141,6 @@
             },
             "NOTIFY_TOPIC": {
               "Ref": "notifyTopicArn"
-            },
-            "DB_PROXY_HOST": {
-              "Ref": "dbProxyHost"
-            },
-            "DB_PROXY_PORT": {
-              "Ref": "dbProxyPort"
             }
           }
         },

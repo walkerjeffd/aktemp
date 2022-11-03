@@ -41,14 +41,6 @@
       "Description": "Name of secret for database credentials",
       "Type": "String"
     },
-    "dbProxyHost": {
-      "Description": "Database proxy host address",
-      "Type": "String"
-    },
-    "dbProxyPort": {
-      "Description": "Database proxy port",
-      "Type": "String"
-    },
     "userPoolId": {
       "Description": "User pool ID",
       "Type": "String"
@@ -77,8 +69,6 @@
           "subnetIds": { "Ref": "privateSubnetIds" },
           "dbSecretArn": { "Ref": "dbSecretArn" },
           "dbSecretName": { "Ref": "dbSecretName" },
-          "dbProxyHost": { "Ref": "dbProxyHost" },
-          "dbProxyPort": { "Ref": "dbProxyPort" },
           "storageBucketName": { "Ref": "storageBucketName" },
           "lambdaWorkerName": {
             "Fn::GetAtt": [ "LambdaWorkerStack", "Outputs.LambdaName" ]

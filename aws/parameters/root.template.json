@@ -36,14 +36,6 @@
     "ParameterValue": ""
   },
   {
-    "ParameterKey": "dbProxyHost",
-    "ParameterValue": ""
-  },
-  {
-    "ParameterKey": "dbProxyPort",
-    "ParameterValue": ""
-  },
-  {
     "ParameterKey": "userPoolId",
     "ParameterValue": ""
   }

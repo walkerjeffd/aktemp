@@ -2,7 +2,7 @@
   <v-card elevation="2">
     <v-toolbar flat dense>
       <v-toolbar-title>
-        <span class="text-h6">{{ station.data ? station.data.code : '' }}</span>
+        <span class="text-h6">Station: {{ station.data ? station.data.code : 'Loading...' }}</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn text small @click="$router.push({ name: 'manageStations' })">
@@ -63,7 +63,7 @@
                       :series="series.data"
                       :selected="series.selected"
                       :loading="series.loading"
-                      :columns="['id', 'start_datetime', 'end_datetime', 'depth', 'reviewed']"
+                      :columns="['id', 'start_datetime', 'end_datetime', 'depth_m', 'reviewed']"
                       @select="selectSeries"
                     ></SeriesTable>
 
@@ -86,14 +86,16 @@
                       :profiles="profiles.data"
                       :selected="profiles.selected"
                       :loading="profiles.loading"
-                      :columns="['id', 'date']"
                       @select="selectProfile"
                       v-else
                     ></ProfilesTable>
 
-                    <div v-if="profiles.selected">
-                      selected: {{ profiles.selected.id }}
-                    </div>
+                    <SelectedProfileCard
+                      v-if="profiles.selected"
+                      :profile="profiles.selected"
+                      @close="selectProfile()"
+                      @delete="onDeleteProfile()"
+                    ></SelectedProfileCard>
                   </v-card-text>
                 </v-card>
               </v-tab-item>
@@ -108,9 +110,10 @@
 <script>
 import StationsMap from '@/components/StationsMap'
 import SeriesTable from '@/components/series/SeriesTable'
-import ProfilesTable from '@/components/ProfilesTable'
+import ProfilesTable from '@/components/profiles/ProfilesTable'
 import ManageStationInfo from '@/views/manage/stations/ManageStationInfo'
 import SelectedSeriesCard from '@/components/series/SelectedSeriesCard.vue'
+import SelectedProfileCard from '@/components/profiles/SelectedProfileCard.vue'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -120,6 +123,7 @@ export default {
     StationsMap,
     SeriesTable,
     SelectedSeriesCard,
+    SelectedProfileCard,
     ProfilesTable
   },
   data () {
@@ -222,6 +226,10 @@ export default {
     onDeleteSeries () {
       this.selectSeries()
       this.fetchSeries()
+    },
+    onDeleteProfile () {
+      this.selectProfile()
+      this.fetchProfiles()
     }
   }
 }

@@ -59,28 +59,31 @@ export default {
           {
             text: 'ID',
             value: 'id',
-            align: 'left',
             width: '70px'
           },
           {
             text: 'Start',
-            value: 'start_datetime',
-            align: 'left'
+            value: 'start_datetime'
           },
           {
             text: 'End',
-            value: 'end_datetime',
-            align: 'left'
+            value: 'end_datetime'
           },
           {
             text: 'Depth Category',
-            value: 'depth_category',
-            align: 'left'
+            value: 'depth_category'
           },
           {
             text: 'Depth (m)',
-            value: 'depth_m',
-            align: 'left'
+            value: 'depth_m'
+          },
+          {
+            text: 'Interval',
+            value: 'interval'
+          },
+          {
+            text: 'Frequency (min)',
+            value: 'frequency'
           }
         ]
       }

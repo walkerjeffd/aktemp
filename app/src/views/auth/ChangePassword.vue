@@ -40,7 +40,7 @@
           text
           colored-border
           border="left"
-          class="body-2 mb-0"
+          class="body-2 mb-4"
           :value="!!error"
         >
           <div class="body-1 font-weight-bold">Server Error</div>

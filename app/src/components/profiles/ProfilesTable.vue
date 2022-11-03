@@ -26,7 +26,10 @@
       {{ item.station_code | truncate(20) }}
     </template>
     <template v-slot:item.date="{ item }">
-      {{ item.date | timestamp('DD', item.station_timezone) }}
+      {{ item.date | timestamp('DD') }}
+    </template>
+    <template v-slot:item.values_count="{ item }">
+      {{ item.values_count | numberLocaleString }}
     </template>
   </v-data-table>
 </template>
@@ -36,25 +39,21 @@ const allHeaders = [
   {
     text: 'ID',
     value: 'id',
-    align: 'left',
     width: '80px'
   },
   {
     text: 'Station',
     value: 'station_code',
-    align: 'left',
     width: '200px'
   },
   {
     text: 'Date',
-    value: 'date',
-    align: 'left'
+    value: 'date'
+  },
+  {
+    text: '# Values',
+    value: 'values_count'
   }
-  // {
-  //   text: 'End',
-  //   value: 'end_datetime',
-  //   align: 'left'
-  // }
 ]
 
 export default {
@@ -73,7 +72,7 @@ export default {
     columns: {
       type: Array,
       default () {
-        return ['id', 'station_code', 'date']
+        return allHeaders.map(d => d.value)
       }
     }
   },

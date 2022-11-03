@@ -2,7 +2,7 @@
   <v-card elevation="2">
     <v-toolbar flat dense>
       <v-toolbar-title>
-        <span class="text-h6">{{ file ? file.filename : '' }}</span>
+        <span class="text-h6">File: {{ file ? file.filename : 'Loading...' }}</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn text small @click="$router.push({ name: 'manageFiles' })">
@@ -14,10 +14,10 @@
     <v-card-text>
       <Alert type="error" title="Failed to Load File" class="ma-4" v-if="error">{{ error }}</Alert>
       <v-row v-else>
-        <v-col cols="12" lg="4" xl="3">
+        <v-col cols="12" lg="4">
           <ManageFileInfo :file="file" :loading="loading" :refreshing="refreshing" @refresh="fetch(true)"></ManageFileInfo>
         </v-col>
-        <v-col cols="12" lg="8" xl="9">
+        <v-col cols="12" lg="8">
           <Loading v-if="loading" class="pb-8"></Loading>
           <Alert type="error" title="File Not Found" class="ma-4" v-else-if="!file">File was not found on server</Alert>
           <div v-else>
@@ -64,12 +64,16 @@
                 <ProfilesTable
                   :profiles="file.profiles"
                   :selected="profiles.selected"
-                  :columns="['id', 'date']"
                   @select="selectProfile"
                   v-else
                 ></ProfilesTable>
 
-                <Alert type="error" title="Under Development" class="my-4 elevation-2">Profile chart is under development</Alert>
+                <SelectedProfileCard
+                  v-if="profiles.selected"
+                  :profile="profiles.selected"
+                  @close="selectProfile()"
+                  @delete="onDeleteProfile()"
+                ></SelectedProfileCard>
               </v-sheet>
             </div>
           </div>
@@ -82,8 +86,9 @@
 <script>
 import ManageFileInfo from '@/views/manage/files/ManageFileInfo'
 import SeriesTable from '@/components/series/SeriesTable'
-import ProfilesTable from '@/components/ProfilesTable'
 import SelectedSeriesCard from '@/components/series/SelectedSeriesCard.vue'
+import ProfilesTable from '@/components/profiles/ProfilesTable'
+import SelectedProfileCard from '@/components/profiles/SelectedProfileCard.vue'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -92,7 +97,8 @@ export default {
     ManageFileInfo,
     SeriesTable,
     SelectedSeriesCard,
-    ProfilesTable
+    ProfilesTable,
+    SelectedProfileCard
   },
   data () {
     return {
@@ -178,6 +184,10 @@ export default {
     },
     onDeleteSeries () {
       this.selectSeries()
+      this.fetch()
+    },
+    onDeleteProfile () {
+      this.selectProfile()
       this.fetch()
     }
   }

@@ -6,7 +6,7 @@
     </Alert>
     <div v-else>
       <div class="mx-4">
-        <highcharts :options="chart"></highcharts>
+        <highcharts :options="settings"></highcharts>
         <!-- <div class="text--secondary caption"><v-icon x-small>mdi-information</v-icon> Click+drag to zoom in. Shift+click to slide.</div> -->
 
         <div class="text--secondary caption ml-2">
@@ -57,7 +57,7 @@ export default {
       loading: true,
       about: false,
       profiles: [],
-      chart: {
+      settings: {
         chart: {
           height: 400,
           marginLeft: 50,
@@ -112,7 +112,7 @@ export default {
       const response = await this.$http.public.get(`/stations/${this.station.id}/profiles/values`)
       const profiles = response.data
       this.profiles = Object.freeze(profiles)
-      this.chart.series = profiles.map(p => ({
+      this.settings.series = profiles.map(p => ({
         name: p.date.substr(0, 10),
         zIndex: 1,
         lineWidth: 1,

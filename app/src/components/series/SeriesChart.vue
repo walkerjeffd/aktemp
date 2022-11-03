@@ -37,6 +37,7 @@ export default {
           events: {
             load: async (e) => {
               this.chart = e.target
+              window.chart = this.chart
               await this.fetchDaily()
             }
           }
@@ -168,7 +169,7 @@ export default {
         xAxis: {
           ordinal: false,
           events: {
-            afterSetExtremes: this.afterSetExtremes
+            afterSetExtremes: this.updateMode
           }
         },
         yAxis: {
@@ -290,7 +291,7 @@ export default {
     }
   },
   methods: {
-    async afterSetExtremes () {
+    async updateMode () {
       if (!this.chart) return
       const extremes = this.chart.xAxis[0].getExtremes()
       if (extremes.min === undefined || extremes.max === undefined) return
@@ -298,7 +299,7 @@ export default {
       const end = this.$luxon.DateTime.fromMillis(extremes.max)
       if (!start.isValid || !end.isValid) return
       const durationDays = end.diff(start, 'days').as('days')
-      // console.log('seriesChart:afterSetExtremes', durationDays, [start.toJSDate(), end.toJSDate()])
+      console.log('seriesChart:updateMode', durationDays, [start.toJSDate(), end.toJSDate()])
 
       if (durationDays <= 31) {
         await this.fetchRaw(start.toJSDate(), end.toJSDate())
@@ -314,7 +315,6 @@ export default {
       console.log('seriesChart:fetchDaily')
       this.loading = true
       this.error = null
-      // this.chart.showLoading('Loading data from server...')
 
       try {
         this.dailySeries = await Promise.all(
@@ -362,8 +362,9 @@ export default {
           return [
             {
               id: `daily-mean-${s.id}-flag-${flag.id}`,
-              name: `series-${s.id}-flag`,
+              // name: `series-${s.id}-flag`,
               seriesId: s.id,
+              mode: 'daily',
               flag: true,
               type: 'line',
               data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
@@ -380,8 +381,9 @@ export default {
             },
             {
               id: `daily-range-${s.id}-flag-${flag.id}`,
-              name: `series-${s.id}-flag`,
+              // name: `series-${s.id}-flag`,
               seriesId: s.id,
+              mode: 'daily',
               flag: true,
               type: 'arearange',
               data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
@@ -394,6 +396,7 @@ export default {
           {
             id: `daily-mean-${s.id}`,
             seriesId: s.id,
+            mode: 'daily',
             type: 'line',
             data: s.values.unflagged.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
             visible: true,
@@ -404,8 +407,9 @@ export default {
           },
           {
             id: `daily-range-${s.id}`,
-            name: `series-${s.id}`,
+            // name: `series-${s.id}`,
             seriesId: s.id,
+            mode: 'daily',
             type: 'arearange',
             data: s.values.unflagged.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
             visible: true,
@@ -464,8 +468,9 @@ export default {
             .map(d => [this.parseDatetime(d.datetime).valueOf(), d.value])
           return {
             id: `raw-${s.id}-flag-${flag.id}`,
-            name: `series-${s.id}-flag`,
+            // name: `series-${s.id}-flag`,
             seriesId: s.id,
+            mode: 'raw',
             flag: true,
             type: 'line',
             data,
@@ -489,6 +494,7 @@ export default {
           {
             id: `raw-${s.id}`,
             seriesId: s.id,
+            mode: 'raw',
             type: 'line',
             data: data,
             tooltip: {
@@ -507,9 +513,10 @@ export default {
 
       this.loading = false
     },
-    getNavigatorData () {
-      console.log('seriesChart:getNavigatorData')
-      return Array.from(
+    updateNavigator () {
+      console.log('seriesChart:updateNavigator')
+      if (!this.chart) return
+      const data = Array.from(
         d3.rollup(
           this.selectedDailySeries
             .map(d => this.showFlags ? d.values.all : d.values.unflagged).flat(),
@@ -521,13 +528,9 @@ export default {
           d => d.date
         )
       ).sort((a, b) => d3.ascending(a[0], b[0]))
-    },
-    updateNavigator () {
-      console.log('seriesChart:updateNavigator')
-      if (!this.chart) return
-      const navigatorData = this.getNavigatorData()
+        .map(d => [this.parseDatetime(d[0]).valueOf(), d[1].max])
       this.chart.get('navigator')
-        .setData(navigatorData.map(d => [this.$luxon.DateTime.fromISO(d[0], { zone: this.timezone }).valueOf(), d[1].max]))
+        .setData(data)
     }
   }
 }

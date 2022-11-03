@@ -803,103 +803,110 @@
           <v-row justify="space-around">
             <v-col cols="12" md="8" lg="6" xl="4">
               <v-form ref="depthForm" @change="resetDepth()">
-                <div v-if="config.file_type === 'SERIES'">
-                  <div class="text-h6">Depth</div>
-                  <p>If the file contains multiple timeseries at one or more stations, then either:</p>
-
-                  <ol class="mb-4">
-                    <li>Specify the <strong>depth category</strong> and/or <strong>numeric depth</strong>, which will be applied to all timeseries within the file, or</li>
-                    <li>Specify a <strong>column</strong> containing the depth of each timeseries.</li>
-                  </ol>
-
-                  <div class="text-subtitle-1 font-weight-bold">Category</div>
-                  <p>Where in the water column were the measurements taken? (Optional)</p>
-                  <v-btn-toggle v-model="config.depth_category" class="mb-4">
-                    <v-btn value="SURFACE">
-                      <v-icon left>mdi-arrow-collapse-up</v-icon>
-                      Surface
-                    </v-btn>
-                    <v-btn value="MID-DEPTH">
-                      <v-icon left>mdi-arrow-collapse-horizontal</v-icon>
-                      Mid-Depth
-                    </v-btn>
-                    <v-btn value="BOTTOM">
-                      <v-icon left>mdi-arrow-collapse-down</v-icon>
-                      Bottom
-                    </v-btn>
-                  </v-btn-toggle>
-
-                  <div class="text-subtitle-1 font-weight-bold">Numeric</div>
-                  <p>
-                    What was the approximate depth (e.g. 5 meters) at which the measurements were collected? (Optional)
-                  </p>
-                  <v-text-field
-                    v-model="config.depth_value"
-                    :rules="depth.value.rules"
-                    type="number"
-                    hint="If depth varies, use depth at start of the timeseries."
-                    persistent-hint
-                    outlined
-                  ></v-text-field>
-
-                  <Alert
-                    v-if="config.depth_value !== null && config.depth_value !== '' && !!config.depth_column"
-                    type="warning"
-                    title="Numeric Depth Will Be Ignored"
-                    class="mt-4"
-                  >
-                    If both a numeric depth and depth column are specified, only the values in the column will be used and the numeric depth will be ignored.
+                <div v-if="config.file_type === 'SERIES' && config.interval === 'DISCRETE'">
+                  <Alert type="info" title="Depth Information Not Supported">
+                    <p>Depth information is not supported for discrete timeseries data.</p>
+                    <p class="mb-0">Please click <strong>Continue</strong> to skip this step.</p>
                   </Alert>
                 </div>
+                <div v-else>
+                  <div v-if="config.file_type === 'SERIES' && config.interval === 'CONTINUOUS'">
+                    <div class="text-h6">Depth</div>
+                    <p>If the file contains multiple timeseries at one or more stations, then either:</p>
 
-                <div class="text-subtitle-1 font-weight-bold">Depth Column</div>
-                <p v-if="config.file_type === 'SERIES'">
-                  If file contains multiple timeseries at different depths, which column contains the depth of each timeseries? (Optional)
-                </p>
-                <p v-else-if="config.file_type === 'PROFILES'">
-                  Which column contains the depth of each measurement?
-                </p>
-                <v-select
-                  v-model="config.depth_column"
-                  :items="fileColumns"
-                  :rules="depth.column.rules"
-                  outlined
-                  clearable
-                ></v-select>
+                    <ol class="mb-4">
+                      <li>Specify the <strong>depth category</strong> and/or <strong>numeric depth</strong>, which will be applied to all timeseries within the file, or</li>
+                      <li>Specify a <strong>column</strong> containing the depth of each timeseries.</li>
+                    </ol>
 
-                <Alert
-                  v-if="config.file_type === 'SERIES' && config.depth_column"
-                  type="warning"
-                  title="Time-varying Depths Not Supported"
-                >
-                  <p>
-                    For each station in this file, rows will be grouped by depth into separate timeseries, one for <strong>each unique depth</strong> found in this column.
+                    <div class="text-subtitle-1 font-weight-bold">Category</div>
+                    <p>Where in the water column were the measurements taken? (Optional)</p>
+                    <v-btn-toggle v-model="config.depth_category" class="mb-4">
+                      <v-btn value="SURFACE">
+                        <v-icon left>mdi-arrow-collapse-up</v-icon>
+                        Surface
+                      </v-btn>
+                      <v-btn value="MID-DEPTH">
+                        <v-icon left>mdi-arrow-collapse-horizontal</v-icon>
+                        Mid-Depth
+                      </v-btn>
+                      <v-btn value="BOTTOM">
+                        <v-icon left>mdi-arrow-collapse-down</v-icon>
+                        Bottom
+                      </v-btn>
+                    </v-btn-toggle>
+
+                    <div class="text-subtitle-1 font-weight-bold">Numeric</div>
+                    <p>
+                      What was the approximate depth (e.g. 5 meters) at which the measurements were collected? (Optional)
+                    </p>
+                    <v-text-field
+                      v-model="config.depth_value"
+                      :rules="depth.value.rules"
+                      type="number"
+                      hint="If depth varies, use depth at start of the timeseries."
+                      persistent-hint
+                      outlined
+                    ></v-text-field>
+
+                    <Alert
+                      v-if="config.depth_value !== null && config.depth_value !== '' && !!config.depth_column"
+                      type="warning"
+                      title="Numeric Depth Will Be Ignored"
+                      class="mt-4"
+                    >
+                      If both a numeric depth and depth column are specified, only the values in the column will be used and the numeric depth will be ignored.
+                    </Alert>
+                  </div>
+
+                  <div class="text-subtitle-1 font-weight-bold">Depth Column</div>
+                  <p v-if="config.file_type === 'SERIES'">
+                    If file contains multiple timeseries at different depths, which column contains the depth of each timeseries? (Optional)
                   </p>
-                  <p>
-                    For example, if the file contains three separate timeseries of measurements collected at 0, 5, and 10 m depths, then the depth column should contain '0' for all measurements at 0 m, '5' for all at 5 m, and '10' for all at 10 m.
+                  <p v-else-if="config.file_type === 'PROFILES'">
+                    Which column contains the depth of each measurement?
                   </p>
-                  <p class="mb-0">
-                    A depth column is typically used when the file contains multiple stations with a different depth for each station, or when the file contains paired surface/bottom timeseries or a lake array using multiple loggers deployed at different depths but at the same location.
-                  </p>
-                </Alert>
+                  <v-select
+                    v-model="config.depth_column"
+                    :items="fileColumns"
+                    :rules="depth.column.rules"
+                    outlined
+                    clearable
+                  ></v-select>
+                  <Alert
+                    v-if="config.file_type === 'SERIES' && config.interval === 'CONTINUOUS' && config.depth_column"
+                    type="warning"
+                    title="Time-varying Depths Not Supported"
+                  >
+                    <p>
+                      For each station in this file, rows will be grouped by depth into separate timeseries, one for <strong>each unique depth</strong> found in this column.
+                    </p>
+                    <p>
+                      For example, if the file contains three separate timeseries of measurements collected at 0, 5, and 10 m depths, then the depth column should contain '0' for all measurements at 0 m, '5' for all at 5 m, and '10' for all at 10 m.
+                    </p>
+                    <p class="mb-0">
+                      A depth column is typically used when the file contains multiple stations with a different depth for each station, or when the file contains paired surface/bottom timeseries or a lake array using multiple loggers deployed at different depths but at the same location.
+                    </p>
+                  </Alert>
 
-                <div class="text-subtitle-1 font-weight-bold">Units</div>
-                <p>What are the depth units? <span v-if="config.file_type === 'SERIES'">(Required if either numeric depth or depth column is set)</span></p>
-                <v-select
-                  v-model="config.depth_units"
-                  :items="depth.units.options"
-                  :rules="depth.units.rules"
-                  item-text="label"
-                  item-value="value"
-                  hint="All depths will be converted to meters."
-                  persistent-hint
-                  outlined
-                  clearable
-                ></v-select>
+                  <div class="text-subtitle-1 font-weight-bold">Units</div>
+                  <p>What are the depth units? <span v-if="config.file_type === 'SERIES'">(Required if either numeric depth or depth column is set)</span></p>
+                  <v-select
+                    v-model="config.depth_units"
+                    :items="depth.units.options"
+                    :rules="depth.units.rules"
+                    item-text="label"
+                    item-value="value"
+                    hint="All depths will be converted to meters."
+                    persistent-hint
+                    outlined
+                    clearable
+                  ></v-select>
 
-                <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
-                  {{ depth.error || 'Unknown error' }}
-                </Alert>
+                  <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
+                    {{ depth.error || 'Unknown error' }}
+                  </Alert>
+                </div>
 
                 <v-row class="mt-8 mb-4 px-3">
                   <v-btn text class="mr-4 px-4" @click="step -= 1">

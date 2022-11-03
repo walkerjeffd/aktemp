@@ -2,7 +2,7 @@
   <v-card elevation="2" class="mt-4">
     <v-toolbar dense flat color="grey lighten-3" height="40px">
       <v-toolbar-title>
-        <span class="text-overline">Selected Timeseries</span>
+        <span class="text-overline">Selected Vertical Profile</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn icon x-small @click="$emit('close')" class="mr-0">
@@ -15,15 +15,15 @@
         <v-col cols="12" xl="4">
           <div v-if="!$vuetify.breakpoint.xl">
             <v-sheet elevation="2" class="pa-4">
-              <SeriesChart :series="[series]" :selected="[series]" :key="series.id" />
+              <ProfilesChart :profiles="[profile]" :selected="[profile]" :key="profile.id" />
             </v-sheet>
             <v-divider dark class="my-2"></v-divider>
           </div>
-          <SeriesInfo :series="series" @delete="$emit('delete')" />
+          <ProfilesInfo :profile="profile" @delete="$emit('delete')" />
         </v-col>
-        <v-col cols="12" xl="8" v-if="$vuetify.breakpoint.xl">
+        <v-col cols="12" xl="6" v-if="$vuetify.breakpoint.xl">
           <v-sheet elevation="2" class="pa-4 fill-height">
-            <SeriesChart :series="[series]" :selected="[series]" :key="series.id" />
+            <ProfilesChart :profiles="[profile]" :selected="[profile]" :key="profile.id" />
           </v-sheet>
         </v-col>
       </v-row>
@@ -32,14 +32,14 @@
 </template>
 
 <script>
-import SeriesInfo from '@/components/series/SeriesInfo'
-import SeriesChart from '@/components/series/SeriesChart'
+import ProfilesInfo from '@/components/profiles/ProfileInfo'
+import ProfilesChart from '@/components/profiles/ProfilesChart'
 export default {
-  name: 'SelectedSeriesCard',
-  props: ['series'],
+  name: 'SelectedProfileCard',
+  props: ['profile'],
   components: {
-    SeriesChart,
-    SeriesInfo
+    ProfilesChart,
+    ProfilesInfo
   }
 }
 </script>

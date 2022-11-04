@@ -70,9 +70,6 @@
           "dbSecretArn": { "Ref": "dbSecretArn" },
           "dbSecretName": { "Ref": "dbSecretName" },
           "storageBucketName": { "Ref": "storageBucketName" },
-          "lambdaWorkerName": {
-            "Fn::GetAtt": [ "LambdaWorkerStack", "Outputs.LambdaName" ]
-          },
           "batchJobDefinitionName": {
             "Fn::GetAtt": [ "BatchStack", "Outputs.JobDefinitionName" ]
           },
@@ -114,38 +111,6 @@
           "notifyTopicArn": {
             "Fn::GetAtt": [ "NotifyStack", "Outputs.TopicArn" ]
           }
-        }
-      }
-    },
-    "LambdaTriggerStack": {
-      "Type": "AWS::CloudFormation::Stack",
-      "Properties": {
-        "TemplateURL": "./lambda-trigger.local.json",
-        "Parameters": {
-          "appName": { "Ref": "appName" },
-          "env": { "Ref": "env" },
-          "permissionsBoundaryName": { "Ref": "permissionsBoundaryName" },
-          "vpcId": { "Ref": "vpcId" },
-          "subnetIds": { "Ref": "privateSubnetIds" },
-          "notifyTopicArn": {
-            "Fn::GetAtt": [ "NotifyStack", "Outputs.TopicArn" ]
-          },
-          "userPoolId": { "Ref": "userPoolId" }
-        }
-      }
-    },
-    "LambdaWorkerStack": {
-      "Type": "AWS::CloudFormation::Stack",
-      "Properties": {
-        "TemplateURL": "./lambda-worker.local.json",
-        "Parameters": {
-          "appName": { "Ref": "appName" },
-          "env": { "Ref": "env" },
-          "permissionsBoundaryName": { "Ref": "permissionsBoundaryName" },
-          "vpcId": { "Ref": "vpcId" },
-          "subnetIds": { "Ref": "privateSubnetIds" },
-          "storageBucketName": { "Ref": "storageBucketName" },
-          "userPoolId": { "Ref": "userPoolId" }
         }
       }
     }

@@ -35,10 +35,6 @@
       "Description": "Name of storage bucket",
       "Type": "String"
     },
-    "lambdaWorkerName": {
-      "Description": "Name of lambda worker function",
-      "Type": "String"
-    },
     "batchJobDefinitionName": {
       "Description": "Name of batch job definition",
       "Type": "String"
@@ -126,9 +122,6 @@
             },
             "DB_SECRET": {
               "Ref": "dbSecretName"
-            },
-            "AWS_LAMBDA_WORKER": {
-              "Ref": "lambdaWorkerName"
             },
             "JOB_DEFINITION": {
               "Ref": "batchJobDefinitionName"
@@ -288,25 +281,6 @@
                 "batch:*"
               ],
               "Resource": "*"
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "lambda:InvokeFunction"
-              ],
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:aws:lambda:",
-                    { "Ref": "AWS::Region" },
-                    ":",
-                    { "Ref": "AWS::AccountId" },
-                    ":function:",
-                    { "Ref": "lambdaWorkerName" }
-                  ]
-                ]
-              }
             },
             {
               "Effect": "Allow",

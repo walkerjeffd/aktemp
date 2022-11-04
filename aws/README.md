@@ -25,8 +25,6 @@ source .env.prod.local.sh
 
 # package lambda functions (must be done first to avoid s3-prefix clash)
 ./package-lambda.sh api
-./package-lambda.sh trigger
-./package-lambda.sh worker
 
 # package root stack (uploads templates to s3)
 ./package.sh
@@ -40,9 +38,6 @@ source .env.prod.local.sh
 cp templates/subscriptions.template.json templates/subscriptions.${ENV}.local.json
 # edit templates/subscriptions.${ENV}.local.json
 ./create-subscriptions.sh parameters/subscriptions.${ENV}.local.json
-
-# add trigger to auth
-aws cloudformation deploy --stack-name ${STACK_NAME}-auth --template-file templates/auth.json --capabilities CAPABILITY_NAMED_IAM --parameter-overrides lambdaTriggerArn=arn:aws:lambda:us-east-1:474916309046:function:${APP_NAME}-${ENV}-lambda-trigger
 
 # update (use packaged template)
 ./deploy.sh

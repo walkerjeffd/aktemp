@@ -110,7 +110,7 @@ const columnDefs = {
       label: 'Sensor checked using Pre/Post Bath according to SOP'
     },
     accuracy: {
-      label: 'Sensor Accuracy Level (1 = < ±0.25 degC (best), 2: < ±0.5 degC, 3: > ±0.5 degC (worst))'
+      label: 'Sensor Accuracy Level (1 = < ±0.25 degC (best); 2: < ±0.5 degC; 3: > ±0.5 degC (worst))'
     },
     reviewed: {
       label: 'QAQC Review Complete'
@@ -156,7 +156,7 @@ const columnDefs = {
       label: 'Date (station timezone)'
     },
     accuracy: {
-      label: 'Sensor Accuracy Level (1 = < ±0.25 degC (best), 2: < ±0.5 degC, 3: > ±0.5 degC (worst))'
+      label: 'Sensor Accuracy Level (1 = < ±0.25 degC (best); 2: < ±0.5 degC; 3: > ±0.5 degC (worst))'
     },
     reviewed: {
       label: 'QAQC Review Complete'
@@ -176,91 +176,6 @@ const columnDefs = {
       label: 'Temperature (degC)'
     }
   }
-}
-
-function csv (rows, filename, columns) {
-  const csv = Papa.unparse(rows, { columns: columns || Object.keys(rows[0]) })
-  const blob = new Blob([csv], {
-    type: 'text/csv;charset=utf-8'
-  })
-  saveAs(blob, filename)
-}
-
-// function stations (stations, columns) {
-//   const now = luxon.DateTime.now()
-//   columns = columns || Object.keys(columnDefs.stations)
-//   const filename = `AKTEMP-stations-${formatTimestamp(now, 'yMMeeHHmmss', 'local')}.csv`
-
-//   const columnDescriptions = columns.map(d => {
-//     return `#    ${d}: ${columnDefs.stations[d].label}`
-//   })
-//   const header = `# AKTEMP: Alaska Stream Temperature Database
-// # URL: ??
-// # Downloaded at: ${formatTimestamp(now, 'FFF', 'local')}
-// # Citation: ??
-// #
-// # Stations table
-// #
-// # Column descriptions:
-// ${columnDescriptions.join('\r\n')}
-// #
-// #
-// `
-//   const timeColumns = columns.filter(d => columnDefs.stations[d].timeFormat)
-//   console.log(timeColumns)
-// stations.forEach((d, i) => {
-//   timeColumns.forEach(c => {
-//     if (i === 0) {
-//       console.log(d, c, d[c])
-//     }
-//     if (d[c]) {
-//       d[c] = formatTimestamp(d[c], columnDefs.stations[c].timeFormat, d.timezone)
-//     }
-//   })
-// })
-//   const rows = Papa.unparse(stations, { columns })
-//   const body = header + rows
-//   const blob = new Blob([body], {
-//     type: 'text/csv;charset=utf-8'
-//   })
-//   saveAs(blob, filename)
-// }
-
-function series (series) {
-  const now = luxon.DateTime.now()
-  const filename = `AKTEMP-timeseries-${formatTimestamp(now, 'yMMeeHHmmss', 'local')}.csv`
-
-  const seriesColumnDescriptions = Object.keys(columnDefs.series).map(d => {
-    return `#    ${d}: ${columnDefs.series[d].label}`
-  })
-  const seriesTable = Papa.unparse(series, { columns: Object.keys(columnDefs.series) })
-
-  // const dailyValuesColumnDescriptions = Object.keys(columnDefs.dailyValues).map(d => {
-  //   return `#    ${d}: ${columnDefs.dailyValues[d].label}`
-  // })
-
-  const header = `# AKTEMP: Alaska Stream Temperature Database
-# URL: ??
-# Downloaded at: ${formatTimestamp(now, 'fff', 'local')}
-# Citation: ??
-#
-# Timeseries Data
-#
-# Series table columns:
-${seriesColumnDescriptions.join('\r\n')}
-#
-${seriesTable}
-#
-# Daily values table columns:
-${seriesColumnDescriptions.join('\r\n')}
-#
-`
-  const rows = Papa.unparse([], { columns: Object.keys(columnDefs.dailyValues) })
-  const body = header + rows
-  const blob = new Blob([body], {
-    type: 'text/csv;charset=utf-8'
-  })
-  saveAs(blob, filename)
 }
 
 function fileHeader () {
@@ -301,7 +216,17 @@ function seriesTable (series, columns = Object.keys(columnDefs.series)) {
   const descriptions = columns.map(d => {
     return `#     ${d}: ${columnDefs.series[d].label}`
   })
-  const table = Papa.unparse(series, { columns })
+  const rows = series.map(d => {
+    const x = { ...d }
+    if (columns.includes('start_datetime')) {
+      x.start_datetime = formatTimestamp(x.start_datetime, 'D T', d.timezone)
+    }
+    if (columns.includes('end_datetime')) {
+      x.end_datetime = formatTimestamp(x.end_datetime, 'D T', d.timezone)
+    }
+    return x
+  })
+  const table = Papa.unparse(rows, { columns })
   return `${hr}
 # Timeseries Metadata Table
 ${descriptions.join('\r\n')}
@@ -358,9 +283,20 @@ ${stationTable(stations)}
 function stationDailyValues (filename, station, series, values) {
   const body = `${fileHeader()}
 #
-# Description: This file contains daily stream temperature data for a single station.
-#     Daily statistics (min, mean, max) were computed over all timeseries associated with
-#     each station. Metadata for this station and all associates timeseries are also provided.
+# Description: This file contains daily water temperature data for a single station.
+#
+#     Daily statistics (min/mean/max) were computed over all timeseries. If two or more
+#     timeseries overlap (e.g. duplicate loggers or loggers at different depths) then
+#     measurements from all loggers are aggregated within the same day. The daily
+#     or raw measurement data for each each logger can be downloaded on the Explore Station
+#     page for this station.
+#
+#     Both discrete and continuous timeseries data are included in this daily aggregation.
+#
+#     QAQC flags are also aggregated over all timeseries. If one or more measurements
+#     during a single day were flagged then that flag is assigned to the entire day.
+#     If more than one type of flag occurred in a single day then the unique flag labels
+#     are combined into a comma-separated list.
 #
 ${stationTable([station], ['organization_code', 'id', 'code', 'latitude', 'longitude', 'timezone', 'description', 'waterbody_name', 'waterbody_type', 'placement', 'mixed', 'active', 'reference'])}
 #

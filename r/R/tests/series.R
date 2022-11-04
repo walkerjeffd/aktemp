@@ -200,7 +200,7 @@ targets_test_series <- list(
                   filter(!is.na(temp_c)) %>%
                   transmute(
                     datetime = format(timestamp_utc, "%FT%T.000Z", tz = "UTC"),
-                    value = temp_c
+                    temp_c
                   )
               })
             ) %>%
@@ -521,14 +521,14 @@ targets_test_series <- list(
   tar_target(test_series_cli_csv, {
     from <- test_series_s2d2_csv
     to <- file.path("../cli/tests/files/series/csv/series.csv")
-    file.copy(from, to)
+    file.copy(from, to, overwrite = TRUE)
     to
   }, format = "file"),
   tar_target(test_series_s2d2_json, file.path(test_series_root, "json/series-s2d2.json"), format = "file"),
   tar_target(test_series_cli_json, {
     from <- test_series_s2d2_json
     to <- file.path("../cli/tests/files/series/json/series.json")
-    file.copy(from, to)
+    file.copy(from, to, overwrite = TRUE)
     to
   }, format = "file"),
   tar_target(test_series_cli_config_csv, {

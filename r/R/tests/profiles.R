@@ -135,8 +135,8 @@ targets_test_profiles <- list(
                   filter(!is.na(temp_c)) %>%
                   transmute(
                     datetime = format(timestamp_utc, "%FT%T.000Z", tz = "UTC"),
-                    value = temp_c,
-                    depth_m = depth_m
+                    temp_c,
+                    depth_m
                   )
               })
             ) %>%
@@ -240,8 +240,8 @@ targets_test_profiles <- list(
             filter(!is.na(temp_c)) %>%
             transmute(
               datetime = format(force_tz(date, "US/Alaska"), "%FT%T.000Z", tz = "UTC"),
-              value = temp_c,
-              depth_m = depth_m
+              temp_c,
+              depth_m
             )
         })
       ) %>%
@@ -486,14 +486,14 @@ targets_test_profiles <- list(
   tar_target(test_profiles_cli_csv, {
     from <- test_profiles_s2d2_csv
     to <- file.path("../cli/tests/files/profiles/csv/profiles.csv")
-    file.copy(from, to)
+    file.copy(from, to, overwrite = TRUE)
     to
   }, format = "file"),
   tar_target(test_profiles_s2d2_json, file.path(test_profiles_root, "json/profiles-s2d2.json"), format = "file"),
   tar_target(test_profiles_cli_json, {
     from <- test_profiles_s2d2_json
     to <- file.path("../cli/tests/files/profiles/json/profiles.json")
-    file.copy(from, to)
+    file.copy(from, to, overwrite = TRUE)
     to
   }, format = "file"),
   tar_target(test_profiles_cli_config_csv, {

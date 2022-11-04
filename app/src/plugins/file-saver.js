@@ -50,11 +50,11 @@ const columnDefs = {
       label: 'Number of timeseries'
     },
     series_start_datetime: {
-      label: 'First timeseries timestamp (station timezone)',
+      label: 'First timeseries timestamp (local timezone)',
       timeFormat: 'FFF'
     },
     series_end_datetime: {
-      label: 'Last timeseries timestamp (station timezone)',
+      label: 'Last timeseries timestamp (local timezone)',
       timeFormat: 'FFF'
     },
     series_count_days: {
@@ -64,11 +64,11 @@ const columnDefs = {
       label: 'Number of vertical profiles'
     },
     profiles_start_date: {
-      label: 'First date of vertical profiles (station timezone)',
+      label: 'First date of vertical profiles (local timezone)',
       timeFormat: 'DD'
     },
     profiles_end_date: {
-      label: 'Last date of vertical profiles (station timezone)',
+      label: 'Last date of vertical profiles (local timezone)',
       timeFormat: 'DD'
     }
   },
@@ -89,10 +89,10 @@ const columnDefs = {
       label: 'Station Timezone'
     },
     start_datetime: {
-      label: 'Start Timestamp (station timezone)'
+      label: 'Start Timestamp (local timezone)'
     },
     end_datetime: {
-      label: 'End Timestamp (station timezone)'
+      label: 'End Timestamp (local timezone)'
     },
     interval: {
       label: 'Interval (Continuous or Discrete)'
@@ -118,19 +118,30 @@ const columnDefs = {
   },
   dailyValues: {
     date: {
-      label: 'Date (station timezone)'
+      label: 'Date (local timezone)'
     },
     n: {
       label: 'Number of measurements'
     },
-    min: {
+    min_temp_c: {
       label: 'Minimum temperature (degC)'
     },
-    mean: {
+    mean_temp_c: {
       label: 'Mean temperature (degC)'
     },
-    max: {
+    max_temp_c: {
       label: 'Maximum temperature (degC)'
+    },
+    flags: {
+      label: 'QAQC flag(s)'
+    }
+  },
+  seriesValues: {
+    datetime: {
+      label: 'Timestamp (local timezone)'
+    },
+    temp_c: {
+      label: 'Temperature (degC)'
     },
     flags: {
       label: 'QAQC flag(s)'
@@ -153,7 +164,7 @@ const columnDefs = {
       label: 'Station Timezone'
     },
     date: {
-      label: 'Date (station timezone)'
+      label: 'Date (local timezone)'
     },
     accuracy: {
       label: 'Sensor Accuracy Level (1 = < ±0.25 degC (best); 2: < ±0.5 degC; 3: > ±0.5 degC (worst))'
@@ -167,12 +178,12 @@ const columnDefs = {
       label: 'Profile ID'
     },
     datetime: {
-      label: 'Timestamp (station timezone)'
+      label: 'Timestamp (local timezone)'
     },
     depth_m: {
       label: 'Depth (m)'
     },
-    value: {
+    temp_c: {
       label: 'Temperature (degC)'
     }
   }
@@ -302,7 +313,7 @@ ${stationTable([station], ['organization_code', 'id', 'code', 'latitude', 'longi
 #
 ${seriesTable(series)}
 #
-${dailyValuesTable(values, ['date', 'n', 'min', 'mean', 'max', 'flags'])}
+${dailyValuesTable(values)}
   `
 
   saveFile(body, filename)

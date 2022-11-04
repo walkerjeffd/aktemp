@@ -54,8 +54,8 @@ describe('files', () => {
           d.end_datetime = new Date(d.end_datetime)
         })
         series.values.forEach((d, j) => {
-          if (typeof d.value === 'number') {
-            d.value = expect.closeTo(d.value, 3)
+          if (typeof d.temp_c === 'number') {
+            d.temp_c = expect.closeTo(d.temp_c, 3)
           }
           d.datetime = new Date(d.datetime)
         })
@@ -103,8 +103,8 @@ describe('files', () => {
           d.end_datetime = new Date(d.end_datetime)
         })
         series.values.forEach((d, j) => {
-          if (typeof d.value === 'number') {
-            d.value = expect.closeTo(d.value, 3)
+          if (typeof d.temp_c === 'number') {
+            d.temp_c = expect.closeTo(d.temp_c, 3)
           }
           d.datetime = new Date(d.datetime)
         })
@@ -147,8 +147,8 @@ describe('files', () => {
       delete profile.station_code
       profile.station_id = station.id
       profile.values.forEach((d, j) => {
-        if (typeof d.value === 'number') {
-          d.value = expect.closeTo(d.value, 3)
+        if (typeof d.temp_c === 'number') {
+          d.temp_c = expect.closeTo(d.temp_c, 3)
         }
         if (typeof d.depth_m === 'number') {
           d.depth_m = expect.closeTo(d.depth_m, 3)

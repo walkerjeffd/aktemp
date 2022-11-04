@@ -110,15 +110,12 @@ function parseDepth (d, config) {
 function parseRow (d, config) {
   const result = {
     station_code: parseStationCode(d, config),
-    value: parseTemperature(d, config),
+    datetime: parseTimestamp(d, config),
+    temp_c: parseTemperature(d, config),
     depth_m: parseDepth(d, config)
   }
   if (config.file_type === 'SERIES') {
-    result.datetime = parseTimestamp(d, config)
     result.flag = parseFlag(d, config)
-  } else if (config.file_type === 'PROFILES') {
-    result.datetime = parseTimestamp(d, config)
-    // result.datetime = getTimestampString(d, config.datetime_column, config.time_column)
   }
   return result
 }
@@ -134,7 +131,7 @@ function parseRows (rows, config) {
   }
 
   const parsed = rows.map(d => parseRow(d, config))
-  let filtered = parsed.filter(d => d.datetime !== null && d.value !== null && d.station_code !== null)
+  let filtered = parsed.filter(d => d.datetime !== null && d.temp_c !== null && d.station_code !== null)
   if (config.file_type === 'PROFILES') {
     filtered = filtered.filter(d => d.depth_m !== null)
   }

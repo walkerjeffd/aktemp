@@ -139,6 +139,7 @@ export default {
             visible: true,
             color: undefined,
             data: [],
+            gapSize: 0,
             dataGrouping: {
               enabled: false
             }
@@ -355,7 +356,7 @@ export default {
             seriesId: this.series.id,
             flag: true,
             type: 'line',
-            data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
+            data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
             tooltip: {
               pointFormat: 'Mean: <b>{point.y}</b> °C<br/>'
             },
@@ -373,7 +374,7 @@ export default {
             seriesId: this.series.id,
             flag: true,
             type: 'arearange',
-            data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
+            data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
             tooltip: {
               pointFormat: `Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>Flag: ${label}`,
               valueDecimals: 1
@@ -387,7 +388,7 @@ export default {
         {
           id: `daily-mean-${this.series.id}`,
           type: 'line',
-          data: values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
+          data: values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
           visible: true,
           showInNavigator: false,
           tooltip: {
@@ -399,7 +400,7 @@ export default {
           name: `series-${this.series.id}`,
           seriesId: this.series.id,
           type: 'arearange',
-          data: values.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
+          data: values.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
           visible: true,
           tooltip: {
             pointFormat: 'Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>'
@@ -454,7 +455,7 @@ export default {
           seriesId: this.series.id,
           flag: true,
           type: 'line',
-          data: flag.values.map(d => [this.parseDatetime(d.datetime).valueOf(), d.value]),
+          data: flag.values.map(d => [this.parseDatetime(d.datetime).valueOf(), d.temp_c]),
           tooltip: {
             pointFormat: `Temperature: <b>{point.y}</b> °C<br/>Flag: <b>${label}</b>`
           },
@@ -474,7 +475,7 @@ export default {
           id: `raw-${this.series.id}`,
           seriesId: this.series.id,
           type: 'line',
-          data: values.map(d => [this.parseDatetime(d.datetime).valueOf(), d.value]),
+          data: values.map(d => [this.parseDatetime(d.datetime).valueOf(), d.temp_c]),
           tooltip: {
             pointFormat: 'Temperature: <b>{point.y}</b> °C<br/>'
           }
@@ -546,12 +547,11 @@ export default {
         values = unflaggedValues
       }
       this.chart.get('navigator')
-        .setData(values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]))
+        .setData(values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]))
     },
     onSelect (event) {
       if (this.zoom) return
       event.preventDefault()
-      console.log(event.xAxis[0].min)
       let start = this.$luxon.DateTime.fromMillis(event.xAxis[0].min)
       let end = this.$luxon.DateTime.fromMillis(event.xAxis[0].max)
       if (this.mode === 'daily') {

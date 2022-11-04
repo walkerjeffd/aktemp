@@ -8,7 +8,7 @@ class ProfileValue extends Base {
   static get modifiers () {
     return {
       defaultSelect (builder) {
-        builder.select('datetime', 'depth_m', 'value')
+        builder.select('datetime', 'depth_m', 'temp_c')
       },
       defaultSort (builder) {
         builder.orderBy('datetime')

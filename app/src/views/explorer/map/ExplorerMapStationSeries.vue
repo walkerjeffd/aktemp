@@ -175,7 +175,7 @@ export default {
             data: unflaggedValues.map(v => {
               return [
                 (new Date(v.date)).valueOf(),
-                v.mean
+                v.mean_temp_c
               ]
             }),
             showInLegend: false
@@ -186,8 +186,8 @@ export default {
             data: unflaggedValues.map(v => {
               return [
                 (new Date(v.date)).valueOf(),
-                v.min,
-                v.max
+                v.min_temp_c,
+                v.max_temp_c
               ]
             }),
             showInLegend: false
@@ -208,7 +208,7 @@ export default {
                 radius: 2,
                 symbol: 'circle'
               },
-              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.mean]),
+              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.mean_temp_c]),
               color: 'orangered',
               showInLegend: false,
               linkedTo: 'flag'
@@ -216,7 +216,7 @@ export default {
             {
               id: `flag-${i}-range`,
               type: 'arearange',
-              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.min, d.max]),
+              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.min_temp_c, d.max_temp_c]),
               tooltip: {
                 pointFormat: `Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>Flag: ${flag.label}`,
                 valueDecimals: 1

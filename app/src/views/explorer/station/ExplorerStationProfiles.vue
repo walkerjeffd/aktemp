@@ -130,7 +130,7 @@ export default {
         },
         data: p.values.map(v => {
           return [
-            v.value,
+            v.temp_c,
             v.depth_m
           ]
         })

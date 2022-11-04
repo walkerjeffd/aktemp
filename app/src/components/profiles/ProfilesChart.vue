@@ -88,7 +88,7 @@ export default {
         .map(p => {
           const data = p.values
             .sort((a, b) => ascending(a.depth_m, b.depth_m))
-            .map(v => [v.value, v.depth_m])
+            .map(v => [v.temp_c, v.depth_m])
           return {
             id: p.id,
             zIndex: 1,

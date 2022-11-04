@@ -68,8 +68,8 @@ exports.seed = async knex => {
   ]).returning('*')
 
   await knex('series_values').insert([
-    { series_id: series[0].id, datetime: '2022-04-15T12:00:00Z', value: 1.5 },
-    { series_id: series[0].id, datetime: '2022-04-15T13:00:00Z', value: 2.5 },
-    { series_id: series[0].id, datetime: '2022-04-15T14:00:00Z', value: 3.5 }
+    { series_id: series[0].id, datetime: '2022-04-15T12:00:00Z', temp_c: 1.5 },
+    { series_id: series[0].id, datetime: '2022-04-15T13:00:00Z', temp_c: 2.5 },
+    { series_id: series[0].id, datetime: '2022-04-15T14:00:00Z', temp_c: 3.5 }
   ])
 }

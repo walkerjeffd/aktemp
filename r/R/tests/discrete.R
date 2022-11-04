@@ -174,7 +174,7 @@ targets_test_discrete <- list(
                   filter(!is.na(temp_c)) %>%
                   transmute(
                     datetime = format(timestamp_utc, "%FT%T.000Z", tz = "UTC"),
-                    value = temp_c
+                    temp_c
                   )
               })
             ) %>%
@@ -453,14 +453,14 @@ targets_test_discrete <- list(
   tar_target(test_discrete_cli_csv, {
     from <- test_discrete_s2_csv
     to <- file.path("../cli/tests/files/series/csv/discrete.csv")
-    file.copy(from, to)
+    file.copy(from, to, overwrite = TRUE)
     to
   }, format = "file"),
   tar_target(test_discrete_s2_json, file.path(test_discrete_root, "json/discrete-s2.json"), format = "file"),
   tar_target(test_discrete_cli_json, {
     from <- test_discrete_s2_json
     to <- file.path("../cli/tests/files/series/json/discrete.json")
-    file.copy(from, to)
+    file.copy(from, to, overwrite = TRUE)
     to
   }, format = "file"),
   tar_target(test_discrete_cli_config_csv, {

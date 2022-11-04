@@ -39,8 +39,8 @@ describe('parseSeriesFile()', () => {
           series.depth_m = expect.closeTo(series.depth_m, 3)
         }
         series.values.forEach((d, j) => {
-          if (typeof d.value === 'number') {
-            d.value = expect.closeTo(d.value, 3)
+          if (typeof d.temp_c === 'number') {
+            d.temp_c = expect.closeTo(d.temp_c, 3)
           }
         })
       })
@@ -83,8 +83,8 @@ describe('parseSeriesFile()', () => {
           series.depth_m = expect.closeTo(series.depth_m, 3)
         }
         series.values.forEach((d, j) => {
-          if (typeof d.value === 'number') {
-            d.value = expect.closeTo(d.value, 3)
+          if (typeof d.temp_c === 'number') {
+            d.temp_c = expect.closeTo(d.temp_c, 3)
           }
         })
       })
@@ -133,8 +133,8 @@ describe('parseProfilesFile()', () => {
         if (typeof d.depth_m === 'number') {
           d.depth_m = expect.closeTo(d.depth_m, 3)
         }
-        if (typeof d.value === 'number') {
-          d.value = expect.closeTo(d.value, 3)
+        if (typeof d.temp_c === 'number') {
+          d.temp_c = expect.closeTo(d.temp_c, 3)
         }
       })
     })

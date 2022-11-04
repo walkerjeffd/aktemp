@@ -368,7 +368,7 @@ export default {
               mode: 'daily',
               flag: true,
               type: 'line',
-              data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
+              data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
               tooltip: {
                 pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (Flag: <b>${label}</b>)`
               },
@@ -387,7 +387,7 @@ export default {
               mode: 'daily',
               flag: true,
               type: 'arearange',
-              data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
+              data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
               linkedTo: 'flag-daily'
             }
           ]
@@ -399,7 +399,7 @@ export default {
             seriesId: s.id,
             mode: 'daily',
             type: 'line',
-            data: s.values.unflagged.map(d => [this.parseDatetime(d.date).valueOf(), d.mean]),
+            data: s.values.unflagged.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
             visible: true,
             showInNavigator: false,
             tooltip: {
@@ -412,7 +412,7 @@ export default {
             seriesId: s.id,
             mode: 'daily',
             type: 'arearange',
-            data: s.values.unflagged.map(d => [this.parseDatetime(d.date).valueOf(), d.min, d.max]),
+            data: s.values.unflagged.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
             visible: true,
             linkedTo: ':previous'
           },
@@ -466,7 +466,7 @@ export default {
         const flagSeries = s.flags.map(flag => {
           const label = flagLabel(flag)
           const data = flag.values
-            .map(d => [this.parseDatetime(d.datetime).valueOf(), d.value])
+            .map(d => [this.parseDatetime(d.datetime).valueOf(), d.temp_c])
           return {
             id: `raw-${s.id}-flag-${flag.id}`,
             // name: `series-${s.id}-flag`,
@@ -490,7 +490,7 @@ export default {
         })
 
         const data = s.values.unflagged
-          .map(d => [this.parseDatetime(d.datetime).valueOf(), d.value])
+          .map(d => [this.parseDatetime(d.datetime).valueOf(), d.temp_c])
         return [
           {
             id: `raw-${s.id}`,
@@ -527,9 +527,9 @@ export default {
           this.selectedDailySeries
             .map(d => this.showFlags ? d.values.all : d.values.unflagged).flat(),
           v => ({
-            mean: d3.mean(v, d => d.mean),
-            min: d3.min(v, d => d.min),
-            max: d3.max(v, d => d.max)
+            mean: d3.mean(v, d => d.mean_temp_c),
+            min: d3.min(v, d => d.min_temp_c),
+            max: d3.max(v, d => d.max_temp_c)
           }),
           d => d.date
         )

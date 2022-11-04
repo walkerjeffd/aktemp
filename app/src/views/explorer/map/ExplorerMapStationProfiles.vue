@@ -106,7 +106,7 @@ export default {
         },
         data: p.values.sort((a, b) => ascending(a.depth_m, b.depth_m)).map(v => {
           return [
-            v.value,
+            v.temp_c,
             v.depth_m
           ]
         })

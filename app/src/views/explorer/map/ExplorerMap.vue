@@ -55,8 +55,8 @@ import { mapGetters } from 'vuex'
 import evt from '@/events'
 
 import StationsMap from '@/components/StationsMap'
-import ExplorerMapStationsTable from '@/views/explorer/map/components/ExplorerMapStationsTable'
-import ExplorerMapStation from '@/views/explorer/map/components/ExplorerMapStation'
+import ExplorerMapStationsTable from '@/views/explorer/map/ExplorerMapStationsTable'
+import ExplorerMapStation from '@/views/explorer/map/ExplorerMapStation'
 
 const { waterbodyTypeOptions } = require('aktemp-utils/constants')
 

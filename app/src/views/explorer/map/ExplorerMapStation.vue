@@ -73,9 +73,9 @@
 
 <script>
 import evt from '@/events'
-import ExplorerMapStationInfo from '@/views/explorer/map/components/ExplorerMapStationInfo'
-import ExplorerMapStationSeries from '@/views/explorer/map/components/ExplorerMapStationSeries'
-import ExplorerMapStationProfiles from '@/views/explorer/map/components/ExplorerMapStationProfiles'
+import ExplorerMapStationInfo from '@/views/explorer/map/ExplorerMapStationInfo'
+import ExplorerMapStationSeries from '@/views/explorer/map/ExplorerMapStationSeries'
+import ExplorerMapStationProfiles from '@/views/explorer/map/ExplorerMapStationProfiles'
 export default {
   name: 'ExplorerMapStation',
   components: {

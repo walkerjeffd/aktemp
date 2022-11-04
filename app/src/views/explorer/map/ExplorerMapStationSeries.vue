@@ -23,11 +23,11 @@ i<template>
             <v-icon v-else x-small right>mdi-chevron-down-circle-outline</v-icon>
           </v-btn>
           <v-spacer></v-spacer>
-          <DownloadButton @click="download" text="CSV" small />
+          <DownloadButton @click="download" text="Download" small />
         </div>
 
         <div class="text--secondary caption ml-2 mt-4" v-if="about">
-          This chart shows the daily mean and range over all available timeseries at this station. Click <code>Explore Station Data</code> below to view the individual timeseries, which may vary by depth, or to drill down into the raw data. Click <code>CSV</code> to download a file containing the daily values shown above.
+          This chart shows the daily mean and range over all available timeseries at this station. Click <code>Explore Station Data</code> below to view the individual timeseries, which may vary by depth, or to drill down into the raw data. Click <code>Download</code> to download a file containing the daily values shown above.
         </div>
       </div>
     </div>
@@ -232,10 +232,14 @@ export default {
         this.loading = false
       }
     },
-    download () {
+    async download () {
       if (this.loading || this.values.length === 0) return
 
-      this.$download.csv(this.values, `AKTEMP-${this.station.organization_code}-${this.station.code}-daily.csv`)
+      const series = await this.$http.public.get(`/stations/${this.station.id}/series`)
+        .then(d => d.data)
+
+      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-daily.csv`
+      this.$download.stationDailyValues(filename, this.station, series, this.values)
     }
   }
 }

@@ -133,6 +133,7 @@ export default {
             visible: true,
             color: undefined,
             data: [],
+            gapSize: 0,
             dataGrouping: {
               enabled: false
             }
@@ -481,8 +482,8 @@ export default {
             visible: this.showFlags,
             color: 'orangered',
             marker: {
-              enabled: flag.values.length === 1,
-              radius: 3,
+              enabled: flag.values.length === 1 || s.interval === 'DISCRETE',
+              radius: 5,
               symbol: 'circle'
             }
           }
@@ -499,6 +500,11 @@ export default {
             data: data,
             tooltip: {
               pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
+            },
+            marker: {
+              enabled: data.length === 1 || s.interval === 'DISCRETE',
+              radius: 5,
+              symbol: 'circle'
             }
           },
           ...flagSeries

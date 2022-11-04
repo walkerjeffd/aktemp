@@ -254,7 +254,9 @@ function parseSeriesFile (rows, config, stations) {
     s.start_datetime = datetimeExtent[0]
     s.end_datetime = datetimeExtent[1]
     s.interval = config.interval
-    s.frequency = medianFrequency(datetimes)
+    if (s.interval === 'CONTINUOUS') {
+      s.frequency = medianFrequency(datetimes)
+    }
     s.reviewed = config.reviewed
     s.accuracy = config.accuracy
     s.sop_bath = config.sop_bath

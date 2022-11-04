@@ -83,13 +83,16 @@ const getStationProfiles = async (req, res, next) => {
     .$relatedQuery('profiles')
     .modify('stationOrganization')
     .modify('filename')
-    .withGraphFetched('values')
+    .withGraphFetched('values(defaultSelect,defaultSort)')
   return res.status(200).json(profiles)
 }
 
 const getStationProfilesValues = async (req, res, next) => {
-  const profilesValues = await res.locals.station.$relatedQuery('profiles')
-    .withGraphFetched('values(defaultSelect)')
+  const profilesValues = await res.locals.station
+    .$relatedQuery('profiles')
+    .modify('stationOrganization')
+    .modify('filename')
+    .withGraphFetched('values(defaultSelect,defaultSort)')
   return res.status(200).json(profilesValues)
 }
 

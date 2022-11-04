@@ -13,35 +13,19 @@
           <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in.
         </div>
 
-        <div class="text-right d-flex align-end my-4">
+        <div class="text-right d-flex align-end mt-4">
           <v-btn x-small text @click="about = !about">
             About This Chart
             <v-icon v-if="about" x-small right>mdi-chevron-up-circle-outline</v-icon>
             <v-icon v-else x-small right>mdi-chevron-down-circle-outline</v-icon>
           </v-btn>
           <v-spacer></v-spacer>
-          <DownloadButton @click="download" text="CSV" small />
+          <DownloadButton @click="download" text="Download" small />
         </div>
 
-        <div class="text--secondary caption ml-2" v-if="about">
+        <div class="text--secondary caption ml-2 mt-4" v-if="about">
           This chart shows all available vertical profiles at this station. Click <code>Explore Data</code> below to view the individual profiles. Click <code>Download</code> to download a file containing the profiles shown above.
         </div>
-      </div>
-
-      <v-divider class="my-4"></v-divider>
-
-      <div class="text-right mx-4 mb-4 d-flex">
-        <v-btn
-          color="info"
-          title="Explore station data in more detail"
-          :to="{ name: 'explorerStation', params: { stationId: station.id }}"
-        >
-          <v-icon left>mdi-chart-line</v-icon>
-          Explore Data
-          <!-- <v-icon right>mdi-chevron-right</v-icon> -->
-        </v-btn>
-        <v-spacer></v-spacer>
-        <DownloadButton @click="download" />
       </div>
     </div>
   </div>
@@ -130,16 +114,10 @@ export default {
       this.loading = false
     },
     download () {
-      if (this.loading || this.profiles.length === 0) return
+      if (this.loading) return
 
-      const rows = this.profiles.map(profile => {
-        return profile.values.map(v => ({
-          ...profile,
-          ...v
-        }))
-      }).flat()
-
-      this.$download.csv(rows, `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`)
+      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`
+      this.$download.stationProfileValues(filename, this.station, this.profiles)
     }
   }
 }

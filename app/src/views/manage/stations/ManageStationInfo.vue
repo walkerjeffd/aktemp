@@ -4,6 +4,11 @@
     <v-divider></v-divider>
     <div class="mx-4 mt-4 pb-4">
       <div class="mb-4">
+        <v-btn block outlined color="primary" :to="{ name: 'explorerStation', params: { stationId: station.id } }">
+          <v-icon left>mdi-earth</v-icon> Show in Explorer
+        </v-btn>
+      </div>
+      <div class="mb-4">
         <v-btn block outlined color="primary" @click="edit">
           <v-icon left>mdi-pencil</v-icon> Edit Station
         </v-btn>

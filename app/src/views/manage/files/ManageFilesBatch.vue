@@ -72,7 +72,7 @@
             outlined
             bloc
             class="ml-4 mb-4"
-            @click="downloadStationsFile"
+            @click="downloadStations"
           ><v-icon left>mdi-download</v-icon> Download Stations</v-btn>
           <p class="black--text">After you have filled out the table in the template, copy and paste the cells from Excel into the table below (excluding the header row).</p>
 
@@ -726,8 +726,8 @@ export default {
         this.renderHot()
       }
     },
-    downloadStationsFile () {
-      this.$download.csv(this.stations, `AKTEMP-${this.organization.code}-stations.csv`)
+    downloadStations () {
+      this.$download.stations(`AKTEMP-${this.organization.code}-stations.csv`, this.stations)
     },
     async removeUploadedFiles () {
       this.loading = true

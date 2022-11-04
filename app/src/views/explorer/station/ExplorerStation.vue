@@ -33,7 +33,7 @@
                       <v-divider></v-divider>
 
                       <div class="pa-4 text-right">
-                        <DownloadButton @click="downloadStation" text="Download Station"></DownloadButton>
+                        <DownloadButton block @click="downloadStation" text="Download Station Metadata"></DownloadButton>
                       </div>
                     </v-sheet>
                   </v-col>
@@ -104,16 +104,18 @@ export default {
       this.status.loading = true
       const stationId = this.$route.params.stationId
       try {
-        const response = await this.$http.public.get(`/stations/${stationId}`)
-        this.station = response.data
+        this.station = await this.$http.public.get(`/stations/${stationId}`)
+          .then(d => d.data)
       } catch (err) {
         this.status.error = err.message || err.toString() || 'Unknown error'
       } finally {
         this.status.loading = false
       }
     },
-    downloadStation () {
-      this.$download.stations([this.station])
+    async downloadStation () {
+      const series = await this.$http.public.get(`/stations/${this.station.id}/series`)
+      const profiles = await this.$http.public.get(`/stations/${this.station.id}/profiles`)
+      this.$download.stationMetadata(`AKTEMP-station-${this.station.organization_code}-${this.station.code}.csv`, this.station, series, profiles)
     }
   }
 }

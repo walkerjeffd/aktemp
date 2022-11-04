@@ -279,7 +279,7 @@
             @click="download"
             title="Download stations"
             :disabled="loading"
-            :text="`CSV ${ selectedRows.length > 0 ? ' (' + selectedRows.length + ')' : ''}`"
+            :text="`Download Stations ${ selectedRows.length > 0 ? ' (' + selectedRows.length + ')' : ''}`"
           />
         </template>
       </v-data-table>
@@ -433,7 +433,7 @@ export default {
       } else {
         stations = this.$refs.table.$children[0].filteredItems
       }
-      this.$download.stations(stations)
+      this.$download.stations('AKTEMP-explorer-stations.csv', stations)
     },
     fitToStations () {
       evt.$emit('map:fitToStations')

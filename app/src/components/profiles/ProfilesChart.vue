@@ -10,7 +10,7 @@
 
 <script>
 import { ascending } from 'd3'
-
+const { formatTimestamp } = require('aktemp-utils/time')
 export default {
   name: 'ProfileChart',
   props: ['profiles'],
@@ -23,16 +23,29 @@ export default {
           height: 500,
           marginLeft: 50,
           type: 'scatter',
+          animation: false,
           events: {
             load: async (e) => {
               this.chart = e.target
+              window.chart = this.chart
             }
-            // redraw () {
-            //   console.log('redraw')
-            // },
-            // render () {
-            //   console.log('render')
-            // }
+          },
+          states: {
+            hover: {
+              enabled: false
+            },
+            select: {
+              enabled: false
+            },
+            inactive: {
+              opacity: 1
+            }
+          }
+        },
+        plotOptions: {
+          series: {
+            animation: false,
+            showInLegend: false
           }
         },
         title: {
@@ -80,8 +93,9 @@ export default {
     render () {
       if (!this.chart) return
 
-      this.chart.series
-        .forEach(d => this.chart.get(d.options.id).remove(false))
+      while (this.chart.series.length) {
+        this.chart.series[0].remove(false)
+      }
 
       const series = this.profiles
         .filter(d => d.values && d.values.length > 0)
@@ -97,9 +111,13 @@ export default {
               symbol: 'circle',
               radius: 3
             },
-            data
+            data,
+            tooltip: {
+              headerFormat: `Profile ID: <b>${p.id}</b><br>Date: <b>${formatTimestamp(p.date, 'DD')}</b><br>`
+            }
           }
         })
+      console.log(series)
       series.forEach(d => this.chart.addSeries(d, false))
       this.chart.redraw()
     }

@@ -6,7 +6,7 @@
           <v-card elevation="4">
             <v-toolbar dense flat color="grey lighten-3" height="60px">
               <v-toolbar-title class="text-h6">
-                <span v-if="station">{{ station.code }}</span><span v-else>Loading...</span>
+                Station: <span v-if="station">{{ station.code }}</span><span v-else>Loading...</span>
               </v-toolbar-title>
               <v-spacer></v-spacer>
               <v-btn text @click="$router.push({ name: 'explorer' })">
@@ -33,25 +33,26 @@
                       <v-divider></v-divider>
 
                       <div class="pa-4 text-right">
-                        <DownloadButton block @click="downloadStation" text="Download Station Metadata"></DownloadButton>
+                        <DownloadButton @click="downloadStation" text="Download Metadata"></DownloadButton>
                       </div>
                     </v-sheet>
                   </v-col>
                   <v-col cols="12" lg="8">
-                    <v-tabs class="elevation-2" grow>
+                    <v-tabs class="elevation-2" grow v-model="tab">
                       <v-tab>
                         <v-icon left>mdi-chart-line</v-icon> Timeseries
                       </v-tab>
                       <v-tab>
                         <v-icon left>mdi-arrow-expand-down</v-icon> Profiles
                       </v-tab>
-
                       <!-- SERIES -->
                       <v-tab-item>
+                        <v-divider></v-divider>
                         <ExplorerStationSeries :station="station"></ExplorerStationSeries>
                       </v-tab-item>
                       <!-- PROFILES -->
                       <v-tab-item>
+                        <v-divider></v-divider>
                         <ExplorerStationProfiles :station="station"></ExplorerStationProfiles>
                       </v-tab-item>
                     </v-tabs>
@@ -83,6 +84,7 @@ export default {
   },
   data () {
     return {
+      tab: 0,
       status: {
         loading: true,
         error: null
@@ -114,7 +116,9 @@ export default {
     },
     async downloadStation () {
       const series = await this.$http.public.get(`/stations/${this.station.id}/series`)
+        .then(d => d.data)
       const profiles = await this.$http.public.get(`/stations/${this.station.id}/profiles`)
+        .then(d => d.data)
       this.$download.stationMetadata(`AKTEMP-station-${this.station.organization_code}-${this.station.code}.csv`, this.station, series, profiles)
     }
   }

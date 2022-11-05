@@ -117,6 +117,9 @@ const columnDefs = {
     }
   },
   dailyValues: {
+    series_id: {
+      label: 'Series ID'
+    },
     date: {
       label: 'Date (local timezone)'
     },
@@ -136,8 +139,14 @@ const columnDefs = {
       label: 'QAQC flag(s)'
     }
   },
-  seriesValues: {
-    datetime: {
+  rawValues: {
+    series_id: {
+      label: 'Series ID'
+    },
+    datetime_utc: {
+      label: 'Timestamp (UTC)'
+    },
+    datetime_local: {
       label: 'Timestamp (local timezone)'
     },
     temp_c: {
@@ -195,7 +204,7 @@ function fileHeader () {
 # File downloaded: ${formatTimestamp(now, 'D t ZZZZ', 'local')}`
 }
 
-function stationTable (stations = [], columns = Object.keys(columnDefs.stations)) {
+function stationsTable (stations = [], columns = Object.keys(columnDefs.stations)) {
   const descriptions = columns.map(d => {
     return `#     ${d}: ${columnDefs.stations[d].label}`
   })
@@ -240,7 +249,7 @@ function seriesTable (series, columns = Object.keys(columnDefs.series)) {
   const table = Papa.unparse(rows, { columns })
   return `${hr}
 # Timeseries Metadata Table
-${descriptions.join('\r\n')}
+${descriptions.join('\n')}
 #
 ${table}`
 }
@@ -252,19 +261,19 @@ function profilesTable (profiles, columns = Object.keys(columnDefs.profiles)) {
   const table = Papa.unparse(profiles, { columns })
   return `${hr}
 # Vertical Profiles Metadata Table
-${descriptions.join('\r\n')}
+${descriptions.join('\n')}
 #
 ${table}`
 }
 
-function profileValuesTable (values, columns = Object.keys(columnDefs.profileValues)) {
+function profilesValuesTable (values, columns = Object.keys(columnDefs.profileValues)) {
   const descriptions = columns.map(d => {
     return `#     ${d}: ${columnDefs.profileValues[d].label}`
   })
   const table = Papa.unparse(values, { columns })
   return `${hr}
-# Daily Values Table
-${descriptions.join('\r\n')}
+# Vertical Profiles Values Table
+${descriptions.join('\n')}
 #
 ${table}`
 }
@@ -276,18 +285,50 @@ function dailyValuesTable (values, columns = Object.keys(columnDefs.dailyValues)
   const table = Papa.unparse(values, { columns })
   return `${hr}
 # Daily Values Table
-${descriptions.join('\r\n')}
+${descriptions.join('\n')}
 #
 ${table}`
 }
 
-// ----
+function rawValuesTable (values, timezone, columns = Object.keys(columnDefs.rawValues)) {
+  const descriptions = columns.map(d => {
+    return `#     ${d}: ${columnDefs.rawValues[d].label}`
+  })
+  const rows = values.map(d => {
+    const x = { ...d }
+    if (columns.includes('datetime_utc')) {
+      x.datetime_utc = formatTimestamp(x.datetime, 'ISO', 'UTC')
+    }
+    if (columns.includes('datetime_local')) {
+      x.datetime_local = formatTimestamp(x.datetime, 'D T', timezone)
+    }
+    return x
+  })
+  const table = Papa.unparse(rows, { columns })
+  return `${hr}
+# Raw Values Table
+${descriptions.join('\n')}
+#
+${table}`
+}
 
 function stations (filename, stations) {
   const body = `${fileHeader()}
 #
-${stationTable(stations)}
+${stationsTable(stations)}
 `
+  saveFile(body, filename)
+}
+
+function stationMetadata (filename, station, series, profiles) {
+  const body = `${fileHeader()}
+#
+${stationsTable([station])}
+#
+${seriesTable(series)}
+#
+${profilesTable(profiles)}
+  `
   saveFile(body, filename)
 }
 
@@ -309,7 +350,31 @@ function stationDailyValues (filename, station, series, values) {
 #     If more than one type of flag occurred in a single day then the unique flag labels
 #     are combined into a comma-separated list.
 #
-${stationTable([station], ['organization_code', 'id', 'code', 'latitude', 'longitude', 'timezone', 'description', 'waterbody_name', 'waterbody_type', 'placement', 'mixed', 'active', 'reference'])}
+${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'longitude', 'timezone', 'description', 'waterbody_name', 'waterbody_type', 'placement', 'mixed', 'active', 'reference'])}
+#
+${seriesTable(series)}
+#
+${dailyValuesTable(values, ['date', 'n', 'min_temp_c', 'mean_temp_c', 'max_temp_c', 'flags'])}
+  `
+
+  saveFile(body, filename)
+}
+
+function seriesDailyValues (filename, station, series, values) {
+  const body = `${fileHeader()}
+#
+# Description: This file contains daily water temperature data for each timeseries at a single station.
+#
+#     Daily statistics (min/mean/max) were computed for each timeseries.
+#
+#     Both discrete and continuous timeseries data are included in this daily aggregation.
+#
+#     QAQC flags are also aggregated to daily timesteps. If one or more measurements
+#     during a single day were flagged then that flag is assigned to the entire day.
+#     If more than one type of flag occurred in a single day then the unique flag labels
+#     are combined into a comma-separated list.
+#
+${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'longitude', 'timezone', 'description', 'waterbody_name', 'waterbody_type', 'placement', 'mixed', 'active', 'reference'])}
 #
 ${seriesTable(series)}
 #
@@ -319,7 +384,22 @@ ${dailyValuesTable(values)}
   saveFile(body, filename)
 }
 
-function stationProfileValues (filename, station, profiles) {
+function seriesRawValues (filename, station, series, values) {
+  const body = `${fileHeader()}
+#
+# Description: This file contains raw water temperature data for a single timeseries.
+#
+${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'longitude', 'timezone', 'description', 'waterbody_name', 'waterbody_type', 'placement', 'mixed', 'active', 'reference'])}
+#
+${seriesTable([series])}
+#
+${rawValuesTable(values, station.timezone)}
+  `
+
+  saveFile(body, filename)
+}
+
+function profilesValues (filename, station, profiles) {
   const values = profiles.map(d => {
     return d.values.map(v => {
       return {
@@ -333,25 +413,13 @@ function stationProfileValues (filename, station, profiles) {
 #
 # Description: This file contains vertical profile data for a single station.
 #
-${stationTable([station], ['organization_code', 'id', 'code', 'latitude', 'longitude', 'timezone', 'description', 'waterbody_name', 'waterbody_type', 'placement', 'mixed', 'active', 'reference'])}
+${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'longitude', 'timezone', 'description', 'waterbody_name', 'waterbody_type', 'placement', 'mixed', 'active', 'reference'])}
 #
 ${profilesTable(profiles)}
 #
-${profileValuesTable(values)}
+${profilesValuesTable(values)}
   `
 
-  saveFile(body, filename)
-}
-
-function stationMetadata (filename, station, series, profiles) {
-  const body = `${fileHeader()}
-#
-${stationTable([station])}
-#
-${seriesTable(series)}
-#
-${profilesTable(profiles)}
-  `
   saveFile(body, filename)
 }
 
@@ -366,5 +434,7 @@ Vue.prototype.$download = {
   stations,
   stationMetadata,
   stationDailyValues,
-  stationProfileValues
+  seriesDailyValues,
+  profilesValues,
+  seriesRawValues
 }

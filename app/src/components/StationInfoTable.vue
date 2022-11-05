@@ -5,7 +5,7 @@
         <td
           class="text-right grey--text text--darken-2"
           style="width:150px">
-          ID
+          Station ID
         </td>
         <td class="font-weight-bold">{{ station.id }}</td>
       </tr>

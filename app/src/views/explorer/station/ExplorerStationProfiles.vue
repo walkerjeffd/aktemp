@@ -6,41 +6,50 @@
       This station does not have any vertical profile data.
     </Alert>
     <div v-else>
-      <highcharts :options="chart" ref="profileChart" style="max-width:800px"></highcharts>
-      <v-divider class="my-4"></v-divider>
-      <v-data-table
-        v-model="selected"
-        :headers="table.headers"
-        :items="profiles"
-        :loading="loading"
-        :options="{ itemsPerPage: 5 }"
-        show-select
-        dense
-        loading-text="Loading... Please wait"
-        @input="onInput"
-        @toggle-select-all="selectAll"
-      >
-        <template v-slot:item.station_code="{ item }">
-          {{ item.station_code | truncate(20) }}
-        </template>
-        <template v-slot:item.date="{ item }">
-          {{ item.date | timestamp('DD') }}
-        </template>
-      </v-data-table>
-      <v-divider class="mb-4"></v-divider>
-      <div class="d-flex">
-        <v-btn color="info" disabled>
-          <v-icon left>mdi-download</v-icon>
-          Download Profiles
-        </v-btn>
-      </div>
+      <v-row>
+        <v-col cols="12" xl="6">
+          <v-sheet elevation="2" class="pa-4">
+            <ProfilesChart :profiles="selected"></ProfilesChart>
+          </v-sheet>
+        </v-col>
+        <v-col cols="12" xl="6">
+          <v-sheet elevation="2">
+            <v-data-table
+              v-model="selected"
+              :headers="table.headers"
+              :items="profiles"
+              :loading="loading"
+              :options="{ itemsPerPage: 5 }"
+              show-select
+              dense
+              loading-text="Loading... Please wait"
+              @input="onInput"
+              @toggle-select-all="selectAll"
+            >
+              <template v-slot:item.station_code="{ item }">
+                {{ item.station_code | truncate(20) }}
+              </template>
+              <template v-slot:item.date="{ item }">
+                {{ item.date | timestamp('DD') }}
+              </template>
+            </v-data-table>
+            <v-divider></v-divider>
+            <div class="text-right pa-4">
+              <DownloadButton text="Download Profiles" @click="download"></DownloadButton>
+            </div>
+          </v-sheet>
+        </v-col>
+      </v-row>
     </div>
   </div>
 </template>
 
 <script>
+import ProfilesChart from '@/components/profiles/ProfilesChart.vue'
+
 export default {
   name: 'ExploreStationProfiles',
+  components: { ProfilesChart },
   props: ['station'],
   data () {
     return {
@@ -89,13 +98,15 @@ export default {
           {
             text: 'ID',
             value: 'id',
-            align: 'left',
             width: '80px'
           },
           {
             text: 'Date',
-            value: 'date',
-            align: 'left'
+            value: 'date'
+          },
+          {
+            text: '# Values',
+            value: 'values_count'
           }
         ]
       }
@@ -160,6 +171,10 @@ export default {
       } else {
         this.selected = []
       }
+    },
+    download () {
+      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`
+      this.$download.profilesValues(filename, this.station, this.profiles)
     }
   }
 }

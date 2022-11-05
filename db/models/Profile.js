@@ -29,12 +29,6 @@ class Profile extends Base {
           Profile.relatedQuery('values')
             .select(raw('count(*)::integer'))
             .as('values_count')
-          // Profile.relatedQuery('series')
-          //   .min('start_datetime')
-          //   .as('series_start_datetime'),
-          // Profile.relatedQuery('series')
-          //   .max('end_datetime')
-          //   .as('series_end_datetime')
         )
       }
     }

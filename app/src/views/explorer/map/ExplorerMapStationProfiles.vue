@@ -117,7 +117,7 @@ export default {
       if (this.loading) return
 
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`
-      this.$download.stationProfileValues(filename, this.station, this.profiles)
+      this.$download.profilesValues(filename, this.station, this.profiles)
     }
   }
 }

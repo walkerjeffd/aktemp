@@ -209,6 +209,7 @@ export default {
           .find(d => d.id === parseInt(this.$route.params.seriesId))
         if (row) {
           this.selected = [row]
+          this.filters.reviewed = row.reviewed
         }
       } else if (this.$route.params.refresh) {
         console.log('refresh', this.selected)

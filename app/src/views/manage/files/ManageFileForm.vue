@@ -581,13 +581,16 @@
                   <Alert
                     v-if="timestamp.timezone.mode === 'LOCAL' && config.file_type === 'SERIES' && config.interval === 'CONTINUOUS'"
                     type="warning"
-                    title="Local Timezone Adjustment"
+                    title="Daylight Savings Transitions Not Supported"
                   >
                     <p>
-                      Timestamps will be adjusted to the local daylight or standard time of the associated station <strong>at the time of the first timestamp</strong>.
+                      When a continuous timeseries is uploaded in the local timezone, AKTEMP assumes that the timestamps <strong>do not account for daylight savings time transitions</strong> (which is also true for most data loggers).
                     </p>
                     <p>
-                      If the first timestamp occurs during daylight savings time then <strong>all subsequent timestamps will be adjusted by the same UTC offset</strong> (e.g. UTC-8 for AKDT). This assumes the logger clock was set just prior to deployment. This adjustment <strong>does not</strong> account for daylight savings time shifts (which is true for most data loggers).
+                      For each timeseries in this file, all timestamps will be adjusted using either the local daylight savings or standard time of the associated station depending on which occurred <strong>at the time of the first timestamp</strong>. This assumes the logger clock was set just prior to deployment.
+                    </p>
+                    <p>
+                      For example, if the first timestamp occurs during daylight savings time then all subsequent timestamps will be adjusted by the same UTC offset (e.g. UTC-8 for AKDT).
                     </p>
                     <p class="mb-0">
                       If the logger clock was not correctly set to the local daylight savings or standard time at the start of the deployment, then choose the <strong>fixed UTC offset</strong> option above and then select the correct offset.

@@ -83,7 +83,7 @@ const getStationProfiles = async (req, res, next) => {
     .$relatedQuery('profiles')
     .modify('stationOrganization')
     .modify('filename')
-    .withGraphFetched('values(defaultSelect,defaultSort)')
+    .modify('valuesSummary')
   return res.status(200).json(profiles)
 }
 
@@ -92,6 +92,7 @@ const getStationProfilesValues = async (req, res, next) => {
     .$relatedQuery('profiles')
     .modify('stationOrganization')
     .modify('filename')
+    .modify('valuesSummary')
     .withGraphFetched('values(defaultSelect,defaultSort)')
   return res.status(200).json(profilesValues)
 }

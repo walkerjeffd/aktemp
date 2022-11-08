@@ -7,6 +7,7 @@ async function attachSeries (req, res, next) {
     .findById(req.params.seriesId)
     .modify('stationOrganization')
     .modify('filename')
+    .withGraphFetched('flags')
 
   if (!series) {
     throw createError(404, `Series (id=${req.params.seriesId}) not found`)

@@ -180,16 +180,15 @@
             </v-row>
             <v-row>
               <v-col cols="12">
-                <ManageQaqcSeriesChart
-                  :series="series"
+                <SeriesChart
+                  :series="[series]"
                   :flags="flags"
                   :flag="flag.selected"
-                  :chart-loading="chartLoading"
-                  :zoom="!showForm"
-                  @select="setRange"
-                  @click-flag="selectFlag"
+                  :brush="!!showForm"
+                  @brush="setRange"
+                  @select="selectFlag"
                   class="elevation-2 py-2 pr-2"
-                ></ManageQaqcSeriesChart>
+                ></SeriesChart>
               </v-col>
             </v-row>
           </v-sheet>
@@ -218,7 +217,7 @@
 // import { flagTypeOptions } from '@/lib/constants'
 import StationsMap from '@/components/StationsMap'
 import SeriesInfo from '@/components/series/SeriesInfo'
-import ManageQaqcSeriesChart from '@/views/manage/qaqc/components/ManageQaqcSeriesChart'
+import SeriesChart from '@/components/series/SeriesChart'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -226,7 +225,7 @@ export default {
   components: {
     StationsMap,
     SeriesInfo,
-    ManageQaqcSeriesChart
+    SeriesChart
   },
   data () {
     return {
@@ -355,11 +354,14 @@ export default {
       }
       try {
         if (payload.id === undefined) {
-          await this.$http.restricted.post(`/series/${this.$route.params.seriesId}/flags`, payload)
+          await this.$http.restricted
+            .post(`/series/${this.$route.params.seriesId}/flags`, payload)
         } else {
-          await this.$http.restricted.put(`/series/${this.$route.params.seriesId}/flags/${payload.id}`, payload)
+          await this.$http.restricted
+            .put(`/series/${this.$route.params.seriesId}/flags/${payload.id}`, payload)
         }
-        this.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)
+        this.flags = await this.$http.restricted
+          .get(`/series/${this.$route.params.seriesId}/flags`)
           .then(d => d.data)
         this.selectFlag()
       } catch (err) {
@@ -445,7 +447,7 @@ export default {
         this.showForm = false
       } else if (flag) {
         this.showForm = true
-        this.flag.selected = flag
+        this.flag.selected = { ...flag }
       }
     },
     createNewFlag () {

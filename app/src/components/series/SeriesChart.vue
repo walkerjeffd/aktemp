@@ -8,7 +8,6 @@
         Mode: <strong>{{ mode === 'daily' ? 'Daily Mean and Range' : 'Raw Instantaneous' }}</strong>
       </div>
       <div class="text--secondary caption ml-12"><v-icon x-small>mdi-information</v-icon> Zoom in to see raw instantaneous data (selected period must be &leq; 31 days long). Click "Flagged" in the bottom right corner to hide/show flagged values.</div>
-      <pre>showFlags: {{ showFlags }}</pre>
     </div>
   </div>
 </template>
@@ -19,7 +18,15 @@ const { flagLabel } = require('aktemp-utils/flags')
 
 export default {
   name: 'SeriesChart',
-  props: ['series'],
+  props: {
+    series: Array,
+    flags: Array,
+    flag: Object,
+    brush: {
+      type: Boolean,
+      default: false
+    }
+  },
   data () {
     return {
       loading: false,
@@ -40,8 +47,9 @@ export default {
               await this.initDaily()
               this.chart.hideLoading()
             },
-            redraw: () => console.log('chart:redraw'),
-            render: () => console.log('chart:render')
+            selection: this.onBrush
+            // redraw: () => console.log('chart:redraw'),
+            // render: () => console.log('chart:render')
           }
         },
         plotOptions: {
@@ -211,6 +219,11 @@ export default {
     },
     showFlags () {
       this.render()
+    },
+    flags () {
+      console.log('watch:flags', this.flags)
+      // this.updateFlags()
+      this.render()
     }
   },
   methods: {
@@ -260,14 +273,75 @@ export default {
       }
       this.render()
     },
+    updateFlags () {
+      this.series.forEach((s) => {
+        console.log(`updateFlags(${s.id})`)
+        if (s.daily && s.daily.values) {
+          s.daily.values = this.assignFlags(s, s.daily.values, this.flags, 'daily')
+          s.daily.series = this.createDailyChartSeries(s)
+        }
+        if (s.raw && s.raw.values) {
+          s.raw.values = this.assignFlags(s, s.raw.values, this.flags, 'raw')
+          s.raw.series = this.createRawChartSeries(s)
+        }
+      })
+      this.render()
+    },
+    assignFlags (s, values, flags, mode) {
+      console.log(`assignFlags(${s.id})`, values)
+      values.forEach(d => {
+        d.flag = []
+      })
+
+      if (s.interval === 'CONTINUOUS' && mode === 'daily') {
+        flags.forEach(flag => {
+          const label = flagLabel(flag)
+          const startDate = this.$luxon.DateTime
+            .fromISO(flag.start_datetime)
+            .setZone(s.station_timezone)
+            .toFormat('yyyy-MM-dd')
+          const endDate = this.$luxon.DateTime
+            .fromISO(flag.end_datetime)
+            .setZone(s.station_timezone)
+            .toFormat('yyyy-MM-dd')
+          values.forEach(d => {
+            if (d.date >= startDate && d.date <= endDate) {
+              d.flag.push(label)
+            }
+          })
+        })
+      } else {
+        flags.forEach(flag => {
+          const label = flagLabel(flag)
+          values.forEach(d => {
+            if (d.datetime >= flag.start_datetime && d.datetime <= flag.end_datetime) {
+              d.flag.push(label)
+            }
+          })
+        })
+      }
+
+      values.forEach(d => {
+        d.flag = d.flag.join(',')
+      })
+      return values
+    },
     async initDaily () {
       this.removeUnselectedSeries()
 
       // fetch daily and flag data for each series (if not exist)
       await Promise.all(this.series.map(async (s) => {
         s.daily = {}
-        s.daily.values = await this.fetchDaily(s)
+        const values = await this.fetchDaily(s)
+        if (this.flags) {
+          s.daily.values = this.assignFlags(s, values, this.flags, 'daily')
+        } else {
+          s.daily.values = this.assignFlags(s, values, s.flags, 'daily')
+        }
         s.daily.series = this.createDailyChartSeries(s)
+        if (s.raw) {
+          delete s.raw
+        }
       }))
 
       this.render()
@@ -281,31 +355,6 @@ export default {
           .get(`/series/${series.id}/daily`)
           .then(d => d.data)
 
-        values.forEach(d => {
-          d.flag = []
-        })
-
-        series.flags.forEach(flag => {
-          const label = flagLabel(flag)
-          const startDate = this.$luxon.DateTime
-            .fromISO(flag.start_datetime)
-            .setZone(series.station_timezone)
-            .toFormat('yyyy-MM-dd')
-          const endDate = this.$luxon.DateTime
-            .fromISO(flag.end_datetime)
-            .setZone(series.station_timezone)
-            .toFormat('yyyy-MM-dd')
-          values.forEach(d => {
-            if (d.date >= startDate && d.date <= endDate) {
-              d.flag.push(label)
-            }
-          })
-        })
-
-        values.forEach(d => {
-          d.flag = d.flag.join(',')
-        })
-
         return values
       } else if (series.interval === 'DISCRETE') {
         const values = await this.$http.public
@@ -317,20 +366,6 @@ export default {
           d.min_temp_c = d.temp_c
           d.mean_temp_c = d.temp_c
           d.max_temp_c = d.temp_c
-          d.flag = []
-        })
-
-        series.flags.forEach(flag => {
-          const label = flagLabel(flag)
-          values.forEach(d => {
-            if (d.datetime >= flag.start_datetime && d.datetime <= flag.end_datetime) {
-              d.flag.push(label)
-            }
-          })
-        })
-
-        values.forEach(d => {
-          d.flag = d.flag.join(',')
         })
 
         return values
@@ -489,6 +524,8 @@ export default {
           console.log(`renderDailySeries(${d.id}): add `, d)
           this.chart.addSeries(d, false)
           chartSeries = this.chart.get(d.id)
+        } else {
+          chartSeries.setData(d.data, false)
         }
         if (d.interval === 'DISCRETE') {
           if (!d.flag || this.showFlags) {
@@ -519,24 +556,6 @@ export default {
       const values = await this.$http.public
         .get(`/series/${series.id}/values?start=${start.toISOString()}&end=${end.toISOString()}`)
         .then(d => d.data)
-
-      values.forEach(d => {
-        d.flag = []
-      })
-
-      series.flags.forEach(flag => {
-        const label = flagLabel(flag)
-        values.forEach(d => {
-          if (d.datetime >= flag.start_datetime &&
-              d.datetime <= flag.end_datetime) {
-            d.flag.push(label)
-          }
-        })
-      })
-
-      values.forEach(d => {
-        d.flag = d.flag.join(',')
-      })
 
       return values
     },
@@ -627,10 +646,15 @@ export default {
 
         if (!(s.raw && s.raw.start === start && s.raw.end === end)) {
           const values = await this.fetchRaw(s, start, end)
+
           s.raw = {
             start,
-            end,
-            values
+            end
+          }
+          if (this.flags) {
+            s.raw.values = this.assignFlags(s, values, this.flags, 'raw')
+          } else {
+            s.raw.values = this.assignFlags(s, values, s.flags, 'raw')
           }
           s.raw.series = this.createRawChartSeries(s)
         }
@@ -641,6 +665,56 @@ export default {
       this.renderDailySeries(s)
       this.renderRawSeries(s)
     },
+    renderBands () {
+      console.log('renderBands', this.flags)
+      let bands = []
+      if (this.flags) {
+        bands = this.flags.map(d => {
+          let start = this.parseDatetime(d.start_datetime)
+          let end = this.parseDatetime(d.end_datetime)
+          if (this.mode === 'daily') {
+            start = this.parseDatetime(d.start_date)
+            end = this.parseDatetime(d.end_date)
+          }
+          return {
+            id: d.id,
+            from: start.valueOf(),
+            to: end.valueOf(),
+            label: { text: d.flag_type_id },
+            color: '#EEEEEE',
+            events: {
+              click: () => this.$emit('select', d)
+            }
+          }
+        })
+      }
+
+      if (this.flag) {
+        if (this.flag.id) {
+          bands = bands.filter(d => d.id !== this.flag.id)
+        }
+        let start = this.$luxon.DateTime.fromISO(this.flag.start_datetime, { zone: 'UTC' })
+        let end = this.$luxon.DateTime.fromISO(this.flag.end_datetime, { zone: 'UTC' })
+        if (this.mode === 'daily') {
+          start = start.startOf('day')
+          end = end.endOf('day')
+        }
+        bands.push({
+          from: start.valueOf(),
+          to: end.valueOf(),
+          label: {
+            text: this.flag.id ? 'SELECTED' : 'NEW'
+          },
+          color: '#FEEEEE',
+          events: {
+            click: () => this.$emit('select')
+          }
+        })
+      }
+      this.chart.xAxis[0].update({
+        plotBands: bands
+      })
+    },
     async render () {
       console.log('render', this.mode)
 
@@ -649,6 +723,7 @@ export default {
       }
 
       this.series.forEach(this.renderSeries)
+      this.renderBands()
 
       this.updateNavigator()
       this.chart.redraw()
@@ -676,6 +751,18 @@ export default {
         .map(d => [this.parseDatetime(d[0]).valueOf(), d[1].max])
 
       this.chart.get('navigator').setData(data, false)
+    },
+
+    onBrush (event) {
+      if (!this.brush) return
+      event.preventDefault()
+      let start = this.$luxon.DateTime.fromMillis(event.xAxis[0].min)
+      let end = this.$luxon.DateTime.fromMillis(event.xAxis[0].max)
+      if (this.mode === 'daily') {
+        start = start.startOf('day')
+        end = end.endOf('day').plus(1, 'day')
+      }
+      this.$emit('brush', start.toISO(), end.toISO())
     }
   }
 }

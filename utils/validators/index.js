@@ -12,7 +12,12 @@ const validateFileFields = module.exports.validateFileFields = function (fields)
 }
 
 module.exports.validateFileConfig = function (config, fields, stations) {
-  fields = validateFileFields(fields)
+  try {
+    fields = validateFileFields(fields)
+  } catch (err) {
+    console.log(err)
+    throw new Error(`Invalid file columns (${fields.map(d => `'${d}'`).join(',')}). File must contain at least two columns (date/time, temperature) and all column names must be unique.`)
+  }
   return validateSchema(createFileSchema(fields, stations), config)
 }
 

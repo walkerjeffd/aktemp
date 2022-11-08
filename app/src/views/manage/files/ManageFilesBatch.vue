@@ -672,6 +672,8 @@ export default {
             message: err.message || this.$errorMessage(err),
             details: err
           }]
+          const j = this.hot.propToCol('filename')
+          this.hot.setCellMeta(i, j, 'valid', false)
         } else {
           row.errors = err.details
           console.log(err.details)

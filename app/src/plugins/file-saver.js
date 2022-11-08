@@ -357,20 +357,21 @@ ${seriesTable(series)}
 #
 ${dailyValuesTable(values, ['date', 'n', 'min_temp_c', 'mean_temp_c', 'max_temp_c', 'flag'])}
 #
-${rawValuesTable(discrete)}
+${rawValuesTable(discrete, station.timezone)}
   `
 
   saveFile(body, filename)
 }
 
-function seriesDailyValues (filename, station, series, values) {
+function seriesDailyValues (filename, station, series, dailyValues, discreteValues) {
   const body = `${fileHeader()}
 #
 # Description: This file contains daily water temperature data for each timeseries at a single station.
 #
-#     Daily statistics (min/mean/max) were computed for each timeseries.
+#     Daily statistics (min/mean/max) were computed for each continuous timeseries.
 #
-#     Both discrete and continuous timeseries data are included in this daily aggregation.
+#     Only continuous timeseries data are included in this daily aggregation. Measurements
+#     for discrete timeseries are provided in the raw values table below.
 #
 #     QAQC flags are also aggregated to daily timesteps. If one or more measurements
 #     during a single day were flagged then that flag is assigned to the entire day.
@@ -381,7 +382,9 @@ ${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'long
 #
 ${seriesTable(series)}
 #
-${dailyValuesTable(values)}
+${dailyValuesTable(dailyValues)}
+#
+${rawValuesTable(discreteValues, station.timezone)}
   `
 
   saveFile(body, filename)

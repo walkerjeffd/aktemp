@@ -200,16 +200,31 @@ export default {
       //   }))
       // }).flat()
       //   .sort((a, b) => ascending(a.series_id, b.series_id) || ascending(a.date, b.date))
-      const values = series.map(s => {
-        return s.daily.values.map(v => ({
-          ...v,
-          series_id: s.id
-        }))
-      }).flat()
+      const dailyValues = series
+        .filter(d => d.interval === 'CONTINUOUS')
+        .map(s => {
+          return s.daily.values.map(v => ({
+            ...v,
+            series_id: s.id
+          }))
+        })
+        .flat()
         .sort((a, b) => ascending(a.series_id, b.series_id) || ascending(a.date, b.date))
+      const discreteValues = series
+        .filter(d => d.interval === 'DISCRETE')
+        .map(s => {
+          return s.daily.values.map(v => ({
+            series_id: s.id,
+            datetime: v.datetime,
+            temp_c: v.temp_c,
+            flag: v.flag
+          }))
+        })
+        .flat()
+        .sort((a, b) => ascending(a.series_id, b.series_id) || ascending(a.datetime, b.datetime))
 
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-daily.csv`
-      this.$download.seriesDailyValues(filename, this.station, series, values)
+      this.$download.seriesDailyValues(filename, this.station, series, dailyValues, discreteValues)
     }
   }
 }

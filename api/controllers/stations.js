@@ -55,6 +55,7 @@ const getStationSeries = async (req, res, next) => {
     .$relatedQuery('series')
     .modify('stationOrganization')
     .modify('filename')
+    .withGraphFetched('flags')
   return res.status(200).json(series)
 }
 

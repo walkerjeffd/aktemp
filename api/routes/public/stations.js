@@ -7,6 +7,7 @@ const {
   getStation,
   getStationSeries,
   getStationSeriesDaily,
+  getStationSeriesDiscrete,
   getStationSeriesFlags,
   getStationProfiles,
   getStationProfilesValues
@@ -32,6 +33,10 @@ router.route('/:stationId/series/')
 router.route('/:stationId/series/daily')
   .all(asyncHandler(attachStation))
   .get(asyncHandler(getStationSeriesDaily))
+
+router.route('/:stationId/series/discrete')
+  .all(asyncHandler(attachStation))
+  .get(asyncHandler(getStationSeriesDiscrete))
 
 router.route('/:stationId/series/flags')
   .all(asyncHandler(attachStation))

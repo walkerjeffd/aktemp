@@ -67,14 +67,23 @@ const getStationSeriesDaily = async (req, res, next) => {
     .max('temp_c as max_temp_c')
     .avg('temp_c as mean_temp_c')
     .joinRelated('[values, station]')
+    .where('interval', 'CONTINUOUS')
     .groupBy('date')
     .orderBy('date')
+  return res.status(200).json(values)
+}
+
+const getStationSeriesDiscrete = async (req, res, next) => {
+  const values = await res.locals.station.$relatedQuery('series')
+    .where('interval', 'DISCRETE')
+    .withGraphFetched('[flags, values]')
   return res.status(200).json(values)
 }
 
 const getStationSeriesFlags = async (req, res, next) => {
   const values = await res.locals.station.$relatedQuery('series')
     .select('flags.*')
+    .where('interval', 'CONTINUOUS')
     .joinRelated('flags(dates)')
   return res.status(200).json(values)
 }
@@ -121,6 +130,7 @@ module.exports = {
   getStation,
   getStationSeries,
   getStationSeriesDaily,
+  getStationSeriesDiscrete,
   getStationSeriesFlags,
   getStationProfiles,
   getStationProfilesValues,

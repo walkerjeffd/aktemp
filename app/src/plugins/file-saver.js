@@ -135,7 +135,7 @@ const columnDefs = {
     max_temp_c: {
       label: 'Maximum temperature (degC)'
     },
-    flags: {
+    flag: {
       label: 'QAQC flag(s)'
     }
   },
@@ -152,7 +152,7 @@ const columnDefs = {
     temp_c: {
       label: 'Temperature (degC)'
     },
-    flags: {
+    flag: {
       label: 'QAQC flag(s)'
     }
   },
@@ -354,7 +354,7 @@ ${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'long
 #
 ${seriesTable(series)}
 #
-${dailyValuesTable(values, ['date', 'n', 'min_temp_c', 'mean_temp_c', 'max_temp_c', 'flags'])}
+${dailyValuesTable(values, ['date', 'n', 'min_temp_c', 'mean_temp_c', 'max_temp_c', 'flag'])}
   `
 
   saveFile(body, filename)

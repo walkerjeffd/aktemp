@@ -162,14 +162,14 @@ export default {
         ([key, value]) => ({
           datetime: key,
           temp_c: mean(value.map(d => d.temp_c)),
-          flags: value.map(d => d.flag).join(',')
+          flag: value.map(d => d.flag).join(',')
         })
       )
       const outputValues = [results.values, groupedFlaggedValues].flat()
         .sort((a, b) => ascending(a.datetime, b.datetime))
       outputValues.forEach(d => {
         d.series_id = series.id
-        d.flags = d.flags || ''
+        d.flag = d.flag || ''
       })
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-${series.id}-raw.csv`
       this.$download.seriesRawValues(filename, this.station, series, outputValues)
@@ -177,26 +177,33 @@ export default {
     async downloadDaily (series) {
       console.log('downloadDaily', series)
 
+      // const values = series.map(s => {
+      //   const flaggedValues = s.daily.flags.map(flag => {
+      //     return flag.values.map(value => {
+      //       return {
+      //         ...value,
+      //         flag: flag.label
+      //       }
+      //     })
+      //   }).flat()
+
+      //   const flagMap = rollup(
+      //     flaggedValues,
+      //     v => v.map(d => d.flag).join(','),
+      //     d => d.date
+      //   )
+
+      //   return s.daily.values.map(v => ({
+      //     ...v,
+      //     series_id: s.id,
+      //     flags: flagMap.get(v.date)
+      //   }))
+      // }).flat()
+      //   .sort((a, b) => ascending(a.series_id, b.series_id) || ascending(a.date, b.date))
       const values = series.map(s => {
-        const flaggedValues = s.daily.flags.map(flag => {
-          return flag.values.map(value => {
-            return {
-              ...value,
-              flag: flag.label
-            }
-          })
-        }).flat()
-
-        const flagMap = rollup(
-          flaggedValues,
-          v => v.map(d => d.flag).join(','),
-          d => d.date
-        )
-
         return s.daily.values.map(v => ({
           ...v,
-          series_id: s.id,
-          flags: flagMap.get(v.date)
+          series_id: s.id
         }))
       }).flat()
         .sort((a, b) => ascending(a.series_id, b.series_id) || ascending(a.date, b.date))

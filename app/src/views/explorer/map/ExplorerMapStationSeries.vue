@@ -35,7 +35,9 @@ i<template>
 </template>
 
 <script>
+import { ascending } from 'd3'
 import { assignDailyFlags } from '@/lib/utils'
+const { flagLabel } = require('aktemp-utils/flags')
 
 export default {
   name: 'ExplorerMapStationSeries',
@@ -65,7 +67,12 @@ export default {
         plotOptions: {
           series: {
             gapSize: 2,
-            animation: false
+            animation: false,
+            states: {
+              inactive: {
+                opacity: 1
+              }
+            }
           },
           arearange: {
             lineWidth: 0,
@@ -158,6 +165,29 @@ export default {
 
       this.loading = true
       try {
+        const discreteSeries = await this.$http.public.get(`/stations/${this.station.id}/series/discrete`)
+          .then(d => d.data)
+
+        const discreteValues = discreteSeries.map(s => {
+          s.values.forEach(d => {
+            d.flag = []
+          })
+          s.flags.forEach(flag => {
+            const label = flagLabel(flag)
+            s.values.forEach(d => {
+              if (d.datetime >= flag.start_datetime && d.datetime <= flag.end_datetime) {
+                d.flag.push(label)
+              }
+            })
+          })
+          s.values.forEach(d => {
+            d.flag = d.flag.join(',')
+          })
+          return s.values
+        }).flat()
+          .sort((a, b) => ascending(a.datetime, b.datetime))
+        console.log(discreteValues)
+
         const values = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
           .then(d => d.data)
         const flags = await this.$http.public.get(`/stations/${this.station.id}/series/flags`)
@@ -169,6 +199,50 @@ export default {
         const { values: unflaggedValues, flags: flaggedValues } = assignDailyFlags(values, flags)
 
         this.chart.series = [
+          {
+            name: 'discrete-values',
+            type: 'line',
+            lineWidth: 0,
+            marker: {
+              enabled: true,
+              radius: 2
+            },
+            data: discreteValues
+              .filter(d => !d.flag)
+              .map(v => {
+                return [
+                  (new Date(v.datetime)).valueOf(),
+                  v.temp_c
+                ]
+              }),
+            tooltip: {
+              pointFormat: 'Discrete: <b>{point.y}</b> °C'
+            },
+            showInLegend: false
+          },
+          {
+            name: 'discrete-flags',
+            type: 'line',
+            lineWidth: 0,
+            marker: {
+              enabled: true,
+              radius: 2
+            },
+            data: discreteValues
+              .filter(d => !!d.flag)
+              .map(v => {
+                return {
+                  x: (new Date(v.datetime)).valueOf(),
+                  y: v.temp_c,
+                  flag: v.flag
+                }
+              }),
+            tooltip: {
+              pointFormat: 'Discrete: <b>{point.y}</b> °C (Flag: <b>{point.flag}</b>)'
+            },
+            color: 'orangered',
+            showInLegend: false
+          },
           {
             name: 'mean',
             type: 'line',

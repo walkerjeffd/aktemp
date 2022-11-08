@@ -332,18 +332,19 @@ ${profilesTable(profiles)}
   saveFile(body, filename)
 }
 
-function stationDailyValues (filename, station, series, values) {
+function stationDailyValues (filename, station, series, values, discrete) {
   const body = `${fileHeader()}
 #
 # Description: This file contains daily water temperature data for a single station.
 #
-#     Daily statistics (min/mean/max) were computed over all timeseries. If two or more
-#     timeseries overlap (e.g. duplicate loggers or loggers at different depths) then
+#     Daily statistics (min/mean/max) were computed over all continuous timeseries. If two
+#     or more timeseries overlap (e.g. duplicate loggers or loggers at different depths) then
 #     measurements from all loggers are aggregated within the same day. The daily
 #     or raw measurement data for each each logger can be downloaded on the Explore Station
 #     page for this station.
 #
-#     Both discrete and continuous timeseries data are included in this daily aggregation.
+#     Only continuous timeseries data are included in this daily aggregation. Measurements
+#     for discrete timeseries are provided in the raw values table below.
 #
 #     QAQC flags are also aggregated over all timeseries. If one or more measurements
 #     during a single day were flagged then that flag is assigned to the entire day.
@@ -355,6 +356,8 @@ ${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'long
 ${seriesTable(series)}
 #
 ${dailyValuesTable(values, ['date', 'n', 'min_temp_c', 'mean_temp_c', 'max_temp_c', 'flag'])}
+#
+${rawValuesTable(discrete)}
   `
 
   saveFile(body, filename)

@@ -47,6 +47,7 @@ export default {
       loading: true,
       error: null,
       about: false,
+      discrete: [],
       values: [],
       chart: {
         chart: {
@@ -186,7 +187,7 @@ export default {
           return s.values
         }).flat()
           .sort((a, b) => ascending(a.datetime, b.datetime))
-        console.log(discreteValues)
+        this.discrete = Object.freeze(discreteValues)
 
         const values = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
           .then(d => d.data)
@@ -313,7 +314,7 @@ export default {
         .then(d => d.data)
 
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-daily.csv`
-      this.$download.stationDailyValues(filename, this.station, series, this.values)
+      this.$download.stationDailyValues(filename, this.station, series, this.values, this.discrete)
     }
   }
 }

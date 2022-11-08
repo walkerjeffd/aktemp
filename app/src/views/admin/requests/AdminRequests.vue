@@ -46,7 +46,9 @@
         {{ item.created_at | timestamp('ff', 'local') }}
       </template>
       <template v-slot:item.pending="{ item }">
-        <Checkbox :value="item.pending"></Checkbox>
+        <v-chip v-if="item.pending" small label color="warning">
+          Pending
+        </v-chip>
       </template>
     </v-data-table>
 

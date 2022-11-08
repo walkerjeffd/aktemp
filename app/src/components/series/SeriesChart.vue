@@ -306,59 +306,104 @@ export default {
 
           const chartFlagSeries = dailyFlags.map((flag) => {
             const label = flagLabel(flag)
-            return [
-              {
-                id: `daily-mean-${series.id}-flag-${flag.id}`,
-                seriesId: series.id,
-                mode: 'daily',
-                flag: true,
-                type: 'line',
-                data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
-                tooltip: {
-                  pointFormat: `Series ${series.id}: <b>{point.y}</b> °C (Flag: <b>${label}</b>)`
-                },
-                linkedTo: 'flag-daily',
-                color: 'orangered',
-                marker: {
-                  enabled: flag.values.length === 1,
-                  radius: 3,
-                  symbol: 'circle'
-                }
+            const seriesMean = {
+              id: `daily-mean-${series.id}-flag-${flag.id}`,
+              seriesId: series.id,
+              mode: 'daily',
+              flag: true,
+              type: 'line',
+              data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
+              tooltip: {
+                pointFormat: `Series ${series.id}: <b>{point.y}</b> °C (Flag: <b>${label}</b>)`
               },
-              {
+              linkedTo: 'flag-daily',
+              color: 'orangered',
+              marker: {
+                enabled: flag.values.length === 1 || series.interval === 'DISCRETE',
+                radius: 3,
+                symbol: 'circle'
+              }
+            }
+            if (series.interval === 'DISCRETE') {
+              seriesMean.lineWidth = 0
+            }
+            let seriesRange
+            if (series.interval === 'CONTINUOUS') {
+              seriesRange = {
                 id: `daily-range-${series.id}-flag-${flag.id}`,
                 seriesId: series.id,
                 mode: 'daily',
                 flag: true,
                 type: 'arearange',
                 data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
-                linkedTo: 'flag-daily'
+                linkedTo: `daily-mean-${series.id}-flag-${flag.id}`
               }
-            ]
+            } else if (series.interval === 'DISCRETE') {
+              seriesRange = {
+                id: `daily-range-${series.id}-flag-${flag.id}`,
+                seriesId: series.id,
+                mode: 'daily',
+                flag: true,
+                type: 'columnrange',
+                tooltip: {
+                  pointFormat: null
+                },
+                data: flag.values.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
+                linkedTo: `daily-mean-${series.id}-flag-${flag.id}`
+              }
+            }
+            return [seriesMean, seriesRange]
           }).flat()
 
-          const chartSeries = [
-            {
-              id: `daily-mean-${series.id}`,
-              seriesId: series.id,
-              mode: 'daily',
-              type: 'line',
-              data: unflaggedValues.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
-              visible: true,
-              showInNavigator: false,
-              tooltip: {
-                pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
-              }
+          const seriesMean = {
+            id: `daily-mean-${series.id}`,
+            seriesId: series.id,
+            mode: 'daily',
+            type: 'line',
+            data: unflaggedValues.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
+            visible: true,
+            showInNavigator: false,
+            tooltip: {
+              pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
             },
-            {
+            marker: {
+              enabled: unflaggedValues.length === 1 || series.interval === 'DISCRETE',
+              radius: 3,
+              symbol: 'circle'
+            }
+          }
+          if (series.interval === 'DISCRETE') {
+            seriesMean.lineWidth = 0
+          }
+          let seriesRange
+          if (series.interval === 'CONTINUOUS') {
+            seriesRange = {
               id: `daily-range-${series.id}`,
               seriesId: series.id,
               mode: 'daily',
               type: 'arearange',
               data: unflaggedValues.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
               visible: true,
-              linkedTo: ':previous'
-            },
+              linkedTo: `daily-mean-${series.id}`
+            }
+          } else if (series.interval === 'DISCRETE') {
+            seriesRange = {
+              id: `daily-range-${series.id}`,
+              seriesId: series.id,
+              mode: 'daily',
+              type: 'columnrange',
+              data: unflaggedValues.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
+              visible: true,
+              tooltip: {
+                pointFormat: null
+              },
+              linkedTo: `daily-mean-${series.id}`
+            }
+          }
+
+          const chartSeries = [
+            seriesMean,
+            seriesRange,
             ...chartFlagSeries
           ]
 
@@ -426,6 +471,7 @@ export default {
               mode: 'raw',
               flag: true,
               type: 'line',
+              gapSize: 0,
               data,
               tooltip: {
                 pointFormat: `Series ${series.id}: <b>{point.y}</b> °C<br/>Flag: ${label}`
@@ -447,6 +493,7 @@ export default {
               seriesId: series.id,
               mode: 'raw',
               type: 'line',
+              gapSize: 0,
               data: unflaggedValues.map(d => [this.parseDatetime(d.datetime).valueOf(), d.temp_c]),
               tooltip: {
                 pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`

@@ -71,7 +71,7 @@
                       v-if="series.selected"
                       :series="series.selected"
                       @close="selectSeries()"
-                      @delete="onDeleteSeries()"
+                      @refresh="refreshSeries()"
                     ></SelectedSeriesCard>
                   </v-card-text>
                 </v-card>
@@ -94,7 +94,7 @@
                       v-if="profiles.selected"
                       :profile="profiles.selected"
                       @close="selectProfile()"
-                      @delete="onDeleteProfile()"
+                      @refresh="refreshProfiles()"
                     ></SelectedProfileCard>
                   </v-card-text>
                 </v-card>
@@ -223,13 +223,29 @@ export default {
         this.profiles.selected = profile
       }
     },
-    onDeleteSeries () {
+    async refreshSeries () {
+      let id
+      if (this.series.selected) {
+        id = this.series.selected.id
+      }
       this.selectSeries()
-      this.fetchSeries()
+      await this.fetchSeries()
+      if (id) {
+        const series = this.series.data.find(d => d.id === id)
+        if (series) this.selectSeries(series)
+      }
     },
-    onDeleteProfile () {
+    async refreshProfiles () {
+      let id
+      if (this.profiles.selected) {
+        id = this.profiles.selected.id
+      }
       this.selectProfile()
-      this.fetchProfiles()
+      await this.fetchProfiles()
+      if (id) {
+        const profile = this.profiles.data.find(d => d.id === id)
+        if (profile) this.selectProfile(profile)
+      }
     }
   }
 }

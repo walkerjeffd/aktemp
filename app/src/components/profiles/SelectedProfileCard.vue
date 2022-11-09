@@ -19,7 +19,7 @@
             </v-sheet>
             <v-divider dark class="my-2"></v-divider>
           </div>
-          <ProfilesInfo :profile="profile" @delete="$emit('delete')" />
+          <ProfilesInfo :profile="profile" @delete="$emit('delete')" @refresh="$emit('refresh')" />
         </v-col>
         <v-col cols="12" xl="6" v-if="$vuetify.breakpoint.xl">
           <v-sheet elevation="2" class="pa-4 fill-height">

@@ -10,7 +10,7 @@ async function attachFile (req, res, next) {
       .findById(req.params.fileId)
   } else {
     query = File.query()
-      .withGraphFetched('series(stationOrganization,filename)')
+      .withGraphFetched('series(stationOrganization,filename).flags')
       .withGraphFetched('profiles(stationOrganization,valuesSummary,filename).values')
       .findById(req.params.fileId)
   }

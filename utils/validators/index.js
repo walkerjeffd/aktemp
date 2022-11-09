@@ -1,4 +1,6 @@
 const { createFileSchema, fileFieldsSchema } = require('./file')
+const { createSeriesSchema } = require('./series')
+const { createProfileSchema } = require('./profile')
 const { stationSchema } = require('./station')
 
 const validateSchema = module.exports.validateSchema = function (schema, input) {
@@ -23,4 +25,12 @@ module.exports.validateFileConfig = function (config, fields, stations) {
 
 module.exports.validateStation = function (station) {
   return validateSchema(stationSchema, station)
+}
+
+module.exports.validateSeries = function (series, stations) {
+  return validateSchema(createSeriesSchema(stations), series)
+}
+
+module.exports.validateProfile = function (profile, stations) {
+  return validateSchema(createProfileSchema(stations), profile)
 }

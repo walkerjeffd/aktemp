@@ -54,7 +54,7 @@
           <td class="text-right grey--text text--darken-2">
             Accuracy
           </td>
-          <td class="font-weight-bold">{{ profile.accuracy }}</td>
+          <td class="font-weight-bold">{{ profile.accuracy | accuracy }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -69,6 +69,10 @@
 
     <v-divider class="mb-4"></v-divider>
 
+    <Alert v-if="downloadStatus.error" type="error" title="Failed to Download Profile" class="mx-4">
+      {{ downloadStatus.error }}
+    </Alert>
+
     <div class="mx-4 pb-2">
       <div class="my-4">
         <v-btn
@@ -77,7 +81,8 @@
           outlined
           block
           download
-          disabled
+          :loading="downloadStatus.loading"
+          @click="download"
         >
           <v-icon left>mdi-download</v-icon> Download
         </v-btn>
@@ -86,7 +91,7 @@
           class="my-4"
           outlined
           block
-          disabled
+          @click="edit"
         >
           <v-icon left>mdi-pencil</v-icon>
           Edit Profile
@@ -106,6 +111,8 @@
       <Alert type="error" title="Error Occurred" v-if="deleteStatus.error">{{ deleteStatus.error }}</Alert>
     </div>
 
+    <ManageProfileEditForm ref="form"></ManageProfileEditForm>
+
     <ConfirmDialog ref="confirmDelete">
       <v-alert
         type="error"
@@ -124,18 +131,30 @@
 </template>
 
 <script>
+import ManageProfileEditForm from '@/views/manage/profiles/ManageProfileEditForm'
 export default {
   name: 'ProfileInfo',
   props: ['profile'],
+  components: { ManageProfileEditForm },
   data () {
     return {
       deleteStatus: {
+        loading: false,
+        error: null
+      },
+      downloadStatus: {
         loading: false,
         error: null
       }
     }
   },
   methods: {
+    async edit () {
+      const profile = await this.$refs.form.open(this.profile)
+      if (profile) {
+        this.$emit('refresh')
+      }
+    },
     async confirmDelete () {
       const ok = await this.$refs.confirmDelete.open(
         'Confirm Deletion',
@@ -156,6 +175,22 @@ export default {
         this.deleteStatus.error = err.toString() || 'Unknown error'
       } finally {
         this.deleteStatus.loading = false
+      }
+    },
+    async download () {
+      this.downloadStatus.loading = true
+      this.downloadStatus.error = null
+
+      try {
+        const station = await this.$http.restricted.get(`/stations/${this.profile.station_id}`)
+          .then(d => d.data)
+        const filename = `AKTEMP-${station.organization_code}-${station.code}-profile-${this.profile.id}.csv`
+        this.$download.profilesValues(filename, station, [this.profile])
+      } catch (err) {
+        console.log(err)
+        this.downloadStatus.error = this.$errorMessage(err)
+      } finally {
+        this.downloadStatus.loading = false
       }
     }
   }

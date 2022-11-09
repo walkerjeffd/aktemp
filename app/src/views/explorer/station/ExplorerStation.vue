@@ -119,7 +119,7 @@ export default {
         .then(d => d.data)
       const profiles = await this.$http.public.get(`/stations/${this.station.id}/profiles`)
         .then(d => d.data)
-      this.$download.stationMetadata(`AKTEMP-station-${this.station.organization_code}-${this.station.code}.csv`, this.station, series, profiles)
+      this.$download.stationMetadata(`AKTEMP-${this.station.organization_code}-${this.station.code}-station.csv`, this.station, series, profiles)
     }
   }
 }

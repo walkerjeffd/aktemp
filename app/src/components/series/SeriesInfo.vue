@@ -68,13 +68,13 @@
           </td>
           <td class="font-weight-bold">{{ series.frequency ? `${series.frequency} min` : '' }}</td>
         </tr>
-        <tr>
+        <tr v-if="series.interval === 'CONTINUOUS'">
           <td class="text-right grey--text text--darken-2">
             Depth Cat.
           </td>
           <td class="font-weight-bold">{{ series.depth_category }}</td>
         </tr>
-        <tr>
+        <tr v-if="series.interval === 'CONTINUOUS'">
           <td class="text-right grey--text text--darken-2">
             Depth (m)
           </td>
@@ -84,9 +84,9 @@
           <td class="text-right grey--text text--darken-2">
             Accuracy
           </td>
-          <td class="font-weight-bold">{{ series.accuracy }}</td>
+          <td class="font-weight-bold">{{ series.accuracy | accuracy }}</td>
         </tr>
-        <tr>
+        <tr v-if="series.interval === 'CONTINUOUS'">
           <td class="text-right grey--text text--darken-2">
             SOP Bath
           </td>
@@ -107,6 +107,10 @@
 
     <v-divider class="mb-4"></v-divider>
 
+    <Alert v-if="downloadStatus.error" type="error" title="Failed to Download Series" class="mx-4">
+      {{ downloadStatus.error }}
+    </Alert>
+
     <div class="mx-4 pb-2">
       <div class="my-4">
         <v-btn
@@ -115,7 +119,8 @@
           outlined
           block
           download
-          disabled
+          :loading="downloadStatus.loading"
+          @click="download"
         >
           <v-icon left>mdi-download</v-icon> Download
         </v-btn>
@@ -124,7 +129,7 @@
           class="my-4"
           outlined
           block
-          disabled
+          @click="edit"
         >
           <v-icon left>mdi-pencil</v-icon>
           Edit Series
@@ -157,6 +162,8 @@
       <Alert type="error" title="Error Occurred" v-if="deleteStatus.error">{{ deleteStatus.error }}</Alert>
     </div>
 
+    <ManageSeriesEditForm ref="form"></ManageSeriesEditForm>
+
     <ConfirmDialog ref="confirmDelete">
       <v-alert
         type="error"
@@ -175,18 +182,32 @@
 </template>
 
 <script>
+import { rollup, mean, ascending } from 'd3'
+import { assignRawFlags } from '@/lib/utils'
+import ManageSeriesEditForm from '@/views/manage/series/ManageSeriesEditForm'
 export default {
   name: 'SeriesInfo',
   props: ['series'],
+  components: { ManageSeriesEditForm },
   data () {
     return {
       deleteStatus: {
+        loading: false,
+        error: null
+      },
+      downloadStatus: {
         loading: false,
         error: null
       }
     }
   },
   methods: {
+    async edit () {
+      const series = await this.$refs.form.open(this.series)
+      if (series) {
+        this.$emit('refresh')
+      }
+    },
     async confirmDelete () {
       const ok = await this.$refs.confirmDelete.open(
         'Confirm Deletion',
@@ -207,6 +228,59 @@ export default {
         this.deleteStatus.error = err.toString() || 'Unknown error'
       } finally {
         this.deleteStatus.loading = false
+      }
+    },
+    async download () {
+      this.downloadStatus.loading = true
+      this.downloadStatus.error = null
+
+      try {
+        const station = await this.$http.restricted.get(`/stations/${this.series.station_id}`)
+          .then(d => d.data)
+
+        const values = await this.$http.public
+          .get(`/series/${this.series.id}/values`)
+          .then(d => d.data)
+        const flags = await this.$http.public
+          .get(`/series/${this.series.id}/flags`)
+          .then(d => d.data)
+
+        const results = assignRawFlags(values, flags)
+        const flaggedValues = results.flags.map(flag => {
+          return flag.values.map(value => {
+            return {
+              ...value,
+              flag: flag.label
+            }
+          })
+        }).flat()
+        // combine overlapping flags
+        const groupedFlaggedValues = Array.from(
+          rollup(
+            flaggedValues,
+            v => v,
+            d => d.datetime
+          ),
+          ([key, value]) => ({
+            datetime: key,
+            temp_c: mean(value.map(d => d.temp_c)),
+            flag: value.map(d => d.flag).join(',')
+          })
+        )
+        const outputValues = [results.values, groupedFlaggedValues].flat()
+          .sort((a, b) => ascending(a.datetime, b.datetime))
+        outputValues.forEach(d => {
+          d.series_id = this.series.id
+          d.flag = d.flag || ''
+        })
+
+        const filename = `AKTEMP-${station.organization_code}-${station.code}-series-${this.series.id}-raw.csv`
+        this.$download.seriesRawValues(filename, station, this.series, outputValues)
+      } catch (err) {
+        console.log(err)
+        this.downloadStatus.error = this.$errorMessage(err)
+      } finally {
+        this.downloadStatus.loading = false
       }
     }
   }

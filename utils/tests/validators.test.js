@@ -5,7 +5,9 @@ const { parseBoolean } = require('../parsers')
 const {
   validateFileFields,
   validateFileConfig,
-  validateStation
+  validateStation,
+  validateSeries,
+  validateProfile
 } = require('../validators')
 const { readCsvFile } = require('./utils')
 
@@ -32,7 +34,7 @@ describe('validateFileFields()', () => {
   })
 })
 
-describe.only('validateFileConfig()', () => {
+describe('validateFileConfig()', () => {
   const fields = ['stationCode', 'datetime', 'date', 'time', 'utcOffset', 'temp_c', 'flag', 'depth_m']
   const stations = [{ code: 'TEST' }]
 
@@ -162,6 +164,73 @@ describe('validateStation()', () => {
       expect(() => validateStation(row.value)).not.toThrow()
     } else {
       expect(() => validateStation(row.value)).toThrow()
+    }
+  })
+})
+
+describe('validateSeries()', () => {
+  // const schema = {
+  //   station_id: ''
+  //   depth_m: ''
+  //   depth_category: ''
+  //   interval: ''
+  //   frequency: ''
+  //   accuracy: ''
+  //   sop_bath: ''
+  //   reviewed: ''
+  // }
+  const stations = [{
+    id: 1
+  }]
+
+  let rows = readCsvFile(path.join(__dirname, './files/validateSeries/series.csv'))
+  rows = rows.map(({ valid, ...value }, i) => {
+    valid = parseBoolean(valid, false)
+    return {
+      row: i + 1,
+      valid,
+      expected: valid ? 'passes' : 'fails',
+      value
+    }
+  })
+
+  test.each(rows)('row $row $expected', (row) => {
+    if (row.valid) {
+      delete row.valid
+      expect(() => validateSeries(row.value, stations)).not.toThrow()
+    } else {
+      expect(() => validateSeries(row.value, stations)).toThrow()
+    }
+  })
+})
+
+describe('validateProfile()', () => {
+  // const schema = {
+  //   station_id: ''
+  //   accuracy: ''
+  //   reviewed: ''
+  // }
+  const stations = [{
+    id: 1
+  }]
+
+  let rows = readCsvFile(path.join(__dirname, './files/validateProfile/profiles.csv'))
+  rows = rows.map(({ valid, ...value }, i) => {
+    valid = parseBoolean(valid, false)
+    return {
+      row: i + 1,
+      valid,
+      expected: valid ? 'passes' : 'fails',
+      value
+    }
+  })
+
+  test.each(rows)('row $row $expected', (row) => {
+    if (row.valid) {
+      delete row.valid
+      expect(() => validateProfile(row.value, stations)).not.toThrow()
+    } else {
+      expect(() => validateProfile(row.value, stations)).toThrow()
     }
   })
 })

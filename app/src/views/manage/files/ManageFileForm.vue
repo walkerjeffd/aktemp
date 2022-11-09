@@ -761,9 +761,9 @@
                   ></v-combobox>
                 </div>
 
-                <div class="mt-2">
+                <div class="mt-2" v-if="config.file_type === 'SERIES'">
                   <p>
-                    Which column contain QAQC flags? (Optional)
+                    Which column contains QAQC flags? (Optional)
                   </p>
                   <div class="text-center">
                     <v-select

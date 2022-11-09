@@ -333,7 +333,7 @@ ${profilesTable(profiles)}
 }
 
 function stationDailyValues (filename, station, series, values, discrete) {
-  const body = `${fileHeader()}
+  let body = `${fileHeader()}
 #
 # Description: This file contains daily water temperature data for a single station.
 #
@@ -344,7 +344,7 @@ function stationDailyValues (filename, station, series, values, discrete) {
 #     page for this station.
 #
 #     Only continuous timeseries data are included in this daily aggregation. Measurements
-#     for discrete timeseries are provided in the raw values table below.
+#     for discrete timeseries are provided in the raw values table below (if any).
 #
 #     QAQC flags are also aggregated over all timeseries. If one or more measurements
 #     during a single day were flagged then that flag is assigned to the entire day.
@@ -356,22 +356,25 @@ ${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'long
 ${seriesTable(series)}
 #
 ${dailyValuesTable(values, ['date', 'n', 'min_temp_c', 'mean_temp_c', 'max_temp_c', 'flag'])}
-#
+`
+  if (discrete && discrete.length > 0) {
+    body += `#
 ${rawValuesTable(discrete, station.timezone)}
-  `
+`
+  }
 
   saveFile(body, filename)
 }
 
 function seriesDailyValues (filename, station, series, dailyValues, discreteValues) {
-  const body = `${fileHeader()}
+  let body = `${fileHeader()}
 #
 # Description: This file contains daily water temperature data for each timeseries at a single station.
 #
 #     Daily statistics (min/mean/max) were computed for each continuous timeseries.
 #
 #     Only continuous timeseries data are included in this daily aggregation. Measurements
-#     for discrete timeseries are provided in the raw values table below.
+#     for discrete timeseries are provided in the raw values table below (if any).
 #
 #     QAQC flags are also aggregated to daily timesteps. If one or more measurements
 #     during a single day were flagged then that flag is assigned to the entire day.
@@ -383,9 +386,12 @@ ${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'long
 ${seriesTable(series)}
 #
 ${dailyValuesTable(dailyValues)}
-#
+`
+  if (discreteValues && discreteValues.length > 0) {
+    body += `#
 ${rawValuesTable(discreteValues, station.timezone)}
-  `
+`
+  }
 
   saveFile(body, filename)
 }

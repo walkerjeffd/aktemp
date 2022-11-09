@@ -51,7 +51,7 @@
                   v-if="series.selected"
                   :series="series.selected"
                   @close="selectSeries()"
-                  @delete="onDeleteSeries()"
+                  @refresh="refreshSeries()"
                 ></SelectedSeriesCard>
               </v-sheet>
               <v-sheet v-if="file.type === 'PROFILES'">
@@ -72,7 +72,7 @@
                   v-if="profiles.selected"
                   :profile="profiles.selected"
                   @close="selectProfile()"
-                  @delete="onDeleteProfile()"
+                  @refresh="refreshProfiles()"
                 ></SelectedProfileCard>
               </v-sheet>
             </div>
@@ -182,13 +182,29 @@ export default {
         this.profiles.selected = profile
       }
     },
-    onDeleteSeries () {
+    async refreshSeries () {
+      let id
+      if (this.series.selected) {
+        id = this.series.selected.id
+      }
       this.selectSeries()
-      this.fetch()
+      await this.fetch()
+      if (id) {
+        const series = this.file.series.find(d => d.id === id)
+        if (series) this.selectSeries(series)
+      }
     },
-    onDeleteProfile () {
+    async refreshProfiles () {
+      let id
+      if (this.profiles.selected) {
+        id = this.profiles.selected.id
+      }
       this.selectProfile()
-      this.fetch()
+      await this.fetch()
+      if (id) {
+        const profile = this.file.profiles.find(d => d.id === id)
+        if (profile) this.selectProfile(profile)
+      }
     }
   }
 }

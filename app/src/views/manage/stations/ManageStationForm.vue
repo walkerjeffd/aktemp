@@ -201,7 +201,7 @@ const {
 const { validateStation } = require('aktemp-utils/validators')
 
 export default {
-  name: 'StationForm',
+  name: 'ManageStationForm',
   data () {
     return {
       resolve: null,

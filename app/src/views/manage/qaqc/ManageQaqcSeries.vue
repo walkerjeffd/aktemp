@@ -21,7 +21,7 @@
             :station="station"
             style="height:300px"
           ></StationsMap>
-          <SeriesInfo :series="series"></SeriesInfo>
+          <SeriesInfo :series="series" @refresh="fetch"></SeriesInfo>
         </v-col>
         <v-col cols="12" lg="8" xl="9">
           <v-sheet>
@@ -306,7 +306,6 @@ export default {
       try {
         this.series = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}`)
           .then(d => d.data)
-        console.log(this.organization.id, this.series)
         if (this.series.organization_id !== this.organization.id) {
           return this.$router.push({
             name: 'manageQaqc'

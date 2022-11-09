@@ -1,0 +1,10 @@
+﻿valid,station_id,accuracy,reviewed
+TRUE,1,,
+FALSE,2,,
+FALSE,,,
+TRUE,1,1,
+TRUE,1,2,
+FALSE,1,INVALID,
+TRUE,1,,TRUE
+TRUE,1,,FALSE
+FALSE,1,,INVALID

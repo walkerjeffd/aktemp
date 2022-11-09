@@ -221,8 +221,7 @@ export default {
       this.render()
     },
     flags () {
-      console.log('watch:flags', this.flags)
-      // this.updateFlags()
+      // console.log('watch:flags', this.flags)
       this.render()
     }
   },
@@ -248,18 +247,18 @@ export default {
       const chartIdsToRemove = this.chart.series
         .filter(d => d.options.seriesId && !seriesIds.includes(d.options.seriesId))
         .map(d => d.options.id)
-      console.log('removeUnselectedSeries', chartIdsToRemove)
+      // console.log('removeUnselectedSeries', chartIdsToRemove)
       chartIdsToRemove.forEach(id => {
         const series = this.chart.get(id)
         if (series) {
-          console.log(`removeUnselectedSeries: remove(${id})`)
+          // console.log(`removeUnselectedSeries: remove(${id})`)
           series.remove(false)
         }
       })
-      console.log('removeUnselectedSeries', this.chart.series.length)
+      // console.log('removeUnselectedSeries', this.chart.series.length)
     },
     async afterSetExtremes () {
-      console.log('afterSetExtremes')
+      // console.log('afterSetExtremes')
       const datetimeRange = this.getDatetimeRange()
       if (!datetimeRange) return
 
@@ -275,20 +274,21 @@ export default {
     },
     updateFlags () {
       this.series.forEach((s) => {
-        console.log(`updateFlags(${s.id})`)
+        // console.log(`updateFlags(${s.id})`)
         if (s.daily && s.daily.values) {
-          s.daily.values = this.assignFlags(s, s.daily.values, this.flags, 'daily')
+          s.daily.values = this.assignFlags(s, s.daily.values, this.flags || s.flags, 'daily')
           s.daily.series = this.createDailyChartSeries(s)
         }
         if (s.raw && s.raw.values) {
-          s.raw.values = this.assignFlags(s, s.raw.values, this.flags, 'raw')
+          s.raw.values = this.assignFlags(s, s.raw.values, this.flags || s.flags, 'raw')
           s.raw.series = this.createRawChartSeries(s)
         }
       })
       this.render()
     },
     assignFlags (s, values, flags, mode) {
-      console.log(`assignFlags(${s.id})`, values)
+      if (!flags) return
+      console.log(`assignFlags(${s.id})`, values, flags)
       values.forEach(d => {
         d.flag = []
       })
@@ -348,7 +348,7 @@ export default {
     },
     async fetchDaily (series) {
       if (series.daily && series.daily.values) return series.daily.values
-      console.log('fetchDaily', series.id)
+      // console.log('fetchDaily', series.id)
 
       if (series.interval === 'CONTINUOUS') {
         const values = await this.$http.public
@@ -516,12 +516,12 @@ export default {
     },
     renderDailySeries (series) {
       if (!series.daily || !series.daily.series) return
-      console.log(`renderDailySeries(${series.id})`)
+      // console.log(`renderDailySeries(${series.id})`)
       series.daily.series.forEach(d => {
         let chartSeries = this.chart.get(d.id)
-        console.log(`renderDailySeries(${d.id}): get `, chartSeries)
+        // console.log(`renderDailySeries(${d.id}): get `, chartSeries)
         if (!chartSeries) {
-          console.log(`renderDailySeries(${d.id}): add `, d)
+          // console.log(`renderDailySeries(${d.id}): add `, d)
           this.chart.addSeries(d, false)
           chartSeries = this.chart.get(d.id)
         } else {
@@ -529,17 +529,17 @@ export default {
         }
         if (d.interval === 'DISCRETE') {
           if (!d.flag || this.showFlags) {
-            console.log(`renderDailySeries(${d.id}): visible=true`)
+            // console.log(`renderDailySeries(${d.id}): visible=true`)
             chartSeries.setVisible(true, false)
           } else {
-            console.log(`renderDailySeries(${d.id}): visible=false`)
+            // console.log(`renderDailySeries(${d.id}): visible=false`)
             chartSeries.setVisible(false, false)
           }
         } else if (this.mode === 'daily' && (!d.flag || this.showFlags)) {
-          console.log(`renderDailySeries(${d.id}): visible=true`)
+          // console.log(`renderDailySeries(${d.id}): visible=true`)
           this.chart.get(d.id).setVisible(true, false)
         } else {
-          console.log(`renderDailySeries(${d.id}): visible=false`)
+          // console.log(`renderDailySeries(${d.id}): visible=false`)
           chartSeries.setVisible(false, false)
         }
       })
@@ -551,7 +551,7 @@ export default {
           series.raw.end.valueOf() === end.valueOf()
       ) return series.raw.values
 
-      console.log(`fetchRaw(${series.id})`, start.toISOString(), end.toISOString())
+      // console.log(`fetchRaw(${series.id})`, start.toISOString(), end.toISOString())
 
       const values = await this.$http.public
         .get(`/series/${series.id}/values?start=${start.toISOString()}&end=${end.toISOString()}`)
@@ -611,22 +611,22 @@ export default {
     },
     renderRawSeries (series) {
       if (!series.raw || !series.raw.series) return
-      console.log(`renderRawSeries(${series.id})`)
+      // console.log(`renderRawSeries(${series.id})`)
       series.raw.series.forEach(d => {
         let chartSeries = this.chart.get(d.id)
-        console.log(`renderRawSeries(${d.id}): get `, chartSeries)
+        // console.log(`renderRawSeries(${d.id}): get `, chartSeries)
         if (!chartSeries) {
-          console.log(`renderRawSeries(${d.id}): add `, d)
+          // console.log(`renderRawSeries(${d.id}): add `, d)
           this.chart.addSeries(d, false)
           chartSeries = this.chart.get(d.id)
         } else {
           chartSeries.setData(d.data, false)
         }
         if (this.mode === 'raw' && (!d.flag || this.showFlags)) {
-          console.log(`renderRawSeries(${d.id}): visible=true`)
+          // console.log(`renderRawSeries(${d.id}): visible=true`)
           chartSeries.setVisible(true, false)
         } else {
-          console.log(`renderRawSeries(${d.id}): visible=false`)
+          // console.log(`renderRawSeries(${d.id}): visible=false`)
           chartSeries.setVisible(false, false)
         }
       })
@@ -666,7 +666,7 @@ export default {
       this.renderRawSeries(s)
     },
     renderBands () {
-      console.log('renderBands', this.flags)
+      // console.log('renderBands', this.flags)
       let bands = []
       if (this.flags) {
         bands = this.flags.map(d => {
@@ -716,7 +716,7 @@ export default {
       })
     },
     async render () {
-      console.log('render', this.mode)
+      // console.log('render', this.mode)
 
       if (this.mode === 'raw') {
         await this.initRaw()
@@ -730,7 +730,7 @@ export default {
     },
 
     updateNavigator () {
-      console.log('updateNavigator')
+      // console.log('updateNavigator')
       if (!this.chart) return
 
       const values = this.series

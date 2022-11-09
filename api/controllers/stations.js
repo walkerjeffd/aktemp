@@ -94,6 +94,7 @@ const getStationProfiles = async (req, res, next) => {
     .modify('stationOrganization')
     .modify('filename')
     .modify('valuesSummary')
+    .withGraphFetched('values(defaultSelect,defaultSort)')
   return res.status(200).json(profiles)
 }
 

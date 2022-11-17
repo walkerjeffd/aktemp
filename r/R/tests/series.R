@@ -539,5 +539,53 @@ targets_test_series <- list(
       mutate(filename = "series.csv") %>%
       write_csv(filename, na = "")
     filename
+  }, format = "file"),
+
+  tar_target(test_series_year, {
+    x_values <- uaa_data$values %>%
+      filter(
+        station_code == "Little Su 1",
+        logger_sn == 20431757,
+        minute(datetime) == 0
+      ) %>%
+      arrange(datetime)
+    x_flags <- tribble(
+      ~start_datetime, ~end_datetime, ~flag, ~add,
+      "2020-10-05 12:00", "2020-10-05 12:00", "1h", -10,
+      "2020-10-08 00:00", "2020-10-08 23:00", "1d", 20,
+      "2021-05-01 12:00", "2021-05-09 11:00", "10d-1", 20,
+      "2021-05-11 00:00", "2021-05-19 23:00", "10d-2", -20,
+      "2021-07-01 00:00", "2021-07-05 23:00", "X", 10,
+      "2021-07-06 00:00", "2021-07-10 23:00", "XY", 15,
+      "2021-07-11 00:00", "2021-07-15 23:00", "Y", 5
+    ) %>%
+      mutate(
+        across(ends_with("_datetime"), ymd_hm)
+      )
+    x <- x_values %>%
+      fuzzyjoin::fuzzy_left_join(
+        x_flags,
+        by = c(
+          "datetime" = "start_datetime",
+          "datetime" = "end_datetime"
+        ),
+        match_fun = list(`>=`, `<=`)
+      ) %>%
+      mutate(temp_c = temp_c + coalesce(add, 0)) %>%
+      select(-ends_with("_datetime"), -add)
+    x
+  }),
+  tar_target(test_series_year_plot, {
+    test_series_year %>%
+      ggplot(aes(datetime, temp_c)) +
+      geom_line() +
+      geom_point(data = . %>% filter(!is.na(flag)), color = "red")
+  }),
+  tar_target(test_series_year_csv, {
+    filename <- "../cli/tests/files/series/csv/series-year.csv"
+    test_series_year %>%
+      select(datetime, temp_c, flag) %>%
+      write_csv(filename, na = "")
+    filename
   }, format = "file")
 )

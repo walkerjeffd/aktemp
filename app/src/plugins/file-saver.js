@@ -195,6 +195,26 @@ const columnDefs = {
     temp_c: {
       label: 'Temperature (degC)'
     }
+  },
+  flags: {
+    id: {
+      label: 'Flag ID'
+    },
+    series_id: {
+      label: 'Series ID'
+    },
+    start_datetime: {
+      label: 'Start Timestamp (local timezone)'
+    },
+    end_datetime: {
+      label: 'End Timestamp (local timezone)'
+    },
+    flag_type_id: {
+      label: 'Flag Type'
+    },
+    flag_type_other: {
+      label: 'Flag (Other)'
+    }
   }
 }
 
@@ -307,6 +327,28 @@ function rawValuesTable (values, timezone, columns = Object.keys(columnDefs.rawV
   const table = Papa.unparse(rows, { columns })
   return `${hr}
 # Raw Values Table
+${descriptions.join('\n')}
+#
+${table}`
+}
+
+function flagsTable (flags, timezone, columns = Object.keys(columnDefs.flags)) {
+  const descriptions = columns.map(d => {
+    return `#     ${d}: ${columnDefs.flags[d].label}`
+  })
+  const rows = flags.map(d => {
+    const x = { ...d }
+    if (columns.includes('start_datetime')) {
+      x.start_datetime = formatTimestamp(x.start_datetime, 'D T', timezone)
+    }
+    if (columns.includes('end_datetime')) {
+      x.end_datetime = formatTimestamp(x.end_datetime, 'D T', timezone)
+    }
+    return x
+  })
+  const table = Papa.unparse(rows, { columns })
+  return `${hr}
+# Flags Table
 ${descriptions.join('\n')}
 #
 ${table}`
@@ -435,6 +477,21 @@ ${profilesValuesTable(values)}
   saveFile(body, filename)
 }
 
+function flags (filename, station, series, flags) {
+  const body = `${fileHeader()}
+#
+# Description: This file contains the QAQC flags for a single timeseries.
+#
+${stationsTable([station], ['organization_code', 'id', 'code', 'latitude', 'longitude', 'timezone', 'description', 'waterbody_name', 'waterbody_type', 'placement', 'mixed', 'active', 'reference'])}
+#
+${seriesTable([series])}
+#
+${flagsTable(flags, station.timezone)}
+  `
+
+  saveFile(body, filename)
+}
+
 function saveFile (body, filename) {
   const blob = new Blob([body], {
     type: 'text/csv;charset=utf-8'
@@ -448,5 +505,6 @@ Vue.prototype.$download = {
   stationDailyValues,
   seriesDailyValues,
   profilesValues,
-  seriesRawValues
+  seriesRawValues,
+  flags
 }

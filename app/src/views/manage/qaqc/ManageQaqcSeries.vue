@@ -26,7 +26,7 @@
         <v-col cols="12" lg="8" xl="9">
           <v-sheet>
             <v-row>
-              <v-col cols="12" xl="6" class="order-last order-xl-first">
+              <v-col cols="12" xl="7" class="order-last order-xl-first">
                 <v-sheet elevation="2">
                   <v-toolbar color="grey lighten-3" flat dense>
                     <div class="text-overline">QAQC Flags</div>
@@ -74,11 +74,12 @@
                         @click="confirmDeleteAllFlags"
                         :disabled="flags.length === 0"
                       ><v-icon small left>mdi-delete</v-icon> Delete All</v-btn>
+                      <DownloadButton @click="download" text="Download" small />
                     </template>
                   </v-data-table>
                 </v-sheet>
               </v-col>
-              <v-col cols="12" xl="6">
+              <v-col cols="12" xl="5">
                 <v-card v-if="showForm">
                   <v-toolbar color="grey lighten-3" flat dense>
                     <div class="text-overline"><span v-if="flag.selected.id === null">New</span><span v-else>Edit</span> Flag</div>
@@ -96,6 +97,7 @@
                         </div>
 
                         <v-divider></v-divider>
+
                         <v-simple-table>
                           <tbody>
                             <tr>
@@ -107,12 +109,114 @@
                               <td class="font-weight-bold text-left">
                                 {{ flag.selected.start_datetime | timestamp('ff ZZZZ', series.station_timezone) }}
                               </td>
+                              <td style="width:0">
+                                <v-menu
+                                  v-model="start.show"
+                                  :close-on-content-click="false"
+                                  :nudge-width="300"
+                                  offset-x
+                                >
+                                  <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                      v-bind="attrs"
+                                      v-on="on"
+                                      small
+                                      outlined
+                                      class="ml-8"
+                                    >
+                                      <v-icon left>mdi-pencil</v-icon> Edit
+                                    </v-btn>
+                                  </template>
+
+                                  <v-card>
+                                    <v-card-text>
+                                      <v-text-field
+                                        v-model="start.value"
+                                        placeholder="Start Date/time"
+                                        hint="Must be in ISO format ('yyyy-MM-dd HH:mm')"
+                                        persistent-hint
+                                        :error-messages="start.error"
+                                      >
+                                      </v-text-field>
+                                    </v-card-text>
+
+                                    <v-card-actions>
+                                      <v-btn
+                                        color="primary"
+                                        text
+                                        @click="saveStart"
+                                      >
+                                        Save
+                                      </v-btn>
+                                      <v-spacer></v-spacer>
+                                      <v-btn
+                                        text
+                                        @click="start.show = false"
+                                      >
+                                        Cancel
+                                      </v-btn>
+                                    </v-card-actions>
+                                  </v-card>
+                                </v-menu>
+                              </td>
+                            </tr>
+                            <tr>
                               <td
                                 class="text-right grey--text text--darken-2"
                                 style="width:30px">
                                 End
                               </td>
                               <td class="font-weight-bold text-left">{{ flag.selected.end_datetime | timestamp('ff ZZZZ', series.station_timezone) }}</td>
+                              <td style="width:0">
+                                <v-menu
+                                  v-model="end.show"
+                                  :close-on-content-click="false"
+                                  :nudge-width="300"
+                                  offset-x
+                                >
+                                  <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                      v-bind="attrs"
+                                      v-on="on"
+                                      small
+                                      outlined
+                                      class="ml-8"
+                                    >
+                                      <v-icon left>mdi-pencil</v-icon> Edit
+                                    </v-btn>
+                                  </template>
+
+                                  <v-card>
+                                    <v-card-text>
+                                      <v-text-field
+                                        v-model="end.value"
+                                        placeholder="End Date/time"
+                                        hint="Must be in ISO format ('yyyy-MM-dd HH:mm')"
+                                        persistent-hint
+                                        :error-messages="end.error"
+                                      >
+                                      </v-text-field>
+                                    </v-card-text>
+
+                                    <v-card-actions>
+                                      <v-btn
+                                        color="primary"
+                                        text
+                                        @click="saveEnd"
+                                      >
+                                        Save
+                                      </v-btn>
+                                      <v-spacer></v-spacer>
+                                      <v-btn
+                                        text
+                                        @click="end.show = false"
+                                      >
+                                        Cancel
+                                      </v-btn>
+                                    </v-card-actions>
+                                  </v-card>
+                                </v-menu>
+                              </td>
                             </tr>
                           </tbody>
                         </v-simple-table>
@@ -180,15 +284,33 @@
             </v-row>
             <v-row>
               <v-col cols="12">
-                <SeriesChart
-                  :series="[series]"
-                  :flags="flags"
-                  :flag="flag.selected"
-                  :brush="!!showForm"
-                  @brush="setRange"
-                  @select="selectFlag"
-                  class="elevation-2 py-2 pr-2"
-                ></SeriesChart>
+                <v-sheet elevation="2">
+                  <div class="d-flex align-center px-4 pt-4">
+                    <v-spacer></v-spacer>
+                    <div class="mr-2 text-overline">Chart Mode:</div>
+                    <v-btn-toggle
+                      v-model="chartMode"
+                      dense
+                      mandatory
+                    >
+                      <v-btn :disabled="!showForm" value="zoom">
+                        <v-icon left>mdi-magnify</v-icon> Zoom
+                      </v-btn>
+                      <v-btn :disabled="!showForm" value="brush">
+                        <v-icon left>mdi-select-compare</v-icon> Select
+                      </v-btn>
+                    </v-btn-toggle>
+                  </div>
+                  <SeriesChart
+                    :series="[series]"
+                    :flags="flags"
+                    :flag="flag.selected"
+                    :brush="chartMode === 'brush'"
+                    @brush="setRange"
+                    @select="selectFlag"
+                    class="elevation-0 py-2 pr-2"
+                  ></SeriesChart>
+                </v-sheet>
               </v-col>
             </v-row>
           </v-sheet>
@@ -234,8 +356,19 @@ export default {
       error: null,
       chartLoading: false,
       showForm: false,
+      chartMode: 'zoom',
       series: null,
       station: null,
+      start: {
+        show: false,
+        value: null,
+        error: null
+      },
+      end: {
+        show: false,
+        value: null,
+        error: null
+      },
       flag: {
         loading: false,
         error: null,
@@ -292,7 +425,20 @@ export default {
   },
   watch: {
     '$route.params' () {
+      this.showForm = false
+      this.resetForm()
       this.fetch()
+      this.chartMode = 'zoom'
+    },
+    'start.show' () {
+      if (this.start.show) {
+        this.openStart()
+      }
+    },
+    'end.show' () {
+      if (this.end.show) {
+        this.openEnd()
+      }
     }
   },
   mounted () {
@@ -444,14 +590,63 @@ export default {
       if (!flag || (this.flag.selected && this.flag.selected.id === flag.id)) {
         this.flag.selected = null
         this.showForm = false
+        this.chartMode = 'zoom'
       } else if (flag) {
         this.showForm = true
+        this.chartMode = 'brush'
         this.flag.selected = { ...flag }
       }
     },
     createNewFlag () {
       this.resetForm()
       this.showForm = true
+      this.chartMode = 'brush'
+    },
+    openStart () {
+      if (this.flag.selected && this.flag.selected.start_datetime) {
+        this.start.value = this.$luxon.DateTime.fromISO(this.flag.selected.start_datetime, {
+          zone: this.series.station_timezone
+        }).toFormat('yyyy-MM-dd HH:mm')
+      } else {
+        this.start.value = null
+      }
+      this.start.error = null
+    },
+    saveStart () {
+      const startDatetime = this.$luxon.DateTime.fromFormat(this.start.value, 'yyyy-MM-dd H:mm', {
+        zone: this.series.station_timezone
+      })
+      if (!startDatetime.isValid) {
+        this.start.error = 'Failed to parse date/time using ISO format (\'yyyy-MM-dd HH:mm\')'
+        return
+      }
+      this.flag.selected.start_datetime = startDatetime.setZone('UTC').toISO()
+      this.start.show = false
+    },
+    openEnd () {
+      if (this.flag.selected && this.flag.selected.end_datetime) {
+        this.end.value = this.$luxon.DateTime.fromISO(this.flag.selected.end_datetime, {
+          zone: this.series.station_timezone
+        }).toFormat('yyyy-MM-dd HH:mm')
+      } else {
+        this.end.value = null
+      }
+      this.end.error = null
+    },
+    saveEnd () {
+      const endDatetime = this.$luxon.DateTime.fromFormat(this.end.value, 'yyyy-MM-dd H:mm', {
+        zone: this.series.station_timezone
+      })
+      if (!endDatetime.isValid) {
+        this.end.error = 'Failed to parse date/time using ISO format (\'yyyy-MM-dd HH:mm\')'
+        return
+      }
+      this.flag.selected.end_datetime = endDatetime.setZone('UTC').toISO()
+      this.end.show = false
+    },
+    download () {
+      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-${this.series.id}-flags.csv`
+      this.$download.flags(filename, this.station, this.series, this.flags)
     }
   }
 }

@@ -50,8 +50,7 @@
             </td>
             <td></td>
             <td></td>
-            <!-- <td></td>
-            <td></td> -->
+            <td></td>
             <td>
               <v-checkbox
                 v-model="filters.reviewed"
@@ -146,14 +145,10 @@ export default {
           text: 'End',
           value: 'end_datetime'
         },
-        // {
-        //   text: 'Depth Category',
-        //   value: 'depth_category'
-        // },
-        // {
-        //   text: 'Depth (m)',
-        //   value: 'depth_m'
-        // },
+        {
+          text: 'Depth (m)',
+          value: 'depth_m'
+        },
         {
           text: 'Reviewed',
           value: 'reviewed',

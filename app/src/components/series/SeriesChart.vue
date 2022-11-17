@@ -1,13 +1,18 @@
-<template>
+Raw<template>
   <div style="width:100%">
     <Loading v-if="loading" style="height:500px"></Loading>
     <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data" class="mb-0">{{ error }}</Alert>
     <div v-show="!loading && !error">
-      <highcharts :constructor-type="'stockChart'" :options="settings" ref="chart"></highcharts>
-      <div class="text--secondary overline ml-12">
-        Mode: <strong>{{ mode === 'daily' ? 'Daily Mean and Range' : 'Raw Instantaneous' }}</strong>
+      <div class="ml-16">
+        <div class="h6 font-weight-bold">
+          {{ mode === 'daily' ? 'Daily Mean and Range' : 'Instantaneous Measurements' }}
+        </div>
+        <div class="text--secondary caption body-2">
+          <v-icon x-small>mdi-information</v-icon> Click and drag on the top chart or use the handles on the bottom chart to zoom in. To see instantaneous data, zoom in to a period &leq; 31 days.<br>Click "Flagged" in the bottom right corner to hide/show flagged values.
+        </div>
       </div>
-      <div class="text--secondary caption ml-12"><v-icon x-small>mdi-information</v-icon> Zoom in to see raw instantaneous data (selected period must be &leq; 31 days long). Click "Flagged" in the bottom right corner to hide/show flagged values.</div>
+
+      <highcharts :constructor-type="'stockChart'" :options="settings" ref="chart"></highcharts>
     </div>
   </div>
 </template>
@@ -31,6 +36,7 @@ export default {
     return {
       loading: false,
       error: null,
+      about: false,
       mode: 'daily',
       showFlags: true,
       settings: {
@@ -39,6 +45,9 @@ export default {
           marginLeft: 70,
           zoomType: 'x',
           animation: false,
+          boost: {
+            enabled: false
+          },
           events: {
             load: async (e) => {
               this.chart = e.target
@@ -57,7 +66,7 @@ export default {
             animation: false,
             showInLegend: false,
             showInNavigator: false,
-            gapSize: 2,
+            gapSize: 0,
             dataGrouping: {
               enabled: false
             },
@@ -135,7 +144,7 @@ export default {
             visible: true,
             color: undefined,
             data: [],
-            gapSize: 0,
+            // gapSize: 0,
             dataGrouping: {
               enabled: false
             }
@@ -288,7 +297,7 @@ export default {
     },
     assignFlags (s, values, flags, mode) {
       if (!flags) return
-      console.log(`assignFlags(${s.id})`, values, flags)
+      // console.log(`assignFlags(${s.id})`, values, flags)
       values.forEach(d => {
         d.flag = []
       })
@@ -377,139 +386,276 @@ export default {
       if (series.daily && series.daily.series) return series.daily.series
 
       let chartSeries = []
-      const values = series.daily.values.filter(d => !d.flag)
-      const flaggedValues = series.daily.values.filter(d => !!d.flag)
       if (series.interval === 'CONTINUOUS') {
-        const meanSeries = {
-          id: `${series.id}-daily-mean`,
+        // Option 1: Chunks
+        // const v = series.daily.values
+        // const chunks = []
+        // v.forEach((d, i) => {
+        //   d.date = this.parseDatetime(d.date)
+        //   if (i === 0) {
+        //     // first chunk
+        //     chunks.push({
+        //       flag: !!d.flag,
+        //       values: [d]
+        //     })
+        //   } else if (!!v[i].flag !== !!v[i - 1].flag) {
+        //     // new chunk
+        //     // chunks[chunks.length - 1].values.push(d)
+        //     chunks.push({
+        //       flag: !!d.flag,
+        //       values: [d]
+        //       // values: [v[i - 1], d]
+        //     })
+        //   } else {
+        //     chunks[chunks.length - 1].values.push(d)
+        //   }
+        // })
+
+        // chartSeries = chunks.map((chunk, i) => {
+        //   const s = {
+        //     id: `${series.id}-daily-${i}-mean`,
+        //     seriesId: series.id,
+        //     interval: series.interval,
+        //     mode: 'daily',
+        //     type: 'line',
+        //     data: chunk.values.map(d => ({
+        //       x: d.date.valueOf(),
+        //       y: d.mean_temp_c,
+        //       flag: d.flag
+        //     })),
+        //     visible: true,
+        //     showInNavigator: false,
+        //     tooltip: {
+        //       pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
+        //     },
+        //     marker: {
+        //       enabled: chunk.values.length === 1,
+        //       radius: 2,
+        //       symbol: 'circle'
+        //     }
+        //   }
+        //   if (chunk.flag) {
+        //     s.flag = true
+        //     s.color = 'orangered'
+        //     s.tooltip = {
+        //       pointFormat: `Series ${series.id}: <b>{point.y}</b> °C (Flag: <b>{point.flag}</b>)`
+        //     }
+        //   }
+        //   return s
+        // })
+        // console.log(chunks)
+
+        // Option 2: Connected Chunks
+        const v = series.daily.values
+        const chunks = []
+        v.forEach((d, i) => {
+          d.date = this.parseDatetime(d.date)
+          if (i === 0) {
+            // first chunk
+            chunks.push({
+              flag: !!d.flag,
+              values: [d]
+            })
+          } else if (!!v[i].flag !== !!v[i - 1].flag) {
+            // new chunk
+            if (v[i - 1].flag) {
+              chunks[chunks.length - 1].values.push(d)
+              chunks.push({
+                flag: !!d.flag,
+                values: [d]
+              })
+            } else {
+              chunks.push({
+                flag: !!d.flag,
+                values: [v[i - 1], d]
+              })
+            }
+          } else {
+            chunks[chunks.length - 1].values.push(d)
+          }
+        })
+
+        chartSeries = chunks.map((chunk, i) => {
+          const mean = {
+            id: `${series.id}-daily-${i}-mean`,
+            seriesId: series.id,
+            interval: series.interval,
+            mode: 'daily',
+            type: 'line',
+            data: chunk.values.map(d => ([d.date.valueOf(), d.mean_temp_c])),
+            visible: true,
+            showInNavigator: false,
+            tooltip: {
+              pointFormat: null
+            }
+          }
+          const range = {
+            id: `${series.id}-daily-${i}-range`,
+            seriesId: series.id,
+            interval: series.interval,
+            mode: 'daily',
+            type: 'arearange',
+            data: chunk.values.map(d => ([d.date.valueOf(), d.min_temp_c, d.max_temp_c])),
+            visible: true,
+            showInNavigator: false,
+            tooltip: {
+              pointFormat: null
+            }
+          }
+          if (chunk.flag) {
+            mean.color = 'orangered'
+            mean.flag = true
+            range.flag = true
+          }
+
+          return [mean, range]
+        }).flat()
+
+        chartSeries.push({
+          id: `${series.id}-daily-tooltip`,
           seriesId: series.id,
           interval: series.interval,
           mode: 'daily',
           type: 'line',
-          data: values.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
+          data: v.filter(d => !d.flag).map(d => ([d.date.valueOf(), d.mean_temp_c])),
           visible: true,
           showInNavigator: false,
+          lineWidth: 0,
           tooltip: {
             pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
-          },
-          marker: {
-            enabled: values.length === 1,
-            radius: 3,
-            symbol: 'circle'
           }
-        }
-        const rangeSeries = {
-          id: `${series.id}-daily-range`,
+        })
+        chartSeries.push({
+          id: `${series.id}-daily-tooltip-flag`,
           seriesId: series.id,
           interval: series.interval,
-          mode: 'daily',
-          type: 'arearange',
-          data: values.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
-          visible: true,
-          showInNavigator: false,
-          tooltip: {
-            pointFormat: null
-          }
-        }
-        const meanFlaggedSeries = {
-          id: `${series.id}-daily-mean-flag`,
-          seriesId: series.id,
-          interval: series.interval,
-          mode: 'daily',
           flag: true,
+          mode: 'daily',
           type: 'line',
-          data: flaggedValues.map(d => ({
-            x: this.parseDatetime(d.date).valueOf(),
+          data: v.filter(d => !!d.flag).map(d => ({
+            x: d.date.valueOf(),
             y: d.mean_temp_c,
             flag: d.flag
           })),
           visible: true,
           showInNavigator: false,
+          turboThreshold: 0,
           tooltip: {
             pointFormat: `Series ${series.id}: <b>{point.y}</b> °C (Flag: <b>{point.flag}</b>)`
           },
-          marker: {
-            enabled: values.length === 1,
-            radius: 3,
-            symbol: 'circle'
-          },
+          lineWidth: 0,
           color: 'orangered'
-        }
-        const rangeFlaggedSeries = {
-          id: `${series.id}-daily-range-flag`,
-          seriesId: series.id,
-          interval: series.interval,
-          mode: 'daily',
-          flag: true,
-          type: 'arearange',
-          data: flaggedValues.map(d => ({
-            x: this.parseDatetime(d.date).valueOf(),
-            low: d.min_temp_c,
-            high: d.max_temp_c
-          })),
-          visible: true,
-          showInNavigator: false,
-          tooltip: {
-            pointFormat: null
-          },
-          states: {
-            inactive: {
-              opacity: 1
-            }
-          }
-        }
-        chartSeries = [
-          meanSeries,
-          rangeSeries,
-          meanFlaggedSeries,
-          rangeFlaggedSeries
-        ]
+        })
+
+        // Option 3: Flag Points
+        // const v = series.daily.values
+        // chartSeries = [
+        //   {
+        //     id: `${series.id}-daily-mean`,
+        //     seriesId: series.id,
+        //     interval: series.interval,
+        //     mode: 'daily',
+        //     type: 'line',
+        //     data: v.map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
+        //     visible: true,
+        //     showInNavigator: false,
+        //     tooltip: {
+        //       pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
+        //     },
+        //     marker: {
+        //       enabled: v.length === 1,
+        //       radius: 2,
+        //       symbol: 'circle'
+        //     }
+        //   },
+        //   {
+        //     id: `${series.id}-daily-range`,
+        //     seriesId: series.id,
+        //     interval: series.interval,
+        //     mode: 'daily',
+        //     type: 'arearange',
+        //     data: v.map(d => [this.parseDatetime(d.date).valueOf(), d.min_temp_c, d.max_temp_c]),
+        //     visible: true,
+        //     showInNavigator: false,
+        //     tooltip: {
+        //       pointFormat: null
+        //     },
+        //     marker: {
+        //       enabled: v.length === 1,
+        //       radius: 2,
+        //       symbol: 'circle'
+        //     }
+        //   },
+        //   {
+        //     id: `${series.id}-daily-flag`,
+        //     seriesId: series.id,
+        //     interval: series.interval,
+        //     mode: 'daily',
+        //     flag: true,
+        //     type: 'line',
+        //     data: v.filter(d => !!d.flag).map(d => [this.parseDatetime(d.date).valueOf(), d.mean_temp_c]),
+        //     visible: true,
+        //     showInNavigator: false,
+        //     tooltip: {
+        //       pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
+        //     },
+        //     lineWidth: 0,
+        //     color: 'orangered',
+        //     marker: {
+        //       enabled: true,
+        //       radius: 3,
+        //       symbol: 'circle'
+        //     }
+        //   }
+        // ]
       } else if (series.interval === 'DISCRETE') {
-        const valueSeries = {
-          id: `${series.id}-discrete-value`,
-          seriesId: series.id,
-          interval: series.interval,
-          type: 'line',
-          data: values.map(d => [this.parseDatetime(d.datetime).valueOf(), d.temp_c]),
-          visible: true,
-          showInNavigator: false,
-          tooltip: {
-            pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
-          },
-          lineWidth: 0,
-          marker: {
-            enabled: true,
-            radius: 3,
-            symbol: 'circle'
-          }
-        }
-        const valueFlaggedSeries = {
-          id: `${series.id}-discrete-value-flag`,
-          seriesId: series.id,
-          interval: series.interval,
-          flag: true,
-          type: 'line',
-          data: flaggedValues.map(d => ({
-            x: this.parseDatetime(d.datetime).valueOf(),
-            y: d.temp_c,
-            flag: d.flag
-          })),
-          visible: true,
-          showInNavigator: false,
-          tooltip: {
-            pointFormat: `Series ${series.id}: <b>{point.y}</b> °C (Flag: <b>{point.flag}</b>)`
-          },
-          lineWidth: 0,
-          marker: {
-            enabled: true,
-            radius: 3,
-            symbol: 'circle'
-          },
-          color: 'orangered'
-        }
         chartSeries = [
-          valueSeries,
-          valueFlaggedSeries
+          {
+            id: `${series.id}-discrete-value`,
+            seriesId: series.id,
+            interval: series.interval,
+            type: 'line',
+            data: series.daily.values
+              .filter(d => !d.flag)
+              .map(d => [this.parseDatetime(d.datetime.substr(0, 10)).valueOf(), d.temp_c]),
+            visible: true,
+            showInNavigator: false,
+            tooltip: {
+              pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
+            },
+            lineWidth: 0,
+            marker: {
+              enabled: true,
+              radius: 3,
+              symbol: 'circle'
+            }
+          },
+          {
+            id: `${series.id}-discrete-flag`,
+            seriesId: series.id,
+            interval: series.interval,
+            flag: true,
+            type: 'line',
+            data: series.daily.values
+              .filter(d => !!d.flag)
+              .map(d => ({
+                x: this.parseDatetime(d.datetime.substr(0, 10)).valueOf(),
+                y: d.temp_c,
+                flag: d.flag
+              })),
+            visible: true,
+            showInNavigator: false,
+            tooltip: {
+              pointFormat: `Series ${series.id}: <b>{point.y}</b> °C (Flag: <b>{point.flag}</b>)`
+            },
+            lineWidth: 0,
+            marker: {
+              enabled: true,
+              radius: 3,
+              symbol: 'circle'
+            },
+            color: 'orangered'
+          }
         ]
       }
       return chartSeries
@@ -560,68 +706,161 @@ export default {
       return values
     },
     createRawChartSeries (series) {
-      const values = series.raw.values.filter(d => !d.flag)
-      const flaggedValues = series.raw.values.filter(d => !!d.flag)
-      const valuesSeries = {
-        id: `${series.id}-raw-values`,
+      const v = series.raw.values
+      console.log(v)
+      const chunks = []
+      v.forEach((d, i) => {
+        // d.datetime = this.parseDatetime(d.datetime)
+        if (i === 0) {
+          // first chunk
+          chunks.push({
+            flag: !!d.flag,
+            values: [d]
+          })
+        } else if (!!v[i].flag !== !!v[i - 1].flag) {
+          // new chunk
+          if (v[i - 1].flag) {
+            chunks[chunks.length - 1].values.push(d)
+            chunks.push({
+              flag: !!d.flag,
+              values: [d]
+            })
+          } else {
+            chunks.push({
+              flag: !!d.flag,
+              values: [v[i - 1], d]
+            })
+          }
+        } else {
+          chunks[chunks.length - 1].values.push(d)
+        }
+      })
+      console.log(chunks)
+
+      const chartSeries = chunks.map((chunk, i) => {
+        const value = {
+          id: `${series.id}-raw-${i}`,
+          seriesId: series.id,
+          interval: series.interval,
+          mode: 'raw',
+          type: 'line',
+          data: chunk.values.map(d => ([this.parseDatetime(d.datetime).valueOf(), d.temp_c])),
+          visible: true,
+          showInNavigator: false,
+          tooltip: {
+            pointFormat: null
+          }
+        }
+        if (chunk.flag) {
+          value.color = 'orangered'
+          value.flag = true
+        }
+
+        return value
+      })
+
+      chartSeries.push({
+        id: `${series.id}-raw-tooltip`,
         seriesId: series.id,
         interval: series.interval,
         mode: 'raw',
         type: 'line',
-        data: values.map(d => [this.parseDatetime(d.datetime).valueOf(), d.temp_c]),
+        data: v.filter(d => !d.flag).map(d => ([this.parseDatetime(d.datetime).valueOf(), d.temp_c])),
         visible: true,
         showInNavigator: false,
+        lineWidth: 0,
         tooltip: {
           pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
-        },
-        marker: {
-          enabled: values.length === 1,
-          radius: 3,
-          symbol: 'circle'
         }
-      }
-      const flaggedSeries = {
-        id: `${series.id}-raw-flag`,
+      })
+      chartSeries.push({
+        id: `${series.id}-raw-tooltip-flag`,
         seriesId: series.id,
         interval: series.interval,
-        mode: 'raw',
         flag: true,
+        mode: 'raw',
         type: 'line',
-        data: flaggedValues.map(d => ({
+        data: v.filter(d => !!d.flag).map(d => ({
           x: this.parseDatetime(d.datetime).valueOf(),
           y: d.temp_c,
           flag: d.flag
         })),
         visible: true,
         showInNavigator: false,
+        turboThreshold: 0,
         tooltip: {
           pointFormat: `Series ${series.id}: <b>{point.y}</b> °C (Flag: <b>{point.flag}</b>)`
         },
-        marker: {
-          enabled: values.length === 1,
-          radius: 3,
-          symbol: 'circle'
-        },
+        lineWidth: 0,
         color: 'orangered'
-      }
-      return [
-        valuesSeries,
-        flaggedSeries
-      ]
+      })
+      // const values = series.raw.values.filter(d => !d.flag)
+      // const flaggedValues = series.raw.values.filter(d => !!d.flag)
+      // const valuesSeries = {
+      //   id: `${series.id}-raw-values`,
+      //   seriesId: series.id,
+      //   interval: series.interval,
+      //   mode: 'raw',
+      //   type: 'line',
+      //   data: v.map(d => [this.parseDatetime(d.datetime).valueOf(), d.temp_c]),
+      //   visible: true,
+      //   showInNavigator: false,
+      //   tooltip: {
+      //     pointFormat: `Series ${series.id}: <b>{point.y}</b> °C`
+      //   },
+      //   marker: {
+      //     enabled: values.length === 1,
+      //     radius: 3,
+      //     symbol: 'circle'
+      //   }
+      // }
+      // const flaggedSeries = {
+      //   id: `${series.id}-raw-flag`,
+      //   seriesId: series.id,
+      //   interval: series.interval,
+      //   mode: 'raw',
+      //   flag: true,
+      //   type: 'line',
+      //   data: flaggedValues.map(d => ({
+      //     x: this.parseDatetime(d.datetime).valueOf(),
+      //     y: d.temp_c,
+      //     flag: d.flag
+      //   })),
+      //   visible: true,
+      //   showInNavigator: false,
+      //   tooltip: {
+      //     pointFormat: `Series ${series.id}: <b>{point.y}</b> °C (Flag: <b>{point.flag}</b>)`
+      //   },
+      //   marker: {
+      //     enabled: values.length === 1,
+      //     radius: 3,
+      //     symbol: 'circle'
+      //   },
+      //   color: 'orangered'
+      // }
+      // return [
+      //   valuesSeries,
+      //   flaggedSeries
+      // ]
+      return chartSeries
     },
     renderRawSeries (series) {
       if (!series.raw || !series.raw.series) return
       // console.log(`renderRawSeries(${series.id})`)
+      console.log(series.raw.series)
+      const ids = this.chart.series.filter(d => d.options.mode === 'raw').map(d => d.options.id)
+      console.log('remove', ids)
+      for (const id of ids) {
+        this.chart.get(id).remove(false)
+      }
       series.raw.series.forEach(d => {
         let chartSeries = this.chart.get(d.id)
-        // console.log(`renderRawSeries(${d.id}): get `, chartSeries)
-        if (!chartSeries) {
-          // console.log(`renderRawSeries(${d.id}): add `, d)
-          this.chart.addSeries(d, false)
-          chartSeries = this.chart.get(d.id)
-        } else {
-          chartSeries.setData(d.data, false)
+        if (chartSeries) {
+          chartSeries.remove(false)
         }
+        // console.log(`renderRawSeries(${d.id}): get `, chartSeries)
+        this.chart.addSeries(d, false)
+        chartSeries = this.chart.get(d.id)
         if (this.mode === 'raw' && (!d.flag || this.showFlags)) {
           // console.log(`renderRawSeries(${d.id}): visible=true`)
           chartSeries.setVisible(true, false)
@@ -670,12 +909,12 @@ export default {
       let bands = []
       if (this.flags) {
         bands = this.flags.map(d => {
-          let start = this.parseDatetime(d.start_datetime)
-          let end = this.parseDatetime(d.end_datetime)
-          if (this.mode === 'daily') {
-            start = this.parseDatetime(d.start_date)
-            end = this.parseDatetime(d.end_date)
-          }
+          const start = this.parseDatetime(d.start_datetime)
+          const end = this.parseDatetime(d.end_datetime)
+          // if (this.mode === 'daily') {
+          //   start = this.parseDatetime(d.start_date)
+          //   end = this.parseDatetime(d.end_date)
+          // }
           return {
             id: d.id,
             from: start.valueOf(),
@@ -683,7 +922,10 @@ export default {
             label: { text: d.flag_type_id },
             color: '#EEEEEE',
             events: {
-              click: () => this.$emit('select', d)
+              click: () => {
+                if (this.brush) return
+                this.$emit('select', d)
+              }
             }
           }
         })
@@ -693,12 +935,13 @@ export default {
         if (this.flag.id) {
           bands = bands.filter(d => d.id !== this.flag.id)
         }
-        let start = this.$luxon.DateTime.fromISO(this.flag.start_datetime, { zone: 'UTC' })
-        let end = this.$luxon.DateTime.fromISO(this.flag.end_datetime, { zone: 'UTC' })
-        if (this.mode === 'daily') {
-          start = start.startOf('day')
-          end = end.endOf('day')
-        }
+        const start = this.parseDatetime(this.flag.start_datetime)
+        const end = this.parseDatetime(this.flag.end_datetime)
+        // if (this.mode === 'daily') {
+        //   start = start.startOf('day')
+        //   end = end.endOf('day')
+        // }
+        console.log(start.toISO(), end.toISO())
         bands.push({
           from: start.valueOf(),
           to: end.valueOf(),
@@ -707,7 +950,10 @@ export default {
           },
           color: '#FEEEEE',
           events: {
-            click: () => this.$emit('select')
+            click: () => {
+              if (this.brush) return
+              this.$emit('select')
+            }
           }
         })
       }
@@ -756,11 +1002,13 @@ export default {
     onBrush (event) {
       if (!this.brush) return
       event.preventDefault()
-      let start = this.$luxon.DateTime.fromMillis(event.xAxis[0].min)
-      let end = this.$luxon.DateTime.fromMillis(event.xAxis[0].max)
+      let start = this.$luxon.DateTime.fromMillis(event.xAxis[0].min, { zone: this.timezone })
+      let end = this.$luxon.DateTime.fromMillis(event.xAxis[0].max, { zone: this.timezone })
+      console.log('onBrush', start.toISO(), end.toISO())
       if (this.mode === 'daily') {
         start = start.startOf('day')
-        end = end.endOf('day').plus(1, 'day')
+        end = end.endOf('day').plus(1, 'day').minus(1, 'minute')
+        console.log('daily', start.toISO(), end.toISO())
       }
       this.$emit('brush', start.toISO(), end.toISO())
     }

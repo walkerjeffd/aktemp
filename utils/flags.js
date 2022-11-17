@@ -11,14 +11,13 @@ exports.flagLabel = function (d) {
 }
 
 exports.extractFlags = function (rows) {
-  debug('extractFlags()')
   if (!rows || rows.length === 0) return []
-  debug(`rows: n=${rows.length}`)
+  debug(`extractFlags(): n=${rows.length}`)
 
   if (rows.length === 1) {
     const row = rows[0]
     if (row.flag) {
-      debug(`single row contains flag: datetime=${row.datetime} flag=${row.flag}`)
+      debug(`extractFlags(): single row contains flag (datetime=${row.datetime} flag=${row.flag})`)
       return [{
         start_datetime: row.datetime,
         end_datetime: row.datetime,
@@ -33,7 +32,7 @@ exports.extractFlags = function (rows) {
   let flag
   const flags = []
   if (rows[0].flag) {
-    debug(`first row contains flag: datetime=${rows[0].datetime} flag=${rows[0].flag}`)
+    debug(`extractFlags(): first row contains flag (datetime=${rows[0].datetime} flag=${rows[0].flag})`)
     flag = {
       start_datetime: rows[0].datetime,
       end_datetime: null,
@@ -43,14 +42,14 @@ exports.extractFlags = function (rows) {
   }
   for (let i = 1; i < rows.length; i++) {
     if (rows[i].flag !== rows[i - 1].flag) {
-      debug(`flag change between rows ${i - 1} ('${rows[i - 1].flag}') and ${i} ('${rows[i].flag}')`)
+      debug(`extractFlags(): flag change between rows ${i - 1} ('${rows[i - 1].flag}') and ${i} ('${rows[i].flag}')`)
       if (flag) {
-        debug(`end flag: datetime=${rows[i - 1].datetime} flag='${rows[i - 1].flag}'`)
+        debug(`extractFlags(): end flag (datetime=${rows[i - 1].datetime} flag='${rows[i - 1].flag}')`)
         flag.end_datetime = rows[i - 1].datetime
         flags.push(flag)
       }
       if (rows[i].flag) {
-        debug(`start flag: datetime=${rows[i].datetime} flag='${rows[i].flag}'`)
+        debug(`extractFlags(): start flag (datetime=${rows[i].datetime} flag='${rows[i].flag}')`)
         flag = {
           start_datetime: rows[i].datetime,
           end_datetime: null,
@@ -66,5 +65,6 @@ exports.extractFlags = function (rows) {
     flag.end_datetime = rows[rows.length - 1].datetime
     flags.push(flag)
   }
+  debug(`extractFlags(): done (n=${flags.length})`)
   return flags
 }

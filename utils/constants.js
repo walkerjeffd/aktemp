@@ -88,7 +88,7 @@ module.exports.constraints = {
       maxLength: 250
     },
     waterbody_name: {
-      maxLength: 50
+      maxLength: 100
     },
     latitude: {
       min: 45,

@@ -72,10 +72,10 @@ exports.processFile = async function (id, { dryRun }) {
   debug(`processFile(): file.type=${file.type}`)
   const relationTable = file.type.toLowerCase()
 
-  debug(`processFile(): deleting existing ${relationTable}`)
-  await file.$relatedQuery(relationTable).delete()
-
   if (!dryRun) {
+    debug(`processFile(): deleting existing ${relationTable}`)
+    await file.$relatedQuery(relationTable).delete()
+
     debug('processFile(): set file.status=\'PROCESSING\'')
     await file.$query().patch({
       status: 'PROCESSING',
@@ -85,6 +85,11 @@ exports.processFile = async function (id, { dryRun }) {
 
   debug(`processFile(): read file from s3 (bucket=${file.s3.Bucket} key=${file.s3.Key})`)
   const { data, fields } = await readFileFromS3(file, file.config)
+
+  if (data.length > 0) {
+    debug('processFile(): first row ->')
+    debug(data[0])
+  }
 
   debug('processFile(): add row numbers')
   data.forEach((d, i) => { d.$row = i + 1 })

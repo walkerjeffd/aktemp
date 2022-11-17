@@ -211,7 +211,14 @@ function parseSeriesFile (rows, config, stations) {
   debug(`parseSeriesFile(): returned ${series.length} series -> [station_code, depth_m, values.length]`)
   debug(series.map(d => [d.station_code, d.depth_m, d.values.length]))
 
-  series.forEach(s => {
+  series.forEach((s, i) => {
+    debug(`parseSeriesFile(): processing series ${i} ('${s.station_code}', ${s.depth_m}, ${s.values.length})`)
+
+    if (s.values.length > 0) {
+      debug('parseSeriesFile(): first row ->')
+      debug(s.values[0])
+    }
+
     debug(`parseSeriesFile(): fetching station ('${s.station_code}')`)
     const station = stations.find(d => d.code === s.station_code)
     if (!station) throw new Error(`Station not found (code=${s.station_code})`)
@@ -252,6 +259,7 @@ function parseSeriesFile (rows, config, stations) {
     s.end_datetime = datetimeExtent[1]
     s.interval = config.interval
     if (s.interval === 'CONTINUOUS') {
+      debug(`parseSeriesFile(): done (n=${series.length})`)
       s.frequency = medianFrequency(datetimes)
     }
     s.reviewed = config.reviewed
@@ -259,6 +267,8 @@ function parseSeriesFile (rows, config, stations) {
     s.sop_bath = config.sop_bath
   })
 
+  debug(`parseSeriesFile(): done (n=${series.length})`)
+  debug(series)
   return series
 }
 

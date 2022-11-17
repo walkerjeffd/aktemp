@@ -41,8 +41,8 @@ program
       rows = file.series.map(d => ({
         file_id: d.file_id,
         series_id: d.id,
-        start_datetime: d.start_datetime.toISOString(),
-        end_datetime: d.end_datetime.toISOString()
+        start_datetime: d.start_datetime,
+        end_datetime: d.end_datetime
       }))
     } else if (file.profiles.length > 0) {
       rows = file.profiles.map(d => ({

@@ -3,36 +3,12 @@
 const path = require('path')
 const { parseBoolean } = require('../parsers')
 const {
-  validateFileFields,
   validateFileConfig,
   validateStation,
   validateSeries,
   validateProfile
 } = require('../validators')
 const { readCsvFile } = require('./utils')
-
-describe('validateFileFields()', () => {
-  test.each`
-    value
-    ${undefined}
-    ${null}
-    ${[]}
-    ${['column1']}
-    ${[1]}
-    ${['column1', '']}
-    ${['column1', null]}
-    ${['column1', 'column1']}
-  `('$value fails', ({ value }) => {
-    expect(() => validateFileFields(value)).toThrow()
-  })
-  test.each`
-    value
-    ${['column1', 'column2']}
-    ${['column1', 'column2', 'column3', 'column4']}
-  `('$value fails', ({ value }) => {
-    expect(validateFileFields(value)).toMatchObject(value)
-  })
-})
 
 describe('validateFileConfig()', () => {
   const fields = ['stationCode', 'datetime', 'date', 'time', 'utcOffset', 'temp_c', 'flag', 'depth_m']

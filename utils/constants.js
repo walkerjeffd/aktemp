@@ -19,7 +19,8 @@ module.exports.depthCategoryOptions = [
   { value: 'SURFACE', label: 'Surface' },
   { value: 'MID-DEPTH', label: 'Mid-Depth' },
   { value: 'BOTTOM', label: 'Bottom' },
-  { value: 'HYPORHEIC', label: 'Hyporheic Zone' }
+  { value: 'HYPORHEIC', label: 'Hyporheic Zone' },
+  { value: 'OTHER', label: 'Other' }
 ]
 
 module.exports.temperatureUnitsOptions = [

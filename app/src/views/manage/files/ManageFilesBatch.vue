@@ -31,26 +31,23 @@
             </v-btn>
           </v-btn-toggle>
         </div>
+        <v-divider class="my-4"></v-divider>
         <div>
           <div class="font-weight-bold text-subtitle-1">Select Files</div>
           <p class="black--text">Select one or more data files. Each file must be in comma-separated value (CSV) format.</p>
-          <v-row>
-            <v-col cols="12" md="6" class="pb-0">
-              <v-file-input
-                ref="filesInput"
-                v-model="files.selected"
-                :rules="files.rules"
-                placeholder="Select data files"
-                truncate-length="200"
-                prepend-icon="mdi-file-delimited-outline"
-                @change="initTable"
-                outlined
-                multiple
-                validate-on-blur
-              >
-              </v-file-input>
-            </v-col>
-          </v-row>
+          <v-file-input
+            ref="filesInput"
+            v-model="files.selected"
+            :rules="files.rules"
+            placeholder="Select data files"
+            truncate-length="200"
+            prepend-icon="mdi-file-delimited-outline"
+            @change="initTable"
+            outlined
+            multiple
+            validate-on-blur
+          >
+          </v-file-input>
         </div>
 
         <div v-show="table.rows.length > 0">
@@ -75,13 +72,22 @@
             @click="downloadStations"
           ><v-icon left>mdi-download</v-icon> Download Stations</v-btn>
           <p class="black--text">After you have filled out the table in the template, copy and paste the cells from Excel into the table below (excluding the header row).</p>
+          <Alert type="warning" title="To Do">
+            New features need to be explained in template
+            <ul>
+              <li>Columns can be specified by index (number) as well as name</li>
+              <li>Date/time format can be left blank and AKTEMP will attempt to guess. If this fails, it will throw an error and ask the user to specify the token string.</li>
+            </ul>
+          </Alert>
 
+          <!-- https://github.com/vuejs/devtools/issues/1947#issuecomment-1299134339 -->
           <HotTable
             ref="hotSeries"
             :data="table.rows"
             :colHeaders="true"
             :settings="table.settings"
             class="elevation-2"
+            class-name=""
             v-show="files.type === 'SERIES'"
           >
             <HotColumn
@@ -98,6 +104,7 @@
             :colHeaders="true"
             :settings="table.settings"
             class="elevation-2"
+            class-name=""
             v-show="files.type === 'PROFILES'"
           >
             <HotColumn
@@ -113,44 +120,13 @@
             * = Always Required, † = Conditionally Required. Ctrl+c/Ctrl+v to copy/paste. Right-click to undo/redo.
           </div>
 
-          <div v-if="table.selected" style="max-width:800px">
-            <Alert
-              v-if="table.selected.status === 'INVALID'"
-              type="error"
-              :title="`Validation Failed on Row ${table.selected.row + 1}`"
-            >
-              <table class="mt-2">
-                <tbody>
-                  <tr>
-                    <td class="text-right pr-2">Filename:</td>
-                    <td class="font-weight-bold">{{ table.selected.filename }}</td>
-                  </tr>
-                  <tr>
-                    <td class="text-right pr-2"># Rows:</td>
-                    <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
-                    <td class="font-weight-bold">
-                      {{ table.selected.fields.map(d => `'${d}'`).join(', ') }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <p class="mt-4">Please fix the following errors, then click Submit to try again</p>
-              <ul>
-                <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
-                  <div v-html="err.message"></div>
-                </li>
-              </ul>
-            </Alert>
-            <Alert
-              v-else-if="table.selected.status === 'SUCCESS'"
-              type="success"
-              :title="`File Uploaded on Row ${table.selected.row + 1}`"
-            >
-              <table class="mt-2">
+          <v-card v-if="table.selected">
+            <v-toolbar color="grey lighten-3" flat dense>
+              <div class="text-overline black--text">Selected File</div>
+            </v-toolbar>
+            <v-divider></v-divider>
+            <v-card-text class="black--text">
+              <table class="mb-4">
                 <tbody>
                   <tr>
                     <td class="text-right pr-2">Row:</td>
@@ -159,89 +135,136 @@
                   <tr>
                     <td class="text-right pr-2">Filename:</td>
                     <td class="font-weight-bold">
-                      <router-link :to="{
-                        name: 'manageFile',
-                        params: {
-                          orgnizationId: this.$route.params.organizationId,
-                          fileId: table.selected.file.id
-                        }
-                      }">
-                        {{ table.selected.filename }}
-                      </router-link>
+                      {{ table.selected.filename }}
                     </td>
                   </tr>
                   <tr>
-                    <td class="text-right pr-2"># Rows:</td>
-                    <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                    <td class="text-right pr-2">Status:</td>
                     <td class="font-weight-bold">
-                      {{ table.selected.fields.map(d => `'${d}'`).join(', ') }}
+                      {{ table.selected.status }}
                     </td>
+                  </tr>
+                  <tr v-if="table.selected.parsed">
+                    <td class="text-right pr-2"># Rows:</td>
+                    <td class="font-weight-bold">{{ table.selected.parsed.data.length.toLocaleString() }}</td>
+                  </tr>
+                  <tr v-if="table.selected.parsed">
+                    <td class="text-right pr-2"># Columns:</td>
+                    <td class="font-weight-bold">{{ table.selected.parsed.meta.fields.length.toLocaleString() }}</td>
                   </tr>
                 </tbody>
               </table>
+              <!-- SUCCESS -->
+              <Alert
+                v-if="table.selected.status === 'SUCCESS'"
+                type="success"
+                :title="`File Uploaded on Row ${table.selected.row + 1}`"
+              >
+                <table class="mt-2">
+                  <tbody>
+                    <tr>
+                      <td class="text-right pr-2">Row:</td>
+                      <td class="font-weight-bold">{{ table.selected.row + 1 }}</td>
+                    </tr>
+                    <tr>
+                      <td class="text-right pr-2">Filename:</td>
+                      <td class="font-weight-bold">
+                        <router-link :to="{
+                          name: 'manageFile',
+                          params: {
+                            orgnizationId: this.$route.params.organizationId,
+                            fileId: table.selected.file.id
+                          }
+                        }">
+                          {{ table.selected.filename }}
+                        </router-link>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="text-right pr-2"># Rows:</td>
+                      <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
+                      <td class="font-weight-bold">
+                        {{ table.selected.fields.map(d => `'${d}'`).join(', ') }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
 
-              <div class="mt-4">This file has been uploaded to the server and can be removed from the import table.</div>
-            </Alert>
+                <div class="mt-4">This file has been uploaded to the server and can be removed from the import table.</div>
+              </Alert>
+              <!-- INVALID -->
+              <Alert
+                v-else-if="table.selected.status === 'INVALID'"
+                type="error"
+                title="Validation Error(s)"
+              >
+                <p>Please fix the following error(s), then click Retry Validation to check if errors were addressed for this file. You can also click the Submit button at the bottom of the form to retry all files.</p>
+                <ul>
+                  <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
+                    <div v-html="err.message"></div>
+                  </li>
+                </ul>
+
+                <div class="mt-4">
+                  <v-btn color="primary" @click="validateRow(table.selected, table.selected.row)">
+                    <v-icon left>mdi-refresh</v-icon> Retry Validation
+                  </v-btn>
+                </div>
+              </Alert>
+              <!-- FAILED -->
+              <Alert
+                v-else-if="table.selected.status === 'FAILED'"
+                type="error"
+                title="Server Error"
+              >
+                <p>This file passed the initial validation but was rejected by the server. Please fix the following error(s), then click Submit to try again.</p>
+                <ul>
+                  <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
+                    <div>{{ err.message }}</div>
+                  </li>
+                </ul>
+              </Alert>
+
+              <div v-if="table.selected.lines">
+                <v-divider class="my-4"></v-divider>
+                <div class="secondary--text caption">Raw File Contents (first 200 lines)</div>
+                <div style="overflow:auto;max-height:400px;border:1px solid rgba(0, 0, 0, 0.12)">
+                  <table class="text-monospace">
+                    <tbody>
+                      <tr v-for="(line, i) in table.selected.lines.slice(0,200)" :key="`line-${i}`">
+                        <td class="px-2 text-right" style="border-right:1px solid rgba(0, 0, 0, 0.12)">{{ i + 1 }}</td>
+                        <td style="white-space:nowrap">{{ line }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <div v-if="table.failedCount > 0">
+            <v-divider class="my-4"></v-divider>
             <Alert
-              v-else-if="table.selected.status === 'FAILED'"
-              type="error"
-              :title="`Server Error on Row ${table.selected.row + 1}`"
+              type="warning"
+              title="Table Contains Failed or Invalid Files"
+              class="mb-0 mt-4"
             >
-              <table class="mt-2">
-                <tbody>
-                  <tr>
-                    <td class="text-right pr-2">Row:</td>
-                    <td class="font-weight-bold">{{ table.selected.row + 1 }}</td>
-                  </tr>
-                  <tr>
-                    <td class="text-right pr-2">Filename:</td>
-                    <td class="font-weight-bold">{{ table.selected.filename }}</td>
-                  </tr>
-                  <tr>
-                    <td class="text-right pr-2"># Rows:</td>
-                    <td class="font-weight-bold">{{ table.selected.n_rows === 0 || !!table.selected.n_rows ? table.selected.n_rows.toLocaleString() : '' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="text-right pr-2" style="vertical-align:top">Columns:</td>
-                    <td class="font-weight-bold">
-                      {{ table.selected.fields.map(d => `'${d}'`).join(', ') }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div class="body-1 font-weight-bold mt-4">Server Errors</div>
-              <p>Please fix the following errors, then click Submit to try again.</p>
-              <ul>
-                <li v-for="(err, i) in table.selected.errors" :key="'err-' + i" class="mb-2">
-                  <div>{{ err.message }}</div>
-                </li>
-              </ul>
+              <p class="mb-0">
+                {{ table.failedCount.toLocaleString() }} file(s) were invalid or failed to be uploaded to the server. Click on any row marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span> for more details.
+              </p>
+              <div v-if="table.rows.length > table.failedCount" class="mt-4">
+                <div>
+                  Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been uploaded to the server and can be safely removed from the table above. Click the following button to remove them leaving only the files that failed.
+                </div>
+                <v-btn color="default" @click="removeUploadedFiles" class="mt-4">
+                  <v-icon small left>mdi-close</v-icon> Remove Uploaded Files
+                </v-btn>
+              </div>
             </Alert>
           </div>
-
-          <Alert
-            v-if="table.failedCount > 0"
-            type="warning"
-            title="Table Contains Failed or Invalid Files"
-            style="max-width:800px"
-            class="mb-0 mt-4"
-          >
-            <p class="mb-0">
-              {{ table.failedCount.toLocaleString() }} file(s) were invalid or failed to be uploaded to the server. Click on any row marked by <span style="color:white;background-color:#ff5252;width:6px">&nbsp;✕&nbsp;</span> for more details.
-            </p>
-            <div v-if="table.rows.length > table.failedCount" class="mt-4">
-              <div>
-                Files marked by <span style="color:white;background-color:#4caf50;width:6px">&nbsp;✓&nbsp;</span> have been uploaded to the server and can be safely removed from the table above. Click the following button to remove them leaving only the files that failed.
-              </div>
-              <v-btn color="default" @click="removeUploadedFiles" class="mt-4">
-                <v-icon small left>mdi-close</v-icon> Remove Uploaded Files
-              </v-btn>
-            </div>
-          </Alert>
         </div>
 
         <div v-if="error">
@@ -284,10 +307,9 @@ import { mapGetters } from 'vuex'
 
 import evt from '@/events'
 import uploader from '@/lib/uploader'
-import { getTimestampString, parseTimestampString } from 'aktemp-utils/time'
+import { getTimestampString, parseTimestampString, guessDatetimeFormat } from 'aktemp-utils/time'
 
 const {
-  typeOptions,
   intervalOptions,
   fileTimezoneOptions,
   depthCategoryOptions,
@@ -301,7 +323,7 @@ const {
   validateFileConfig
 } = require('aktemp-utils/validators')
 
-const { parseCsvFile } = require('@/lib/utils')
+const { parseCsvFile, readLocalFile, splitLines } = require('@/lib/utils')
 
 export default {
   name: 'ManageFilesBatch',
@@ -552,12 +574,15 @@ export default {
       this.files.selected = []
       this.initTable()
     },
-    initTable () {
+    async initTable () {
       this.error = null
       this.table.rows.splice(0, this.table.rows.length)
       this.table.selected = null
 
-      this.files.selected.forEach((file, i) => {
+      for (let i = 0; i < this.files.selected.length; i++) {
+        const file = this.files.selected[i]
+        const data = await readLocalFile(file)
+        const lines = splitLines(data)
         this.table.rows.push({
           status: 'READY',
           row: i,
@@ -567,9 +592,24 @@ export default {
           file_type: this.files.type,
           file_skip: '0',
           fields: [],
-          errors: []
+          errors: [],
+          lines
         })
-      })
+      }
+
+      // this.files.selected.forEach((file, i) => {
+      //   this.table.rows.push({
+      //     status: 'READY',
+      //     row: i,
+      //     file_index: i,
+      //     file,
+      //     filename: file.name,
+      //     file_type: this.files.type,
+      //     file_skip: '0',
+      //     fields: [],
+      //     errors: []
+      //   })
+      // })
       this.renderHot()
     },
     async submit () {
@@ -642,6 +682,7 @@ export default {
           errors,
           file_index, // eslint-disable-line
           file,
+          lines,
           n_rows, // eslint-disable-line
           row: rowId,
           ...value
@@ -651,7 +692,26 @@ export default {
         if (parsed.data.length === 0) throw new Error('File is empty')
         row.n_rows = parsed.data.length
         row.fields = parsed.meta.fields.filter(d => d !== '')
+        if (!value.datetime_format) {
+          value.datetime_format = 'GUESS'
+        }
         row.config = validateFileConfig(value, row.fields, this.stations)
+        if (value.datetime_format === 'GUESS') {
+          const timestampString = getTimestampString(parsed.data[0], row.config.datetime_column, row.config.time_column)
+          let format = guessDatetimeFormat(timestampString)
+          format = Array.isArray(format) ? format.join(' ') : format
+          if (format) {
+            row.datetime_format = format
+            row.config.datetime_format = format
+          } else {
+            const error = new Error('InvalidDatetimeFormat')
+            error.details = [{
+              path: ['datetime_format'],
+              message: `Failed to guess <strong>Date/time Format</strong> from first timestamp ('${timestampString}')`
+            }]
+            throw error
+          }
+        }
         parsed.data.forEach((d, i) => {
           try {
             const value = getTimestampString(d, row.config.datetime_column, row.config.time_column)

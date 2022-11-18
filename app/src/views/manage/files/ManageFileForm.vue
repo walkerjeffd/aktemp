@@ -550,9 +550,8 @@
                       value="NONE"
                     >
                       <template v-slot:label>
-                        <span>All timestamps are either in <strong>UTC or contain UTC offset</strong> (e.g. end in '-0800')</span>
+                        <span>All timestamps are in <strong>UTC</strong> or <strong>contain a UTC offset</strong> (e.g. each timestamp ends in a UTC offset such as '-0800')</span>
                       </template>
-
                     </v-radio>
                     <v-radio
                       value="LOCAL"
@@ -824,20 +823,15 @@
 
                     <div class="text-subtitle-1 font-weight-bold">Category</div>
                     <p>Where in the water column were the measurements taken? (Optional)</p>
-                    <v-btn-toggle v-model="config.depth_category" class="mb-4">
-                      <v-btn value="SURFACE">
-                        <v-icon left>mdi-arrow-collapse-up</v-icon>
-                        Surface
-                      </v-btn>
-                      <v-btn value="MID-DEPTH">
-                        <v-icon left>mdi-arrow-collapse-horizontal</v-icon>
-                        Mid-Depth
-                      </v-btn>
-                      <v-btn value="BOTTOM">
-                        <v-icon left>mdi-arrow-collapse-down</v-icon>
-                        Bottom
-                      </v-btn>
-                    </v-btn-toggle>
+                    <v-select
+                      v-model="config.depth_category"
+                      :items="depth.category.options"
+                      :rules="depth.category.rules"
+                      item-text="label"
+                      item-value="value"
+                      outlined
+                      clearable
+                    ></v-select>
 
                     <div class="text-subtitle-1 font-weight-bold">Numeric</div>
                     <p>
@@ -1035,7 +1029,7 @@
 
                   <v-spacer></v-spacer>
 
-                  <v-btn text @click="cancel">
+                  <v-btn text @click="cancelUpload">
                     Cancel
                   </v-btn>
                 </v-row>
@@ -1791,43 +1785,6 @@ export default {
         return
       }
 
-      // this.upload.message = `Uploading ${file.name}...`
-      // this.upload.progress = 0.25
-
-      // try {
-      //   await this.uploadFile(this.upload.file, file)
-      // } catch (err) {
-      //   console.log(err.response || err)
-
-      //   if (this.upload.status === 'CANCELLED') return
-
-      //   this.upload.status = 'FAILED'
-      //   this.upload.message = `Failed to upload file: ${file.name}.`
-      //   this.upload.error = this.$errorMessage(err)
-
-      //   this.deleteFile(this.upload.file)
-      //   return
-      // }
-
-      // this.upload.progress = 0.75
-
-      // try {
-      //   await this.processFile(this.upload.file)
-      // } catch (err) {
-      //   console.log(err.response || err)
-
-      //   if (this.upload.status === 'CANCELLED') return
-
-      //   this.upload.status = 'FAILED'
-      //   this.upload.error = 'Failed to start processing file. The file has been saved to the server, but will need to be manually processed. Please contact us for help, or delete it and try uploading again.<br><br>'
-      //   this.upload.error += this.$errorMessage(err)
-
-      //   this.deleteFile(this.upload.file)
-      //   return
-      // }
-
-      // this.upload.progress = 1
-
       this.upload.progress = 1
       this.upload.status = 'DONE'
       this.upload.message = 'Upload complete'
@@ -1841,39 +1798,6 @@ export default {
         }
       })
     },
-    async createFile () {
-      if (!this.file.selected) throw new Error('File not found')
-      const organizationId = this.organization.id
-      const filename = this.file.selected.name
-
-      let config
-      try {
-        config = validateFileConfig(this.config, this.fileColumns, this.stations)
-      } catch (err) {
-        this.error = err.toString()
-        return
-      }
-
-      const response = await this.$http.restricted.post(`/organizations/${organizationId}/files`, {
-        filename,
-        type: config.file_type,
-        config
-      })
-
-      return response.data
-    },
-    async updateFile (file, payload) {
-      return await this.$http.restricted.put(
-        `/files/${file.id}`,
-        payload
-      )
-    },
-    async processFile (file) {
-      return await this.$http.restricted.post(
-        `/files/${file.id}/process`,
-        null
-      )
-    },
     async deleteFile (file) {
       try {
         await this.$http.restricted.delete(`/files/${file.id}`)
@@ -1881,24 +1805,6 @@ export default {
         console.log(`Failed to delete file (id=${file.id})`)
         console.error(err)
       }
-    },
-    async uploadFile (file) {
-      await this.updateFile(file, { status: 'UPLOADING' })
-
-      const formData = new FormData()
-      Object.keys(file.presignedUrl.fields).forEach((key) => {
-        formData.append(key, file.presignedUrl.fields[key])
-      })
-      formData.append('file', this.file.selected)
-
-      const response = await this.$http.external.post(file.presignedUrl.url, formData)
-
-      const payload = {
-        url: `https://${file.s3.Bucket}.s3.amazonaws.com/${file.s3.Key}`,
-        s3: response.data.s3
-      }
-
-      await this.updateFile(file, payload)
     },
     cancelUpload () {
       if (this.upload.status === 'READY') {

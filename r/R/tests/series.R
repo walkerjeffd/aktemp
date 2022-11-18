@@ -498,6 +498,54 @@ targets_test_series <- list(
         test_name = str_c(row_number(), test_name, sep = "_")
       )
   }),
+  tar_target(test_series_config_columns, {
+    columns <- names(test_series_values)
+    columns <- columns[-which(str_starts(columns, "timestamp_"))]
+    list(
+      default = list(
+        station_column = as.character(which(columns == "station_code")),
+        datetime_column = as.character(which(columns == "datetime_utc_iso")),
+        temperature_column = as.character(which(columns == "temp_c")),
+        flag_column = as.character(which(columns == "flag")),
+        depth_column = as.character(which(columns == "depth_m"))
+      ),
+      time = list(
+        station_column = as.character(which(columns == "station_code")),
+        datetime_column = as.character(which(columns == "date_local_mdy")),
+        time_column = as.character(which(columns == "time_local_hm")),
+        datetime_format = "M/d/yy H:mm",
+        timezone = "LOCAL",
+        temperature_column = as.character(which(columns == "temp_c")),
+        flag_column = as.character(which(columns == "flag")),
+        depth_column = as.character(which(columns == "depth_m"))
+      ),
+      timezone = list(
+        station_column = as.character(which(columns == "station_code")),
+        datetime_column = "datetime_tz_mdyhm",
+        datetime_format = "M/d/yy H:mm",
+        timezone = "COLUMN",
+        timezone_column = as.character(which(columns == "timezone_int")),
+        temperature_column = as.character(which(columns == "temp_c")),
+        flag_column = as.character(which(columns == "flag")),
+        depth_column = as.character(which(columns == "depth_m"))
+      )
+    ) %>%
+      enframe(name = "test_name") %>%
+      mutate(
+        test_name = str_c(row_number(), test_name, sep = "_")
+      ) %>%
+      crossing(test_file = unique(test_series$name)) %>%
+      rowwise() %>%
+      mutate(test_name = glue("{test_file}:{test_name}")) %>%
+      mutate(
+        filename = glue("series-{test_file}.csv"),
+        expected = glue("series-{test_file}.json"),
+        config = list(as_tibble(modifyList(test_series_config_default, value)))
+      ) %>%
+      select(-value, -test_file) %>%
+      unnest(config) %>%
+      ungroup()
+  }),
 
   tar_target(test_series_config, {
     bind_rows(
@@ -507,6 +555,7 @@ targets_test_series <- list(
       stations = test_series_config_stations,
       temperature = test_series_config_temperature,
       depth = test_series_config_depth,
+      columns = test_series_config_columns,
       .id = "test_group"
     )
   }),
@@ -533,10 +582,16 @@ targets_test_series <- list(
   }, format = "file"),
   tar_target(test_series_cli_config_csv, {
     filename <- "../cli/tests/files/series/config-series.csv"
-    test_series_config_minimal %>%
-      filter(test_name == "3_s2d2") %>%
-      select(-test_name, -expected) %>%
-      mutate(filename = "series.csv") %>%
+    bind_rows(
+      test_series_config_minimal %>%
+        filter(test_name == "3_s2d2") %>%
+        select(-test_name, -expected) %>%
+        mutate(filename = "series.csv"),
+      test_series_config_columns %>%
+        filter(test_name == "s2d2:1_default") %>%
+        select(-test_name, -expected) %>%
+        mutate(filename = "series.csv")
+    ) %>%
       write_csv(filename, na = "")
     filename
   }, format = "file"),

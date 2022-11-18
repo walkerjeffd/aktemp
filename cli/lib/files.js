@@ -102,7 +102,7 @@ exports.processFile = async function (id, { dryRun }) {
 
   debug('processFile(): validate config ->')
   const config = await validateFileConfig(file.config, fields, stations)
-  debug(file.config)
+  debug(config)
 
   if (config.file_type === 'SERIES') {
     debug('processFile(): parsing series file')

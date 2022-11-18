@@ -9,16 +9,25 @@ const {
   temperatureUnitsOptions
 } = require('../constants')
 
-const fileFieldsSchema = Joi.array()
-  .min(2)
-  .items(Joi.string())
-  .unique()
-  .required()
-
 const createFileSchema = (fields, stations) => {
-  const validFields = Joi.string().valid(...fields)
+  const validFields = v => Joi.alternatives().try(
+    Joi.string()
+      .valid(...fields),
+    Joi.number()
+      .integer()
+      .min(1)
+      .max(fields.length)
+  ).empty(['', null])
+    .messages({
+      'alternatives.types': `"${v}" must be a valid column name (${fields.map(d => `'${d}'`).join(', ')})`,
+      'number.max': `"${v}" must be a column index between 1 and ${fields.length}`
+    })
   const stationCodes = stations.map(d => d.code)
-  const validStationCodes = Joi.string().valid(...stationCodes)
+  const validStationCodes = Joi.string()
+    .valid(...stationCodes)
+    .messages({
+      'any.only': '"station_code" must match an existing station code for this organization (case sensitive) or be blank if Station Column is specified'
+    })
   return Joi.object({
     file_skip: Joi.number()
       .integer()
@@ -49,15 +58,12 @@ const createFileSchema = (fields, stations) => {
         then: Joi.forbidden(),
         otherwise: Joi.required()
       }),
-    station_column: validFields
-      .empty(['', null]),
+    station_column: validFields('station_column'),
     // TIMESTAMP
-    datetime_column: validFields
-      .empty(['', null])
+    datetime_column: validFields('datetime_column')
       .required(),
-    time_column: validFields
-      .allow(null)
-      .empty(['', null]),
+    time_column: validFields('time_column')
+      .allow(null),
     datetime_format: Joi.string()
       .empty(['', null])
       .required(),
@@ -72,16 +78,16 @@ const createFileSchema = (fields, stations) => {
         is: Joi.not('ISO'),
         then: Joi.required()
       }),
-    timezone_column: validFields
+    timezone_column: validFields('timezone_column')
       .allow(null)
-      .empty(['', null])
       .when('timezone', {
         is: 'COLUMN',
         then: Joi.required(),
         otherwise: Joi.forbidden()
       }),
     // TEMPERATURE
-    temperature_column: validFields.required(),
+    temperature_column: validFields('temperature_column')
+      .required(),
     temperature_units: Joi.string()
       .uppercase()
       .trim()
@@ -91,9 +97,8 @@ const createFileSchema = (fields, stations) => {
     temperature_missing: Joi.string()
       .allow(null)
       .empty(['', null]),
-    flag_column: validFields
+    flag_column: validFields('flag_column')
       .allow(null)
-      .empty(['', null])
       .when('file_type', {
         is: 'SERIES',
         then: Joi.optional(),
@@ -127,9 +132,8 @@ const createFileSchema = (fields, stations) => {
         }),
         otherwise: Joi.forbidden()
       }),
-    depth_column: validFields
+    depth_column: validFields('depth_column')
       .allow(null)
-      .empty(['', null])
       .when('file_type', {
         is: 'SERIES',
         then: Joi.when('interval', {
@@ -179,6 +183,5 @@ const createFileSchema = (fields, stations) => {
 }
 
 module.exports = {
-  createFileSchema,
-  fileFieldsSchema
+  createFileSchema
 }

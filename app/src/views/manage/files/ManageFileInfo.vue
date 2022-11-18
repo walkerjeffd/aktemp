@@ -33,7 +33,7 @@
             <td class="text-right grey--text text--darken-2">
               Filename
             </td>
-            <td class="font-weight-bold">{{ file.filename | truncate(28) }}</td>
+            <td class="font-weight-bold">{{ file.filename }}</td>
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">

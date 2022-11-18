@@ -2,6 +2,8 @@ import Papa from 'papaparse'
 
 const { flagLabel } = require('aktemp-utils/flags')
 
+export function splitLines (t) { return t.split(/\r\n|\r|\n/) }
+
 export function readLocalFile (file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()

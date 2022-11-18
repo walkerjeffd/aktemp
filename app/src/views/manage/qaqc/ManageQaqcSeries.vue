@@ -284,7 +284,7 @@
             </v-row>
             <v-row>
               <v-col cols="12">
-                <v-sheet elevation="2">
+                <v-sheet elevation="2" class="px-4">
                   <div class="d-flex align-center px-4 pt-4">
                     <v-spacer></v-spacer>
                     <div class="mr-2 text-overline">Chart Mode:</div>

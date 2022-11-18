@@ -3,16 +3,14 @@ Raw<template>
     <Loading v-if="loading" style="height:500px"></Loading>
     <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data" class="mb-0">{{ error }}</Alert>
     <div v-show="!loading && !error">
-      <div class="ml-16">
-        <div class="h6 font-weight-bold">
-          {{ mode === 'daily' ? 'Daily Mean and Range' : 'Instantaneous Measurements' }}
-        </div>
-        <div class="text--secondary caption body-2">
-          <v-icon x-small>mdi-information</v-icon> Click and drag on the top chart or use the handles on the bottom chart to zoom in. To see instantaneous data, zoom in to a period &leq; 31 days.<br>Click "Flagged" in the bottom right corner to hide/show flagged values.
-        </div>
+      <div class="text-h6 font-weight-bold">
+        {{ mode === 'daily' ? 'Daily Mean and Range' : 'Instantaneous Measurements' }}
       </div>
 
       <highcharts :constructor-type="'stockChart'" :options="settings" ref="chart"></highcharts>
+      <div class="text--secondary caption body-2">
+        <v-icon x-small>mdi-information</v-icon> Click and drag on the top chart or use the handles on the bottom chart to zoom in. To see instantaneous data, zoom in to a period &leq; 31 days. Click "Flagged" in the bottom right corner to hide/show flagged values.
+      </div>
     </div>
   </div>
 </template>

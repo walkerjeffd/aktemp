@@ -49,7 +49,7 @@
                   <v-data-table
                     :value="selectedFlagArray"
                     :loading="loading"
-                    :items="flags"
+                    :items="series.flags"
                     :headers="table.headers"
                     :sort-by.sync="table.sort.by"
                     :sort-desc.sync="table.sort.desc"
@@ -72,7 +72,7 @@
                         outlined
                         small
                         @click="confirmDeleteAllFlags"
-                        :disabled="flags.length === 0"
+                        :disabled="series.flags.length === 0"
                       ><v-icon small left>mdi-delete</v-icon> Delete All</v-btn>
                       <DownloadButton @click="download" text="Download" small />
                     </template>
@@ -302,8 +302,8 @@
                     </v-btn-toggle>
                   </div>
                   <SeriesChart
-                    :series="[series]"
-                    :flags="flags"
+                    :series="seriesArray"
+                    :flags="series.flags"
                     :flag="flag.selected"
                     :brush="chartMode === 'brush'"
                     @brush="setRange"
@@ -391,7 +391,6 @@ export default {
           }
         }
       },
-      flags: [],
       table: {
         sort: {
           by: 'start_datetime',
@@ -421,6 +420,10 @@ export default {
     }),
     selectedFlagArray () {
       return this.flag.selected ? [this.flag.selected] : []
+    },
+    seriesArray () {
+      console.log('seriesArray')
+      return [this.series]
     }
   },
   watch: {
@@ -459,8 +462,8 @@ export default {
         }
         this.station = await this.$http.restricted.get(`/stations/${this.series.station_id}`)
           .then(d => d.data)
-        this.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)
-          .then(d => d.data)
+        // this.series.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)
+        //   .then(d => d.data)
       } catch (err) {
         this.error = this.$errorMessage(err)
       } finally {
@@ -505,7 +508,7 @@ export default {
           await this.$http.restricted
             .put(`/series/${this.$route.params.seriesId}/flags/${payload.id}`, payload)
         }
-        this.flags = await this.$http.restricted
+        this.series.flags = await this.$http.restricted
           .get(`/series/${this.$route.params.seriesId}/flags`)
           .then(d => d.data)
         this.selectFlag()
@@ -527,7 +530,7 @@ export default {
       }
       try {
         await this.$http.restricted.delete(`/series/${this.$route.params.seriesId}/flags/${id}`)
-        this.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)
+        this.series.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)
           .then(d => d.data)
         this.selectFlag()
       } catch (err) {
@@ -550,7 +553,7 @@ export default {
       this.chartLoading = true
       try {
         await this.$http.restricted.delete(`/series/${this.$route.params.seriesId}/flags`)
-        this.flags = []
+        this.series.flags = []
         this.selectFlag()
       } catch (err) {
         this.error = this.$errorMessage(err)
@@ -646,7 +649,7 @@ export default {
     },
     download () {
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-${this.series.id}-flags.csv`
-      this.$download.flags(filename, this.station, this.series, this.flags)
+      this.$download.flags(filename, this.station, this.series, this.series.flags)
     }
   }
 }

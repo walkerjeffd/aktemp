@@ -51,6 +51,7 @@
             <td></td>
             <td></td>
             <td></td>
+            <td></td>
             <td>
               <v-checkbox
                 v-model="filters.reviewed"
@@ -148,6 +149,10 @@ export default {
         {
           text: 'Depth (m)',
           value: 'depth_m'
+        },
+        {
+          text: 'Interval',
+          value: 'interval'
         },
         {
           text: 'Reviewed',

@@ -168,25 +168,20 @@ function parseCsv (csv, skipLines = 0, ignoreErrors = false) {
     throw new Error('Failed to parse csv file (unknown error)')
   }
 
-  if (!ignoreErrors) {
-    if (results.errors.length > 0) {
-      const err = results.errors[0]
-      let message
-      if (err.row) {
-        message = `Error at row ${err.row + 1} (${err.message})`
-      } else {
-        message = err.message
-      }
-      if (results.errors.length === 2) {
-        message += ' (and 1 more error)'
-      } else if (results.errors.length > 2) {
-        message += ` (and ${results.errors.length - 1} more errors)`
-      }
-      throw new Error(message)
-    } else if (!results.meta.fields.every(d => d.length > 0)) {
-      const index = results.meta.fields.findIndex(d => d.length === 0) + 1
-      throw new Error(`File contains unnamed column (column ${index}). All columns must have a name.`)
+  if (!ignoreErrors && results.errors.length > 0) {
+    const err = results.errors[0]
+    let message
+    if (err.row) {
+      message = `Error at row ${err.row + 1} (${err.message})`
+    } else {
+      message = err.message
     }
+    if (results.errors.length === 2) {
+      message += ' (and 1 more error)'
+    } else if (results.errors.length > 2) {
+      message += ` (and ${results.errors.length - 1} more errors)`
+    }
+    throw new Error(message)
   }
   return results
 }
@@ -209,7 +204,7 @@ function parseSeriesFile (rows, config, stations) {
     }))
   ).flat()
   debug(`parseSeriesFile(): returned ${series.length} series -> [station_code, depth_m, values.length]`)
-  debug(series.map(d => [d.station_code, d.depth_m, d.values.length]))
+  // debug(series.map(d => [d.station_code, d.depth_m, d.values.length]))
 
   series.forEach((s, i) => {
     debug(`parseSeriesFile(): processing series ${i} ('${s.station_code}', ${s.depth_m}, ${s.values.length})`)
@@ -268,7 +263,7 @@ function parseSeriesFile (rows, config, stations) {
   })
 
   debug(`parseSeriesFile(): done (n=${series.length})`)
-  debug(series)
+  // debug(series)
   return series
 }
 
@@ -332,7 +327,7 @@ function parseProfilesFile (rows, config, stations) {
       })
     )
   }).flat()
-  debug(profiles)
+  // debug(profiles)
 
   return profiles
 }

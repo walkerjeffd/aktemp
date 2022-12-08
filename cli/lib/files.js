@@ -15,16 +15,13 @@ const { findStations } = require('./stations')
 
 async function readFileFromS3 (file, config) {
   const { Bucket, Key } = file.s3
+  debug(`readFileFromS3(): ${Bucket}/${Key}`)
   const object = await s3.getObject({ Bucket, Key }).promise()
   const csv = stripBom(object.Body.toString())
-  // const csv = object.Body.toString()
-  try {
-    const parsed = parseCsv(csv, config.file_skip)
-    return { data: parsed.data, fields: parsed.meta.fields }
-  } catch (err) {
-    console.log(err)
-    throw new Error(`failed to parse CSV file from s3 (bucket='${Bucket}', key='${Key}', filename='${file.filename}'), error: ${err.toString()}`)
-  }
+  debug('readFileFromS3(): parsing')
+  const parsed = parseCsv(csv, config.file_skip)
+  debug('readFileFromS3(): done')
+  return { data: parsed.data, fields: parsed.meta.fields }
 }
 
 module.exports.findFiles = async function (organizationCode) {
@@ -110,7 +107,12 @@ exports.processFile = async function (id, { dryRun }) {
     const series = parsed.map(({ station_code, ...d }) => d) // eslint-disable-line
     if (!dryRun) {
       debug(`processFile(): saving series (n=${series.length})`)
-      await file.$relatedQuery('series').insertGraph(series)
+      let i = 0
+      for (const s of series) {
+        debug(`processFile(): inserting series (${i} of ${series.length})`)
+        await file.$relatedQuery('series').insertGraph(s)
+        i++
+      }
     } else {
       file.series = series
       file.status = 'DONE'

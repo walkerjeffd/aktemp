@@ -223,11 +223,11 @@
           "ResourceRequirements": [
             {
               "Type": "MEMORY",
-              "Value": 3072
+              "Value": 8192
             },
             {
               "Type": "VCPU",
-              "Value": 1
+              "Value": 2
             }
           ],
           "Command": [
@@ -255,6 +255,10 @@
             {
               "Name": "NOTIFY_TOPIC",
               "Value": { "Ref": "notifyTopicArn" }
+            },
+            {
+              "Name": "NODE_OPTIONS",
+              "Value": "--max-old-space-size=8192"
             }
           ]
         },

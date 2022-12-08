@@ -1,6 +1,7 @@
 const program = require('commander')
 const { findFiles, deleteFile, importFiles, processFile } = require('../lib/files')
 const { printTable } = require('../lib/utils')
+const { File } = require('aktemp-db/models')
 
 function printFiles (rows, columns = ['id', 'organization_code', 'filename', 'status']) {
   printTable(rows, columns)
@@ -35,26 +36,40 @@ program
   .option('-d, --dry-run', 'Only parse file, do not save to database')
   .description('Process file')
   .action(async (id, options) => {
-    const file = await processFile(id, options)
-    let rows = []
-    if (file.series.length > 0) {
-      rows = file.series.map(d => ({
-        file_id: d.file_id,
-        series_id: d.id,
-        start_datetime: d.start_datetime,
-        end_datetime: d.end_datetime
-      }))
-    } else if (file.profiles.length > 0) {
-      rows = file.profiles.map(d => ({
-        file_id: d.file_id,
-        profile_id: d.id,
-        station_id: d.station_id,
-        date: d.date.toISOString().substr(0, 10)
-      }))
+    try {
+      const file = await processFile(id, options)
+      let rows = []
+      if (file.series.length > 0) {
+        rows = file.series.map(d => ({
+          file_id: d.file_id,
+          series_id: d.id,
+          start_datetime: d.start_datetime,
+          end_datetime: d.end_datetime
+        }))
+      } else if (file.profiles.length > 0) {
+        rows = file.profiles.map(d => ({
+          file_id: d.file_id,
+          profile_id: d.id,
+          station_id: d.station_id,
+          date: d.date.toISOString().substr(0, 10)
+        }))
+      }
+      printFiles([file])
+      console.log('')
+      printTable(rows)
+    } catch (err) {
+      console.log(`failed to process file (id=${id})`)
+      console.log(err)
+      if (!options.dryRun) {
+        const file = await File.query().findById(id)
+        if (file) {
+          await file.$query().patch({
+            status: 'FAILED',
+            error: err.toString()
+          })
+        }
+      }
     }
-    printFiles([file])
-    console.log('')
-    printTable(rows)
   })
 
 program

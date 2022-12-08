@@ -232,7 +232,7 @@ export default {
           {
             prop: 'timezone',
             label: 'Timezone*',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: stationTimezoneOptions.map(d => d.value),
             width: '100px'
@@ -250,21 +250,21 @@ export default {
           {
             prop: 'waterbody_type',
             label: 'Waterbody Type',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: waterbodyTypeOptions.map(d => d.value)
           },
           {
             prop: 'placement',
             label: 'Placement',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: placementOptions.map(d => d.value)
           },
           {
             prop: 'mixed',
             label: 'Well-mixed',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: booleanOptions.map(d => d.value),
             width: '80px'
@@ -272,7 +272,7 @@ export default {
           {
             prop: 'active',
             label: 'Active',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: booleanOptions.map(d => d.value),
             width: '80px'
@@ -285,7 +285,7 @@ export default {
           {
             prop: 'private',
             label: 'Private',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: booleanOptions.map(d => d.value)
           }

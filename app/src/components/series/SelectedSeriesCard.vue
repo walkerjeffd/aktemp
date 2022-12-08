@@ -22,7 +22,7 @@
           <SeriesInfo :series="series" @delete="$emit('refresh')" @refresh="$emit('refresh')" />
         </v-col>
         <v-col cols="12" xl="8" v-if="$vuetify.breakpoint.xl">
-          <v-sheet elevation="2" class="pa-4 fill-height">
+          <v-sheet elevation="2" class="pa-4">
             <SeriesChart :series="[series]" :key="series.id" />
           </v-sheet>
         </v-col>

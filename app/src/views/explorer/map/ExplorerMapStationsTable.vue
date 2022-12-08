@@ -442,7 +442,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .aktemp-explorer-map-stations-table {
   position: absolute;
   transform: translate(-50%, 0);
@@ -452,5 +452,11 @@ export default {
   background-color: white;
   pointer-events: autocomplete;
   z-index: 1000;
+}
+
+.aktemp-explorer-map-stations-table > div > .v-data-table > .v-data-table__wrapper {
+  max-height: calc(50vh);
+  overflow-y: auto;
+  padding-bottom: 1px;
 }
 </style>

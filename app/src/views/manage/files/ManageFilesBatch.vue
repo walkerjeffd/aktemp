@@ -388,7 +388,7 @@ export default {
           {
             prop: 'interval',
             label: 'Interval*',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: intervalOptions.map(d => d.value),
             width: '120px',
@@ -417,7 +417,7 @@ export default {
           {
             prop: 'timezone',
             label: 'Timezone*',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: fileTimezoneOptions.map(d => d.value)
           },
@@ -432,7 +432,7 @@ export default {
           {
             prop: 'temperature_units',
             label: 'Temperature Units*',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: temperatureUnitsOptions.map(d => d.value)
           },
@@ -448,7 +448,7 @@ export default {
           {
             prop: 'depth_category',
             label: 'Depth Category',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: depthCategoryOptions.map(d => d.value),
             excludeProfiles: true
@@ -465,21 +465,21 @@ export default {
           {
             prop: 'depth_units',
             label: 'Depth Units†',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: depthUnitsOptions.map(d => d.value)
           },
           {
             prop: 'accuracy',
             label: 'Sensor Accuracy',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: sensorAccuracyOptions.map(d => d.value)
           },
           {
             prop: 'sop_bath',
             label: 'SOP Bath',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: booleanOptions.map(d => d.value),
             excludeProfiles: true
@@ -487,7 +487,7 @@ export default {
           {
             prop: 'reviewed',
             label: 'Reviewed',
-            type: 'autocomplete',
+            type: 'dropdown',
             strict: false,
             source: booleanOptions.map(d => d.value)
           }

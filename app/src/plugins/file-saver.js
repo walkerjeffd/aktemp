@@ -46,6 +46,9 @@ const columnDefs = {
     reference: {
       label: 'Reference URL'
     },
+    private: {
+      label: 'Private'
+    },
     series_count: {
       label: 'Number of timeseries'
     },
@@ -110,7 +113,7 @@ const columnDefs = {
       label: 'Sensor checked using Pre/Post Bath according to SOP'
     },
     accuracy: {
-      label: 'Sensor Accuracy Level (1 = < ±0.25 degC (best); 2: < ±0.5 degC; 3: > ±0.5 degC (worst))'
+      label: 'Sensor Accuracy Level (1 = < 0.25 degC (best); 2: < 0.5 degC; 3: > 0.5 degC (worst))'
     },
     reviewed: {
       label: 'QAQC Review Complete'
@@ -176,7 +179,7 @@ const columnDefs = {
       label: 'Date (local timezone)'
     },
     accuracy: {
-      label: 'Sensor Accuracy Level (1 = < ±0.25 degC (best); 2: < ±0.5 degC; 3: > ±0.5 degC (worst))'
+      label: 'Sensor Accuracy Level (1 = < 0.25 degC (best); 2: < 0.5 degC; 3: > 0.5 degC (worst))'
     },
     reviewed: {
       label: 'QAQC Review Complete'

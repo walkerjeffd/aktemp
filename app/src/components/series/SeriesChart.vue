@@ -47,7 +47,7 @@ export default {
   },
   data () {
     return {
-      debug: true,
+      debug: false,
       showDebug: true,
       seriesDebug: [],
       loading: false,

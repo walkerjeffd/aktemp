@@ -56,6 +56,12 @@
             <Checkbox :value="item.private"></Checkbox>
           </template>
           <template v-slot:footer.prepend>
+            <DownloadButton
+              @click="download"
+              title="Download Stations Table as CSV File"
+              text="Download CSV"
+              class="mr-4"
+            />
             <v-btn
               outlined
               color="error"
@@ -199,6 +205,9 @@ export default {
     },
     unselectById (id) {
       this.selected = this.selected.filter(d => d.id !== id)
+    },
+    download () {
+      this.$download.stations(`AKTEMP-${this.organization.code}-stations.csv`, this.stations)
     }
   }
 }

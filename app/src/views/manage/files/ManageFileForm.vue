@@ -166,6 +166,8 @@
                     color="primary"
                     class="mr-4 px-4"
                     @click="nextFile"
+                    :disabled="file.loading"
+                    :loading="file.loading"
                   >
                     Continue <v-icon right>mdi-chevron-right</v-icon>
                   </v-btn>
@@ -1487,7 +1489,7 @@ export default {
         const csv = await readLocalFile(this.file.selected)
         const results = parseCsv(csv, this.config.file_skip, true)
         this.$refs.fileInput.blur()
-        this.file.parsed = results
+        this.file.parsed = Object.freeze(results)
         if (results.errors.length > 0) {
           const err = results.errors[0]
           if (err.code === 'TooManyFields') {
@@ -1642,7 +1644,7 @@ export default {
       if (!this.file.parsed) throw new Error('Parsed file not found')
 
       const timeColumn = this.timestamp.columns.separate ? this.config.time_column : null
-      this.file.parsed.data.map((d, i) => {
+      this.file.parsed.data.forEach((d, i) => {
         try {
           const raw = getTimestampString(d, this.config.datetime_column, timeColumn)
           const parsed = parseTimestampString(raw, this.timestampFormat)

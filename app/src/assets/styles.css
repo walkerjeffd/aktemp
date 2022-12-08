@@ -26,6 +26,10 @@ tr.v-data-table-filter {
   box-shadow: none !important;
 }
 
+.v-menu__content.menuable__content__active {
+  z-index: 2000 !important;
+}
+
 /* hichart date selector background */
 .highcharts-range-selector {
   background-color: #fff !important;
@@ -41,6 +45,7 @@ pre {
   display: none;
 }
 
+/* for showing code */
 .text-monospace {
   font-family: monospace;
 }

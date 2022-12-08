@@ -79,7 +79,6 @@
         </template>
         <template v-slot:footer.prepend>
           <v-btn
-            small
             outlined
             :disabled="selected.length === 0"
             :loading="saving"

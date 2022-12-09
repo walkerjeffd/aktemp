@@ -313,6 +313,21 @@ export default {
       const series = await this.$http.public.get(`/stations/${this.station.id}/series`)
         .then(d => d.data)
 
+      this.values.forEach(d => {
+        d.flag = []
+      })
+      this.flags.forEach(flag => {
+        const label = flagLabel(flag)
+        this.values.forEach(d => {
+          if (d.date >= flag.start_date && d.date <= flag.end_date) {
+            d.flag.push(label)
+          }
+        })
+      })
+      this.values.forEach(d => {
+        d.flag = d.flag.join(',')
+      })
+
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-daily.csv`
       this.$download.stationDailyValues(filename, this.station, series, this.values, this.discrete)
     }

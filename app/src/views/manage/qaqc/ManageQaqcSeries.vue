@@ -601,6 +601,7 @@ export default {
       }
     },
     createNewFlag () {
+      console.log('createNewFlag()')
       this.resetForm()
       this.showForm = true
       this.chartMode = 'brush'

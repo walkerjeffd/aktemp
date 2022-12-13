@@ -895,7 +895,10 @@ export default {
       if (this.flags) {
         bands = this.flags.map(d => {
           const start = this.parseDatetime(d.start_datetime)
-          const end = this.parseDatetime(d.end_datetime)
+          let end = this.parseDatetime(d.end_datetime)
+          if (this.mode === 'daily') {
+            end = end.startOf('day')
+          }
           return {
             id: d.id,
             from: start.valueOf(),
@@ -917,7 +920,10 @@ export default {
           bands = bands.filter(d => d.id !== this.flag.id)
         }
         const start = this.parseDatetime(this.flag.start_datetime)
-        const end = this.parseDatetime(this.flag.end_datetime)
+        let end = this.parseDatetime(this.flag.end_datetime)
+        if (this.mode === 'daily') {
+          end = end.startOf('day')
+        }
         bands.push({
           from: start.valueOf(),
           to: end.valueOf(),
@@ -1043,15 +1049,60 @@ export default {
     onBrush (event) {
       if (!this.brush) return
       event.preventDefault()
-      let start = this.$luxon.DateTime.fromMillis(event.xAxis[0].min, { zone: this.timezone })
-      let end = this.$luxon.DateTime.fromMillis(event.xAxis[0].max, { zone: this.timezone })
-      console.log('onBrush', start.toISO(), end.toISO())
+      const brushStart = this.$luxon.DateTime.fromMillis(event.xAxis[0].min, { zone: this.timezone })
+      const brushEnd = this.$luxon.DateTime.fromMillis(event.xAxis[0].max, { zone: this.timezone })
+      console.log('onBrush(): brush', brushStart.toISO(), brushEnd.toISO())
+      const series = this.series[0]
+      if (!series) return
       if (this.mode === 'daily') {
-        start = start.startOf('day')
-        end = end.endOf('day').plus(1, 'day').minus(1, 'minute')
-        console.log('daily', start.toISO(), end.toISO())
+        if (!series.daily.values || series.daily.values.length === 0) return
+        const dataStart = series.daily.values.find(d => d.date.valueOf() >= brushStart.valueOf())
+        if (!dataStart) return // brush period starts after last data point
+        let indexEnd = series.daily.values.findIndex(d => d.date.valueOf() > brushEnd.valueOf())
+        if (indexEnd < 0) {
+          // brush period ends after last data point
+          console.log('onBrush(): last day')
+          indexEnd = series.daily.values.length
+        } else if (indexEnd === series.daily.values.length - 1) {
+          // brush period ends at last data point
+          console.log('onBrush(): last day')
+          indexEnd = series.daily.values.length
+        } else if (indexEnd === 0) {
+          // brush period ends before first data point
+          return
+        }
+        const dataEnd = series.daily.values[indexEnd - 1]
+
+        const flagStart = dataStart.date
+        const flagEnd = dataEnd.date.endOf('day')
+        console.log('onBrush(): daily flag', flagStart.toISO(), flagEnd.toISO())
+        // console.log('onBrush(): daily data', dataStart, dataEnd)
+        this.$emit('brush', flagStart.toISO(), flagEnd.toISO())
+      } else {
+        if (!series.raw.values || series.raw.values.length === 0) return
+        const dataStart = series.raw.values.find(d => d.datetime.valueOf() >= brushStart.valueOf())
+        if (!dataStart) return // brush period starts after last data point
+        let indexEnd = series.raw.values.findIndex(d => d.datetime.valueOf() > brushEnd.valueOf())
+        if (indexEnd < 0) {
+          // brush period ends after last data point
+          console.log('onBrush(): last timestep')
+          indexEnd = series.raw.values.length
+        } else if (indexEnd === series.raw.values.length - 1) {
+          // brush period ends at last data point
+          console.log('onBrush(): last timestep')
+          indexEnd = series.raw.values.length
+        } else if (indexEnd === 0) {
+          // brush period ends before first data point
+          return
+        }
+        const dataEnd = series.raw.values[indexEnd - 1]
+
+        const flagStart = dataStart.datetime
+        const flagEnd = dataEnd.datetime
+        console.log('onBrush(): raw flag', flagStart.toISO(), flagEnd.toISO())
+        // console.log('onBrush(): daily data', dataStart, dataEnd)
+        this.$emit('brush', flagStart.toISO(), flagEnd.toISO())
       }
-      this.$emit('brush', start.toISO(), end.toISO())
     },
 
     updateSeriesDebug () {

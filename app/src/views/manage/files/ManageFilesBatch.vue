@@ -753,7 +753,7 @@ export default {
             const error = new Error('TooManyUniqueFlags')
             error.details = [{
               path: ['flag_column'],
-              message: `<strong>Flag Column</strong>: '${row.config.flag_column}' contains an unusually large number of unique flags (n=${uniqueFlags.size.toLocaleString()}). The first five unique flags are: ${Array.from(uniqueFlags.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. Please check that the correct column was specified, and that only standardized flags (e.g. 'OOW' to indicate out of water conditions) are used.`
+              message: `<strong>Flag Column</strong>: '${row.config.flag_column}' contains ${uniqueFlags.size.toLocaleString()} unique flags. The maximum allowed number of unique flags is 100. The first five unique flags are: ${Array.from(uniqueFlags.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. Please check that the correct column was specified, and that it only contains standardized flags (e.g., 'OOW' to indicate out of water conditions).`
             }]
             throw error
           }
@@ -764,7 +764,7 @@ export default {
             const error = new Error('TooManyUniqueDepths')
             error.details = [{
               path: ['depth_column'],
-              message: `<strong>Depth Column</strong>: '${row.config.depth_column}' contains an unusually large number of unique depths (n=${uniqueDepths.size.toLocaleString()}). The first five unique depths are: ${Array.from(uniqueDepths.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. AKTEMP does not support time-varying depths for timeseries data. A depth column is generally used to upload timeseries data collected at multiple depths at the same station (e.g., from a lake array). Please check that the correct column was specified, and that the depths do not vary over each logger deployment.`
+              message: `<strong>Depth Column</strong>: '${row.config.depth_column}' contains ${uniqueDepths.size.toLocaleString()} unique depths. The maximum allowed number of unique depths per file is 100. The first five unique depths are: ${Array.from(uniqueDepths.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. For timeseries data, the depth column can be used to differentiate loggers deployed at different depths but at the same station (e.g., a lake array). However, each logger should be given a constant depth. AKTEMP does not support time-varying depths for timeseries data (i.e., depths recorded by a pressure transducer). Please check that the correct column was specified, and that the depths do not vary over each logger deployment.`
             }]
             throw error
           }

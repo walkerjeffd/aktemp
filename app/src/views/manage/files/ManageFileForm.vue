@@ -848,7 +848,7 @@
                     </Alert>
                   </div>
 
-                  <div class="text-subtitle-1 font-weight-bold">Depth Column</div>
+                  <div class="text-subtitle-1 font-weight-bold mt-4">Depth Column</div>
                   <p v-if="config.file_type === 'SERIES'">
                     If file contains multiple timeseries at different depths, which column contains the depth of each timeseries? (Optional)
                   </p>
@@ -892,7 +892,7 @@
                     clearable
                   ></v-select>
 
-                  <Alert type="error" title="Depth Error" v-if="depth.status === 'ERROR'">
+                  <Alert type="error" title="Depth Error" v-if="depth.error" class="mt-8">
                     {{ depth.error || 'Unknown error' }}
                   </Alert>
                 </div>
@@ -1681,6 +1681,12 @@ export default {
       if (!this.$refs.temperatureForm.validate()) {
         throw new Error('Form is incomplete or contains an error')
       }
+      if (this.config.flag_column) {
+        const uniqueFlags = new Set(this.file.parsed.data.map(d => d[this.config.flag_column]))
+        if (uniqueFlags.size > 100) {
+          throw new Error(`QAQC column ('${this.config.flag_column}') contains ${uniqueFlags.size.toLocaleString()} unique flags. The maximum allowed number of unique flags is 100. The first five unique flags are: ${Array.from(uniqueFlags.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. Please check that the correct column was selected, and that it only standardized flags (e.g., 'OOW' to indicate out of water conditions).`)
+        }
+      }
     },
     nextTemperature () {
       this.temperature.error = null
@@ -1701,6 +1707,14 @@ export default {
     validateDepth () {
       if (!this.$refs.depthForm.validate()) {
         throw new Error('Form is incomplete or contains an error')
+      }
+
+      if (this.config.file_type === 'SERIES' && this.config.depth_column) {
+        debugger
+        const uniqueDepths = new Set(this.file.parsed.data.map(d => d[this.config.depth_column]))
+        if (uniqueDepths.size > 100) {
+          throw new Error(`Depth column ('${this.config.depth_column}') contains ${uniqueDepths.size.toLocaleString()} unique depths. The maximum allowed number of unique depths per file is 100. The first five unique depths are: ${Array.from(uniqueDepths.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. For timeseries data, the depth column can be used to differentiate loggers deployed at different depths but at the same station (e.g., a lake array). However, each logger should be given a constant depth. AKTEMP does not support time-varying depths for timeseries data (i.e., depths recorded by a pressure transducer). Please check that the correct column was specified, and that the depths do not vary over each logger deployment.`)
+        }
       }
     },
     nextDepth () {

@@ -226,16 +226,7 @@
               <div v-if="table.selected.lines">
                 <v-divider class="my-4"></v-divider>
                 <div class="secondary--text caption">Raw File Contents (first 100 lines)</div>
-                <div style="overflow:auto;max-height:400px;border:1px solid rgba(0, 0, 0, 0.12)">
-                  <table class="text-monospace">
-                    <tbody>
-                      <tr v-for="(line, i) in table.selected.lines" :key="`line-${i}`">
-                        <td class="px-2 text-right" style="border-right:1px solid rgba(0, 0, 0, 0.12)">{{ i + 1 }}</td>
-                        <td style="white-space:nowrap">{{ line }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                <FilePreview :lines="table.selected.lines" :skip-lines="+table.selected.file_skip" />
               </div>
             </v-card-text>
           </v-card>
@@ -302,8 +293,10 @@ import { mapGetters } from 'vuex'
 
 import evt from '@/events'
 import uploader from '@/lib/uploader'
-import { getTimestampString, parseTimestampString, guessDatetimeFormat } from 'aktemp-utils/time'
 
+import FilePreview from '@/components/FilePreview'
+
+import { getTimestampString, parseTimestampString, guessDatetimeFormat } from 'aktemp-utils/time'
 const {
   intervalOptions,
   fileTimezoneOptions,
@@ -313,15 +306,13 @@ const {
   depthUnitsOptions,
   booleanOptions
 } = require('aktemp-utils/constants')
-
-const {
-  validateFileConfig
-} = require('aktemp-utils/validators')
+const { validateFileConfig } = require('aktemp-utils/validators')
 
 const { parseCsvFile, readLocalFile, splitLines } = require('@/lib/utils')
 
 export default {
   name: 'ManageFilesBatch',
+  components: { FilePreview },
   data () {
     return {
       loading: false,

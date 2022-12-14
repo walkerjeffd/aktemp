@@ -38,7 +38,6 @@
           <v-file-input
             ref="filesInput"
             v-model="files.selected"
-            :rules="files.rules"
             placeholder="Select data files"
             truncate-length="200"
             prepend-icon="mdi-file-delimited-outline"
@@ -46,8 +45,10 @@
             outlined
             multiple
             validate-on-blur
-          >
-          </v-file-input>
+          />
+          <Alert type="error" title="File Error" v-if="files.error">
+            {{ files.error }}
+          </Alert>
         </div>
 
         <div v-show="table.rows.length > 0">
@@ -72,13 +73,7 @@
             @click="downloadStations"
           ><v-icon left>mdi-download</v-icon> Download Stations</v-btn>
           <p class="black--text">After you have filled out the table in the template, copy and paste the cells from Excel into the table below (excluding the header row).</p>
-          <Alert type="warning" title="To Do">
-            New features need to be explained in template
-            <ul>
-              <li>Columns can be specified by index (number) as well as name</li>
-              <li>Date/time format can be left blank and AKTEMP will attempt to guess. If this fails, it will throw an error and ask the user to specify the token string.</li>
-            </ul>
-          </Alert>
+          <p class="black--text">Note: if the <strong>date/time format</strong> is blank, AKTEMP will attempt to guess the correct format for you.</p>
 
           <!-- https://github.com/vuejs/devtools/issues/1947#issuecomment-1299134339 -->
           <HotTable
@@ -230,11 +225,11 @@
 
               <div v-if="table.selected.lines">
                 <v-divider class="my-4"></v-divider>
-                <div class="secondary--text caption">Raw File Contents (first 200 lines)</div>
+                <div class="secondary--text caption">Raw File Contents (first 100 lines)</div>
                 <div style="overflow:auto;max-height:400px;border:1px solid rgba(0, 0, 0, 0.12)">
                   <table class="text-monospace">
                     <tbody>
-                      <tr v-for="(line, i) in table.selected.lines.slice(0,200)" :key="`line-${i}`">
+                      <tr v-for="(line, i) in table.selected.lines" :key="`line-${i}`">
                         <td class="px-2 text-right" style="border-right:1px solid rgba(0, 0, 0, 0.12)">{{ i + 1 }}</td>
                         <td style="white-space:nowrap">{{ line }}</td>
                       </tr>
@@ -334,11 +329,12 @@ export default {
       message: null,
 
       files: {
+        error: null,
         type: 'SERIES',
-        selected: [],
-        rules: [
-          v => v.length > 0 || 'No files selected'
-        ]
+        selected: []
+        // rules: [
+        //   v => v.length > 0 || 'No files selected'
+        // ]
       },
 
       table: {
@@ -412,7 +408,7 @@ export default {
           },
           {
             prop: 'datetime_format',
-            label: 'Date/time Format*'
+            label: 'Date/time Format'
           },
           {
             prop: 'timezone',
@@ -576,14 +572,23 @@ export default {
     },
     async initTable () {
       this.error = null
+      this.files.error = null
+      this.loading = true
       this.table.rows.splice(0, this.table.rows.length)
       this.table.selected = null
+      this.table.failedCount = 0
 
       for (let i = 0; i < this.files.selected.length; i++) {
         const file = this.files.selected[i]
+        if (file.size > 250 * 1024 * 1024) {
+          this.files.error = `File '${file.name}' exceeds maximum file size (250 MB). Please separate the data in this file into multiple (smaller) files and try again.`
+
+          this.loading = false
+          return
+        }
         const data = await readLocalFile(file)
         const lines = splitLines(data)
-        this.table.rows.push({
+        const row = {
           status: 'READY',
           row: i,
           file_index: i,
@@ -594,23 +599,19 @@ export default {
           fields: [],
           errors: [],
           lines
-        })
+        }
+        this.table.rows.push(row)
       }
-
-      // this.files.selected.forEach((file, i) => {
-      //   this.table.rows.push({
-      //     status: 'READY',
-      //     row: i,
-      //     file_index: i,
-      //     file,
-      //     filename: file.name,
-      //     file_type: this.files.type,
-      //     file_skip: '0',
-      //     fields: [],
-      //     errors: []
-      //   })
-      // })
       this.renderHot()
+      this.loading = false
+    },
+    updateFailedCount () {
+      this.table.failedCount = 0
+      this.table.rows.forEach(row => {
+        if (row.status === 'INVALID' || row.status === 'FAILED') {
+          this.table.failedCount += 1
+        }
+      })
     },
     async submit () {
       this.error = null
@@ -623,7 +624,6 @@ export default {
       }
 
       this.loading = true
-      this.table.failedCount = 0
       for (let i = 0; i < this.table.rows.length; i++) {
         let row = this.table.rows[i]
 
@@ -632,12 +632,11 @@ export default {
 
         try {
           row = await this.validateRow(row, i)
+          this.loading = true
           if (row.config) {
             await this.uploadFile(row, i)
           }
-          if (row.status === 'INVALID' || row.status === 'FAILED') {
-            this.table.failedCount += 1
-          }
+          this.updateFailedCount()
         } catch (err) {
           console.log(err)
           this.error = this.$errorMessage(err)
@@ -650,7 +649,7 @@ export default {
       this.renderHot()
 
       if (!this.table.rows.some(d => d.status !== 'SUCCESS')) {
-        evt.$emit('notify', 'Files have been uploaded', 'success')
+        evt.$emit('notify', 'File(s) have been uploaded', 'success')
         this.$router.push({ name: 'manageFiles' })
       }
     },
@@ -660,6 +659,7 @@ export default {
       if (row.status === 'SUCCESS') return row
       if (this.hot.isEmptyRow(i)) return row
 
+      this.loading = true
       this.message = `Validating ${row.filename}`
 
       const columns = this.hot.getSettings().columns
@@ -695,6 +695,36 @@ export default {
         if (!value.datetime_format) {
           value.datetime_format = 'GUESS'
         }
+
+        // replace column indices with names
+        const configColumns = [
+          'station_column',
+          'datetime_column',
+          'time_column',
+          'timezone_column',
+          'temperature_column',
+          'flag_column',
+          'depth_column'
+        ]
+        for (const prop of configColumns) {
+          if (value[prop]) {
+            const i = parseInt(value[prop])
+            if (Number.isInteger(i)) {
+              if (i <= 0 || i > row.fields.length) {
+                const error = new Error('InvalidColumnIndex')
+                error.details = [{
+                  path: [prop],
+                  message: `"${prop}" contains an invalid column index (${value[prop]}), must be between 1 and ${row.fields.length}`
+                }]
+                throw error
+              } else {
+                value[prop] = row.fields[i - 1]
+                row[prop] = row.fields[i - 1]
+              }
+            }
+          }
+        }
+
         row.config = validateFileConfig(value, row.fields, this.stations)
         if (value.datetime_format === 'GUESS') {
           const timestampString = getTimestampString(parsed.data[0], row.config.datetime_column, row.config.time_column)
@@ -726,6 +756,28 @@ export default {
             throw error
           }
         })
+        if (row.config.flag_column) {
+          const uniqueFlags = new Set(parsed.data.map(d => d[row.config.flag_column]))
+          if (uniqueFlags.size > 100) {
+            const error = new Error('TooManyUniqueFlags')
+            error.details = [{
+              path: ['flag_column'],
+              message: `<strong>Flag Column</strong>: '${row.config.flag_column}' contains an unusually large number of unique flags (n=${uniqueFlags.size.toLocaleString()}). The first five unique flags are: ${Array.from(uniqueFlags.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. Please check that the correct column was specified, and that only standardized flags (e.g. 'OOW' to indicate out of water conditions) are used.`
+            }]
+            throw error
+          }
+        }
+        if (row.file_type === 'SERIES' && row.config.depth_column) {
+          const uniqueDepths = new Set(parsed.data.map(d => d[row.config.depth_column]))
+          if (uniqueDepths.size > 100) {
+            const error = new Error('TooManyUniqueDepths')
+            error.details = [{
+              path: ['depth_column'],
+              message: `<strong>Depth Column</strong>: '${row.config.depth_column}' contains an unusually large number of unique depths (n=${uniqueDepths.size.toLocaleString()}). The first five unique depths are: ${Array.from(uniqueDepths.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. AKTEMP does not support time-varying depths for timeseries data. A depth column is generally used to upload timeseries data collected at multiple depths at the same station (e.g., from a lake array). Please check that the correct column was specified, and that the depths do not vary over each logger deployment.`
+            }]
+            throw error
+          }
+        }
       } catch (err) {
         if (!err.details) {
           row.errors = [{
@@ -754,10 +806,12 @@ export default {
       if (row.errors.length > 0) {
         row.status = 'INVALID'
       } else {
-        row.status = 'READY'
+        row.status = 'VALID'
       }
+      this.updateFailedCount()
       this.renderHot()
       this.message = null
+      this.loading = false
 
       return row
     },

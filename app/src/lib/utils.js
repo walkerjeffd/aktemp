@@ -2,7 +2,7 @@ import Papa from 'papaparse'
 
 const { flagLabel } = require('aktemp-utils/flags')
 
-export function splitLines (t) { return t.split(/\r\n|\r|\n/) }
+export function splitLines (t, limit = 100) { return t.split(/\r\n|\r|\n/, limit) }
 
 export function readLocalFile (file) {
   return new Promise((resolve, reject) => {

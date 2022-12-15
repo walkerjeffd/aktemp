@@ -1,20 +1,24 @@
 <template>
   <div class="fill-height">
     <v-main class="fill-height">
-     <div style="background-color:red;height:100%">
+     <div style="height:100%">
         <StationsMap
           :loading="stationsStatus.loading"
           :stations="stations.filtered"
           :station="stations.selected"
+          :selected-huc="huc.selected"
           @select="select"
+          @select-huc="selectHuc"
         />
         <ExplorerMapStationsTable
           v-show="show.stationsTable"
           :loading="stationsStatus.loading"
           :stations="stations.all"
           :selected="stations.selected"
+          :selected-huc="huc.selected"
           @select="select"
           @filter="filter"
+          @unselectHuc="selectHuc"
           @close="show.stationsTable = false"
         />
         <ExplorerMapStation
@@ -24,28 +28,6 @@
         />
       </div>
     </v-main>
-    <v-navigation-drawer
-      app
-      clipped
-      dark
-      absolute
-      mini-variant
-      expand-on-hover
-      color="grey darken-2"
-      style="z-index:1000"
-      elevation="2"
-    >
-      <v-list nav>
-        <v-list-item>
-          <v-list-item-icon class="pull-right">
-            <v-icon>mdi-map</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title class="font-weight-bold">Map Options</v-list-item-title>
-          <v-list-item-content>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
   </div>
 </template>
 
@@ -88,6 +70,9 @@ export default {
         active: false,
         series: false,
         profiles: false
+      },
+      huc: {
+        selected: null
       }
     }
   },
@@ -101,24 +86,12 @@ export default {
   watch: {
     storeStations () {
       this.stations.all = this.storeStations
-      // const mockStations = require('../../../../../r/export/mock/stations.json')
-      // this.stations.all = mockStations.slice(0, 1000)
     },
     'stationsStatus.error' () {
       this.checkStationsError()
     }
   },
   async created () {
-    // try {
-    //   const response = await this.$http.public.get('/stations')
-    //   this.stations.all = response.data
-    //   this.stations.filtered = this.stations.all
-    // } catch (e) {
-    //   alert('Error occurred fetching stations')
-    //   console.log(e)
-    // } finally {
-    //   this.loading = false
-    // }
     this.$store.dispatch('explorer/fetchOrganizations')
     this.$store.dispatch('explorer/fetchStations')
     this.checkStationsError()
@@ -135,6 +108,12 @@ export default {
       } else {
         this.stations.selected = null
       }
+    },
+    selectHuc (feature) {
+      if (feature && this.huc.selected && feature.id === this.huc.selected.id) {
+        feature = null
+      }
+      this.huc.selected = feature
     },
     filter (filteredStations) {
       this.stations.filtered = filteredStations

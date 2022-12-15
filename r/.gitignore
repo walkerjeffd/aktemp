@@ -3,3 +3,4 @@ _targets/
 export/
 .Rhistory
 .Rproj.user
+.env

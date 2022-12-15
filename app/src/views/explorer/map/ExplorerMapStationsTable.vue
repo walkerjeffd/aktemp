@@ -191,6 +191,67 @@
         </template>
         <template v-slot:footer.prepend>
           <v-menu
+            v-model="filters.spatial.show"
+            top
+            offset-y
+            :close-on-content-click="false"
+            min-width="400"
+            nudge-top="10"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn
+                outlined
+                :color="spatialEnabled ? 'warning' : null"
+                class="mr-4"
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon left>mdi-pentagon-outline</v-icon>
+                Spatial Filters
+              </v-btn>
+            </template>
+
+            <v-sheet class="pa-4">
+              <div class="font-weight-bold d-flex">
+                <div>Spatial Filters</div>
+                <v-spacer></v-spacer>
+                <v-btn x-small icon @click="filters.spatial.show = false"><v-icon small>mdi-close</v-icon></v-btn>
+              </div>
+              <v-checkbox
+                label="Enable Spatial Filters"
+                v-model="spatialEnabled"
+                dense
+                class="mt-4"
+              ></v-checkbox>
+              <v-select
+                :items="filters.spatial.hucLevel.options"
+                :disabled="!spatialEnabled"
+                v-model="hucLevel"
+                label="Select HUC Level"
+                item-text="label"
+                item-value="value"
+                :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
+                hide-details
+                single-line
+                outlined
+                dense
+                mandatory
+              ></v-select>
+              <div class="text--secondary text-subtitle-2 mt-2" v-if="spatialEnabled">
+                Click on a HUC basin to filter stations within it
+              </div>
+              <div class="text-subtitle-1 mt-4" v-if="spatialEnabled && selectedHuc">
+                Selected: <strong>{{ selectedHuc.properties.name }} ({{ selectedHuc.id }})</strong>
+                <v-btn icon small @click="$emit('unselectHuc')" title="Unselect HUC"><v-icon small>mdi-close</v-icon></v-btn>
+              </div>
+              <div class="text-right">
+                <v-btn text @click="filters.spatial.show = false" class="mt-4">
+                  <v-icon left>mdi-close</v-icon> Close
+                </v-btn>
+              </div>
+            </v-sheet>
+          </v-menu>
+          <v-menu
             v-model="filters.advanced.show"
             top
             offset-y
@@ -206,7 +267,7 @@
                 v-bind="attrs"
                 v-on="on"
               >
-                <v-icon left>mdi-filter</v-icon>
+                <v-icon left>mdi-filter-outline</v-icon>
                 More Filters<span v-if="advancedFilterCount > 0">&nbsp;({{ advancedFilterCount }})</span>
               </v-btn>
             </template>
@@ -288,12 +349,13 @@
 </template>
 
 <script>
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon'
 import evt from '@/events'
 import { waterbodyTypeOptions, placementOptions } from 'aktemp-utils/constants'
 
 export default {
   name: 'ExplorerMapStationsTable',
-  props: ['stations', 'selected', 'loading'],
+  props: ['stations', 'selected', 'loading', 'selectedHuc'],
   data () {
     return {
       collapse: false,
@@ -311,6 +373,16 @@ export default {
         before: {
           show: false,
           value: null
+        },
+        spatial: {
+          show: false,
+          hucLevel: {
+            options: [
+              { value: 'huc4', label: 'HUC4' },
+              { value: 'huc6', label: 'HUC6' },
+              { value: 'huc8', label: 'HUC8' }
+            ]
+          }
         },
         advanced: {
           show: false,
@@ -385,6 +457,22 @@ export default {
     }
   },
   computed: {
+    spatialEnabled: {
+      get () {
+        return this.$store.state.map.spatialEnabled
+      },
+      set (value) {
+        this.$store.commit('map/SET_SPATIAL_ENABLED', value)
+      }
+    },
+    hucLevel: {
+      get () {
+        return this.$store.state.map.hucLevel
+      },
+      set (value) {
+        this.$store.commit('map/SET_HUC_LEVEL', value)
+      }
+    },
     selectedArray () {
       return this.selected ? [this.selected] : []
     },
@@ -404,6 +492,7 @@ export default {
       const mixed = this.filters.advanced.mixed
       return this.stations
         .filter(d => (
+          (!this.selectedHuc || booleanPointInPolygon([d.longitude, d.latitude], this.selectedHuc)) &&
           (waterbodyTypes.length === 0 || waterbodyTypes.includes(d.waterbody_type)) &&
           (!placement || placement === d.placement) &&
           (!active || d.active) &&

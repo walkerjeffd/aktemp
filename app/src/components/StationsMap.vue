@@ -2,9 +2,9 @@
   <div style="height:100%">
     <v-overlay
       color="grey lighten-1"
-      :value="loading"
+      :value="loading || hucLayer.loading"
       absolute
-      style="width:100%;height:100%" class="text-center"
+      style="width:100%;height:100%;z-index:1000" class="text-center"
     >
       <div class="text-h2 font-weight-medium mb-4">Loading...</div>
       <v-progress-circular
@@ -16,7 +16,7 @@
     <l-map
       ref="map"
       style="width:100%;height:100%"
-      :options="{ preferCanvas: true }"
+      :options="{ preferCanvas: false }"
       :center="[41,-100]"
       :zoom="3"
       @ready="$emit('ready', map)"
@@ -42,8 +42,8 @@
         @click="$emit('select', s)"
       >
         <l-tooltip>
-          <div class="text-subtitle-1">{{s.code}}</div>
-          <div class="text-subheading">{{s.organization_code}}</div>
+          Station: <strong>{{s.code}}</strong><br/>
+          Provider: <strong>{{s.organization_code}}</strong>
         </l-tooltip>
       </l-circle-marker>
       <l-circle-marker
@@ -54,19 +54,37 @@
         @click="$emit('select')"
       >
         <l-tooltip>
-          <div class="text-subtitle-1">{{station.code}}</div>
-          <div class="text-subheading">{{station.organization_code}}</div>
+          Station: <strong>{{station.code}}</strong><br/>
+          Provider: <strong>{{station.organization_code}}</strong>
         </l-tooltip>
       </l-circle-marker>
+      <l-geo-json
+        v-if="!!showHucLevel && hucLayer.data"
+        ref="huc"
+        :geojson="hucLayer.data"
+        :options="hucLayer.options"
+        :options-style="hucLayer.style"
+        pane="overlayPane"
+        @click="clickHucLayer"
+      />
+      <l-geo-json
+        v-if="selectedHuc"
+        :geojson="selectedHuc"
+        :options="selectedHucLayer.options"
+        :options-style="selectedHucLayer.style"
+        pane="overlayPane"
+        @click="clickHucLayer"
+      />
     </l-map>
     <!-- <slot v-if="ready"></slot> -->
   </div>
 </template>
 
 <script>
-import { LMap, LTileLayer, LControlLayers, LControlScale, LCircleMarker, LTooltip } from 'vue2-leaflet'
+import { LMap, LTileLayer, LGeoJson, LControlLayers, LControlScale, LCircleMarker, LTooltip } from 'vue2-leaflet'
 
 import evt from '@/events'
+import { mapGetters } from 'vuex'
 
 const basemaps = [
   {
@@ -132,6 +150,10 @@ export default {
       type: Array,
       required: false,
       default: () => []
+    },
+    selectedHuc: {
+      type: Object,
+      required: false
     }
   },
   components: {
@@ -140,25 +162,61 @@ export default {
     LControlScale,
     LTileLayer,
     LCircleMarker,
+    LGeoJson,
     LTooltip
   },
   data: () => ({
     basemaps,
-    ready: false
+    ready: false,
+    hucLayer: {
+      loading: false,
+      data: null,
+      options: {},
+      style: null
+    },
+    selectedHucLayer: {
+      options: {
+        onEachFeature (feature, layer) {
+          layer.bindTooltip(
+            `HUC ID: <strong>${feature.id}</strong><br>Name: <strong>${feature.properties.name}</strong>`,
+            { permanent: false, sticky: true }
+          )
+        }
+      },
+      style: () => {
+        return {
+          weight: 2,
+          color: 'orangered',
+          opacity: 1,
+          // fillColor: 'lightblue',
+          fillOpacity: 0
+        }
+      }
+    }
   }),
   computed: {
+    ...mapGetters('map', {
+      spatialEnabled: 'spatialEnabled',
+      hucLevel: 'hucLevel'
+    }),
+    showHucLevel () {
+      return this.spatialEnabled ? this.hucLevel : null
+    },
     selectedStationId () {
       return this.station ? this.station.id : null
     }
   },
   mounted () {
     this.map = this.$refs.map.mapObject
+    window.map = this.map
+    this.map.createPane('huc')
     evt.$on('map:zoomToStation', this.zoomToStation)
     evt.$on('map:fitToStations', this.fitToStations)
 
     this.ready = true
 
     this.fitToStations()
+    this.loadHucLayer()
   },
   beforeDestroy () {
     evt.$off('map:zoomToStation', this.zoomToStation)
@@ -167,9 +225,60 @@ export default {
   watch: {
     stations (val, old) {
       if (!old || old.length === 0) this.fitToStations()
+    },
+    selectedHuc (val) {
+      this.styleHucs()
+    },
+    showHucLevel () {
+      this.loadHucLayer()
     }
   },
   methods: {
+    async loadHucLayer () {
+      this.hucLayer.loading = true
+      console.log('loadHucLayer', this.hucLevel)
+      this.$emit('select-huc')
+      const response = await fetch(`static/gis/wbd_${this.hucLevel}.geojson`)
+      const data = await response.json()
+      this.hucLayer.data = data
+      this.hucLayer.options = {
+        onEachFeature (feature, layer) {
+          layer.bindTooltip(
+            `HUC ID: <strong>${feature.id}</strong><br>Name: <strong>${feature.properties.name}</strong>`,
+            { permanent: false, sticky: true }
+          )
+        }
+      }
+      this.hucLayer.style = () => {
+        return {
+          weight: 2,
+          color: 'lightblue',
+          opacity: 1,
+          fillOpacity: 0
+        }
+      }
+      console.log('done')
+      this.hucLayer.loading = false
+    },
+    styleHucs () {
+      if (!this.$refs.huc || !this.$refs.huc.mapObject) return
+      this.$refs.huc.mapObject.eachLayer(layer => {
+        window.layer = layer
+        if (this.selectedHuc && layer.feature.id === this.selectedHuc.id) {
+          layer.setStyle({
+            color: 'red'
+          })
+        } else {
+          layer.setStyle({
+            color: 'lightblue'
+          })
+        }
+      })
+    },
+    clickHucLayer (evt) {
+      const feature = evt.layer.feature
+      this.$emit('select-huc', feature)
+    },
     zoomToStation (station) {
       this.map.flyTo([station.latitude, station.longitude], 12)
     },

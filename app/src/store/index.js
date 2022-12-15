@@ -4,6 +4,7 @@ import Vuex from 'vuex'
 import adminModule from './admin'
 import explorerModule from './explorer'
 import manageModule from './manage'
+import mapModule from './map'
 
 Vue.use(Vuex)
 
@@ -11,7 +12,8 @@ export default new Vuex.Store({
   modules: {
     admin: adminModule,
     explorer: explorerModule,
-    manage: manageModule
+    manage: manageModule,
+    map: mapModule
   },
   state: {
     user: null

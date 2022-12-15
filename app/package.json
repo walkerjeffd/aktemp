@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@handsontable/vue": "^12.1.2",
+    "@turf/points-within-polygon": "^6.5.0",
     "aktemp-utils": "file:../utils",
     "aws-amplify": "^4.3.34",
     "aws-amplify-vue": "^2.1.5",

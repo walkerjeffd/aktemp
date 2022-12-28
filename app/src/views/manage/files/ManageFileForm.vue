@@ -1710,7 +1710,6 @@ export default {
       }
 
       if (this.config.file_type === 'SERIES' && this.config.depth_column) {
-        debugger
         const uniqueDepths = new Set(this.file.parsed.data.map(d => d[this.config.depth_column]))
         if (uniqueDepths.size > 100) {
           throw new Error(`Depth column ('${this.config.depth_column}') contains ${uniqueDepths.size.toLocaleString()} unique depths. The maximum allowed number of unique depths per file is 100. The first five unique depths are: ${Array.from(uniqueDepths.values()).slice(0, 5).map(d => `'${d}'`).join(', ')}. For timeseries data, the depth column can be used to differentiate loggers deployed at different depths but at the same station (e.g., a lake array). However, each logger should be given a constant depth. AKTEMP does not support time-varying depths for timeseries data (i.e., depths recorded by a pressure transducer). Please check that the correct column was specified, and that the depths do not vary over each logger deployment.`)

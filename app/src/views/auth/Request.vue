@@ -75,9 +75,18 @@
           </router-link>
         </div>
 
+        <vue-recaptcha
+          :sitekey="recaptcha.siteKey"
+          @verify="onVerifyRecaptcha"
+          @expired="onExpiredRecaptcha"
+          ref="recaptcha"
+          class="my-4"
+        ></vue-recaptcha>
+
         <Alert v-if="error" type="error" title="Server Error" class="mb-0 mt-4">
           {{error}}
         </Alert>
+
         <Alert v-else-if="success" type="success" title="Request Submitted" class="mb-0 mt-4">
           <p>
             Your account will be created in the next 1-2 business days. You will then receive an email with a temporary password to complete your account registration.
@@ -118,15 +127,22 @@
 </template>
 
 <script>
+import { VueRecaptcha } from 'vue-recaptcha'
 import { rules } from '@/lib/validators'
 
 export default {
   name: 'AuthRequest',
+  components: { VueRecaptcha },
   data () {
     return {
       loading: false,
       success: false,
       error: null,
+
+      recaptcha: {
+        response: null,
+        siteKey: process.env.VUE_APP_RECAPTCHA_SITE_KEY
+      },
 
       name: {
         value: '',
@@ -157,8 +173,14 @@ export default {
 
       if (!this.$refs.form.validate()) return
 
+      if (!this.recaptcha.response) {
+        this.error = 'reCAPTCHA is required, please check the box above.'
+        return
+      }
+
       this.loading = true
       const payload = {
+        'g-recaptcha-response': this.recaptcha.response,
         name: this.name.value,
         email: this.email.value,
         organization: this.organization.value,
@@ -180,12 +202,24 @@ export default {
       this.success = false
       this.error = null
       this.$refs.form.resetValidation()
+      this.resetRecaptcha()
 
       this.name.value = ''
       this.email.value = ''
       this.organization.value = ''
       this.abbreviation.value = ''
       this.description.value = ''
+    },
+    onVerifyRecaptcha (response) {
+      this.recaptcha.response = response
+    },
+    onExpiredRecaptcha () {
+      this.error = 'reCAPTCHA has expired. Please try again.'
+      this.resetRecaptcha()
+    },
+    resetRecaptcha () {
+      this.$refs.recaptcha.reset() // Direct call reset method
+      this.recaptcha.response = null
     }
   }
 }

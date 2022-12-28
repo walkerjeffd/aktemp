@@ -44,6 +44,14 @@
     "userPoolId": {
       "Description": "User pool ID",
       "Type": "String"
+    },
+    "recaptchaSiteKey": {
+      "Description": "reCAPTCHA site key",
+      "Type": "String"
+    },
+    "recaptchaSecretKey": {
+      "Description": "reCAPTCHA secret key",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -79,7 +87,9 @@
           "userPoolId": { "Ref": "userPoolId" },
           "notifyTopicArn": {
             "Fn::GetAtt": [ "NotifyStack", "Outputs.TopicArn" ]
-          }
+          },
+          "recaptchaSiteKey": { "Ref": "recaptchaSiteKey" },
+          "recaptchaSecretKey": { "Ref": "recaptchaSecretKey" }
         }
       }
     },
@@ -110,7 +120,8 @@
           "dbSecretName": { "Ref": "dbSecretName" },
           "notifyTopicArn": {
             "Fn::GetAtt": [ "NotifyStack", "Outputs.TopicArn" ]
-          }
+          },
+          "storageBucketName": { "Ref": "storageBucketName" }
         }
       }
     }

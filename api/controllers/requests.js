@@ -1,6 +1,7 @@
 const createError = require('http-errors')
 
 const { notify } = require('../aws')
+const { verifyRecaptcha } = require('../utils')
 const { Request } = require('aktemp-db/models')
 
 function newRequestMessage (params) {
@@ -31,6 +32,15 @@ const getRequests = async (req, res, next) => {
 }
 
 const postRequests = async (req, res, next) => {
+  if (!req.body.resend) {
+    try {
+      await verifyRecaptcha(req)
+    } catch (err) {
+      console.log(err)
+      throw createError(403, 'Failed to verify reCAPTCHA, please try again')
+    }
+    delete req.body['g-recaptcha-response']
+  }
   try {
     if (req.body.resend) {
       await notify('New Temporary Password Request', resendPasswordMessage(req.body))

@@ -38,5 +38,13 @@
   {
     "ParameterKey": "userPoolId",
     "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "recaptchaSiteKey",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "recaptchaSecretKey",
+    "ParameterValue": ""
   }
 ]

@@ -32,7 +32,7 @@
 
 <script>
 import * as d3 from 'd3'
-const { flagLabel } = require('aktemp-utils/flags')
+const { assignFlags } = require('aktemp-utils/flags')
 
 export default {
   name: 'SeriesChart',
@@ -138,7 +138,7 @@ export default {
         time: {
           getTimezoneOffset: (timestamp) => {
             if (!timestamp) return 0
-            return -1 * this.$luxon.DateTime.fromMillis(timestamp).setZone(this.timezone).offset
+            return -1 * this.$luxon.DateTime.fromMillis(timestamp).setZone(this.defaultTimezone).offset
           }
         },
         legend: {
@@ -238,7 +238,7 @@ export default {
     }
   },
   computed: {
-    timezone () {
+    defaultTimezone () {
       if (!this.series || this.series.length === 0) return null
       return this.series[0].station_timezone
     }
@@ -289,8 +289,8 @@ export default {
   //   console.log('destroyed()', this.series)
   // },
   methods: {
-    parseDatetime (x) {
-      return this.$luxon.DateTime.fromISO(x, { zone: this.timezone })
+    parseDatetime (x, tz) {
+      return this.$luxon.DateTime.fromISO(x, { zone: tz || this.defaultTimezone })
     },
     getDatetimeRange () {
       // console.log('getDatetimeRange')
@@ -355,12 +355,17 @@ export default {
               values: [d]
             })
           } else {
-            chunks.push({
+            const newChunk = {
               flag: !!d.flag,
-              values: [values[i - 1], d]
-            })
+              values: []
+            }
+            if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() <= 25 * 60 * 60 * 1000) {
+              newChunk.values.push(values[i - 1])
+            }
+            newChunk.values.push(d)
+            chunks.push(newChunk)
           }
-        } else if (values[i][accessor].diff(values[i - 1][accessor]).as('days') > 1.05) {
+        } else if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() > 25 * 60 * 60 * 1000) {
           // create new chunk after gap
           chunks.push({
             flag: !!d.flag,
@@ -384,13 +389,13 @@ export default {
           s.daily = s.daily || {}
           if (!s.daily.values) {
             const values = await this.fetchDailySeries(s)
-            s.daily.values = Object.freeze(this.assignFlags(s, values, s.flags, 'daily'))
+            s.daily.values = Object.freeze(assignFlags(values, s.flags, s.station_timezone, true))
             s.daily.chunks = Object.freeze(this.getContinuousChunks(s.daily.values, 'date'))
           }
         } else if (s.interval === 'DISCRETE') {
           if (!s.values) {
             const values = await this.fetchDiscreteSeries(s)
-            s.values = Object.freeze(this.assignFlags(s, values, s.flags))
+            s.values = Object.freeze(assignFlags(values, s.flags))
             s.chunks = Object.freeze(this.getDiscreteChunks(s.values))
           }
         }
@@ -549,8 +554,9 @@ export default {
       const values = await this.$http.public
         .get(`/series/${series.id}/daily`)
         .then(d => d.data)
-      values.forEach(d => {
-        d.date = this.parseDatetime(d.date)
+      values.forEach((d, i) => {
+        console.log(d.date, series.station_timezone, this.parseDatetime(d.date, series.station_timezone).toJSDate())
+        d.date = this.parseDatetime(d.date, series.station_timezone)
       })
       return values
     },
@@ -560,7 +566,7 @@ export default {
         .get(`/series/${series.id}/values?start=${start.toISOString()}&end=${end.toISOString()}`)
         .then(d => d.data)
       values.forEach(d => {
-        d.datetime = this.parseDatetime(d.datetime)
+        d.datetime = this.parseDatetime(d.datetime, series.station_timezone)
       })
       return values
     },
@@ -570,15 +576,8 @@ export default {
         .get(`/series/${series.id}/values`)
         .then(d => d.data)
       values.forEach(d => {
-        d.datetime = this.parseDatetime(d.datetime)
+        d.datetime = this.parseDatetime(d.datetime, series.station_timezone)
       })
-
-      // values.forEach(d => {
-      //   d.date = this.$luxon.DateTime.fromISO(d.datetime).setZone(series.station_timezone).toFormat('yyyy-MM-dd')
-      //   d.min_temp_c = d.temp_c
-      //   d.mean_temp_c = d.temp_c
-      //   d.max_temp_c = d.temp_c
-      // })
 
       return values
     },
@@ -685,7 +684,6 @@ export default {
       // force=true to remove and replace existing chunks
       console.log('renderDaily()')
       this.mode = 'daily'
-      // this.removeRaw()
 
       for (const s of this.series.filter(d => d.interval === 'CONTINUOUS')) {
         console.log(`renderDaily(): series id=${s.id}`)
@@ -811,7 +809,7 @@ export default {
           console.log(`renderRaw(): fetch (id=${s.id}, start=${start.toISOString()}, end=${end.toISOString()})`)
           // console.log(s.raw)
           const values = await this.fetchRawSeries(s, start, end)
-          s.raw.values = Object.freeze(this.assignFlags(s, values, s.flags, 'raw'))
+          s.raw.values = Object.freeze(assignFlags(values, s.flags))
           s.raw.chunks = Object.freeze(this.getContinuousChunks(s.raw.values, 'datetime'))
           s.raw.start = start
           s.raw.end = end
@@ -894,9 +892,11 @@ export default {
 
       if (this.flags) {
         bands = this.flags.map(d => {
-          const start = this.parseDatetime(d.start_datetime)
-          let end = this.parseDatetime(d.end_datetime)
-          if (this.mode === 'daily') {
+          let start = this.parseDatetime(d.start_datetime, this.defaultTimezone)
+          let end = this.parseDatetime(d.end_datetime, this.defaultTimezone)
+          const series = this.series[0]
+          if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
+            start = start.startOf('day')
             end = end.startOf('day')
           }
           return {
@@ -919,9 +919,11 @@ export default {
         if (this.flag.id) {
           bands = bands.filter(d => d.id !== this.flag.id)
         }
-        const start = this.parseDatetime(this.flag.start_datetime)
-        let end = this.parseDatetime(this.flag.end_datetime)
-        if (this.mode === 'daily') {
+        let start = this.parseDatetime(this.flag.start_datetime, this.defaultTimezone)
+        let end = this.parseDatetime(this.flag.end_datetime, this.defaultTimezone)
+        const series = this.series[0]
+        if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
+          start = start.startOf('day')
           end = end.startOf('day')
         }
         bands.push({
@@ -950,64 +952,22 @@ export default {
         if (s.interval === 'CONTINUOUS') {
           if (s.daily && s.daily.values) {
             console.log(`updateFlags(${s.id}, daily)`)
-            s.daily.values = Object.freeze(this.assignFlags(s, s.daily.values, s.flags, 'daily'))
+            s.daily.values = Object.freeze(assignFlags(s.daily.values, s.flags, s.station_timezone, true))
             s.daily.chunks = Object.freeze(this.getContinuousChunks(s.daily.values, 'date'))
           }
           if (s.raw && s.raw.values) {
             console.log(`updateFlags(${s.id}, raw)`)
-            s.raw.values = Object.freeze(this.assignFlags(s, s.raw.values, s.flags, 'raw'))
+            s.raw.values = Object.freeze(assignFlags(s.raw.values, s.flags))
             s.raw.chunks = Object.freeze(this.getContinuousChunks(s.raw.values, 'datetime'))
           }
         } else if (s.interval === 'DISCRETE') {
           if (s.values) {
             console.log(`updateFlags(${s.id}, discrete)`)
-            s.values = Object.freeze(this.assignFlags(s, s.values, s.flags))
+            s.values = Object.freeze(assignFlags(s.values, s.flags))
             s.chunks = Object.freeze(this.getDiscreteChunks(s.values))
           }
         }
       })
-    },
-    assignFlags (s, values, flags, mode) {
-      if (!flags) return
-      console.log(`assignFlags(${s.id}, values=${values.length})`, flags)
-      values.forEach(d => {
-        d.flag = []
-      })
-
-      if (s.interval === 'CONTINUOUS' && mode === 'daily') {
-        flags.forEach(flag => {
-          const label = flagLabel(flag)
-          const startDate = this.$luxon.DateTime
-            .fromISO(flag.start_datetime)
-            .setZone(s.station_timezone)
-            .toFormat('yyyy-MM-dd')
-          const endDate = this.$luxon.DateTime
-            .fromISO(flag.end_datetime)
-            .setZone(s.station_timezone)
-            .toFormat('yyyy-MM-dd')
-          values.forEach(d => {
-            const date = d.date.toFormat('yyyy-MM-dd')
-            if (date >= startDate && date <= endDate) {
-              d.flag.push(label)
-            }
-          })
-        })
-      } else {
-        flags.forEach(flag => {
-          const label = flagLabel(flag)
-          values.forEach(d => {
-            if (d.datetime >= this.parseDatetime(flag.start_datetime) &&
-                d.datetime <= this.parseDatetime(flag.end_datetime)) {
-              d.flag.push(label)
-            }
-          })
-        })
-      }
-
-      values.forEach(d => {
-        d.flag = d.flag.join(',')
-      })
-      return values
     },
 
     updateNavigator () {
@@ -1038,23 +998,23 @@ export default {
       ).sort((a, b) => d3.ascending(a[0], b[0]))
 
       console.log(`updateNavigator(): n=${data.length}`)
-      console.log(data[0], data[data.length - 1])
+      // console.log(data[0], data[data.length - 1])
       this.navData = data
     },
     renderNavigator () {
       console.log('renderNavigator()')
-      this.chart.get('navigator').setData(this.navData.map(d => [this.parseDatetime(d[0]).valueOf(), d[1]]), false)
+      this.chart.get('navigator').setData(this.navData.map(d => [this.parseDatetime(d[0], this.defaultTimezone).valueOf(), d[1]]), false)
     },
 
     onBrush (event) {
       if (!this.brush) return
       event.preventDefault()
-      const brushStart = this.$luxon.DateTime.fromMillis(event.xAxis[0].min, { zone: this.timezone })
-      const brushEnd = this.$luxon.DateTime.fromMillis(event.xAxis[0].max, { zone: this.timezone })
+      const brushStart = this.$luxon.DateTime.fromMillis(event.xAxis[0].min, { zone: this.defaultTimezone })
+      const brushEnd = this.$luxon.DateTime.fromMillis(event.xAxis[0].max, { zone: this.defaultTimezone })
       console.log('onBrush(): brush', brushStart.toISO(), brushEnd.toISO())
       const series = this.series[0]
       if (!series) return
-      if (this.mode === 'daily') {
+      if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
         if (!series.daily.values || series.daily.values.length === 0) return
         const dataStart = series.daily.values.find(d => d.date.valueOf() >= brushStart.valueOf())
         if (!dataStart) return // brush period starts after last data point
@@ -1077,31 +1037,37 @@ export default {
         const flagEnd = dataEnd.date.endOf('day')
         console.log('onBrush(): daily flag', flagStart.toISO(), flagEnd.toISO())
         // console.log('onBrush(): daily data', dataStart, dataEnd)
-        this.$emit('brush', flagStart.toISO(), flagEnd.toISO())
+        this.$emit('brush', flagStart, flagEnd)
       } else {
-        if (!series.raw.values || series.raw.values.length === 0) return
-        const dataStart = series.raw.values.find(d => d.datetime.valueOf() >= brushStart.valueOf())
+        let values = []
+        if (series.interval === 'CONTINUOUS') {
+          values = series.raw.values
+        } else if (series.interval === 'DISCRETE') {
+          values = series.values
+        }
+        if (!values || values.length === 0) return
+        const dataStart = values.find(d => d.datetime.valueOf() >= brushStart.valueOf())
         if (!dataStart) return // brush period starts after last data point
-        let indexEnd = series.raw.values.findIndex(d => d.datetime.valueOf() > brushEnd.valueOf())
+        let indexEnd = values.findIndex(d => d.datetime.valueOf() > brushEnd.valueOf())
         if (indexEnd < 0) {
           // brush period ends after last data point
           console.log('onBrush(): last timestep')
-          indexEnd = series.raw.values.length
-        } else if (indexEnd === series.raw.values.length - 1) {
+          indexEnd = values.length
+        } else if (indexEnd === values.length - 1) {
           // brush period ends at last data point
           console.log('onBrush(): last timestep')
-          indexEnd = series.raw.values.length
+          indexEnd = values.length
         } else if (indexEnd === 0) {
           // brush period ends before first data point
           return
         }
-        const dataEnd = series.raw.values[indexEnd - 1]
+        const dataEnd = values[indexEnd - 1]
 
         const flagStart = dataStart.datetime
         const flagEnd = dataEnd.datetime
         console.log('onBrush(): raw flag', flagStart.toISO(), flagEnd.toISO())
         // console.log('onBrush(): daily data', dataStart, dataEnd)
-        this.$emit('brush', flagStart.toISO(), flagEnd.toISO())
+        this.$emit('brush', flagStart, flagEnd)
       }
     },
 

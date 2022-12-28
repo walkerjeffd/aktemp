@@ -1,7 +1,7 @@
 const debug = require('./debug')
 const { emptyStringToNull } = require('./utils')
 
-exports.flagLabel = function (d) {
+const flagLabel = exports.flagLabel = function (d) {
   if (!d || !d.flag_type_id) return ''
   let label = d.flag_type_id
   if (d.flag_type_id === 'OTHER') {
@@ -67,4 +67,51 @@ exports.extractFlags = function (rows) {
   }
   debug(`extractFlags(): done (n=${flags.length})`)
   return flags
+}
+
+exports.assignFlags = (values, flags, tz, daily = false) => {
+  debug(`assignFlags(n(values)=${values.length}, n(flags)=${flags.length}, daily=${daily})`)
+
+  if (!values || values.length === 0 || !flags || flags.length === 0) return values.map(d => ({ ...d, flag: null }))
+
+  debug('assignFlags(): first value ->')
+  debug(values[0])
+
+  debug('assignFlags(): first flag ->')
+  debug(flags[0])
+
+  values = values.map(d => ({
+    ...d,
+    flag: []
+  }))
+
+  if (daily) {
+    flags.forEach(flag => {
+      const label = flagLabel(flag)
+      const startDate = flag.start_datetime.toFormat('yyyy-MM-dd')
+      const endDate = flag.end_datetime.toFormat('yyyy-MM-dd')
+      values.forEach(d => {
+        const date = d.date.toFormat('yyyy-MM-dd')
+        if (date >= startDate && date <= endDate) {
+          d.flag.push(label)
+        }
+      })
+    })
+  } else {
+    flags.forEach(flag => {
+      const label = flagLabel(flag)
+      values.forEach(d => {
+        if (d.datetime.valueOf() >= flag.start_datetime.valueOf() &&
+            d.datetime.valueOf() <= flag.end_datetime.valueOf()) {
+          d.flag.push(label)
+        }
+      })
+    })
+  }
+
+  values.forEach(d => {
+    d.flag = d.flag.join(',')
+  })
+
+  return values
 }

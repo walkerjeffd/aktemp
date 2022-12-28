@@ -262,10 +262,10 @@ function seriesTable (series, columns = Object.keys(columnDefs.series)) {
   const rows = series.map(d => {
     const x = { ...d }
     if (columns.includes('start_datetime')) {
-      x.start_datetime = formatTimestamp(x.start_datetime, 'D T', d.timezone)
+      x.start_datetime = formatTimestamp(x.start_datetime, 'D T', d.station_timezone)
     }
     if (columns.includes('end_datetime')) {
-      x.end_datetime = formatTimestamp(x.end_datetime, 'D T', d.timezone)
+      x.end_datetime = formatTimestamp(x.end_datetime, 'D T', d.station_timezone)
     }
     return x
   })

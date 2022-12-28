@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 
 import adminModule from './admin'
+import cartModule from './cart'
 import explorerModule from './explorer'
 import manageModule from './manage'
 import mapModule from './map'
@@ -11,6 +12,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   modules: {
     admin: adminModule,
+    cart: cartModule,
     explorer: explorerModule,
     manage: manageModule,
     map: mapModule

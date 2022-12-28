@@ -1,3 +1,4 @@
+exports.Download = require('./Download')
 exports.File = require('./File')
 exports.FlagType = require('./FlagType')
 exports.Organization = require('./Organization')

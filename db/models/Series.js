@@ -7,6 +7,9 @@ class Series extends Base {
 
   static get modifiers () {
     return {
+      defaultSort (builder) {
+        builder.orderBy(['id'])
+      },
       stationOrganization (builder) {
         builder.select(
           'series.*',

@@ -453,17 +453,22 @@ export default {
       this.loading = true
       this.error = null
       try {
-        this.series = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}`)
+        const series = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}`)
           .then(d => d.data)
-        if (this.series.organization_id !== this.organization.id) {
+        if (series.organization_id !== this.organization.id) {
           return this.$router.push({
             name: 'manageQaqc'
           })
         }
-        this.station = await this.$http.restricted.get(`/stations/${this.series.station_id}`)
+        series.flags.forEach(f => {
+          f.start_datetime = this.$luxon.DateTime.fromISO(f.start_datetime, { zone: series.station_timezone })
+          f.end_datetime = this.$luxon.DateTime.fromISO(f.end_datetime, { zone: series.station_timezone })
+        })
+        this.station = await this.$http.restricted.get(`/stations/${series.station_id}`)
           .then(d => d.data)
         // this.series.flags = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}/flags`)
         //   .then(d => d.data)
+        this.series = series
       } catch (err) {
         this.error = this.$errorMessage(err)
       } finally {
@@ -492,8 +497,8 @@ export default {
       this.flag.loading = true
       this.chartLoading = true
       const payload = {
-        start_datetime: this.flag.selected.start_datetime,
-        end_datetime: this.flag.selected.end_datetime,
+        start_datetime: this.flag.selected.start_datetime.toISO(),
+        end_datetime: this.flag.selected.end_datetime.toISO(),
         flag_type_id: this.flag.selected.flag_type_id,
         flag_type_other: this.flag.selected.flag_type_other
       }
@@ -511,6 +516,10 @@ export default {
         this.series.flags = await this.$http.restricted
           .get(`/series/${this.$route.params.seriesId}/flags`)
           .then(d => d.data)
+        this.series.flags.forEach(f => {
+          f.start_datetime = this.$luxon.DateTime.fromISO(f.start_datetime, { zone: this.series.station_timezone })
+          f.end_datetime = this.$luxon.DateTime.fromISO(f.end_datetime, { zone: this.series.station_timezone })
+        })
         this.selectFlag()
       } catch (err) {
         this.flag.error = this.$errorMessage(err)
@@ -624,7 +633,7 @@ export default {
         this.start.error = 'Failed to parse date/time using ISO format (\'yyyy-MM-dd HH:mm\')'
         return
       }
-      this.flag.selected.start_datetime = startDatetime.setZone('UTC').toISO()
+      this.flag.selected.start_datetime = startDatetime
       this.start.show = false
     },
     openEnd () {
@@ -645,7 +654,7 @@ export default {
         this.end.error = 'Failed to parse date/time using ISO format (\'yyyy-MM-dd HH:mm\')'
         return
       }
-      this.flag.selected.end_datetime = endDatetime.setZone('UTC').toISO()
+      this.flag.selected.end_datetime = endDatetime
       this.end.show = false
     },
     download () {

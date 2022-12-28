@@ -27,7 +27,7 @@ tr.v-data-table-filter {
 }
 
 .v-menu__content.menuable__content__active {
-  z-index: 2000 !important;
+  z-index: 5000 !important;
 }
 
 /* hichart date selector background */

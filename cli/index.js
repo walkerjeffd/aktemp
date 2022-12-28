@@ -13,6 +13,7 @@ program
   .name('aktemp')
   .version('0.1.0')
   .executableDir('./commands')
+  .command('downloads', 'Process downloads')
   .command('organizations', 'Manage organizations')
   .command('files', 'Manage files')
   .command('stations', 'Manage stations')

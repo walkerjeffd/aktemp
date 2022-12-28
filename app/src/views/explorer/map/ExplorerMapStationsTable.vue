@@ -336,26 +336,52 @@
             <v-icon left>mdi-fullscreen</v-icon>
             Fit Map
           </v-btn>
-          <DownloadButton
+          <!-- <DownloadButton
             @click="download"
             title="Download stations"
             :disabled="loading"
             :text="`Download Stations ${ selectedRows.length > 0 ? ' (' + selectedRows.length + ')' : ''}`"
-          />
+          /> -->
+          <v-spacer></v-spacer>
+          <v-btn
+            outlined
+            :disabled="selectedRows.length === 0"
+            @click="addToCart(selectedRows)"
+          >
+            <v-icon left>mdi-plus</v-icon>
+            Add to Cart
+          </v-btn>
+          <v-btn
+            outlined
+            class="mx-4"
+            @click="openCart"
+          >
+            <v-icon left>mdi-cart</v-icon>
+            View Cart (<span v-if="cartStations.length === 0">Empty</span><span v-else>{{ cartStations.length}}</span>)
+          </v-btn>
+          <div class="mr-8 ml-4">
+            Selected: {{ selectedRows.length }}
+          </div>
         </template>
       </v-data-table>
     </div>
+
+    <CartDialog ref="cart"></CartDialog>
   </div>
 </template>
 
 <script>
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon'
+
+import CartDialog from '@/components/CartDialog'
 import evt from '@/events'
 import { waterbodyTypeOptions, placementOptions } from 'aktemp-utils/constants'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ExplorerMapStationsTable',
   props: ['stations', 'selected', 'loading', 'selectedHuc'],
+  components: { CartDialog },
   data () {
     return {
       collapse: false,
@@ -457,6 +483,9 @@ export default {
     }
   },
   computed: {
+    ...mapGetters('cart', {
+      cartStations: 'stations'
+    }),
     spatialEnabled: {
       get () {
         return this.$store.state.map.spatialEnabled
@@ -526,6 +555,12 @@ export default {
     },
     fitToStations () {
       evt.$emit('map:fitToStations')
+    },
+    addToCart (stations) {
+      this.$store.dispatch('cart/addStations', stations)
+    },
+    openCart () {
+      this.$refs.cart.open()
     }
   }
 }

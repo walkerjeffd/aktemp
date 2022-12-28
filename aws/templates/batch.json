@@ -25,6 +25,10 @@
       "Type": "String",
       "Default": "NONE"
     },
+    "storageBucketName": {
+      "Description": "Name of storage bucket",
+      "Type": "String"
+    },
     "dbSecretName": {
       "Description": "Name of secret for database credentials",
       "Type": "String"
@@ -153,7 +157,7 @@
         },
         "Policies": [
           {
-            "PolicyName": "root",
+            "PolicyName": "sns",
             "PolicyDocument": {
               "Version": "2012-10-17",
               "Statement": [
@@ -165,6 +169,21 @@
                   "Resource": {
                     "Ref": "notifyTopicArn"
                   }
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "ses",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ses:SendEmail"
+                  ],
+                  "Resource": "*"
                 }
               ]
             }
@@ -232,9 +251,7 @@
           ],
           "Command": [
             "node",
-            "index.js",
-            "files",
-            "process"
+            "index.js"
           ],
           "NetworkConfiguration": {
             "AssignPublicIp": "ENABLED"
@@ -247,6 +264,10 @@
             {
               "Name": "REGION",
               "Value": { "Ref": "AWS::Region" }
+            },
+            {
+              "Name": "STORAGE_BUCKET",
+              "Value": { "Ref": "storageBucketName" }
             },
             {
               "Name": "DB_SECRET",

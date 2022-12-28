@@ -6,6 +6,7 @@ router.get('/', function (req, res, next) {
   res.status(200).json({ api: 'public' })
 })
 
+router.use('/downloads', require('./downloads'))
 router.use('/organizations', require('./organizations'))
 router.use('/profiles', require('./profiles'))
 router.use('/requests', require('./requests'))

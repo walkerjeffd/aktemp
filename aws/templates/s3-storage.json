@@ -48,6 +48,16 @@
               }
             }
           ]
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "DownloadsExpireIn30Days",
+              "Status": "Enabled",
+              "Prefix": "downloads/",
+              "ExpirationInDays": 1
+            }
+          ]
         }
       }
     },

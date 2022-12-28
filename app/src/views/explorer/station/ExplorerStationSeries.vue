@@ -121,6 +121,12 @@ export default {
       this.series = await this.$http.public
         .get(`/stations/${this.station.id}/series`)
         .then(d => d.data)
+      this.series.forEach(d => {
+        d.flags.forEach(f => {
+          f.start_datetime = new Date(f.start_datetime)
+          f.end_datetime = new Date(f.end_datetime)
+        })
+      })
       this.selected = this.series
 
       this.loading = false

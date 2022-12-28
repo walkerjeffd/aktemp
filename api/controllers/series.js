@@ -40,7 +40,6 @@ async function getSeriesFlags (req, res, next) {
   const flags = await res.locals.series
     .$relatedQuery('flags')
     .modify('defaultSort')
-    .modify('dates')
   return res.status(200).json(flags)
 }
 

@@ -59,10 +59,10 @@
                     class="row-cursor-pointer"
                   >
                     <template v-slot:item.start_datetime="{ item }">
-                      {{ item.start_datetime | timestamp('ff ZZZZ', series.station_timezone) }}
+                      {{ item.start_datetime.toISOString() | timestamp('ff ZZZZ', series.station_timezone) }}
                     </template>
                     <template v-slot:item.end_datetime="{ item }">
-                      {{ item.end_datetime | timestamp('ff ZZZZ', series.station_timezone) }}
+                      {{ item.end_datetime.toISOString() | timestamp('ff ZZZZ', series.station_timezone) }}
                     </template>
 
                     <template v-slot:footer.prepend>
@@ -461,8 +461,8 @@ export default {
           })
         }
         series.flags.forEach(f => {
-          f.start_datetime = this.$luxon.DateTime.fromISO(f.start_datetime, { zone: series.station_timezone })
-          f.end_datetime = this.$luxon.DateTime.fromISO(f.end_datetime, { zone: series.station_timezone })
+          f.start_datetime = new Date(f.start_datetime)
+          f.end_datetime = new Date(f.end_datetime)
         })
         this.station = await this.$http.restricted.get(`/stations/${series.station_id}`)
           .then(d => d.data)
@@ -478,8 +478,8 @@ export default {
     },
     async setRange (start, end) {
       if (this.showForm) {
-        this.flag.selected.start_datetime = start
-        this.flag.selected.end_datetime = end
+        this.flag.selected.start_datetime = start.toISOString()
+        this.flag.selected.end_datetime = end.toISOString()
       }
     },
     async saveFlag () {
@@ -497,8 +497,8 @@ export default {
       this.flag.loading = true
       this.chartLoading = true
       const payload = {
-        start_datetime: this.flag.selected.start_datetime.toISO(),
-        end_datetime: this.flag.selected.end_datetime.toISO(),
+        start_datetime: this.flag.selected.start_datetime,
+        end_datetime: this.flag.selected.end_datetime,
         flag_type_id: this.flag.selected.flag_type_id,
         flag_type_other: this.flag.selected.flag_type_other
       }
@@ -517,8 +517,8 @@ export default {
           .get(`/series/${this.$route.params.seriesId}/flags`)
           .then(d => d.data)
         this.series.flags.forEach(f => {
-          f.start_datetime = this.$luxon.DateTime.fromISO(f.start_datetime, { zone: this.series.station_timezone })
-          f.end_datetime = this.$luxon.DateTime.fromISO(f.end_datetime, { zone: this.series.station_timezone })
+          f.start_datetime = new Date(f.start_datetime)
+          f.end_datetime = new Date(f.end_datetime)
         })
         this.selectFlag()
       } catch (err) {
@@ -606,7 +606,10 @@ export default {
       } else if (flag) {
         this.showForm = true
         this.chartMode = 'brush'
-        this.flag.selected = { ...flag }
+        const selectedFlag = { ...flag }
+        selectedFlag.start_datetime = selectedFlag.start_datetime.toISOString()
+        selectedFlag.end_datetime = selectedFlag.end_datetime.toISOString()
+        this.flag.selected = selectedFlag
       }
     },
     createNewFlag () {
@@ -633,7 +636,7 @@ export default {
         this.start.error = 'Failed to parse date/time using ISO format (\'yyyy-MM-dd HH:mm\')'
         return
       }
-      this.flag.selected.start_datetime = startDatetime
+      this.flag.selected.start_datetime = startDatetime.toISO()
       this.start.show = false
     },
     openEnd () {
@@ -654,7 +657,7 @@ export default {
         this.end.error = 'Failed to parse date/time using ISO format (\'yyyy-MM-dd HH:mm\')'
         return
       }
-      this.flag.selected.end_datetime = endDatetime
+      this.flag.selected.end_datetime = endDatetime.toISO()
       this.end.show = false
     },
     download () {

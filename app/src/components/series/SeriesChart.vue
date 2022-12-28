@@ -66,10 +66,10 @@ export default {
             enabled: false
           },
           events: {
-            selection: this.onBrush
-            // load: () => console.log('chart:load'),
-            // redraw: () => console.log('chart:redraw'),
-            // render: () => console.log('chart:render')
+            selection: this.onBrush,
+            load: () => console.log('chart:load'),
+            redraw: () => console.log('chart:redraw'),
+            render: () => console.log('chart:render')
           }
         },
         plotOptions: {
@@ -290,7 +290,7 @@ export default {
   // },
   methods: {
     parseDatetime (x, tz) {
-      return this.$luxon.DateTime.fromISO(x, { zone: tz || this.defaultTimezone })
+      return this.$luxon.DateTime.fromISO(x, { zone: tz || this.defaultTimezone }).toJSDate()
     },
     getDatetimeRange () {
       // console.log('getDatetimeRange')
@@ -305,27 +305,12 @@ export default {
       if (!start.isValid || !end.isValid) return
       return [start, end]
     },
-    async removeUnselectedSeries () {
-      const seriesIds = this.series.map(d => d.id)
-      const ids = this.chart.series
-        .filter(d => d.options.seriesId && !seriesIds.includes(d.options.seriesId))
-        .map(d => d.options.id)
-      console.log('removeUnselectedSeries()', ids)
-      ids.forEach(id => {
-        const series = this.chart.get(id)
-        if (series) {
-          console.log(`removeUnselectedSeries: remove(${id})`)
-          series.remove(false)
-        }
-      })
-      console.log('removeUnselectedSeries', this.chart.series.length)
-    },
     async afterSetExtremes () {
-      console.log('afterSetExtremes()')
-      this.render()
+      // console.log('afterSetExtremes()', this.getDatetimeRange().map(d => d.toJSDate().toISOString()))
+      await this.render()
     },
     getDiscreteChunks (values) {
-      console.log(values)
+      // console.log(values)
       return [
         {
           flag: false,
@@ -349,7 +334,9 @@ export default {
         } else if (!!values[i].flag !== !!values[i - 1].flag) {
           // create new chunk at flag boundary
           if (values[i - 1].flag) {
-            chunks[chunks.length - 1].values.push(d)
+            if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() <= 25 * 60 * 60 * 1000) {
+              chunks[chunks.length - 1].values.push(d)
+            }
             chunks.push({
               flag: !!d.flag,
               values: [d]
@@ -382,14 +369,13 @@ export default {
     async init () {
       console.log('init()')
       this.chart.showLoading('Loading data from the server...')
-      this.removeUnselectedSeries()
 
       await Promise.all(this.series.map(async (s) => {
         if (s.interval === 'CONTINUOUS') {
           s.daily = s.daily || {}
           if (!s.daily.values) {
             const values = await this.fetchDailySeries(s)
-            s.daily.values = Object.freeze(assignFlags(values, s.flags, s.station_timezone, true))
+            s.daily.values = Object.freeze(assignFlags(values, s.flags, s.timezone, true))
             s.daily.chunks = Object.freeze(this.getContinuousChunks(s.daily.values, 'date'))
           }
         } else if (s.interval === 'DISCRETE') {
@@ -405,9 +391,9 @@ export default {
             id: `${s.id}-root`,
             name: `Series ${s.id}`,
             seriesId: s.id,
+            root: true,
             data: [],
             visible: true,
-            // showInLegend: true,
             showInNavigator: false
           }, false)
 
@@ -555,7 +541,7 @@ export default {
         .get(`/series/${series.id}/daily`)
         .then(d => d.data)
       values.forEach((d, i) => {
-        console.log(d.date, series.station_timezone, this.parseDatetime(d.date, series.station_timezone).toJSDate())
+        // console.log(d.date, series.station_timezone, this.parseDatetime(d.date, series.station_timezone).toJSDate())
         d.date = this.parseDatetime(d.date, series.station_timezone)
       })
       return values
@@ -568,6 +554,7 @@ export default {
       values.forEach(d => {
         d.datetime = this.parseDatetime(d.datetime, series.station_timezone)
       })
+      console.log(`fetchRawSeries(${series.id}) done`)
       return values
     },
     async fetchDiscreteSeries (series) {
@@ -603,6 +590,8 @@ export default {
       }
       this.renderBands()
       this.renderNavigator()
+
+      this.toggleSeriesVisibility()
 
       this.chart.redraw()
     },
@@ -669,15 +658,15 @@ export default {
         }
 
         // set visibility
-        for (const s of root.linkedSeries) {
-          if (!s.options.flag || this.showFlags) {
-            // console.log(`renderDaily(): ${s.options.id} true`)
-            s.setVisible(root.visible, false)
-          } else {
-            // console.log(`renderDaily(): ${s.options.id} false`)
-            s.setVisible(false, false)
-          }
-        }
+        // for (const s of root.linkedSeries) {
+        //   if (!s.options.flag || this.showFlags) {
+        //     // console.log(`renderDaily(): ${s.options.id} true`)
+        //     s.setVisible(root.visible, false)
+        //   } else {
+        //     // console.log(`renderDaily(): ${s.options.id} false`)
+        //     s.setVisible(false, false)
+        //   }
+        // }
       }
     },
     renderDaily (force) {
@@ -772,17 +761,17 @@ export default {
         }
 
         // set visibility
-        for (const s of root.linkedSeries) {
-          if (s.options.mode === 'raw') {
-            s.setVisible(false, false)
-          } else if (s.options.tip || !s.options.flag || this.showFlags) {
-            // console.log(`renderDaily(): ${s.options.id} true`)
-            s.setVisible(root.visible, false)
-          } else {
-            // console.log(`renderDaily(): ${s.options.id} false`)
-            s.setVisible(false, false)
-          }
-        }
+        // for (const s of root.linkedSeries) {
+        //   if (s.options.mode === 'raw') {
+        //     s.setVisible(false, false)
+        //   } else if (s.options.tip || !s.options.flag || this.showFlags) {
+        //     // console.log(`renderDaily(): ${s.options.id} ${s.options.flag} ${root.visible}`)
+        //     // s.setVisible(root.visible, false)
+        //   } else {
+        //     // console.log(`renderDaily(): ${s.options.id} false`)
+        //     // s.setVisible(false, false)
+        //   }
+        // }
       }
     },
     async renderRaw (force) {
@@ -868,23 +857,46 @@ export default {
       }
 
       // set visibility
-      for (const s of this.series.filter(d => d.interval === 'CONTINUOUS')) {
-        console.log('raw', s.id)
-        console.log(s.raw)
-        const root = this.chart.get(`${s.id}-root`)
-        for (const s of root.linkedSeries) {
-          if (s.options.mode === 'daily') {
-            s.setVisible(false, false)
-          } else if (!s.options.flag || this.showFlags) {
-            // console.log(`renderDaily(): ${s.options.id} true`)
-            s.setVisible(root.visible, false)
-          } else {
-            // console.log(`renderDaily(): ${s.options.id} false`)
-            s.setVisible(false, false)
-          }
-        }
-      }
+      // for (const s of this.series.filter(d => d.interval === 'CONTINUOUS')) {
+      //   console.log('raw', s.id)
+      //   console.log(s.raw)
+      //   const root = this.chart.get(`${s.id}-root`)
+      //   for (const s of root.linkedSeries) {
+      //     if (s.options.mode === 'daily') {
+      //       s.setVisible(false, false)
+      //     } else if (!s.options.flag || this.showFlags) {
+      //       // console.log(`renderDaily(): ${s.options.id} true`)
+      //       s.setVisible(root.visible, false)
+      //     } else {
+      //       // console.log(`renderDaily(): ${s.options.id} false`)
+      //       s.setVisible(false, false)
+      //     }
+      //   }
+      // }
       this.chart.hideLoading()
+    },
+    toggleSeriesVisibility () {
+      const selectedSeriesIds = this.series.map(d => d.id)
+      // console.log(`toggleSeriesVisibility() selectedSeriesIds=${selectedSeriesIds})`)
+      this.chart.series
+        .filter(d => d.options.seriesId && d.options.root)
+        .forEach(rootSeries => {
+          console.log(`toggleSeriesVisibility() rootSeries=${rootSeries.options.id}`)
+          if (selectedSeriesIds.includes(rootSeries.options.seriesId)) {
+            rootSeries.linkedSeries.forEach(s => {
+              if (this.mode === s.options.mode && (this.showFlags || !s.options.flag)) {
+                console.log(`toggleSeriesVisibility() series=${s.options.id} mode=${this.mode}=${s.options.mode} show`)
+                s.setVisible(true, false)
+              } else {
+                console.log(`toggleSeriesVisibility() series=${s.options.id} mode=${s.options.mode} hide`)
+                s.setVisible(false, false)
+              }
+            })
+          } else {
+            console.log(`toggleSeriesVisibility() root=${rootSeries.options.id} hide all`)
+            rootSeries.setVisible(false, false)
+          }
+        })
     },
     renderBands () {
       console.log('renderBands', this.flags, this.flag)
@@ -896,8 +908,8 @@ export default {
           let end = this.parseDatetime(d.end_datetime, this.defaultTimezone)
           const series = this.series[0]
           if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
-            start = start.startOf('day')
-            end = end.startOf('day')
+            start = this.$luxon.DateTime.fromJSDate(start, { zone: this.defaultTimezone }).startOf('day').toJSDate()
+            end = this.$luxon.DateTime.fromJSDate(end, { zone: this.defaultTimezone }).startOf('day').toJSDate()
           }
           return {
             id: d.id,
@@ -923,8 +935,8 @@ export default {
         let end = this.parseDatetime(this.flag.end_datetime, this.defaultTimezone)
         const series = this.series[0]
         if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
-          start = start.startOf('day')
-          end = end.startOf('day')
+          start = this.$luxon.DateTime.fromJSDate(start, { zone: this.defaultTimezone }).startOf('day').toJSDate()
+          end = this.$luxon.DateTime.fromJSDate(end, { zone: this.defaultTimezone }).startOf('day').toJSDate()
         }
         bands.push({
           from: start.valueOf(),
@@ -973,20 +985,24 @@ export default {
     updateNavigator () {
       const continuousValues = this.series
         .filter(d => d.interval === 'CONTINUOUS' && !!d.daily && !!d.daily.values)
-        .map(d => this.showFlags ? d.daily.values : d.daily.values.filter(d => !d.flag))
+        .map(d => {
+          const values = this.showFlags ? d.daily.values : d.daily.values.filter(d => !d.flag)
+          return values.map(v => ({
+            date: this.$luxon.DateTime.fromJSDate(v.date, { zone: d.station_timezone }).toFormat('yyyy-MM-dd'),
+            value: v.max_temp_c
+          }))
+        })
         .flat()
-        .map(d => ({
-          date: d.date.toFormat('yyyy-MM-dd'),
-          value: d.max_temp_c
-        }))
       const discreteValues = this.series
         .filter(d => d.interval === 'DISCRETE' && !!d.values)
-        .map(d => this.showFlags ? d.values : d.values.filter(d => !d.flag))
+        .map(d => {
+          const values = this.showFlags ? d.values : d.values.filter(d => !d.flag)
+          return values.map(v => ({
+            date: this.$luxon.DateTime.fromJSDate(v.datetime, { zone: d.station_timezone }).toFormat('yyyy-MM-dd'),
+            value: v.temp_c
+          }))
+        })
         .flat()
-        .map(d => ({
-          date: d.datetime.toFormat('yyyy-MM-dd'),
-          value: d.temp_c
-        }))
       const values = [continuousValues, discreteValues].flat()
 
       const data = Array.from(
@@ -1003,15 +1019,16 @@ export default {
     },
     renderNavigator () {
       console.log('renderNavigator()')
-      this.chart.get('navigator').setData(this.navData.map(d => [this.parseDatetime(d[0], this.defaultTimezone).valueOf(), d[1]]), false)
+      this.chart.get('navigator')
+        .setData(this.navData.map(d => [this.parseDatetime(d[0], this.defaultTimezone).valueOf(), d[1]]), false)
     },
 
     onBrush (event) {
       if (!this.brush) return
       event.preventDefault()
-      const brushStart = this.$luxon.DateTime.fromMillis(event.xAxis[0].min, { zone: this.defaultTimezone })
-      const brushEnd = this.$luxon.DateTime.fromMillis(event.xAxis[0].max, { zone: this.defaultTimezone })
-      console.log('onBrush(): brush', brushStart.toISO(), brushEnd.toISO())
+      const brushStart = this.$luxon.DateTime.fromMillis(event.xAxis[0].min, { zone: this.defaultTimezone }).toJSDate()
+      const brushEnd = this.$luxon.DateTime.fromMillis(event.xAxis[0].max, { zone: this.defaultTimezone }).toJSDate()
+      console.log('onBrush(): brush', brushStart.toISOString(), brushEnd.toISOString())
       const series = this.series[0]
       if (!series) return
       if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
@@ -1034,8 +1051,11 @@ export default {
         const dataEnd = series.daily.values[indexEnd - 1]
 
         const flagStart = dataStart.date
-        const flagEnd = dataEnd.date.endOf('day')
-        console.log('onBrush(): daily flag', flagStart.toISO(), flagEnd.toISO())
+        const flagEnd = this.$luxon.DateTime
+          .fromJSDate(dataEnd.date, { zone: series.station_timezone })
+          .endOf('day')
+          .toJSDate()
+        console.log('onBrush(): daily flag', flagStart.toISOString(), flagEnd.toISOString())
         // console.log('onBrush(): daily data', dataStart, dataEnd)
         this.$emit('brush', flagStart, flagEnd)
       } else {

@@ -1,5 +1,6 @@
 const debug = require('./debug')
 const { emptyStringToNull } = require('./utils')
+const { luxon } = require('./time')
 
 const flagLabel = exports.flagLabel = function (d) {
   if (!d || !d.flag_type_id) return ''
@@ -88,10 +89,10 @@ exports.assignFlags = (values, flags, tz, daily = false) => {
   if (daily) {
     flags.forEach(flag => {
       const label = flagLabel(flag)
-      const startDate = flag.start_datetime.toFormat('yyyy-MM-dd')
-      const endDate = flag.end_datetime.toFormat('yyyy-MM-dd')
+      const startDate = luxon.DateTime.fromJSDate(flag.start_datetime, { zone: tz }).toFormat('yyyy-MM-dd')
+      const endDate = luxon.DateTime.fromJSDate(flag.end_datetime, { zone: tz }).toFormat('yyyy-MM-dd')
       values.forEach(d => {
-        const date = d.date.toFormat('yyyy-MM-dd')
+        const date = luxon.DateTime.fromJSDate(d.date, { zone: tz }).toFormat('yyyy-MM-dd')
         if (date >= startDate && date <= endDate) {
           d.flag.push(label)
         }

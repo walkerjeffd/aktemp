@@ -306,7 +306,10 @@ export default {
       return [start, end]
     },
     async afterSetExtremes () {
-      // console.log('afterSetExtremes()', this.getDatetimeRange().map(d => d.toJSDate().toISOString()))
+      console.log('afterSetExtremes()')
+      if (this.getDatetimeRange()) {
+        console.log(`extremes: ${this.getDatetimeRange().map(d => d.toJSDate().toISOString())}`)
+      }
       await this.render()
     },
     getDiscreteChunks (values) {
@@ -777,8 +780,6 @@ export default {
     async renderRaw (force) {
       console.log('renderRaw()')
       this.mode = 'raw'
-      // this.renderNavigator()
-      // this.chart.redraw()
 
       const datetimeRange = this.getDatetimeRange()
       if (!datetimeRange) return
@@ -881,19 +882,19 @@ export default {
       this.chart.series
         .filter(d => d.options.seriesId && d.options.root)
         .forEach(rootSeries => {
-          console.log(`toggleSeriesVisibility() rootSeries=${rootSeries.options.id}`)
+          // console.log(`toggleSeriesVisibility() rootSeries=${rootSeries.options.id}`)
           if (selectedSeriesIds.includes(rootSeries.options.seriesId)) {
             rootSeries.linkedSeries.forEach(s => {
               if (this.mode === s.options.mode && (this.showFlags || !s.options.flag)) {
-                console.log(`toggleSeriesVisibility() series=${s.options.id} mode=${this.mode}=${s.options.mode} show`)
+                // console.log(`toggleSeriesVisibility() series=${s.options.id} mode=${this.mode}=${s.options.mode} show`)
                 s.setVisible(true, false)
               } else {
-                console.log(`toggleSeriesVisibility() series=${s.options.id} mode=${s.options.mode} hide`)
+                // console.log(`toggleSeriesVisibility() series=${s.options.id} mode=${s.options.mode} hide`)
                 s.setVisible(false, false)
               }
             })
           } else {
-            console.log(`toggleSeriesVisibility() root=${rootSeries.options.id} hide all`)
+            // console.log(`toggleSeriesVisibility() root=${rootSeries.options.id} hide all`)
             rootSeries.setVisible(false, false)
           }
         })

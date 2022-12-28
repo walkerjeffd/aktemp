@@ -24,7 +24,7 @@ async function getProfileValues (req, res, next) {
   const values = await res.locals.profile
     .$relatedQuery('values')
     .modify('defaultSelect')
-    .modify('defaultSort')
+    .modify('sort')
   return res.status(200).json(values)
 }
 

@@ -183,34 +183,12 @@ export default {
     async downloadDaily (series) {
       console.log('downloadDaily', series)
 
-      // const values = series.map(s => {
-      //   const flaggedValues = s.daily.flags.map(flag => {
-      //     return flag.values.map(value => {
-      //       return {
-      //         ...value,
-      //         flag: flag.label
-      //       }
-      //     })
-      //   }).flat()
-
-      //   const flagMap = rollup(
-      //     flaggedValues,
-      //     v => v.map(d => d.flag).join(','),
-      //     d => d.date
-      //   )
-
-      //   return s.daily.values.map(v => ({
-      //     ...v,
-      //     series_id: s.id,
-      //     flags: flagMap.get(v.date)
-      //   }))
-      // }).flat()
-      //   .sort((a, b) => ascending(a.series_id, b.series_id) || ascending(a.date, b.date))
       const dailyValues = series
         .filter(d => d.interval === 'CONTINUOUS')
         .map(s => {
           return s.daily.values.map(v => ({
             ...v,
+            date: this.$luxon.DateTime.fromJSDate(v.date, { zone: s.station_timezone }).toFormat('yyyy-MM-dd'),
             series_id: s.id
           }))
         })

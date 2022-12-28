@@ -1,17 +1,14 @@
 const Base = require('./Base')
 
-class SeriesValue extends Base {
+class SeriesDaily extends Base {
   static get tableName () {
-    return 'series_values'
+    return 'series_daily'
   }
 
   static get modifiers () {
     return {
-      defaultSelect (builder) {
-        builder.select('datetime', 'temp_c')
-      },
       sort (builder) {
-        builder.orderBy('datetime')
+        builder.orderBy('date')
       }
     }
   }
@@ -23,7 +20,7 @@ class SeriesValue extends Base {
         relation: Base.BelongsToOneRelation,
         modelClass: Series,
         join: {
-          from: 'series_values.series_id',
+          from: 'series_daily.series_id',
           to: 'series.id'
         }
       }
@@ -37,4 +34,4 @@ class SeriesValue extends Base {
   }
 }
 
-module.exports = SeriesValue
+module.exports = SeriesDaily

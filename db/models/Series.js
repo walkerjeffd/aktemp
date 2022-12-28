@@ -7,7 +7,7 @@ class Series extends Base {
 
   static get modifiers () {
     return {
-      defaultSort (builder) {
+      sort (builder) {
         builder.orderBy(['id'])
       },
       stationOrganization (builder) {
@@ -32,6 +32,7 @@ class Series extends Base {
     const File = require('./File')
     const Station = require('./Station')
     const SeriesValue = require('./SeriesValue')
+    const SeriesDaily = require('./SeriesDaily')
     const SeriesFlag = require('./SeriesFlag')
     return {
       file: {
@@ -55,6 +56,14 @@ class Series extends Base {
         modelClass: SeriesValue,
         join: {
           from: 'series_values.series_id',
+          to: 'series.id'
+        }
+      },
+      daily: {
+        relation: Base.HasManyRelation,
+        modelClass: SeriesDaily,
+        join: {
+          from: 'series_daily.series_id',
           to: 'series.id'
         }
       },

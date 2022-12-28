@@ -1,5 +1,4 @@
 const createError = require('http-errors')
-const { raw } = require('objection')
 const { Station } = require('aktemp-db/models')
 
 const getStations = async (req, res, next) => {
@@ -61,12 +60,12 @@ const getStationSeries = async (req, res, next) => {
 
 const getStationSeriesDaily = async (req, res, next) => {
   const values = await res.locals.station.$relatedQuery('series')
-    .select(raw('to_char(values.datetime at time zone "timezone", \'YYYY-MM-DD\') as date'))
-    .select(raw('count(values.*)::integer as n'))
-    .min('temp_c as min_temp_c')
-    .max('temp_c as max_temp_c')
-    .avg('temp_c as mean_temp_c')
-    .joinRelated('[values, station]')
+    .select('date')
+    .sum('n_values as n_values')
+    .min('min_temp_c as min_temp_c')
+    .max('max_temp_c as max_temp_c')
+    .avg('mean_temp_c as mean_temp_c')
+    .joinRelated('[daily, station]')
     .where('interval', 'CONTINUOUS')
     .groupBy('date')
     .orderBy('date')
@@ -84,7 +83,7 @@ const getStationSeriesFlags = async (req, res, next) => {
   const values = await res.locals.station.$relatedQuery('series')
     .select('flags.*')
     .where('interval', 'CONTINUOUS')
-    .joinRelated('flags(dates)')
+    .joinRelated('flags')
   return res.status(200).json(values)
 }
 
@@ -94,7 +93,7 @@ const getStationProfiles = async (req, res, next) => {
     .modify('stationOrganization')
     .modify('filename')
     .modify('valuesSummary')
-    .withGraphFetched('values(defaultSelect,defaultSort)')
+    .withGraphFetched('values(defaultSelect,sort)')
   return res.status(200).json(profiles)
 }
 
@@ -104,7 +103,7 @@ const getStationProfilesValues = async (req, res, next) => {
     .modify('stationOrganization')
     .modify('filename')
     .modify('valuesSummary')
-    .withGraphFetched('values(defaultSelect,defaultSort)')
+    .withGraphFetched('values(defaultSelect,sort)')
   return res.status(200).json(profilesValues)
 }
 

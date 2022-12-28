@@ -126,7 +126,7 @@ const columnDefs = {
     date: {
       label: 'Date (local timezone)'
     },
-    n: {
+    n_values: {
       label: 'Number of measurements'
     },
     min_temp_c: {

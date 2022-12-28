@@ -10,7 +10,7 @@ class ProfileValue extends Base {
       defaultSelect (builder) {
         builder.select('datetime', 'depth_m', 'temp_c')
       },
-      defaultSort (builder) {
+      sort (builder) {
         builder.orderBy('datetime')
       }
     }

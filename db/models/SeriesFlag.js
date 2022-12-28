@@ -7,7 +7,7 @@ class SeriesFlag extends Base {
 
   static get modifiers () {
     return {
-      defaultSort (builder) {
+      sort (builder) {
         builder.orderBy(['series_id', 'start_datetime'])
       }
     }

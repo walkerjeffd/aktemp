@@ -3,7 +3,7 @@ const path = require('path')
 const { createReadStream, existsSync } = require('fs')
 
 const { File } = require('aktemp-db/models')
-
+const db = require('aktemp-db')
 const { parseCsv, parseSeriesFile, parseProfilesFile } = require('aktemp-utils/parsers')
 const { stripBom } = require('aktemp-utils/utils')
 const { validateFileConfig } = require('aktemp-utils/validators')
@@ -113,6 +113,24 @@ exports.processFile = async function (id, { dryRun }) {
         await file.$relatedQuery('series').insertGraph(s)
         i++
       }
+
+      debug('processFile(): inserting daily values into series_daily')
+      await db.raw(`
+        insert into series_daily (series_id, date, n_values, min_temp_c, mean_temp_c, max_temp_c)
+        select
+          sv.series_id as series_id,
+          to_char((sv.datetime at time zone st.timezone), 'YYYY-MM-DD')::date as date,
+          count(temp_c) as n_values,
+          min(temp_c) as min_temp_c,
+          avg(temp_c) as mean_temp_c,
+          max(temp_c) as max_temp_c
+        from series_values sv
+        left join series s on sv.series_id=s.id
+        left join stations st on s.station_id=st.id
+        where s.file_id=?
+        group by series_id, date
+        order by series_id, date;
+      `, [file.id])
     } else {
       file.series = series
       file.status = 'DONE'

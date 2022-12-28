@@ -25,7 +25,7 @@ async function getSeriesValues (req, res, next) {
   let query = res.locals.series
     .$relatedQuery('values')
     .modify('defaultSelect')
-    .modify('defaultSort')
+    .modify('sort')
   if (req.query.start) {
     query = query.where('datetime', '>=', req.query.start)
   }
@@ -39,15 +39,15 @@ async function getSeriesValues (req, res, next) {
 async function getSeriesFlags (req, res, next) {
   const flags = await res.locals.series
     .$relatedQuery('flags')
-    .modify('defaultSort')
+    .modify('sort')
   return res.status(200).json(flags)
 }
 
 async function getSeriesDaily (req, res, next) {
-  const values = await res.locals.series
-    .$relatedQuery('values')
-    .modify('daily')
-  return res.status(200).json(values)
+  const rows = await res.locals.series
+    .$relatedQuery('daily')
+    .modify('sort')
+  return res.status(200).json(rows)
 }
 
 async function getOrganizationSeries (req, res, next) {

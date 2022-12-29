@@ -98,12 +98,23 @@ function columnDescriptions (columns, defs) {
   return columns.map(d => `#     ${d}: ${defs[d]}`).join('\n')
 }
 
-function fileHeader (title, tz = 'US/Alaska') {
+function fileHeader (title, period) {
   const now = luxon.DateTime.now()
-  return `# AKTEMP | Alaska Stream Temperature Database
-# URL: https://aktemp.uaa.alaska.edu
-# Created: ${formatTimestamp(now, 'D t ZZZZ', tz)}
-# File Type: ${title}`
+  let body = `# AKTEMP | Alaska Stream Temperature Database
+# https://aktemp.uaa.alaska.edu
+#
+# File Type: ${title}
+# Created: ${formatTimestamp(now, 'D t ZZZZ', 'US/Alaska')}`
+  if (period) {
+    if (period.start && !period.end) {
+      body += `\n# Period: ${period.start} or later`
+    } else if (period.end && !period.start) {
+      body += `\n# Period: ${period.end} or earlier`
+    } else if (period.start && period.end) {
+      body += `\n# Period: ${period.start} to ${period.end}`
+    }
+  }
+  return body
 }
 
 function stationsTable (stations = [], columns = Object.keys(columnLabels.stations)) {
@@ -180,7 +191,7 @@ function seriesTable (series, columns = Object.keys(columnLabels.series)) {
 #
 ${descriptions}
 #
-${table || '# No Continuous Timeseries Found'}`
+${table || '# No Timeseries Found'}`
 }
 
 function seriesDailyValuesTable (values, columns = Object.keys(columnLabels.dailyValues)) {
@@ -227,7 +238,7 @@ function seriesRawValuesTable (values, columns = Object.keys(columnLabels.rawVal
 #
 ${descriptions}
 #
-${table}`
+${table || '# No Values Found'}`
 }
 
 function seriesDiscreteValuesTable (values, columns = Object.keys(columnLabels.rawValues)) {
@@ -250,7 +261,7 @@ function seriesDiscreteValuesTable (values, columns = Object.keys(columnLabels.r
 #
 ${descriptions}
 #
-${table}`
+${table || '# No Values Found'}`
 }
 
 function seriesFlagsTable (flags, columns = Object.keys(columnLabels.flags)) {
@@ -294,7 +305,7 @@ function profilesTable (profiles, columns = Object.keys(columnLabels.profiles)) 
 #
 ${descriptions}
 #
-${table}`
+${table || '# No Vertical Profiles Found'}`
 }
 
 function profileValuesTable (values, columns = Object.keys(columnLabels.profileValues)) {
@@ -315,7 +326,7 @@ function profileValuesTable (values, columns = Object.keys(columnLabels.profileV
 #
 ${descriptions}
 #
-${table}`
+${table || '# No Profile Values Found'}`
 }
 
 function writeStationsFile (stations) {
@@ -354,9 +365,9 @@ ${profileValuesTable(rows)}
 `
 }
 
-function writeSeriesDailyFile (series) {
+function writeSeriesDailyFile (series, period) {
   const rows = series.map(d => d.daily.values.map(v => ({ series_id: d.id, ...v }))).flat()
-  return `${fileHeader('Continuous Timeseries Daily Values')}
+  return `${fileHeader('Continuous Timeseries Daily Values', period)}
 #
 ${seriesTable(series)}
 #
@@ -397,9 +408,9 @@ ${seriesRawValuesTable(rows)}
 `
 }
 
-function writeSeriesDiscreteFile (series) {
+function writeSeriesDiscreteFile (series, period) {
   const rows = series.map(d => d.values.map(v => ({ series_id: d.id, station_timezone: d.station_timezone, ...v }))).flat()
-  return `${fileHeader('Discrete Timeseries')}
+  return `${fileHeader('Discrete Timeseries', period)}
 #
 ${seriesTable(series)}
 #
@@ -417,9 +428,9 @@ ${seriesFlagsTable(rows)}
 `
 }
 
-function writeProfilesFile (profiles) {
+function writeProfilesFile (profiles, period) {
   const rows = profiles.map(d => d.values.map(v => ({ profile_id: d.id, ...v }))).flat()
-  return `${fileHeader('Vertical Profiles')}
+  return `${fileHeader('Vertical Profiles', period)}
 #
 ${profilesTable(profiles)}
 #

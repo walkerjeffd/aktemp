@@ -1,7 +1,4 @@
 const debug = require('../debug')
-// const path = require('path')
-// const os = require('os')
-// const { mkdtemp } = require('fs/promises')
 const stream = require('stream')
 const JSZip = require('jszip')
 const { Download, Station } = require('aktemp-db/models')
@@ -74,12 +71,31 @@ exports.processDownload = async (id, { dryRun }) => {
 
   if (config.types.daily) {
     debug('processDownload(): getting daily series')
-    const series = await Station.relatedQuery('series')
+    let query = Station.relatedQuery('series')
       .for(stations)
       .where('interval', 'CONTINUOUS')
       .modify('stationOrganization')
       .withGraphFetched('[daily, flags]')
+
+    if (config.period) {
+      if (config.period.start) {
+        query = query.whereRaw('(end_datetime at time zone station.timezone)::date >= ?', [config.period.start])
+      }
+      if (config.period.end) {
+        query = query.whereRaw('(start_datetime at time zone station.timezone)::date <= ?', [config.period.end])
+      }
+    }
+
+    const series = await query
     series.forEach(d => {
+      if (config.period) {
+        if (config.period.start) {
+          d.daily = d.daily.filter(d => d.date >= config.period.start)
+        }
+        if (config.period.end) {
+          d.daily = d.daily.filter(d => d.date <= config.period.end)
+        }
+      }
       d.daily.forEach(v => {
         v.date = luxon.DateTime.fromISO(v.date, { zone: d.station_timezone }).toJSDate()
       })
@@ -89,7 +105,7 @@ exports.processDownload = async (id, { dryRun }) => {
     })
 
     debug(`processDownload(): create continuous series file (n=${series.length})`)
-    const body = await writeSeriesDailyFile(series)
+    const body = await writeSeriesDailyFile(series, config.period)
 
     debug('processDownload(): adding daily-timeseries.csv to zip file')
     zip.file('daily-timeseries.csv', body)
@@ -97,12 +113,33 @@ exports.processDownload = async (id, { dryRun }) => {
 
   if (config.types.discrete) {
     debug('processDownload(): getting discrete series')
-    const series = await Station.relatedQuery('series')
+    let query = Station.relatedQuery('series')
       .for(stations)
       .where('interval', 'DISCRETE')
       .modify('stationOrganization')
       .withGraphFetched('[values, flags]')
+
+    if (config.period) {
+      if (config.period.start) {
+        query = query.whereRaw('(end_datetime at time zone station.timezone)::date >= ?', [config.period.start])
+      }
+      if (config.period.end) {
+        query = query.whereRaw('(start_datetime at time zone station.timezone)::date <= ?', [config.period.end])
+      }
+    }
+
+    const series = await query
     series.forEach(d => {
+      if (config.period) {
+        if (config.period.start) {
+          d.values = d.values
+            .filter(d => luxon.DateTime.fromJSDate(d.datetime, { zone: d.station_timezone }).toFormat('yyyy-MM-dd') >= config.period.start)
+        }
+        if (config.period.end) {
+          d.values = d.values
+            .filter(d => luxon.DateTime.fromJSDate(d.datetime, { zone: d.station_timezone }).toFormat('yyyy-MM-dd') <= config.period.end)
+        }
+      }
       d.values.forEach(v => {
         v.station_timezone = d.station_timezone
       })
@@ -110,7 +147,7 @@ exports.processDownload = async (id, { dryRun }) => {
     })
 
     debug(`processDownload(): create discrete series file (n=${series.length})`)
-    const body = await writeSeriesDiscreteFile(series)
+    const body = await writeSeriesDiscreteFile(series, config.period)
 
     debug('processDownload(): adding discrete-timeseries.csv to zip file')
     zip.file('discrete-timeseries.csv', body)
@@ -118,10 +155,21 @@ exports.processDownload = async (id, { dryRun }) => {
 
   if (config.types.profiles) {
     debug('processDownload(): getting profiles series')
-    const profiles = await Station.relatedQuery('profiles')
+    let query = Station.relatedQuery('profiles')
       .for(stations)
       .modify('stationOrganization')
       .withGraphFetched('values')
+
+    if (config.period) {
+      if (config.period.start) {
+        query = query.whereRaw('date >= ?', [config.period.start])
+      }
+      if (config.period.end) {
+        query = query.whereRaw('date <= ?', [config.period.end])
+      }
+    }
+
+    const profiles = await query
     profiles.forEach(d => {
       d.values.forEach(v => {
         v.station_timezone = d.station_timezone
@@ -129,7 +177,7 @@ exports.processDownload = async (id, { dryRun }) => {
     })
 
     debug(`processDownload(): create profiles series file (n=${profiles.length})`)
-    const body = await writeProfilesFile(profiles)
+    const body = await writeProfilesFile(profiles, config.period)
 
     debug('processDownload(): adding profiles.csv to zip file')
     zip.file('profiles.csv', body)
@@ -161,7 +209,6 @@ exports.processDownload = async (id, { dryRun }) => {
     url: s3Response.Location,
     status: 'DONE'
   }).returning('*')
-  // debug(download)
 
   debug('processDownload(): done')
   return download

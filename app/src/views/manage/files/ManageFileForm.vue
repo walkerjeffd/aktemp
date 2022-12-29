@@ -542,7 +542,7 @@
                     <div class="text-h6">Timezone Adjustment</div>
 
                     <p>
-                      How should the timezone of the timestamps be determined?
+                      How should the timezone of the timestamps be determined? Note UTC=GMT
                     </p>
                     <v-radio-group v-model="timestamp.timezone.mode" @change="resetTimestamp()">
                       <v-radio
@@ -674,11 +674,11 @@
                             <td class="pl-4">{{ timestamp.timezone.station.timezone }} (Station: {{ timestamp.timezone.station.code }})</td>
                           </tr>
                           <tr>
-                            <td class="text-right">Final (ISO):</td>
+                            <td class="text-right">Final (ISO Format):</td>
                             <td class="pl-4">{{ timestampUtc | timestamp('ISO', timestamp.timezone.station.timezone) }}</td>
                           </tr>
                           <tr>
-                            <td class="text-right">Final (Local):</td>
+                            <td class="text-right">Final (Local Format):</td>
                             <td class="pl-4">{{ timestampUtc | timestamp('ff ZZZZ', timestamp.timezone.station.timezone) }}</td>
                           </tr>
                         </tbody>
@@ -1025,7 +1025,7 @@
 
                 <v-divider class="my-8" v-if="upload.status !== 'READY'"></v-divider>
 
-                <div v-if="upload.status === 'PENDING'" ref="pending">
+                <div v-if="upload.status === 'PENDING'">
                   <div class="mb-4 font-weight-bold">
                     {{upload.message}}
                   </div>
@@ -1570,6 +1570,13 @@ export default {
 
       try {
         this.validateStation()
+
+        if (this.station.mode === 'STATION') {
+          this.config.station_column = null
+        } else if (this.station.mode === 'COLUMN') {
+          this.config.station_code = null
+        }
+
         this.step += 1
       } catch (err) {
         this.station.error = err.toString()
@@ -1664,6 +1671,10 @@ export default {
             this.config.timezone_column = this.timestamp.timezone.column.selected
             break
         }
+
+        if (!this.timestamp.columns.separate) {
+          this.config.time_column = null
+        }
         this.step += 1
       } catch (err) {
         this.timestamp.error = err.toString().replace('Error: ', '')
@@ -1753,8 +1764,6 @@ export default {
       this.upload.loading = true
       this.upload.progress = 0
 
-      this.$nextTick(() => this.$vuetify.goTo(this.$refs.pending))
-
       const file = this.file.selected
 
       if (!file) {
@@ -1765,9 +1774,16 @@ export default {
 
       this.upload.progress = 0.25
       this.upload.message = `Validating ${file.name}...`
-      let config
+      let config = Object.assign({}, this.config)
+      if (config.file_type === 'PROFILES') {
+        delete config.interval
+        delete config.flag_column
+        delete config.depth_category
+        delete config.depth_value
+        delete config.sop_bath
+      }
       try {
-        config = validateFileConfig(this.config, this.fileColumns, this.stations)
+        config = validateFileConfig(config, this.fileColumns, this.stations)
       } catch (err) {
         console.error(err)
         this.upload.status = 'FAILED'

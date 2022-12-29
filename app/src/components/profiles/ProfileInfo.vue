@@ -169,7 +169,7 @@ export default {
       this.deleteStatus.loading = true
       this.deleteStatus.error = null
       try {
-        await this.$http.restricted.delete(`/profile/${this.profile.id}`)
+        await this.$http.restricted.delete(`/profiles/${this.profile.id}`)
         this.$emit('delete')
       } catch (err) {
         console.error(err)

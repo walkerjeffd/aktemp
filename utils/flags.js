@@ -89,8 +89,8 @@ exports.assignFlags = (values, flags, tz, daily = false) => {
   if (daily) {
     flags.forEach(flag => {
       const label = flagLabel(flag)
-      const startDate = luxon.DateTime.fromJSDate(flag.start_datetime, { zone: tz }).toFormat('yyyy-MM-dd')
-      const endDate = luxon.DateTime.fromJSDate(flag.end_datetime, { zone: tz }).toFormat('yyyy-MM-dd')
+      const startDate = luxon.DateTime.fromJSDate(new Date(flag.start_datetime), { zone: tz }).toFormat('yyyy-MM-dd')
+      const endDate = luxon.DateTime.fromJSDate(new Date(flag.end_datetime), { zone: tz }).toFormat('yyyy-MM-dd')
       values.forEach(d => {
         const date = luxon.DateTime.fromJSDate(d.date, { zone: tz }).toFormat('yyyy-MM-dd')
         if (date >= startDate && date <= endDate) {
@@ -102,8 +102,8 @@ exports.assignFlags = (values, flags, tz, daily = false) => {
     flags.forEach(flag => {
       const label = flagLabel(flag)
       values.forEach(d => {
-        if (d.datetime.valueOf() >= flag.start_datetime.valueOf() &&
-            d.datetime.valueOf() <= flag.end_datetime.valueOf()) {
+        if (new Date(d.datetime).valueOf() >= new Date(flag.start_datetime).valueOf() &&
+            new Date(d.datetime).valueOf() <= new Date(flag.end_datetime).valueOf()) {
           d.flag.push(label)
         }
       })

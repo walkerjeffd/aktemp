@@ -33,7 +33,7 @@
                       <v-divider></v-divider>
 
                       <div class="pa-4 text-right">
-                        <DownloadButton @click="downloadStation" text="Download Metadata"></DownloadButton>
+                        <DownloadButton block @click="downloadStation" text="Download Station Metadata"></DownloadButton>
                       </div>
                     </v-sheet>
                   </v-col>
@@ -69,6 +69,9 @@
 </template>
 
 <script>
+import { writeStationsFile } from 'aktemp-utils/downloads'
+import { countDays } from 'aktemp-utils/time'
+
 import StationsMap from '@/components/StationsMap'
 import StationInfoTable from '@/components/StationInfoTable'
 import ExplorerStationProfiles from '@/views/explorer/station/ExplorerStationProfiles'
@@ -106,8 +109,12 @@ export default {
       this.status.loading = true
       const stationId = this.$route.params.stationId
       try {
-        this.station = await this.$http.public.get(`/stations/${stationId}`)
+        const station = await this.$http.public.get(`/stations/${stationId}`)
           .then(d => d.data)
+        this.station = {
+          ...station,
+          series_count_days: countDays(station.series_start_datetime, station.series_end_datetime, station.timezone)
+        }
       } catch (err) {
         this.status.error = err.message || err.toString() || 'Unknown error'
       } finally {
@@ -115,11 +122,9 @@ export default {
       }
     },
     async downloadStation () {
-      const series = await this.$http.public.get(`/stations/${this.station.id}/series`)
-        .then(d => d.data)
-      const profiles = await this.$http.public.get(`/stations/${this.station.id}/profiles`)
-        .then(d => d.data)
-      this.$download.stationMetadata(`AKTEMP-${this.station.organization_code}-${this.station.code}-station.csv`, this.station, series, profiles)
+      const body = writeStationsFile([this.station])
+      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-station.csv`
+      this.$download(body, filename)
     }
   }
 }

@@ -4,7 +4,7 @@
     scrollable
     max-width="800"
     @keydown.esc="close"
-    style="z-index:5000"
+    style="z-index:4000"
   >
     <v-card>
       <v-toolbar flat dense color="grey lighten-2">

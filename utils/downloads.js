@@ -3,7 +3,7 @@ const { luxon, formatTimestamp } = require('./time')
 
 const hr = '# ------------------------------------------------------------------------------'
 
-const columnDefs = {
+const columnLabels = {
   stations: {
     station_id: 'Station ID',
     organization_code: 'Organization Code',
@@ -40,13 +40,21 @@ const columnDefs = {
     depth_category: 'Depth category',
     depth_m: 'Depth (m)',
     sop_bath: 'Sensor checked using Pre/Post Bath according to SOP',
-    accuracy: 'Sensor Accuracy Level (1 = < 0.25 degC (best); 2: < 0.5 degC; 3: > 0.5 degC (worst))',
+    accuracy: 'Sensor Accuracy Level (1: < 0.25 degC (best); 2: < 0.5 degC; 3: > 0.5 degC (worst))',
     reviewed: 'QAQC Review Complete'
+  },
+  stationDailyValues: {
+    date: 'Date (local timezone)',
+    n_values: 'Number of measurements',
+    min_temp_c: 'Minimum temperature (degC)',
+    mean_temp_c: 'Mean temperature (degC)',
+    max_temp_c: 'Maximum temperature (degC)',
+    flag: 'QAQC flag(s)'
   },
   dailyValues: {
     series_id: 'Series ID',
     date: 'Date (local timezone)',
-    n: 'Number of measurements',
+    n_values: 'Number of measurements',
     min_temp_c: 'Minimum temperature (degC)',
     mean_temp_c: 'Mean temperature (degC)',
     max_temp_c: 'Maximum temperature (degC)',
@@ -66,7 +74,7 @@ const columnDefs = {
     station_code: 'Station Code',
     station_timezone: 'Station Timezone',
     date: 'Date (local timezone)',
-    accuracy: 'Sensor Accuracy Level (1 = < 0.25 degC (best); 2: < 0.5 degC; 3: > 0.5 degC (worst))',
+    accuracy: 'Sensor Accuracy Level (1: < 0.25 degC (best); 2: < 0.5 degC; 3: > 0.5 degC (worst))',
     reviewed: 'QAQC Review Complete'
   },
   profileValues: {
@@ -86,70 +94,49 @@ const columnDefs = {
   }
 }
 
-function writeColumnDescriptions (columns, defs) {
+function columnDescriptions (columns, defs) {
   return columns.map(d => `#     ${d}: ${defs[d]}`).join('\n')
 }
 
-exports.writeFileHeader = function (tz = 'US/Alaska') {
+function fileHeader (title, tz = 'US/Alaska') {
   const now = luxon.DateTime.now()
   return `# AKTEMP | Alaska Stream Temperature Database
-# https://aktemp.uaa.alaska.edu
-#
-# File created: ${formatTimestamp(now, 'D t ZZZZ', tz)}`
+# URL: https://aktemp.uaa.alaska.edu
+# Created: ${formatTimestamp(now, 'D t ZZZZ', tz)}
+# File Type: ${title}`
 }
 
-exports.writeStationsTable = function (stations = [], columns = Object.keys(columnDefs.stations)) {
-  const descriptions = writeColumnDescriptions(columns, columnDefs.stations)
+function stationsTable (stations = [], columns = Object.keys(columnLabels.stations)) {
+  const descriptions = columnDescriptions(columns, columnLabels.stations)
   const rows = stations.map(d => {
     const x = { ...d }
     x.station_id = d.id
     if (columns.includes('series_start_datetime')) {
-      x.series_start_datetime = formatTimestamp(x.series_start_datetime.toISOString(), 'D T', d.timezone)
+      x.series_start_datetime = formatTimestamp(x.series_start_datetime, 'D T', d.timezone)
     }
     if (columns.includes('series_end_datetime')) {
-      x.series_end_datetime = formatTimestamp(x.series_end_datetime.toISOString(), 'D T', d.timezone)
+      x.series_end_datetime = formatTimestamp(x.series_end_datetime, 'D T', d.timezone)
     }
-    if (columns.includes('profiles.start_date')) {
-      x.profiles.start_date = formatTimestamp(x.profiles.start_date, 'D', d.timezone)
+    if (columns.includes('profiles_start_date')) {
+      console.log(x.profiles_start_date, d.timezone, formatTimestamp(x.profiles_start_date, 'ISO', d.timezone))
+      x.profiles_start_date = formatTimestamp(x.profiles_start_date, 'D', d.timezone)
     }
-    if (columns.includes('profiles.end_date')) {
-      x.profiles.end_date = formatTimestamp(x.profiles.end_date, 'D', d.timezone)
-    }
-    return x
-  })
-  const table = Papa.unparse(rows, { columns })
-  return `${hr}
-# Station Table
-#
-${descriptions}
-#
-${table}`
-}
-
-exports.writeSeriesTable = function (series, columns = Object.keys(columnDefs.series)) {
-  const descriptions = writeColumnDescriptions(columns, columnDefs.series)
-  const rows = series.map(d => {
-    const x = { ...d }
-    x.series_id = d.id
-    if (columns.includes('start_datetime')) {
-      x.start_datetime = formatTimestamp(x.start_datetime.toISOString(), 'D T', d.station_timezone)
-    }
-    if (columns.includes('end_datetime')) {
-      x.end_datetime = formatTimestamp(x.end_datetime.toISOString(), 'D T', d.station_timezone)
+    if (columns.includes('profiles_end_date')) {
+      x.profiles_end_date = formatTimestamp(x.profiles_end_date, 'D', d.timezone)
     }
     return x
   })
   const table = Papa.unparse(rows, { columns })
   return `${hr}
-# Timeseries Metadata
+# Stations Table
 #
 ${descriptions}
 #
-${table}`
+${table || '# No Stations Found'}`
 }
 
-exports.writeSeriesDailyValuesTable = function (values, columns = Object.keys(columnDefs.dailyValues)) {
-  const descriptions = writeColumnDescriptions(columns, columnDefs.dailyValues)
+function stationDailyValuesTable (values, columns = Object.keys(columnLabels.stationDailyValues)) {
+  const descriptions = columnDescriptions(columns, columnLabels.stationDailyValues)
   values = values.map(d => {
     const x = { ...d }
     if (columns.includes('date')) {
@@ -159,7 +146,55 @@ exports.writeSeriesDailyValuesTable = function (values, columns = Object.keys(co
   })
   const table = Papa.unparse(values, { columns })
   return `${hr}
-# Continuous Daily Values
+# Continuous Timeseries Daily Values
+#
+#     This table contains daily statistics (min/mean/max) of observed water temperature
+#     computed across all timeseries at a single station. If multiple timeseries were collected
+#     at different depths or using duplicate loggers then the daily values will be aggregated.
+#     QAQC flags are also aggregated to daily timesteps. If one or more measurements during a
+#     single day were flagged then that flag is assigned to the entire day. If more than one
+#     type of flag occurred in a single day then the unique flag labels are combined into a
+#     comma-separated list.
+#
+${descriptions}
+#
+${table || '# No Daily Values Found'}`
+}
+
+function seriesTable (series, columns = Object.keys(columnLabels.series)) {
+  const descriptions = columnDescriptions(columns, columnLabels.series)
+  const rows = series.map(d => {
+    const x = { ...d }
+    x.series_id = d.id
+    if (columns.includes('start_datetime')) {
+      x.start_datetime = formatTimestamp(x.start_datetime, 'D T', d.station_timezone)
+    }
+    if (columns.includes('end_datetime')) {
+      x.end_datetime = formatTimestamp(x.end_datetime, 'D T', d.station_timezone)
+    }
+    return x
+  })
+  const table = Papa.unparse(rows, { columns })
+  return `${hr}
+# Timeseries Metadata
+#
+${descriptions}
+#
+${table || '# No Continuous Timeseries Found'}`
+}
+
+function seriesDailyValuesTable (values, columns = Object.keys(columnLabels.dailyValues)) {
+  const descriptions = columnDescriptions(columns, columnLabels.dailyValues)
+  values = values.map(d => {
+    const x = { ...d }
+    if (columns.includes('date')) {
+      x.date = formatTimestamp(x.date, 'yyyy-MM-dd', x.station_timezone)
+    }
+    return x
+  })
+  const table = Papa.unparse(values, { columns })
+  return `${hr}
+# Continuous Timeseries Daily Values
 #
 #     This table contains daily statistics (min/mean/max) of observed water temperature
 #     for each continuous timeseries. QAQC flags are also aggregated to daily timesteps.
@@ -169,11 +204,11 @@ exports.writeSeriesDailyValuesTable = function (values, columns = Object.keys(co
 #
 ${descriptions}
 #
-${table}`
+${table || '# No Daily Values Found'}`
 }
 
-exports.writeSeriesRawValuesTable = function (values, columns = Object.keys(columnDefs.rawValues)) {
-  const descriptions = writeColumnDescriptions(columns, columnDefs.rawValues)
+function seriesRawValuesTable (values, columns = Object.keys(columnLabels.rawValues)) {
+  const descriptions = columnDescriptions(columns, columnLabels.rawValues)
 
   values = values.map(d => {
     const x = { ...d }
@@ -188,15 +223,60 @@ exports.writeSeriesRawValuesTable = function (values, columns = Object.keys(colu
 
   const table = Papa.unparse(values, { columns })
   return `${hr}
-# Continuous Timeseries Values
+# Continuous Timeseries Raw Values
 #
 ${descriptions}
 #
 ${table}`
 }
 
-exports.writeProfilesTable = function (profiles, columns = Object.keys(columnDefs.profiles)) {
-  const descriptions = writeColumnDescriptions(columns, columnDefs.profiles)
+function seriesDiscreteValuesTable (values, columns = Object.keys(columnLabels.rawValues)) {
+  const descriptions = columnDescriptions(columns, columnLabels.rawValues)
+
+  values = values.map(d => {
+    const x = { ...d }
+    if (columns.includes('datetime_utc')) {
+      x.datetime_utc = formatTimestamp(x.datetime, 'ISO', 'UTC')
+    }
+    if (columns.includes('datetime_local')) {
+      x.datetime_local = formatTimestamp(x.datetime, 'D T', x.station_timezone)
+    }
+    return x
+  })
+
+  const table = Papa.unparse(values, { columns })
+  return `${hr}
+# Discrete Timeseries Values
+#
+${descriptions}
+#
+${table}`
+}
+
+function seriesFlagsTable (flags, columns = Object.keys(columnLabels.flags)) {
+  const descriptions = columnDescriptions(columns, columnLabels.flags)
+  const rows = flags.map(d => {
+    const x = { ...d }
+    x.flag_id = x.id
+    if (columns.includes('start_datetime')) {
+      x.start_datetime = formatTimestamp(x.start_datetime, 'D T', x.station_timezone)
+    }
+    if (columns.includes('end_datetime')) {
+      x.end_datetime = formatTimestamp(x.end_datetime, 'D T', x.station_timezone)
+    }
+    return x
+  })
+  const table = Papa.unparse(rows, { columns })
+  return `${hr}
+# Timeseries Flags
+#
+${descriptions}
+#
+${table || '# No Flags Found'}`
+}
+
+function profilesTable (profiles, columns = Object.keys(columnLabels.profiles)) {
+  const descriptions = columnDescriptions(columns, columnLabels.profiles)
   const rows = profiles.map(d => {
     const x = { ...d }
     x.profile_id = d.id
@@ -217,12 +297,10 @@ ${descriptions}
 ${table}`
 }
 
-exports.writeProfileValuesTable = function (values, columns = Object.keys(columnDefs.profileValues)) {
-  const descriptions = writeColumnDescriptions(columns, columnDefs.profileValues)
+function profileValuesTable (values, columns = Object.keys(columnLabels.profileValues)) {
+  const descriptions = columnDescriptions(columns, columnLabels.profileValues)
   values = values.map(d => {
     const x = { ...d }
-    // console.log(typeof x.datetime)
-    // console.log(x.datetime, x.station_timezone, luxon.DateTime.fromISO(x.datetime, { zone: 'UTC' }).toISO())
     if (columns.includes('datetime_utc')) {
       x.datetime_utc = formatTimestamp(x.datetime, 'ISO', 'UTC')
     }
@@ -238,4 +316,125 @@ exports.writeProfileValuesTable = function (values, columns = Object.keys(column
 ${descriptions}
 #
 ${table}`
+}
+
+function writeStationsFile (stations) {
+  return `${fileHeader('Stations Metadata')}
+#
+${stationsTable(stations)}
+  `
+}
+
+function writeStationSeriesFile (station, series, values, discrete) {
+  return `${fileHeader('Station Timeseries Data')}
+#
+${stationsTable([station])}
+#
+${seriesTable(series)}
+#
+${stationDailyValuesTable(values)}
+#
+${seriesDiscreteValuesTable(discrete.map(d => ({ ...d, station_timezone: station.timezone })))}
+`
+}
+
+function writeStationProfilesFile (station, profiles) {
+  const rows = profiles.map(d => d.values.map(v => ({
+    ...v,
+    profiles_id: d.id,
+    station_timezone: station.timezone
+  }))).flat()
+  return `${fileHeader('Station Vertical Profiles Data')}
+#
+${stationsTable([station])}
+#
+${profilesTable(profiles)}
+#
+${profileValuesTable(rows)}
+`
+}
+
+function writeSeriesDailyFile (series) {
+  const rows = series.map(d => d.daily.values.map(v => ({ series_id: d.id, ...v }))).flat()
+  return `${fileHeader('Continuous Timeseries Daily Values')}
+#
+${seriesTable(series)}
+#
+${seriesDailyValuesTable(rows)}
+`
+}
+
+function writeSeriesDailyDiscreteFile (series) {
+  const dailyRows = series
+    .filter(d => d.interval === 'CONTINUOUS')
+    .map(d => d.daily.values.map(v => ({ series_id: d.id, station_timezone: d.station_timezone, ...v })))
+    .flat()
+  const discreteRows = series
+    .filter(d => d.interval === 'DISCRETE')
+    .map(d => d.values.map(v => ({ series_id: d.id, station_timezone: d.station_timezone, ...v })))
+    .flat()
+  return `${fileHeader('Continuous Timeseries Daily Values and Discrete Values')}
+#
+${seriesTable(series)}
+#
+${seriesDailyValuesTable(dailyRows)}
+#
+${seriesDiscreteValuesTable(discreteRows)}
+`
+}
+
+function writeSeriesRawFile (series, values) {
+  const rows = values.map(d => ({
+    ...d,
+    series_id: series.id,
+    station_timezone: series.station_timezone
+  }))
+  return `${fileHeader('Continuous Timeseries Raw Values')}
+#
+${seriesTable([series])}
+#
+${seriesRawValuesTable(rows)}
+`
+}
+
+function writeSeriesDiscreteFile (series) {
+  const rows = series.map(d => d.values.map(v => ({ series_id: d.id, station_timezone: d.station_timezone, ...v }))).flat()
+  return `${fileHeader('Discrete Timeseries')}
+#
+${seriesTable(series)}
+#
+${seriesDiscreteValuesTable(rows)}
+`
+}
+
+function writeSeriesFlagsFile (series) {
+  const rows = series.map(d => d.flags.map(f => ({ ...f, station_timezone: d.station_timezone }))).flat()
+  return `${fileHeader('Timeseries Flags')}
+#
+${seriesTable(series)}
+#
+${seriesFlagsTable(rows)}
+`
+}
+
+function writeProfilesFile (profiles) {
+  const rows = profiles.map(d => d.values.map(v => ({ profile_id: d.id, ...v }))).flat()
+  return `${fileHeader('Vertical Profiles')}
+#
+${profilesTable(profiles)}
+#
+${profileValuesTable(rows)}
+`
+}
+
+module.exports = {
+  writeStationsFile,
+  writeStationSeriesFile,
+  writeStationProfilesFile,
+  writeSeriesDailyFile,
+  writeSeriesDailyDiscreteFile,
+  writeSeriesRawFile,
+  writeSeriesDiscreteFile,
+  writeSeriesFlagsFile,
+  writeProfilesFile
 }

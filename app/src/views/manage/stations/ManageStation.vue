@@ -63,7 +63,7 @@
                       :series="series.data"
                       :selected="series.selected"
                       :loading="series.loading"
-                      :columns="['id', 'start_datetime', 'end_datetime', 'depth_m', 'reviewed']"
+                      :columns="['id', 'start_datetime', 'end_datetime', 'depth_m', 'interval', 'reviewed']"
                       @select="selectSeries"
                     ></SeriesTable>
 

@@ -123,7 +123,7 @@ export default {
           .get(`/organizations/${state.organization.id}/stations`)
           .then(d => d.data)
         data.forEach(d => {
-          d.series_count_days = countDays(d.series_start_timestamp, d.series_end_timestamp, d.timezone)
+          d.series_count_days = countDays(d.series_start_datetime, d.series_end_datetime, d.timezone)
         })
         commit('SET_STATIONS', data)
         commit('SET_STATUS', ['stations', false, null])

@@ -105,40 +105,77 @@
       </tbody>
     </v-simple-table>
 
-    <v-divider class="mb-4"></v-divider>
+    <v-divider class="mb-2"></v-divider>
 
-    <Alert v-if="downloadStatus.error" type="error" title="Failed to Download Series" class="mx-4">
-      {{ downloadStatus.error }}
-    </Alert>
-
-    <div class="mx-4 pb-2">
-      <div class="my-4">
+    <div class="mx-4">
+      <div class="mb-2 d-flex justify-space-between" v-if="series.interval === 'CONTINUOUS'">
         <v-btn
           color="primary"
-          class="my-4"
           outlined
-          block
           download
-          :loading="downloadStatus.loading"
-          @click="download"
+          :loading="downloadStatus.loading.raw"
+          @click="downloadRaw"
         >
-          <v-icon left>mdi-download</v-icon> Download
+          <v-icon left>mdi-download</v-icon> Raw
         </v-btn>
         <v-btn
           color="primary"
-          class="my-4"
           outlined
-          block
+          download
+          :loading="downloadStatus.loading.daily"
+          @click="downloadDaily"
+        >
+          <v-icon left>mdi-download</v-icon> Daily
+        </v-btn>
+        <v-btn
+          color="primary"
+          outlined
+          download
+          :loading="downloadStatus.loading.flags"
+          @click="downloadFlags"
+        >
+          <v-icon left>mdi-download</v-icon> Flags
+        </v-btn>
+      </div>
+      <div class="mb-2 d-flex justify-space-between" v-else-if="series.interval === 'DISCRETE'">
+        <v-btn
+          color="primary"
+          outlined
+          download
+          :loading="downloadStatus.loading.discrete"
+          @click="downloadDiscrete"
+        >
+          <v-icon left>mdi-download</v-icon> Raw
+        </v-btn>
+        <v-btn
+          color="primary"
+          outlined
+          download
+          :loading="downloadStatus.loading.flags"
+          @click="downloadFlags"
+        >
+          <v-icon left>mdi-download</v-icon> Flags
+        </v-btn>
+      </div>
+
+      <Alert v-if="downloadStatus.error" type="error" title="Download Failed">
+        {{ downloadStatus.error }}
+      </Alert>
+    </div>
+    <v-divider class="my-2"></v-divider>
+    <div class="mx-4">
+      <div class="mt-2 mb-2 d-flex justify-space-between">
+        <v-btn
+          color="success"
+          outlined
           @click="edit"
         >
           <v-icon left>mdi-pencil</v-icon>
-          Edit Series
+          Edit
         </v-btn>
         <v-btn
-          color="primary"
-          class="my-4"
+          color="success"
           outlined
-          block
           :to="{
             name: 'manageQaqcSeries',
             params: { seriesId: series.id }
@@ -147,9 +184,13 @@
           <v-icon left>mdi-tools</v-icon>
           QAQC
         </v-btn>
+      </div>
+    </div>
+    <v-divider class="my-2"></v-divider>
+    <div class="mx-4 pb-2">
+      <div>
         <v-btn
           color="error"
-          class="mt-4"
           outlined
           block
           @click="confirmDelete"
@@ -182,9 +223,12 @@
 </template>
 
 <script>
-import { rollup, mean, ascending } from 'd3'
-import { assignRawFlags } from '@/lib/utils'
+// import { rollup, mean, ascending } from 'd3'
+import { assignFlags } from 'aktemp-utils/flags'
+import { writeSeriesRawFile, writeSeriesDailyFile, writeSeriesDiscreteFile, writeSeriesFlagsFile } from 'aktemp-utils/downloads'
+
 import ManageSeriesEditForm from '@/views/manage/series/ManageSeriesEditForm'
+
 export default {
   name: 'SeriesInfo',
   props: ['series'],
@@ -196,7 +240,12 @@ export default {
         error: null
       },
       downloadStatus: {
-        loading: false,
+        loading: {
+          raw: false,
+          daily: false,
+          discrete: false,
+          flags: false
+        },
         error: null
       }
     }
@@ -230,57 +279,79 @@ export default {
         this.deleteStatus.loading = false
       }
     },
-    async download () {
-      this.downloadStatus.loading = true
+    async downloadRaw () {
+      this.downloadStatus.loading.raw = true
       this.downloadStatus.error = null
 
       try {
-        const station = await this.$http.restricted.get(`/stations/${this.series.station_id}`)
-          .then(d => d.data)
-
-        const values = await this.$http.public
+        let values = await this.$http.public
           .get(`/series/${this.series.id}/values`)
           .then(d => d.data)
+        values.forEach(d => {
+          d.datetime = new Date(d.datetime)
+        })
         const flags = await this.$http.public
           .get(`/series/${this.series.id}/flags`)
           .then(d => d.data)
-
-        const results = assignRawFlags(values, flags)
-        const flaggedValues = results.flags.map(flag => {
-          return flag.values.map(value => {
-            return {
-              ...value,
-              flag: flag.label
-            }
-          })
-        }).flat()
-        // combine overlapping flags
-        const groupedFlaggedValues = Array.from(
-          rollup(
-            flaggedValues,
-            v => v,
-            d => d.datetime
-          ),
-          ([key, value]) => ({
-            datetime: key,
-            temp_c: mean(value.map(d => d.temp_c)),
-            flag: value.map(d => d.flag).join(',')
-          })
-        )
-        const outputValues = [results.values, groupedFlaggedValues].flat()
-          .sort((a, b) => ascending(a.datetime, b.datetime))
-        outputValues.forEach(d => {
-          d.series_id = this.series.id
-          d.flag = d.flag || ''
+        flags.forEach(d => {
+          d.start_datetime = new Date(d.start_datetime)
+          d.end_datetime = new Date(d.end_datetime)
         })
+        values = assignFlags(values, flags)
 
-        const filename = `AKTEMP-${station.organization_code}-${station.code}-series-${this.series.id}-raw.csv`
-        this.$download.seriesRawValues(filename, station, this.series, outputValues)
+        const body = writeSeriesRawFile(this.series, values, flags)
+        const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-raw.csv`
+        this.$download(body, filename)
       } catch (err) {
         console.log(err)
         this.downloadStatus.error = this.$errorMessage(err)
       } finally {
-        this.downloadStatus.loading = false
+        this.downloadStatus.loading.raw = false
+      }
+    },
+    async downloadDaily () {
+      this.downloadStatus.loading.daily = true
+      this.downloadStatus.error = null
+
+      try {
+        const body = writeSeriesDailyFile([this.series])
+        const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-daily.csv`
+        this.$download(body, filename)
+      } catch (err) {
+        console.log(err)
+        this.downloadStatus.error = this.$errorMessage(err)
+      } finally {
+        this.downloadStatus.loading.daily = false
+      }
+    },
+    async downloadDiscrete () {
+      this.downloadStatus.loading.discrete = true
+      this.downloadStatus.error = null
+
+      try {
+        const body = writeSeriesDiscreteFile([this.series])
+        const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-discrete.csv`
+        this.$download(body, filename)
+      } catch (err) {
+        console.log(err)
+        this.downloadStatus.error = this.$errorMessage(err)
+      } finally {
+        this.downloadStatus.loading.discrete = false
+      }
+    },
+    async downloadFlags () {
+      this.downloadStatus.loading.flags = true
+      this.downloadStatus.error = null
+
+      try {
+        const body = writeSeriesFlagsFile([this.series])
+        const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-flags.csv`
+        this.$download(body, filename)
+      } catch (err) {
+        console.log(err)
+        this.downloadStatus.error = this.$errorMessage(err)
+      } finally {
+        this.downloadStatus.loading.flags = false
       }
     }
   }

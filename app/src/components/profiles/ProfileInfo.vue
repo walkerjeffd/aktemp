@@ -74,10 +74,10 @@
     </Alert>
 
     <div class="mx-4 pb-2">
-      <div class="my-4">
+      <div class="my-2">
         <v-btn
           color="primary"
-          class="my-4"
+          class="my-2"
           outlined
           block
           download
@@ -87,8 +87,8 @@
           <v-icon left>mdi-download</v-icon> Download
         </v-btn>
         <v-btn
-          color="primary"
-          class="my-4"
+          color="success"
+          class="my-2"
           outlined
           block
           @click="edit"
@@ -98,7 +98,7 @@
         </v-btn>
         <v-btn
           color="error"
-          class="mt-4"
+          class="mt-2"
           outlined
           block
           @click="confirmDelete"
@@ -131,6 +131,7 @@
 </template>
 
 <script>
+import { writeProfilesFile } from 'aktemp-utils/downloads'
 import ManageProfileEditForm from '@/views/manage/profiles/ManageProfileEditForm'
 export default {
   name: 'ProfileInfo',
@@ -184,8 +185,12 @@ export default {
       try {
         const station = await this.$http.restricted.get(`/stations/${this.profile.station_id}`)
           .then(d => d.data)
+        this.profile.values.forEach(d => {
+          d.station_timezone = this.profile.station_timezone
+        })
         const filename = `AKTEMP-${station.organization_code}-${station.code}-profile-${this.profile.id}.csv`
-        this.$download.profilesValues(filename, station, [this.profile])
+        const body = writeProfilesFile([this.profile], [station])
+        this.$download(body, filename)
       } catch (err) {
         console.log(err)
         this.downloadStatus.error = this.$errorMessage(err)

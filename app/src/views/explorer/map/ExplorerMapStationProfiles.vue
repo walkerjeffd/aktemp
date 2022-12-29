@@ -10,7 +10,7 @@
         <!-- <div class="text--secondary caption"><v-icon x-small>mdi-information</v-icon> Click+drag to zoom in. Shift+click to slide.</div> -->
 
         <div class="text--secondary caption ml-2">
-          <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in.
+          <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in, hold shift to pan.
         </div>
 
         <div class="text-right d-flex align-end mt-4">
@@ -33,8 +33,10 @@
 
 <script>
 import { ascending } from 'd3'
+import { writeStationProfilesFile } from 'aktemp-utils/downloads'
+
 export default {
-  name: 'StationDetailProfiles',
+  name: 'ExplorerMapStationProfiles',
   props: ['station'],
   data () {
     return {
@@ -43,6 +45,12 @@ export default {
       profiles: [],
       settings: {
         chart: {
+          panKey: 'shift',
+          panning: {
+            enabled: true,
+            type: 'xy'
+          },
+          zoomType: 'xy',
           height: 400,
           marginLeft: 50,
           type: 'scatter'
@@ -114,10 +122,9 @@ export default {
       this.loading = false
     },
     download () {
-      if (this.loading) return
-
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`
-      this.$download.profilesValues(filename, this.station, this.profiles)
+      const body = writeStationProfilesFile(this.station, this.profiles)
+      this.$download(body, filename)
     }
   }
 }

@@ -32,7 +32,8 @@
 
 <script>
 import * as d3 from 'd3'
-const { assignFlags } = require('aktemp-utils/flags')
+import { assignFlags } from 'aktemp-utils/flags'
+import { getContinuousChunks, getDiscreteChunks } from '@/lib/utils'
 
 export default {
   name: 'SeriesChart',
@@ -290,7 +291,10 @@ export default {
   // },
   methods: {
     parseDatetime (x, tz) {
-      return this.$luxon.DateTime.fromISO(x, { zone: tz || this.defaultTimezone }).toJSDate()
+      if (typeof x === 'string') {
+        return this.$luxon.DateTime.fromISO(x, { zone: tz || this.defaultTimezone }).toJSDate()
+      }
+      return x
     },
     getDatetimeRange () {
       // console.log('getDatetimeRange')
@@ -312,62 +316,6 @@ export default {
       }
       await this.render()
     },
-    getDiscreteChunks (values) {
-      // console.log(values)
-      return [
-        {
-          flag: false,
-          values: values.filter(d => !d.flag)
-        }, {
-          flag: true,
-          values: values.filter(d => !!d.flag)
-        }
-      ]
-    },
-    getContinuousChunks (values, accessor = 'datetime') {
-      console.log('getContinuousChunks()', values.length)
-      const chunks = []
-      values.forEach((d, i) => {
-        if (i === 0) {
-          // create first chunk
-          chunks.push({
-            flag: !!d.flag,
-            values: [d]
-          })
-        } else if (!!values[i].flag !== !!values[i - 1].flag) {
-          // create new chunk at flag boundary
-          if (values[i - 1].flag) {
-            if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() <= 25 * 60 * 60 * 1000) {
-              chunks[chunks.length - 1].values.push(d)
-            }
-            chunks.push({
-              flag: !!d.flag,
-              values: [d]
-            })
-          } else {
-            const newChunk = {
-              flag: !!d.flag,
-              values: []
-            }
-            if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() <= 25 * 60 * 60 * 1000) {
-              newChunk.values.push(values[i - 1])
-            }
-            newChunk.values.push(d)
-            chunks.push(newChunk)
-          }
-        } else if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() > 25 * 60 * 60 * 1000) {
-          // create new chunk after gap
-          chunks.push({
-            flag: !!d.flag,
-            values: [d]
-          })
-        } else {
-          // continue chunk
-          chunks[chunks.length - 1].values.push(d)
-        }
-      })
-      return chunks
-    },
 
     async init () {
       console.log('init()')
@@ -379,13 +327,13 @@ export default {
           if (!s.daily.values) {
             const values = await this.fetchDailySeries(s)
             s.daily.values = Object.freeze(assignFlags(values, s.flags, s.timezone, true))
-            s.daily.chunks = Object.freeze(this.getContinuousChunks(s.daily.values, 'date'))
+            s.daily.chunks = Object.freeze(getContinuousChunks(s.daily.values, 'date'))
           }
         } else if (s.interval === 'DISCRETE') {
           if (!s.values) {
             const values = await this.fetchDiscreteSeries(s)
             s.values = Object.freeze(assignFlags(values, s.flags))
-            s.chunks = Object.freeze(this.getDiscreteChunks(s.values))
+            s.chunks = Object.freeze(getDiscreteChunks(s.values))
           }
         }
 
@@ -659,17 +607,6 @@ export default {
           })
           chunkSeries.forEach(s => this.chart.addSeries(s, false))
         }
-
-        // set visibility
-        // for (const s of root.linkedSeries) {
-        //   if (!s.options.flag || this.showFlags) {
-        //     // console.log(`renderDaily(): ${s.options.id} true`)
-        //     s.setVisible(root.visible, false)
-        //   } else {
-        //     // console.log(`renderDaily(): ${s.options.id} false`)
-        //     s.setVisible(false, false)
-        //   }
-        // }
       }
     },
     renderDaily (force) {
@@ -800,7 +737,7 @@ export default {
           // console.log(s.raw)
           const values = await this.fetchRawSeries(s, start, end)
           s.raw.values = Object.freeze(assignFlags(values, s.flags))
-          s.raw.chunks = Object.freeze(this.getContinuousChunks(s.raw.values, 'datetime'))
+          s.raw.chunks = Object.freeze(getContinuousChunks(s.raw.values, 'datetime'))
           s.raw.start = start
           s.raw.end = end
         }
@@ -856,24 +793,6 @@ export default {
         })
         chunkSeries.forEach(s => this.chart.addSeries(s, false))
       }
-
-      // set visibility
-      // for (const s of this.series.filter(d => d.interval === 'CONTINUOUS')) {
-      //   console.log('raw', s.id)
-      //   console.log(s.raw)
-      //   const root = this.chart.get(`${s.id}-root`)
-      //   for (const s of root.linkedSeries) {
-      //     if (s.options.mode === 'daily') {
-      //       s.setVisible(false, false)
-      //     } else if (!s.options.flag || this.showFlags) {
-      //       // console.log(`renderDaily(): ${s.options.id} true`)
-      //       s.setVisible(root.visible, false)
-      //     } else {
-      //       // console.log(`renderDaily(): ${s.options.id} false`)
-      //       s.setVisible(false, false)
-      //     }
-      //   }
-      // }
       this.chart.hideLoading()
     },
     toggleSeriesVisibility () {
@@ -885,7 +804,8 @@ export default {
           // console.log(`toggleSeriesVisibility() rootSeries=${rootSeries.options.id}`)
           if (selectedSeriesIds.includes(rootSeries.options.seriesId)) {
             rootSeries.linkedSeries.forEach(s => {
-              if (this.mode === s.options.mode && (this.showFlags || !s.options.flag)) {
+              if ((s.options.mode === 'discrete' || this.mode === s.options.mode) &&
+                  (this.showFlags || !s.options.flag)) {
                 // console.log(`toggleSeriesVisibility() series=${s.options.id} mode=${this.mode}=${s.options.mode} show`)
                 s.setVisible(true, false)
               } else {
@@ -908,6 +828,7 @@ export default {
           let start = this.parseDatetime(d.start_datetime, this.defaultTimezone)
           let end = this.parseDatetime(d.end_datetime, this.defaultTimezone)
           const series = this.series[0]
+          console.log(d)
           if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
             start = this.$luxon.DateTime.fromJSDate(start, { zone: this.defaultTimezone }).startOf('day').toJSDate()
             end = this.$luxon.DateTime.fromJSDate(end, { zone: this.defaultTimezone }).startOf('day').toJSDate()
@@ -966,18 +887,18 @@ export default {
           if (s.daily && s.daily.values) {
             console.log(`updateFlags(${s.id}, daily)`)
             s.daily.values = Object.freeze(assignFlags(s.daily.values, s.flags, s.station_timezone, true))
-            s.daily.chunks = Object.freeze(this.getContinuousChunks(s.daily.values, 'date'))
+            s.daily.chunks = Object.freeze(getContinuousChunks(s.daily.values, 'date'))
           }
           if (s.raw && s.raw.values) {
             console.log(`updateFlags(${s.id}, raw)`)
             s.raw.values = Object.freeze(assignFlags(s.raw.values, s.flags))
-            s.raw.chunks = Object.freeze(this.getContinuousChunks(s.raw.values, 'datetime'))
+            s.raw.chunks = Object.freeze(getContinuousChunks(s.raw.values, 'datetime'))
           }
         } else if (s.interval === 'DISCRETE') {
           if (s.values) {
             console.log(`updateFlags(${s.id}, discrete)`)
             s.values = Object.freeze(assignFlags(s.values, s.flags))
-            s.chunks = Object.freeze(this.getDiscreteChunks(s.values))
+            s.chunks = Object.freeze(getDiscreteChunks(s.values))
           }
         }
       })
@@ -1056,7 +977,7 @@ export default {
           .fromJSDate(dataEnd.date, { zone: series.station_timezone })
           .endOf('day')
           .toJSDate()
-        console.log('onBrush(): daily flag', flagStart.toISOString(), flagEnd.toISOString())
+        // console.log('onBrush(): daily flag', flagStart.toISOString(), flagEnd.toISOString())
         // console.log('onBrush(): daily data', dataStart, dataEnd)
         this.$emit('brush', flagStart, flagEnd)
       } else {
@@ -1086,7 +1007,7 @@ export default {
 
         const flagStart = dataStart.datetime
         const flagEnd = dataEnd.datetime
-        console.log('onBrush(): raw flag', flagStart.toISO(), flagEnd.toISO())
+        console.log('onBrush(): raw flag', flagStart.toISOString(), flagEnd.toISOString())
         // console.log('onBrush(): daily data', dataStart, dataEnd)
         this.$emit('brush', flagStart, flagEnd)
       }

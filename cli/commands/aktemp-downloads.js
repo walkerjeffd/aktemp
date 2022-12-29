@@ -1,6 +1,7 @@
 const program = require('commander')
 const { processDownload } = require('../lib/downloads')
 const { printTable } = require('../lib/utils')
+const { sendDownloadEmail } = require('../aws')
 const { Download } = require('aktemp-db/models')
 
 function printDownloads (rows, columns = ['id', 'status', 'url']) {
@@ -27,6 +28,11 @@ program
           })
         }
       }
+    }
+
+    if (!options.dryRun) {
+      const download = await Download.query().findById(id)
+      await sendDownloadEmail(download)
     }
   })
 

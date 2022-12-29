@@ -6,136 +6,16 @@ const stream = require('stream')
 const JSZip = require('jszip')
 const { Download, Station } = require('aktemp-db/models')
 const {
-  writeFileHeader,
-  writeStationsTable,
-  writeSeriesTable,
-  writeSeriesDailyValuesTable,
-  writeSeriesRawValuesTable,
-  writeProfilesTable,
-  writeProfileValuesTable
+  writeStationsFile,
+  writeSeriesDailyFile,
+  writeSeriesDiscreteFile,
+  writeProfilesFile
 } = require('aktemp-utils/downloads')
 const { assignFlags } = require('aktemp-utils/flags')
-const { luxon, formatTimestamp } = require('aktemp-utils/time')
-const { s3, s3GetFilesize, sendDownloadEmail } = require('../aws')
+const { luxon, formatTimestamp, countDays } = require('aktemp-utils/time')
+const { s3, s3GetFilesize } = require('../aws')
 
 const BUCKET = process.env.STORAGE_BUCKET
-
-async function createStationsFile (stations) {
-  debug(`createStationsFile(): n(stations)=${stations.length}`)
-  const fileHeader = writeFileHeader()
-  if (!stations || stations.length === 0) {
-    return `${fileHeader}
-# File contents: Stations metadata
-#
-# Selected station(s) not found
-#
-`
-  }
-  const stationsTable = writeStationsTable(stations)
-
-  const body = `${fileHeader}
-# File contents: Stations metadata
-#
-${stationsTable}
-  `
-  return body
-}
-
-async function createContinousSeriesDailyFile (series) {
-  debug(`createContinousSeriesDailyFile(): n(series)=${series.length}`)
-  const fileHeader = writeFileHeader()
-  if (!series || series.length === 0) {
-    return `${fileHeader}
-# File contents: Continuous timeseries of observed water temperatures at daily intervals
-#
-# No continuous timeseries found for selected station(s)
-#
-`
-  }
-  const seriesTable = writeSeriesTable(series)
-  const values = series.map(d => d.values.map(v => ({ series_id: d.id, ...v }))).flat()
-  const valuesTable = writeSeriesDailyValuesTable(values)
-  return `${fileHeader}
-# File contents: Continuous timeseries of observed water temperatures at daily intervals
-#
-${seriesTable}
-#
-${valuesTable}
-`
-}
-
-// async function createContinousSeriesRawFile (series) {
-//   debug(`createContinousSeriesRawFile(): n(series)=${series.length}`)
-//   const fileHeader = writeFileHeader()
-//   const seriesTable = writeSeriesTable(series)
-//   const values = series.map(d => d.values.map(v => ({ series_id: d.id, ...v }))).flat()
-//   const valuesTable = writeSeriesRawValuesTable(values)
-
-//   return `${fileHeader}
-// #
-// # Description: This file contains continuous timeseries of raw observed water temperatures
-// #
-// ${seriesTable}
-// #
-// ${valuesTable}
-// `
-// }
-
-async function createDiscreteSeriesFile (series) {
-  debug(`createDiscreteSeriesFile(): n(series)=${series.length}`)
-  const fileHeader = writeFileHeader()
-  if (!series || series.length === 0) {
-    return `${fileHeader}
-# File contents: Discrete timeseries of observed water temperatures
-#
-# No discrete timeseries found for selected station(s)
-#
-`
-  }
-  const seriesTable = writeSeriesTable(series)
-  const values = series.map(d => d.values.map(v => ({
-    series_id: d.id,
-    station_timezone: d.station_timezone,
-    ...v
-  }))).flat()
-  const valuesTable = writeSeriesRawValuesTable(values)
-
-  return `${fileHeader}
-# File contents: Discrete timeseries of observed water temperatures
-#
-${seriesTable}
-#
-${valuesTable}
-`
-}
-
-async function createProfilesFile (profiles) {
-  debug(`createProfilesFile(): n(profiles)=${profiles.length}`)
-  const fileHeader = writeFileHeader()
-  if (!profiles || profiles.length === 0) {
-    return `${fileHeader}
-# File contents: Vertical profiles of observed water temperatures
-#
-# No profiles found for selected station(s)
-#
-`
-  }
-  const profilesTable = writeProfilesTable(profiles)
-  const values = profiles.map(d => d.values.map(v => ({
-    profile_id: d.id,
-    station_timezone: d.station_timezone,
-    ...v
-  }))).flat()
-  const valuesTable = writeProfileValuesTable(values)
-
-  return `${fileHeader}
-# File contents: Vertical profiles of observed water temperatures
-#
-${profilesTable}
-#
-${valuesTable}
-`
-}
 
 function uploadZipFromStream (key) {
   const pass = new stream.PassThrough()
@@ -182,67 +62,58 @@ exports.processDownload = async (id, { dryRun }) => {
   if (stations.length === 0) {
     throw new Error('No stations found in download request')
   }
+  stations.forEach(d => {
+    d.series_count_days = countDays(d.series_start_datetime, d.series_end_datetime, d.timezone)
+  })
 
   debug(`processDownload(): create stations file (n=${stations.length})`)
-  const stationsFile = await createStationsFile(stations)
+  const stationsFile = await writeStationsFile(stations)
 
   debug('processDownload(): adding stations.csv to zip file')
   zip.file('stations.csv', stationsFile)
 
-  if (config.types.continuous) {
-    debug('processDownload(): getting continuous series')
-    const continuousSeries = await Station.relatedQuery('series')
+  if (config.types.daily) {
+    debug('processDownload(): getting daily series')
+    const series = await Station.relatedQuery('series')
       .for(stations)
       .where('interval', 'CONTINUOUS')
       .modify('stationOrganization')
-      .withGraphFetched('[values(daily), flags]')
-    continuousSeries.forEach(d => {
-      d.values.forEach(v => {
-        v.date = luxon.DateTime
-          .fromISO(v.date, { zone: d.station_timezone })
+      .withGraphFetched('[daily, flags]')
+    series.forEach(d => {
+      d.daily.forEach(v => {
+        v.date = luxon.DateTime.fromISO(v.date, { zone: d.station_timezone }).toJSDate()
       })
-      d.flags.forEach(f => {
-        f.start_datetime = luxon.DateTime
-          .fromISO(f.start_datetime, { zone: d.station_timezone })
-        f.end_datetime = luxon.DateTime
-          .fromISO(f.end_datetime, { zone: d.station_timezone })
-      })
-      d.values = assignFlags(d.values, d.flags, true)
+      d.daily = {
+        values: assignFlags(d.daily, d.flags, d.station_timezone, true)
+      }
     })
 
-    debug(`processDownload(): create continuous series file (n=${continuousSeries.length})`)
-    const continuousSeriesFile = await createContinousSeriesDailyFile(continuousSeries)
+    debug(`processDownload(): create continuous series file (n=${series.length})`)
+    const body = await writeSeriesDailyFile(series)
 
     debug('processDownload(): adding daily-timeseries.csv to zip file')
-    zip.file('daily-timeseries.csv', continuousSeriesFile)
+    zip.file('daily-timeseries.csv', body)
   }
 
   if (config.types.discrete) {
     debug('processDownload(): getting discrete series')
-    const discreteSeries = await Station.relatedQuery('series')
+    const series = await Station.relatedQuery('series')
       .for(stations)
       .where('interval', 'DISCRETE')
       .modify('stationOrganization')
       .withGraphFetched('[values, flags]')
-    discreteSeries.forEach(d => {
+    series.forEach(d => {
       d.values.forEach(v => {
-        v.datetime = luxon.DateTime
-          .fromJSDate(v.datetime, { zone: d.station_timezone })
-      })
-      d.flags.forEach(f => {
-        f.start_datetime = luxon.DateTime
-          .fromJSDate(f.start_datetime, { zone: d.station_timezone })
-        f.end_datetime = luxon.DateTime
-          .fromJSDate(f.end_datetime, { zone: d.station_timezone })
+        v.station_timezone = d.station_timezone
       })
       d.values = assignFlags(d.values, d.flags)
     })
 
-    debug(`processDownload(): create discrete series file (n=${discreteSeries.length})`)
-    const discreteSeriesFile = await createDiscreteSeriesFile(discreteSeries)
+    debug(`processDownload(): create discrete series file (n=${series.length})`)
+    const body = await writeSeriesDiscreteFile(series)
 
     debug('processDownload(): adding discrete-timeseries.csv to zip file')
-    zip.file('discrete-timeseries.csv', discreteSeriesFile)
+    zip.file('discrete-timeseries.csv', body)
   }
 
   if (config.types.profiles) {
@@ -253,16 +124,15 @@ exports.processDownload = async (id, { dryRun }) => {
       .withGraphFetched('values')
     profiles.forEach(d => {
       d.values.forEach(v => {
-        v.datetime = luxon.DateTime
-          .fromJSDate(v.datetime, { zone: d.station_timezone })
+        v.station_timezone = d.station_timezone
       })
     })
 
     debug(`processDownload(): create profiles series file (n=${profiles.length})`)
-    const profilesFile = await createProfilesFile(profiles)
+    const body = await writeProfilesFile(profiles)
 
     debug('processDownload(): adding profiles.csv to zip file')
-    zip.file('profiles.csv', profilesFile)
+    zip.file('profiles.csv', body)
   }
 
   const timestamp = formatTimestamp(luxon.DateTime.fromJSDate(new Date(download.created_at)), 'yyyyMMdd_HHmm', 'US/Alaska')
@@ -291,13 +161,7 @@ exports.processDownload = async (id, { dryRun }) => {
     url: s3Response.Location,
     status: 'DONE'
   }).returning('*')
-  debug(download)
-
-  if (!dryRun) {
-    debug('processDownload(): sending email')
-    const emailResponse = await sendDownloadEmail(download)
-    debug(emailResponse)
-  }
+  // debug(download)
 
   debug('processDownload(): done')
   return download

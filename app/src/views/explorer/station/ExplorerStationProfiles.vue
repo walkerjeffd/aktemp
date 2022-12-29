@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import { writeProfilesFile } from 'aktemp-utils/downloads'
 import ProfilesChart from '@/components/profiles/ProfilesChart.vue'
 
 export default {
@@ -174,7 +175,13 @@ export default {
     },
     download () {
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`
-      this.$download.profilesValues(filename, this.station, this.profiles)
+      this.profiles.forEach(d => {
+        d.values.forEach(v => {
+          v.station_timezone = this.station.timezone
+        })
+      })
+      const body = writeProfilesFile(this.profiles)
+      this.$download(body, filename)
     }
   }
 }

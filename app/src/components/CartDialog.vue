@@ -53,26 +53,24 @@
                 <v-icon small>mdi-delete</v-icon>
               </v-btn>
             </template>
-            <!-- <template v-slot:footer.prepend>
-              <v-btn
-                outlined
-                @click="clearCart"
-                class="mr-4"
-              >
-                <v-icon left>mdi-delete</v-icon>
-                Remove All
-              </v-btn>
-            </template> -->
+            <template v-slot:footer.prepend>
+              <DownloadButton
+                @click="downloadStations"
+                title="Download stations metadata"
+                :disabled="loading"
+                text="Download Stations Metadata"
+              />
+            </template>
           </v-data-table>
 
           <v-divider class="my-4"></v-divider>
 
           <div class="text-h6">Data Types</div>
-          <div class="secondary--text">Unselect all to download station metadata only</div>
+          <div class="secondary--text">Select at least one</div>
           <div>
             <v-checkbox
               label="Continuous Timeseries (Daily Values Only)"
-              v-model="types.continuous"
+              v-model="types.daily"
               dense
               hide-details
             ></v-checkbox>
@@ -167,15 +165,16 @@
               ></v-text-field>
             </v-col>
           </v-row>
-          <v-divider class="my-4"></v-divider>
 
           <vue-recaptcha
             :sitekey="recaptcha.siteKey"
             @verify="onVerifyRecaptcha"
             @expired="onExpiredRecaptcha"
             ref="recaptcha"
-            class="my-4"
+            class="mb-4"
           ></vue-recaptcha>
+
+          <v-divider class="my-4"></v-divider>
 
           <Alert v-if="error" type="error" title="Failed to Download Data" class="">
             {{ error }}
@@ -184,10 +183,10 @@
           <div class="d-flex mt-4">
             <v-btn
               color="primary"
-              @click="download"
+              @click="submit"
               :loading="loading"
             >
-              <v-icon left>mdi-download</v-icon> Download
+              Submit
             </v-btn>
             <v-spacer></v-spacer>
             <v-btn
@@ -206,6 +205,7 @@
 <script>
 import { VueRecaptcha } from 'vue-recaptcha'
 import { email } from '@/lib/validators'
+import { writeStationsFile } from 'aktemp-utils/downloads'
 import { mapGetters } from 'vuex'
 import evt from '@/events'
 
@@ -244,7 +244,7 @@ export default {
         }
       },
       types: {
-        continuous: true,
+        daily: true,
         discrete: true,
         profiles: true
       },
@@ -298,7 +298,7 @@ export default {
       this.dialog = true
       this.error = null
       this.loading = false
-      this.types.continuous = true
+      this.types.daily = true
       this.types.discrete = true
       this.types.profiles = true
       this.period.start.value = null
@@ -325,9 +325,11 @@ export default {
         throw new Error('Cart is empty. Use the Stations Table on the Data Explorer map to add stations to your cart.')
       } else if (!this.recaptcha.response) {
         throw new Error('reCAPTCHA is required, please check the box above.')
+      } else if (!this.types.daily && !this.types.discrete && !this.types.profiles) {
+        throw new Error('Please select at least one type of data')
       }
     },
-    async download () {
+    async submit () {
       this.loading = true
 
       try {
@@ -345,13 +347,13 @@ export default {
         }
 
         await this.$http.public.post('/downloads', payload)
-        evt.$emit('notify', 'Download request has been submitted', 'success')
+        evt.$emit('notify', 'Download request has been submitted. Data will be emailed to you.', 'success')
         this.clearCart()
         this.close()
       } catch (err) {
-        console.error(err)
+        console.log(err)
         this.error = this.$errorMessage(err)
-        this.resetRecaptcha()
+        // this.resetRecaptcha()
       } finally {
         this.loading = false
       }
@@ -366,6 +368,10 @@ export default {
     resetRecaptcha () {
       this.$refs.recaptcha.reset() // Direct call reset method
       this.recaptcha.response = null
+    },
+    downloadStations () {
+      const body = writeStationsFile(this.stations)
+      this.$download(body, 'AKTEMP-explorer-stations.csv')
     }
   }
 }

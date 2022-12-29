@@ -39,7 +39,13 @@ const datetimeFormats = exports.datetimeFormats = dateFormats.map(d => {
 exports.formatTimestamp = function (value, format, tz) {
   if (!value) return ''
   if (typeof value === 'string') {
-    value = DateTime.fromISO(value, { zone: 'UTC' })
+    if (value.length > 10) {
+      value = DateTime.fromISO(value, { zone: 'UTC' })
+    } else {
+      value = DateTime.fromISO(value, { zone: tz })
+    }
+  } else if (value instanceof Date) {
+    value = DateTime.fromJSDate(value)
   }
   if (!value.isValid) return 'Invalid Timestamp'
   if (tz) {
@@ -106,12 +112,21 @@ exports.adjustTimestampToUtc = function (value, timezone) {
 }
 
 exports.countDays = function (startTimestamp, endTimestamp) {
-  const start = DateTime.fromISO(startTimestamp, { zone: 'UTC' })
-  const end = DateTime.fromISO(endTimestamp, { zone: 'UTC' })
-  if (!start.isValid || !end.isValid) return null
-  return start <= end
-    ? Math.floor(end.diff(start, 'days').as('days')) + 1
-    : Math.floor(end.diff(start, 'days').as('days')) - 1
+  if (!startTimestamp || !endTimestamp) return null
+  if (typeof startTimestamp === 'string') {
+    startTimestamp = DateTime.fromISO(startTimestamp, { zone: 'UTC' })
+  } else if (startTimestamp instanceof Date) {
+    startTimestamp = DateTime.fromJSDate(startTimestamp, { zone: 'UTC' })
+  }
+  if (typeof endTimestamp === 'string') {
+    endTimestamp = DateTime.fromISO(endTimestamp, { zone: 'UTC' })
+  } else if (endTimestamp instanceof Date) {
+    endTimestamp = DateTime.fromJSDate(endTimestamp, { zone: 'UTC' })
+  }
+  if (!startTimestamp.isValid || !endTimestamp.isValid) return null
+  return startTimestamp <= endTimestamp
+    ? Math.floor(endTimestamp.diff(startTimestamp, 'days').as('days')) + 1
+    : Math.floor(endTimestamp.diff(startTimestamp, 'days').as('days')) - 1
 }
 
 exports.getLocalUtcOffsetTimezone = function (timestamp, format, timezone) {

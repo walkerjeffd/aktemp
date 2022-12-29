@@ -5,12 +5,12 @@ i<template>
       Failed to get timeseries from the server.<br><br>
       <strong>{{ error }}</strong>
     </Alert>
-    <Alert v-else-if="values.length === 0" type="info" title="No Timeseries Available" class="mb-0 mx-4">
+    <!-- <Alert v-else-if="values.length === 0" type="info" title="No Timeseries Available" class="mb-0 mx-4">
       This station does not have any timeseries data.
-    </Alert>
+    </Alert> -->
     <div v-else>
       <div class="mx-4">
-        <highcharts :options="chart"></highcharts>
+        <highcharts :options="chart" ref="chart"></highcharts>
 
         <div class="text--secondary caption ml-2">
           <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in, shift+click to slide. Click <code>Flagged</code> in legend to hide/show flagged data (if any).
@@ -27,7 +27,7 @@ i<template>
         </div>
 
         <div class="text--secondary caption ml-2 mt-4" v-if="about">
-          This chart shows the daily mean and range over all available timeseries at this station. Click <code>Explore Station Data</code> below to view the individual timeseries, which may vary by depth, or to drill down into the raw data. Click <code>Download</code> to download a file containing the daily values shown above.
+          This chart shows the daily mean and range over all continuous timeseries at this station. Discrete timesries are shown as individual points. Click <code>Explore Station Data</code> below to view the individual timeseries, which may vary by depth, or to drill down into the raw data. Click <code>Download</code> to download a file containing the daily and discrete values shown above.
         </div>
       </div>
     </div>
@@ -36,8 +36,9 @@ i<template>
 
 <script>
 import { ascending } from 'd3'
-import { assignDailyFlags } from '@/lib/utils'
-const { flagLabel } = require('aktemp-utils/flags')
+import { assignFlags } from 'aktemp-utils/flags'
+import { writeStationSeriesFile } from 'aktemp-utils/downloads'
+import { getDiscreteChunks, getContinuousChunks } from '@/lib/utils'
 
 export default {
   name: 'ExplorerMapStationSeries',
@@ -47,8 +48,14 @@ export default {
       loading: true,
       error: null,
       about: false,
-      discrete: [],
-      values: [],
+      discrete: {
+        values: [],
+        chunks: []
+      },
+      daily: {
+        values: [],
+        chunks: []
+      },
       chart: {
         chart: {
           zoomType: 'x',
@@ -70,6 +77,12 @@ export default {
             gapSize: 2,
             animation: false,
             states: {
+              hover: {
+                enabled: false
+              },
+              select: {
+                enabled: false
+              },
               inactive: {
                 opacity: 1
               }
@@ -168,144 +181,230 @@ export default {
       try {
         const discreteSeries = await this.$http.public.get(`/stations/${this.station.id}/series/discrete`)
           .then(d => d.data)
+        console.log(discreteSeries)
 
-        const discreteValues = discreteSeries.map(s => {
-          s.values.forEach(d => {
-            d.flag = []
-          })
-          s.flags.forEach(flag => {
-            const label = flagLabel(flag)
-            s.values.forEach(d => {
-              if (d.datetime >= flag.start_datetime && d.datetime <= flag.end_datetime) {
-                d.flag.push(label)
-              }
-            })
-          })
-          s.values.forEach(d => {
-            d.flag = d.flag.join(',')
-          })
-          return s.values
-        }).flat()
+        const discreteValues = discreteSeries
+          .map(s => assignFlags(s.values, s.flags))
+          .flat()
           .sort((a, b) => ascending(a.datetime, b.datetime))
-        this.discrete = Object.freeze(discreteValues)
+        this.discrete.values = Object.freeze(discreteValues)
+        this.discrete.chunks = Object.freeze(getDiscreteChunks(discreteValues))
 
-        const values = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
+        const daily = await this.$http.public.get(`/stations/${this.station.id}/series/daily`)
           .then(d => d.data)
+        daily.forEach(d => {
+          d.date = this.$luxon.DateTime.fromISO(d.date, { zone: this.station.timezone }).toJSDate()
+        })
         const flags = await this.$http.public.get(`/stations/${this.station.id}/series/flags`)
           .then(d => d.data)
 
-        this.values = Object.freeze(values)
-        this.flags = flags
+        this.daily.values = Object.freeze(assignFlags(daily, flags, this.station.timezone, true))
+        this.daily.chunks = Object.freeze(getContinuousChunks(this.daily.values, 'date'))
 
-        const { values: unflaggedValues, flags: flaggedValues } = assignDailyFlags(values, flags)
-
-        this.chart.series = [
-          {
-            name: 'discrete-values',
-            type: 'line',
-            lineWidth: 0,
-            marker: {
-              enabled: true,
-              radius: 2
-            },
-            data: discreteValues
-              .filter(d => !d.flag)
-              .map(v => {
-                return [
-                  (new Date(v.datetime)).valueOf(),
-                  v.temp_c
-                ]
-              }),
-            tooltip: {
-              pointFormat: 'Discrete: <b>{point.y}</b> °C'
-            },
-            showInLegend: false
-          },
-          {
-            name: 'discrete-flags',
-            type: 'line',
-            lineWidth: 0,
-            marker: {
-              enabled: true,
-              radius: 2
-            },
-            data: discreteValues
-              .filter(d => !!d.flag)
-              .map(v => {
-                return {
-                  x: (new Date(v.datetime)).valueOf(),
-                  y: v.temp_c,
-                  flag: v.flag
-                }
-              }),
-            tooltip: {
-              pointFormat: 'Discrete: <b>{point.y}</b> °C (Flag: <b>{point.flag}</b>)'
-            },
-            color: 'orangered',
-            showInLegend: false
-          },
-          {
-            name: 'mean',
-            type: 'line',
-            data: unflaggedValues.map(v => {
-              return [
-                (new Date(v.date)).valueOf(),
-                v.mean_temp_c
-              ]
-            }),
-            showInLegend: false
-          },
-          {
-            name: 'range',
-            type: 'arearange',
-            data: unflaggedValues.map(v => {
-              return [
-                (new Date(v.date)).valueOf(),
-                v.min_temp_c,
-                v.max_temp_c
-              ]
-            }),
-            showInLegend: false
-          },
-          {
-            id: 'flag',
-            name: 'Flagged',
-            type: 'line',
-            data: [],
-            color: 'orangered',
-            showInLegend: flaggedValues.length > 0
-          },
-          ...(flaggedValues.map((flag, i) => [
-            {
-              id: `flag-${i}-mean`,
-              marker: {
-                enabled: flag.values.length === 1,
-                radius: 2,
-                symbol: 'circle'
-              },
-              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.mean_temp_c]),
-              color: 'orangered',
-              showInLegend: false,
-              linkedTo: 'flag'
-            },
-            {
-              id: `flag-${i}-range`,
-              type: 'arearange',
-              data: flag.values.map(d => [(new Date(d.date)).valueOf(), d.min_temp_c, d.max_temp_c]),
-              tooltip: {
-                pointFormat: `Range: </b><b>{point.low}</b> - <b>{point.high}</b> °C<br/>Flag: ${flag.label}`,
-                valueDecimals: 1
-              },
-              linkedTo: ':previous',
-              showInLegend: false
-            }
-          ]).flat())
-        ]
+        this.render()
       } catch (err) {
+        console.log(err)
         this.error = this.$errorMessage(err)
       } finally {
         this.loading = false
       }
+    },
+    render () {
+      const dailySeries = this.daily.chunks.map((chunk, i) => {
+        return [
+          {
+            id: `daily-${i}-mean`,
+            type: 'line',
+            data: chunk.values.map(d => ([d.date.valueOf(), d.mean_temp_c])),
+            visible: true,
+            showInNavigator: false,
+            tooltip: {
+              pointFormat: null
+            },
+            linkedTo: chunk.flag ? 'flagged' : undefined,
+            color: chunk.flag ? 'orangered' : 'steelblue',
+            flag: !!chunk.flag,
+            marker: {
+              enabled: chunk.values.length === 1,
+              radius: 2,
+              symbol: 'circle'
+            },
+            showInLegend: false
+          },
+          {
+            id: `daily-${i}-range`,
+            type: 'arearange',
+            data: chunk.values.map(d => ([d.date.valueOf(), d.min_temp_c, d.max_temp_c])),
+            visible: true,
+            showInNavigator: false,
+            tooltip: {
+              pointFormat: null
+            },
+            linkedTo: chunk.flag ? 'flagged' : undefined,
+            flag: !!chunk.flag,
+            showInLegend: false
+          }
+        ]
+      }).flat()
+
+      const discreteSeries = this.discrete.chunks.map((chunk, i) => {
+        return {
+          id: `discrete-${i}`,
+          type: 'line',
+          data: chunk.values.map(d => ([new Date(d.datetime).valueOf(), d.temp_c])),
+          showInNavigator: false,
+          tooltip: {
+            pointFormat: null
+          },
+          lineWidth: 0,
+          marker: {
+            enabled: true,
+            radius: 2,
+            symbol: 'circle'
+          },
+          linkedTo: chunk.flag ? 'flagged' : undefined,
+          color: chunk.flag ? 'orangered' : 'steelblue',
+          flag: chunk.flag
+        }
+      })
+      this.chart.series = [
+        {
+          id: 'flagged',
+          name: 'Flagged',
+          type: 'line',
+          data: [],
+          visible: true,
+          showInLegend: true,
+          showInNavigator: false,
+          color: 'orangered'
+        },
+        {
+          id: 'daily-tip',
+          tip: true,
+          flag: false,
+          type: 'line',
+          data: this.daily.values
+            .filter(d => !d.flag)
+            .map(d => ({
+              x: d.date.valueOf(),
+              y: d.mean_temp_c,
+              flag: d.flag
+            })),
+          visible: true,
+          showInLegend: false,
+          showInNavigator: false,
+          turboThreshold: 0,
+          tooltip: {
+            pointFormat: 'Daily Mean: <b>{point.y}</b> °C'
+          },
+          lineWidth: 0,
+          states: {
+            hover: {
+              enabled: true
+            }
+          },
+          marker: {
+            radius: 2,
+            symbol: 'circle'
+          }
+        },
+        {
+          id: 'daily-tip-flag',
+          tip: true,
+          flag: true,
+          type: 'line',
+          data: this.daily.values
+            .filter(d => d.flag)
+            .map(d => ({
+              x: d.date.valueOf(),
+              y: d.mean_temp_c,
+              flag: d.flag
+            })),
+          visible: true,
+          showInLegend: false,
+          showInNavigator: false,
+          turboThreshold: 0,
+          tooltip: {
+            pointFormat: 'Daily Mean: <b>{point.y}</b> °C<br />Flag: <b>{point.flag}</b>'
+          },
+          lineWidth: 0,
+          color: 'orangered',
+          linkedTo: 'flagged',
+          states: {
+            hover: {
+              enabled: true
+            }
+          },
+          marker: {
+            radius: 2,
+            symbol: 'circle'
+          }
+        },
+        {
+          id: 'discrete-tip',
+          tip: true,
+          flag: false,
+          type: 'line',
+          data: this.discrete.values
+            .filter(d => !d.flag)
+            .map(d => ({
+              x: new Date(d.datetime).valueOf(),
+              y: d.temp_c,
+              flag: d.flag
+            })),
+          visible: true,
+          showInLegend: false,
+          showInNavigator: false,
+          turboThreshold: 0,
+          tooltip: {
+            pointFormat: 'Discrete: <b>{point.y}</b> °C'
+          },
+          lineWidth: 0,
+          states: {
+            hover: {
+              enabled: true
+            }
+          },
+          marker: {
+            radius: 2,
+            symbol: 'circle'
+          }
+        },
+        {
+          id: 'discrete-tip-flag',
+          tip: true,
+          flag: true,
+          type: 'line',
+          data: this.discrete.values
+            .filter(d => d.flag)
+            .map(d => ({
+              x: new Date(d.datetime).valueOf(),
+              y: d.temp_c,
+              flag: d.flag
+            })),
+          visible: true,
+          showInLegend: false,
+          showInNavigator: false,
+          turboThreshold: 0,
+          tooltip: {
+            pointFormat: 'Discrete: <b>{point.y}</b> °C<br />Flag: <b>{point.flag}</b>'
+          },
+          lineWidth: 0,
+          color: 'orangered',
+          linkedTo: 'flagged',
+          states: {
+            hover: {
+              enabled: true
+            }
+          },
+          marker: {
+            radius: 2,
+            symbol: 'circle'
+          }
+        },
+        ...dailySeries,
+        ...discreteSeries
+      ]
     },
     async download () {
       if (this.loading || this.values.length === 0) return
@@ -313,23 +412,9 @@ export default {
       const series = await this.$http.public.get(`/stations/${this.station.id}/series`)
         .then(d => d.data)
 
-      this.values.forEach(d => {
-        d.flag = []
-      })
-      this.flags.forEach(flag => {
-        const label = flagLabel(flag)
-        this.values.forEach(d => {
-          if (d.date >= flag.start_date && d.date <= flag.end_date) {
-            d.flag.push(label)
-          }
-        })
-      })
-      this.values.forEach(d => {
-        d.flag = d.flag.join(',')
-      })
-
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-daily.csv`
-      this.$download.stationDailyValues(filename, this.station, series, this.values, this.discrete)
+      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-timeseries.csv`
+      const body = writeStationSeriesFile(this.station, series, this.values, this.discrete)
+      this.$download(body, filename)
     }
   }
 }

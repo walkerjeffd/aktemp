@@ -61,65 +61,59 @@ export const trim = (x) => {
 
 export const joinStrings = x => x.map(d => `'${d}'`).join(', ')
 
-export function assignDailyFlags (values, flags) {
-  values = values.slice()
-
-  flags = flags.map(flag => {
-    const label = flagLabel(flag)
-
-    const startIndex = values.findIndex(d => d.date >= flag.start_date)
-    const endIndex = values.findIndex(d => d.date >= flag.end_date)
-
-    let flagValues
-    if (startIndex >= 0 && endIndex < 0) {
-      // flag ends after last value
-      flagValues = values.splice(startIndex, values.length - startIndex)
-    } else if (startIndex === 0 && endIndex >= 0) {
-      // flag begins on or before first value
-      flagValues = values.splice(startIndex, endIndex)
+export function getContinuousChunks (values, accessor = 'datetime') {
+  console.log('getContinuousChunks()', values.length)
+  const chunks = []
+  values.forEach((d, i) => {
+    if (i === 0) {
+      // create first chunk
+      chunks.push({
+        flag: !!d.flag,
+        values: [d]
+      })
+    } else if (!!values[i].flag !== !!values[i - 1].flag) {
+      // create new chunk at flag boundary
+      if (values[i - 1].flag) {
+        if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() <= 25 * 60 * 60 * 1000) {
+          chunks[chunks.length - 1].values.push(d)
+        }
+        chunks.push({
+          flag: !!d.flag,
+          values: [d]
+        })
+      } else {
+        const newChunk = {
+          flag: !!d.flag,
+          values: []
+        }
+        if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() <= 25 * 60 * 60 * 1000) {
+          newChunk.values.push(values[i - 1])
+        }
+        newChunk.values.push(d)
+        chunks.push(newChunk)
+      }
+    } else if (values[i][accessor].valueOf() - values[i - 1][accessor].valueOf() > 25 * 60 * 60 * 1000) {
+      // create new chunk after gap
+      chunks.push({
+        flag: !!d.flag,
+        values: [d]
+      })
     } else {
-      flagValues = values.splice(startIndex, endIndex - startIndex + 1)
-    }
-    return {
-      ...flag,
-      label,
-      values: flagValues
+      // continue chunk
+      chunks[chunks.length - 1].values.push(d)
     }
   })
-  return { values, flags }
+  return chunks
 }
 
-export function assignRawFlags (values, flags) {
-  values = values.slice()
-
-  if (values.length === 0) {
-    return { values, flags: [] }
-  }
-
-  flags = flags.map(flag => {
-    const label = flagLabel(flag)
-
-    let flagValues = []
-    if (new Date(flag.end_datetime) >= new Date(values[0].datetime) && // flag ends after first value
-        new Date(flag.start_datetime) <= new Date(values[values.length - 1].datetime)) { // flag starts before last value
-      const startIndex = values.findIndex(d => new Date(d.datetime) >= new Date(flag.start_datetime))
-      const endIndex = values.findIndex(d => new Date(d.datetime) > new Date(flag.end_datetime))
-
-      if (startIndex < 0 && endIndex >= 0) {
-        flagValues = values.splice(0, values.length - endIndex + 1)
-      } else if (startIndex >= 0 && endIndex < 0) {
-        flagValues = values.splice(startIndex, values.length - startIndex)
-      } else {
-        flagValues = values.splice(startIndex, endIndex - startIndex)
-      }
+export function getDiscreteChunks (values) {
+  return [
+    {
+      flag: false,
+      values: values.filter(d => !d.flag)
+    }, {
+      flag: true,
+      values: values.filter(d => !!d.flag)
     }
-
-    return {
-      ...flag,
-      label,
-      values: flagValues
-    }
-  })
-
-  return { values, flags }
+  ]
 }

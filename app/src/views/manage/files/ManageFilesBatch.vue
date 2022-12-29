@@ -296,6 +296,7 @@ import uploader from '@/lib/uploader'
 
 import FilePreview from '@/components/FilePreview'
 
+import { writeStationsFile } from 'aktemp-utils/downloads'
 import { getTimestampString, parseTimestampString, guessDatetimeFormat } from 'aktemp-utils/time'
 const {
   intervalOptions,
@@ -834,7 +835,8 @@ export default {
       }
     },
     downloadStations () {
-      this.$download.stations(`AKTEMP-${this.organization.code}-stations.csv`, this.stations)
+      const body = writeStationsFile(this.stations)
+      this.$download(body, `AKTEMP-${this.organization.code}-stations.csv`)
     },
     async removeUploadedFiles () {
       this.loading = true

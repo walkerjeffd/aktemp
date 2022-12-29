@@ -336,12 +336,6 @@
             <v-icon left>mdi-fullscreen</v-icon>
             Fit Map
           </v-btn>
-          <!-- <DownloadButton
-            @click="download"
-            title="Download stations"
-            :disabled="loading"
-            :text="`Download Stations ${ selectedRows.length > 0 ? ' (' + selectedRows.length + ')' : ''}`"
-          /> -->
           <v-spacer></v-spacer>
           <v-btn
             outlined
@@ -543,15 +537,6 @@ export default {
       if (!this.$refs.table) return
       this.selectedRows = []
       this.$emit('filter', this.$refs.table.$children[0].filteredItems)
-    },
-    download () {
-      let stations
-      if (this.selectedRows.length > 0) {
-        stations = this.selectedRows
-      } else {
-        stations = this.$refs.table.$children[0].filteredItems
-      }
-      this.$download.stations('AKTEMP-explorer-stations.csv', stations)
     },
     fitToStations () {
       evt.$emit('map:fitToStations')

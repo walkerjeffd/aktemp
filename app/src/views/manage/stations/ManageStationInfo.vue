@@ -2,35 +2,24 @@
   <v-card>
     <StationInfoTable :station="station"></StationInfoTable>
     <v-divider></v-divider>
-    <div class="mx-4 mt-4 pb-4">
-      <div class="mb-4">
-        <v-btn block outlined color="primary" :to="{ name: 'explorerStation', params: { stationId: station.id } }">
-          <v-icon left>mdi-earth</v-icon> Show in Explorer
-        </v-btn>
-      </div>
-      <div class="mb-4">
-        <v-btn block outlined color="primary" @click="edit">
-          <v-icon left>mdi-pencil</v-icon> Edit Station
-        </v-btn>
-      </div>
-      <div>
-        <v-btn block outlined color="error" @click="confirmDelete" :loading="deleteStatus.loading">
-          <v-icon left>mdi-delete</v-icon> Delete Station
-        </v-btn>
-      </div>
+    <div class="mx-2 pb-1">
+      <v-btn outlined block class="my-2" color="primary" @click="downloadStation">
+        <v-icon left>mdi-download</v-icon> Download Metadata
+      </v-btn>
+      <v-btn outlined block class="my-2" color="primary" :to="{ name: 'explorerStation', params: { stationId: station.id } }">
+        <v-icon left>mdi-earth</v-icon> Show in Explorer
+      </v-btn>
+      <v-btn outlined block class="my-2" color="success" @click="edit">
+        <v-icon left>mdi-pencil</v-icon> Edit Station
+      </v-btn>
+      <v-btn outlined block class="my-2" color="error" @click="confirmDelete" :loading="deleteStatus.loading">
+        <v-icon left>mdi-delete</v-icon> Delete Station
+      </v-btn>
     </div>
-    <v-card-text v-if="!deleteStatus.loading && deleteStatus.error">
-      <v-alert
-        type="error"
-        text
-        colored-border
-        border="left"
-        class="body-2 mb-0"
-      >
-        <div class="font-weight-bold body-1">Failed to Delete Station</div>
-        <div>{{ deleteStatus.error }}</div>
-      </v-alert>
-    </v-card-text>
+
+    <Alert v-if="!deleteStatus.loading && deleteStatus.error" type="error" title="Failed to Delete Station">
+      {{ deleteStatus.error }}
+    </Alert>
 
     <ManageStationForm ref="form"></ManageStationForm>
 
@@ -52,6 +41,9 @@
 </template>
 
 <script>
+import { writeStationsFile } from 'aktemp-utils/downloads'
+import { countDays } from 'aktemp-utils/time'
+
 import evt from '@/events'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import ManageStationForm from '@/views/manage/stations/ManageStationForm'
@@ -100,6 +92,15 @@ export default {
       } finally {
         this.deleteStatus.loading = false
       }
+    },
+    downloadStation () {
+      const station = {
+        ...this.station,
+        series_count_days: countDays(this.station.series_start_datetime, this.station.series_end_datetime, this.station.timezone)
+      }
+      const body = writeStationsFile([station])
+      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-station.csv`
+      this.$download(body, filename)
     }
   }
 }

@@ -48,7 +48,7 @@
             <v-divider></v-divider>
             <div class="text-right pa-4">
               <DownloadButton
-                :text="`Download Daily Timeseries (${series.length === selected.length ? 'All' : selected.length})`"
+                :text="`Download Daily and Discrete Timeseries (${series.length === selected.length ? 'All' : selected.length})`"
                 :disabled="selected.length === 0"
                 @click="downloadDaily(selected)"
               ></DownloadButton>
@@ -61,9 +61,9 @@
 </template>
 
 <script>
-import { rollup, mean, ascending } from 'd3'
 import SeriesChart from '@/components/series/SeriesChart.vue'
-import { assignRawFlags } from '@/lib/utils'
+import { assignFlags } from 'aktemp-utils/flags'
+import { writeSeriesDailyDiscreteFile, writeSeriesRawFile } from 'aktemp-utils/downloads'
 
 export default {
   name: 'ExploreStationSeries',
@@ -139,76 +139,28 @@ export default {
       }
     },
     async downloadRaw (series) {
-      console.log('downloadRaw', series)
+      // console.log('downloadRaw', series)
       if (!series) return
 
-      const values = await this.$http.public
+      let values = await this.$http.public
         .get(`/series/${series.id}/values`)
         .then(d => d.data)
       const flags = await this.$http.public
         .get(`/series/${series.id}/flags`)
         .then(d => d.data)
 
-      const results = assignRawFlags(values, flags)
-      const flaggedValues = results.flags.map(flag => {
-        return flag.values.map(value => {
-          return {
-            ...value,
-            flag: flag.label
-          }
-        })
-      }).flat()
-      // combine overlapping flags
-      const groupedFlaggedValues = Array.from(
-        rollup(
-          flaggedValues,
-          v => v,
-          d => d.datetime
-        ),
-        ([key, value]) => ({
-          datetime: key,
-          temp_c: mean(value.map(d => d.temp_c)),
-          flag: value.map(d => d.flag).join(',')
-        })
-      )
-      const outputValues = [results.values, groupedFlaggedValues].flat()
-        .sort((a, b) => ascending(a.datetime, b.datetime))
-      outputValues.forEach(d => {
-        d.series_id = series.id
-        d.flag = d.flag || ''
-      })
+      values = assignFlags(values, flags)
+      const body = writeSeriesRawFile(series, values)
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-${series.id}-raw.csv`
-      this.$download.seriesRawValues(filename, this.station, series, outputValues)
+      this.$download(body, filename)
     },
     async downloadDaily (series) {
       console.log('downloadDaily', series)
+      if (!series) return
 
-      const dailyValues = series
-        .filter(d => d.interval === 'CONTINUOUS')
-        .map(s => {
-          return s.daily.values.map(v => ({
-            ...v,
-            date: this.$luxon.DateTime.fromJSDate(v.date, { zone: s.station_timezone }).toFormat('yyyy-MM-dd'),
-            series_id: s.id
-          }))
-        })
-        .flat()
-        .sort((a, b) => ascending(a.series_id, b.series_id) || ascending(a.date, b.date))
-      const discreteValues = series
-        .filter(d => d.interval === 'DISCRETE')
-        .map(s => {
-          return s.daily.values.map(v => ({
-            series_id: s.id,
-            datetime: v.datetime,
-            temp_c: v.temp_c,
-            flag: v.flag
-          }))
-        })
-        .flat()
-        .sort((a, b) => ascending(a.series_id, b.series_id) || ascending(a.datetime, b.datetime))
-
+      const body = writeSeriesDailyDiscreteFile(series)
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-daily.csv`
-      this.$download.seriesDailyValues(filename, this.station, series, dailyValues, discreteValues)
+      this.$download(body, filename)
     }
   }
 }

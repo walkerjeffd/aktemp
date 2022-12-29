@@ -74,7 +74,12 @@
                         @click="confirmDeleteAllFlags"
                         :disabled="series.flags.length === 0"
                       ><v-icon small left>mdi-delete</v-icon> Delete All</v-btn>
-                      <DownloadButton @click="download" text="Download" small />
+                      <DownloadButton
+                        @click="download"
+                        text="Download"
+                        small
+                        :disabled="series.flags.length === 0"
+                      />
                     </template>
                   </v-data-table>
                 </v-sheet>
@@ -341,6 +346,7 @@ import StationsMap from '@/components/StationsMap'
 import SeriesInfo from '@/components/series/SeriesInfo'
 import SeriesChart from '@/components/series/SeriesChart'
 import { mapGetters } from 'vuex'
+import { writeSeriesFlagsFile } from 'aktemp-utils/downloads'
 
 export default {
   name: 'ManageQaqcSeries',
@@ -661,8 +667,9 @@ export default {
       this.end.show = false
     },
     download () {
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-${this.series.id}-flags.csv`
-      this.$download.flags(filename, this.station, this.series, this.series.flags)
+      const body = writeSeriesFlagsFile([this.series])
+      const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-flags.csv`
+      this.$download(body, filename)
     }
   }
 }

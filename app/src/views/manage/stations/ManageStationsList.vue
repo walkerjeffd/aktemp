@@ -107,6 +107,8 @@ import StationsMap from '@/components/StationsMap'
 import ManageStationForm from '@/views/manage/stations/ManageStationForm'
 import evt from '@/events'
 
+import { writeStationsFile } from 'aktemp-utils/downloads'
+
 export default {
   name: 'ManageStationsHome',
   components: { ManageStationForm, StationsMap },
@@ -207,7 +209,8 @@ export default {
       this.selected = this.selected.filter(d => d.id !== id)
     },
     download () {
-      this.$download.stations(`AKTEMP-${this.organization.code}-stations.csv`, this.stations)
+      const body = writeStationsFile(this.stations)
+      this.$download(body, `AKTEMP-${this.organization.code}-stations.csv`)
     }
   }
 }

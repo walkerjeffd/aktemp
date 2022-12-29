@@ -161,6 +161,7 @@ exports.processFile = async function (id, { dryRun }) {
 
   return await File.query()
     .findById(file.id)
+    .modify('organizationCode')
     .withGraphFetched('[series, profiles]')
 }
 

@@ -39,19 +39,19 @@ program
     try {
       const file = await processFile(id, options)
       let rows = []
-      if (file.series.length > 0) {
+      if (file.series && file.series.length > 0) {
         rows = file.series.map(d => ({
           file_id: d.file_id,
           series_id: d.id,
           start_datetime: d.start_datetime,
           end_datetime: d.end_datetime
         }))
-      } else if (file.profiles.length > 0) {
+      } else if (file.profiles && file.profiles.length > 0) {
         rows = file.profiles.map(d => ({
           file_id: d.file_id,
           profile_id: d.id,
           station_id: d.station_id,
-          date: d.date.toISOString().substr(0, 10)
+          date: d.date
         }))
       }
       printFiles([file])

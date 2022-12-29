@@ -29,9 +29,14 @@ exports.sendDownloadEmail = async (download) => {
     throw new Error('Download request is missing recipient email')
   }
   const email = download.config.email
-  const body = `The data you requested from AKTEMP is ready for download.
 
-Request ID: ${download.id}
+  let body
+  let subject
+  if (download.status === 'DONE') {
+    subject = `AKTEMP Download is Ready (Job ${download.id})`
+    body = `The data you requested from AKTEMP is ready for download.
+
+Job ID: ${download.id}
 Requested at: ${formatTimestamp(luxon.DateTime.fromJSDate(new Date(download.created_at)), 'D t ZZZZ', 'US/Alaska')}
 File size: ${prettyBytes.default(download.size)}
 File URL: ${download.url}
@@ -39,7 +44,20 @@ File URL: ${download.url}
 This link will expire in 30 days.
 
 If you are unable to download a file of this size, please return to the Data Explorer (https://aktemp.uaa.alaska.edu/#explorer) to try fewer stations. For technical assistance, please email jeff@walkerenvres.com.
-  `
+`
+  } else if (download.status === 'FAILED') {
+    subject = `AKTEMP Download Failed (Job ${download.id})`
+    body = `The data you requested from AKTEMP failed to be created.
+
+Job ID: ${download.id}
+Requested at: ${formatTimestamp(luxon.DateTime.fromJSDate(new Date(download.created_at)), 'D t ZZZZ', 'US/Alaska')}
+Error: ${download.error}
+
+For technical assistance, please email jeff@walkerenvres.com.
+`
+  } else {
+    return null
+  }
   const params = {
     Destination: {
       ToAddresses: [email]
@@ -54,7 +72,7 @@ If you are unable to download a file of this size, please return to the Data Exp
         }
       },
       Subject: {
-        Data: `AKTEMP Download Request ${download.id} is Ready`
+        Data: subject
       }
     },
     Source: 'jeff@walkerenvres.com'

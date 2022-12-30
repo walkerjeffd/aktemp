@@ -129,7 +129,6 @@ function stationsTable (stations = [], columns = Object.keys(columnLabels.statio
       x.series_end_datetime = formatTimestamp(x.series_end_datetime, 'D T', d.timezone)
     }
     if (columns.includes('profiles_start_date')) {
-      console.log(x.profiles_start_date, d.timezone, formatTimestamp(x.profiles_start_date, 'ISO', d.timezone))
       x.profiles_start_date = formatTimestamp(x.profiles_start_date, 'D', d.timezone)
     }
     if (columns.includes('profiles_end_date')) {
@@ -365,6 +364,13 @@ ${profileValuesTable(rows)}
 `
 }
 
+function writeSeriesMetadataFile (series) {
+  return `${fileHeader('Timeseries Metadata')}
+#
+${seriesTable(series)}
+`
+}
+
 function writeSeriesDailyFile (series, period) {
   const rows = series.map(d => d.daily.values.map(v => ({ series_id: d.id, ...v }))).flat()
   return `${fileHeader('Continuous Timeseries Daily Values', period)}
@@ -394,15 +400,15 @@ ${seriesDiscreteValuesTable(discreteRows)}
 `
 }
 
-function writeSeriesRawFile (series, values) {
-  const rows = values.map(d => ({
-    ...d,
-    series_id: series.id,
-    station_timezone: series.station_timezone
-  }))
-  return `${fileHeader('Continuous Timeseries Raw Values')}
+function writeSeriesRawFile (series) {
+  const rows = series.map(d => d.values.map(v => ({
+    series_id: d.id,
+    station_timezone: d.station_timezone,
+    ...v
+  }))).flat()
+  return `${fileHeader('Raw Timeseries Values')}
 #
-${seriesTable([series])}
+${seriesTable(series)}
 #
 ${seriesRawValuesTable(rows)}
 `
@@ -442,6 +448,7 @@ module.exports = {
   writeStationsFile,
   writeStationSeriesFile,
   writeStationProfilesFile,
+  writeSeriesMetadataFile,
   writeSeriesDailyFile,
   writeSeriesDailyDiscreteFile,
   writeSeriesRawFile,

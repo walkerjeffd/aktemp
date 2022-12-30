@@ -298,8 +298,11 @@ export default {
           d.end_datetime = new Date(d.end_datetime)
         })
         values = assignFlags(values, flags)
-
-        const body = writeSeriesRawFile(this.series, values, flags)
+        const seriesValues = {
+          ...this.series,
+          values
+        }
+        const body = writeSeriesRawFile([seriesValues])
         const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-raw.csv`
         this.$download(body, filename)
       } catch (err) {

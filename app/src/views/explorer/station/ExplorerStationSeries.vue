@@ -150,7 +150,11 @@ export default {
         .then(d => d.data)
 
       values = assignFlags(values, flags)
-      const body = writeSeriesRawFile(series, values)
+      const seriesValues = {
+        ...series,
+        values
+      }
+      const body = writeSeriesRawFile([seriesValues])
       const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-${series.id}-raw.csv`
       this.$download(body, filename)
     },

@@ -1,7 +1,7 @@
 const express = require('express')
 const asyncHandler = require('express-async-handler')
 
-const { requireOrganizationAccessOrAdmin } = require('../../middleware/auth')
+const { requireProviderAccessOrAdmin } = require('../../middleware/auth')
 const {
   getStations,
   postStations,
@@ -12,22 +12,22 @@ const {
 } = require('../../controllers/stations')
 const {
   attachFile,
-  getOrganizationFiles,
+  getProviderFiles,
   postFiles,
   getFile,
   putFile,
   deleteFile,
   processFile
 } = require('../../controllers/files')
-const { getOrganizationSeries } = require('../../controllers/series')
-const { getOrganizationProfiles } = require('../../controllers/profiles')
+const { getProviderSeries } = require('../../controllers/series')
+const { getProviderProfiles } = require('../../controllers/profiles')
 
 const router = express.Router({ mergeParams: true })
 
-router.use(asyncHandler(requireOrganizationAccessOrAdmin))
+router.use(asyncHandler(requireProviderAccessOrAdmin))
 
 router.route('/')
-  .get((req, res) => res.status(200).json(res.locals.organization))
+  .get((req, res) => res.status(200).json(res.locals.provider))
 
 router.route('/stations')
   .get(asyncHandler(getStations))
@@ -40,7 +40,7 @@ router.route('/stations/:stationId')
   .delete(asyncHandler(deleteStation))
 
 router.route('/files')
-  .get(asyncHandler(getOrganizationFiles))
+  .get(asyncHandler(getProviderFiles))
   .post(asyncHandler(postFiles))
 
 router.route('/files/:fileId')
@@ -54,9 +54,9 @@ router.route('/files/:fileId/process')
   .post(asyncHandler(processFile))
 
 router.route('/series')
-  .get(asyncHandler(getOrganizationSeries))
+  .get(asyncHandler(getProviderSeries))
 
 router.route('/profiles')
-  .get(asyncHandler(getOrganizationProfiles))
+  .get(asyncHandler(getProviderProfiles))
 
 module.exports = router

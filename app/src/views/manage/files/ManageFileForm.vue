@@ -1329,8 +1329,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organizations: 'manage/organizations',
-      organization: 'manage/organization',
+      providers: 'manage/providers',
+      provider: 'manage/provider',
       stations: 'manage/stations'
     }),
     fileColumns () {
@@ -1795,7 +1795,7 @@ export default {
       this.upload.progress = 0.5
       this.upload.message = `Uploading ${file.name}...`
       try {
-        this.upload.file = await uploader(file, config, this.organization.id)
+        this.upload.file = await uploader(file, config, this.provider.id)
       } catch (err) {
         console.error(err)
         this.upload.status = 'FAILED'
@@ -1812,7 +1812,7 @@ export default {
       this.$router.push({
         name: 'manageFile',
         params: {
-          organizationId: this.upload.file.organization_id,
+          providerId: this.upload.file.provider_id,
           fileId: this.upload.file.id
         }
       })

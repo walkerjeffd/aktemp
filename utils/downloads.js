@@ -6,7 +6,7 @@ const hr = '# ------------------------------------------------------------------
 const columnLabels = {
   stations: {
     station_id: 'Station ID',
-    organization_code: 'Organization Code',
+    provider_code: 'Provider Code',
     code: 'Station Code',
     latitude: 'Latitude (WGS84)',
     longitude: 'Longitude (WGS84)',
@@ -29,7 +29,7 @@ const columnLabels = {
   },
   series: {
     series_id: 'Timeseries ID',
-    organization_code: 'Organization Code',
+    provider_code: 'Provider Code',
     station_id: 'Station ID',
     station_code: 'Station Code',
     station_timezone: 'Station Timezone',
@@ -69,7 +69,7 @@ const columnLabels = {
   },
   profiles: {
     profile_id: 'Profile ID',
-    organization_code: 'Organization Code',
+    provider_code: 'Provider Code',
     station_id: 'Station ID',
     station_code: 'Station Code',
     station_timezone: 'Station Timezone',

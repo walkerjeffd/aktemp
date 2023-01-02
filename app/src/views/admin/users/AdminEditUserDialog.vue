@@ -102,22 +102,33 @@
             ></v-checkbox>
 
             <v-autocomplete
-              v-model="edit.organizations"
-              :items="organizationsOptions"
-              item-text="name"
+              v-if="dialog"
+              v-model="edit.providers"
+              :items="providersOptions"
+              item-text="code"
               item-value="id"
-              label="Select organization(s)"
+              label="Select provider(s)"
               multiple
               chips
               deletable-chips
               outlined
               required
               hide-details
-              :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
+              clearable
               @input="modified = true"
-            ></v-autocomplete>
+            >
+              <template v-slot:item="{ item }">
+                <v-list-item-icon><v-simple-checkbox :value="edit.providers && edit.providers.includes(item.id)"></v-simple-checkbox></v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title v-html="item.code"></v-list-item-title>
+                  <v-list-item-subtitle v-html="item.name"></v-list-item-subtitle>
+                </v-list-item-content>
+              </template>
+            </v-autocomplete>
 
-            <div class="d-flex justify-center mt-4">
+            <v-divider class="my-4 mx-n4 pr-0"></v-divider>
+
+            <div class="d-flex justify-space-between mt-4">
               <v-btn
                 v-if="!user.enabled"
                 color="success"
@@ -180,7 +191,7 @@
           This user will be permanently deleted. This action cannot be undone.
         </p>
         <p class="mb-0">
-          Note that any data uploaded by this user will remain in the database under the associated organization. Delete the organization to delete all of its data.
+          <strong>NOTE:</strong> Any data uploaded by this user will <strong>not be deleted</strong>. The data will remain under the associated provider. Delete the provider to delete all of its data.
         </p>
       </Alert>
     </ConfirmDialog>
@@ -206,7 +217,7 @@ export default {
       user: null,
       edit: {
         admin: false,
-        organizations: []
+        providers: []
       },
 
       modified: false,
@@ -222,7 +233,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({ organizationsOptions: 'admin/organizations' })
+    ...mapGetters({ providersOptions: 'admin/providers' })
   },
   methods: {
     open (id) {
@@ -232,7 +243,7 @@ export default {
       this.user = null
 
       this.edit.admin = false
-      this.edit.organizations = []
+      this.edit.providers = []
 
       this.init()
 
@@ -278,7 +289,7 @@ export default {
       user.attributes.email_verified = user.attributes.email_verified === 'true'
 
       this.edit.admin = user.admin
-      this.edit.organizations = user.organizations
+      this.edit.providers = user.providers
 
       return user
     },
@@ -334,8 +345,8 @@ export default {
         }
 
         await this.$http.admin.put(`/users/${this.id}`, {
-          action: 'setOrganizations',
-          organizationIds: this.edit.organizations
+          action: 'setProviders',
+          providerIds: this.edit.providers
         })
 
         evt.$emit('notify', `User (${this.user.attributes.email}) has been updated`, 'success')

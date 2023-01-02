@@ -2,12 +2,12 @@ const express = require('express')
 const asyncHandler = require('express-async-handler')
 
 const {
-  getOrganizations
-} = require('../../controllers/organizations')
+  getProviders
+} = require('../../controllers/providers')
 
 const router = express.Router()
 
 router.route('/')
-  .get(asyncHandler(getOrganizations))
+  .get(asyncHandler(getProviders))
 
 module.exports = router

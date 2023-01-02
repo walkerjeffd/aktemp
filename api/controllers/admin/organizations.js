@@ -1,24 +1,26 @@
 const createError = require('http-errors')
 
-const { cognito } = require('../../aws')
 const { Organization } = require('aktemp-db/models')
-
-const userPoolId = process.env.USER_POOL_ID
 
 async function getOrganizations (req, res, next) {
   const rows = await Organization.query()
-    .withGraphFetched('users')
+    .withGraphFetched('providers')
   return res.status(200).json(rows)
 }
 
 async function postOrganizations (req, res, next) {
-  const row = await Organization.query().insert(req.body).returning('*')
+  const row = await Organization.query()
+    .insert(req.body)
+    .returning('*')
+  if (req.body.providers) {
+    await row.$relatedQuery('providers').relate(req.body.providers)
+  }
   return res.status(201).json(row)
 }
 
 const attachOrganization = async (req, res, next) => {
   const row = await Organization.query()
-    .withGraphFetched('users')
+    .withGraphFetched('providers')
     .findById(req.params.organizationId)
 
   if (!row) throw createError(404, `Organization (id=${req.params.organizationId}) not found`)
@@ -31,31 +33,16 @@ const getOrganization = async (req, res, next) => {
   return res.status(200).json(res.locals.organization)
 }
 
-const getOrganizationUsers = async (req, res, next) => {
-  const dbUsers = await res.locals.organization
-    .$relatedQuery('users')
-  console.log(dbUsers)
-  const users = []
-
-  if (dbUsers.length > 0) {
-    for (let i = 0; i < dbUsers.length; i++) {
-      const cognitoUser = await cognito.adminGetUser({
-        UserPoolId: userPoolId,
-        Username: dbUsers[i].id
-      }).promise()
-      const id = cognitoUser.Username
-      const name = cognitoUser.UserAttributes.find(d => d.Name === 'name').Value
-      const email = cognitoUser.UserAttributes.find(d => d.Name === 'email').Value
-      users.push({ id, name, email })
-    }
-  }
-
-  return res.status(200).json(users)
-}
-
 const putOrganization = async (req, res, next) => {
-  const row = await res.locals.organization.$query()
+  await res.locals.organization.$query()
     .patchAndFetch(req.body)
+  if (req.body.providers) {
+    await res.locals.organization.$relatedQuery('providers').unrelate()
+    await res.locals.organization.$relatedQuery('providers').relate(req.body.providers || [])
+  }
+  const row = await Organization.query()
+    .withGraphFetched('providers')
+    .findById(req.params.organizationId)
   return res.status(200).json(row)
 }
 
@@ -74,7 +61,6 @@ module.exports = {
   postOrganizations,
   attachOrganization,
   getOrganization,
-  getOrganizationUsers,
   putOrganization,
   deleteOrganization
 }

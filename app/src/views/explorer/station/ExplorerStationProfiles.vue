@@ -174,7 +174,7 @@ export default {
       }
     },
     download () {
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`
+      const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-profiles.csv`
       this.profiles.forEach(d => {
         d.values.forEach(v => {
           v.station_timezone = this.station.timezone

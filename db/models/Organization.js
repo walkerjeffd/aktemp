@@ -6,36 +6,14 @@ class Organization extends Base {
   }
 
   static get relationMappings () {
-    const File = require('./File')
-    const Station = require('./Station')
-    const User = require('./User')
+    const Provider = require('./Provider')
     return {
-      users: {
-        relation: Base.ManyToManyRelation,
-        modelClass: User,
-        join: {
-          from: 'organizations.id',
-          through: {
-            from: 'users_organizations.organization_id',
-            to: 'users_organizations.user_id'
-          },
-          to: 'users.id'
-        }
-      },
-      files: {
+      providers: {
         relation: Base.HasManyRelation,
-        modelClass: File,
+        modelClass: Provider,
         join: {
           from: 'organizations.id',
-          to: 'files.organization_id'
-        }
-      },
-      stations: {
-        relation: Base.HasManyRelation,
-        modelClass: Station,
-        join: {
-          from: 'organizations.id',
-          to: 'stations.organization_id'
+          to: 'providers.organization_id'
         }
       }
     }

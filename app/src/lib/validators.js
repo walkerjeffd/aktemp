@@ -31,14 +31,6 @@ export const rules = {
       v => !!v || 'Email is required',
       v => (!!v && email(v)) || 'Must be a valid email address'
     ],
-    organization: [
-      v => !!v || 'Organization is required',
-      v => (!!v && v.length <= 128) || 'Organization name cannot exceed 128 characters'
-    ],
-    abbreviation: [
-      v => !!v || 'Abbreviation is required',
-      v => (!!v && v.length <= 50) || 'Abbreviation cannot exceed 50 characters'
-    ],
     description: [
       v => !!v || 'Description is required',
       v => (!!v && v.length <= 500) || 'Description cannot exceed 500 characters'
@@ -53,6 +45,21 @@ export const rules = {
       v => email(v) || 'Must be a valid email address'
     ]
   },
+  provider: {
+    code: [
+      v => !!v || 'Provider code is required',
+      v => v.length <= 50 || 'Provider code cannot exceed 50 characters',
+      v => codeCharacters(v) || 'Provider code must only contain uppercase characters, numbers or underscores'
+    ],
+    name: [
+      v => !!v || 'Provider name is required',
+      v => v.length <= 128 || 'Provider name cannot exceed 128 characters'
+    ],
+    pocName: [],
+    pocEmail: [
+      v => !v || (!!v && email(v)) || 'Must be a valid email address'
+    ]
+  },
   organization: {
     code: [
       v => !!v || 'Organization code is required',
@@ -62,11 +69,6 @@ export const rules = {
     name: [
       v => !!v || 'Organization name is required',
       v => v.length <= 128 || 'Organization name cannot exceed 128 characters'
-    ],
-    pocName: [],
-    pocEmail: [
-      v => !v || (!!v && email(v)) || 'Must be a valid email address'
-    ],
-    pocTel: []
+    ]
   }
 }

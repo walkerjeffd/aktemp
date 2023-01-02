@@ -21,20 +21,44 @@
           <Loading v-if="loading" class="pb-8"></Loading>
           <Alert type="error" title="File Not Found" class="ma-4" v-else-if="!file">File was not found on server</Alert>
           <div v-else>
-            <Alert type="error" title="File Created But Not Uploaded" v-if="file.status == 'CREATED'">File has been created in the database, but was not actually uploaded. This indicates a problem occurred with the upload form. Please delete this file and try again.</Alert>
-            <Alert type="warning" title="File Is Being Uploaded" v-else-if="file.status === 'UPLOADING'">The file is currently being uploaded. If the status does not change in the next 15 minutes, please delete this file and try to upload it again.</Alert>
-            <Alert type="info" title="File Has Been Uploaded" v-else-if="file.status === 'UPLOADED'">File has been uploaded to the server. However, it is not queued for processing, which may indicate a problem. If the status does not change in the next 15 minutes, please delete this file and try to upload it again.</Alert>
-            <Alert type="info" title="File Is Queued for Processing" v-else-if="file.status === 'QUEUED'">
-              <p>
-                File has been uploaded to the server, and is queued for processing after which it will be loaded into the database.
-              </p>
+            <Alert type="error" title="File Created But Not Uploaded" v-if="file.status == 'CREATED'">
+              <p>A record of this file was saved to the database, but the file itself was not uploaded.</p>
               <p class="mb-0">
-                Usually, the server will begin processing a file within about 15 minutes of it being uploaded. However, if the status does not change within an hour, please delete this file and try to upload it again. Otherwise, there is nothing for you to do right now, and it is safe to close the browser or navigate away to another page and check back later.
+                This indicates a problem occurred during the upload process. Please delete this file and try again.
               </p>
             </Alert>
-            <Alert type="warning" title="File Is Being Processed" v-else-if="file.status === 'PROCESSING'">The server is currently processing this file meaning it is being parsed and then loaded into the database. If the status does not change within an hour, please delete this file and try to upload it again. Otherwise, there is nothing for you to do right now, and it is safe to close the browser or navigate away to another page and check back later.</Alert>
+            <Alert type="warning" title="File Is Being Uploaded" v-else-if="file.status === 'UPLOADING'">
+              <p>The file is currently being uploaded.</p>
+              <p class="mb-0">
+                If the status does not change in the next 15 minutes, please delete this file and try uploading it again.
+              </p>
+            </Alert>
+            <Alert type="info" title="File Has Been Uploaded" v-else-if="file.status === 'UPLOADED'">
+              <p>
+                File has been uploaded to the server, but is not queued for loading into the database.
+              </p>
+              <p class="mb-0">
+                If the status does not change in the next 15 minutes, please delete this file and try uploading it again.
+              </p>
+            </Alert>
+            <Alert type="info" title="File Is Queued for Processing" v-else-if="file.status === 'QUEUED'">
+              <p>
+                File has been uploaded to the server and is waiting to be loaded into the database.
+              </p>
+              <p class="mb-0">
+                Usually, a new file will be loaded within about 15 minutes. If the status does not change within an hour, please delete this file and try to upload it again.
+              </p>
+            </Alert>
+            <Alert type="warning" title="File Is Being Processed" v-else-if="file.status === 'PROCESSING'">
+              <p>
+                File is currently being loaded into the database.
+              </p>
+              <p class="mb-0">
+                This can take up to an hour. If the status does not change, please delete this file and try uploading it again.
+              </p>
+            </Alert>
             <Alert type="error" title="Failed To Process File" v-else-if="file.status === 'FAILED'">
-              <p>File was successfully uploaded, but failed to be processed. Please review the error below, fix the file, and try uploading again.</p>
+              <p>File was successfully uploaded, but failed to be loaded into the database. Please review the error below, fix the file, and try uploading again.</p>
               <div class="font-weight-bold">{{ file.error || 'Unknown error'}}</div>
             </Alert>
             <div v-else>
@@ -128,13 +152,13 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organization: 'manage/organization'
+      provider: 'manage/provider'
     })
   },
   watch: {
-    organization () {
-      if (!this.file || !this.organization) return
-      if (this.file.organization_id !== this.organization.id) {
+    provider () {
+      if (!this.file || !this.provider) return
+      if (this.file.provider_id !== this.provider.id) {
         this.$router.push({
           name: 'manageFiles'
         })

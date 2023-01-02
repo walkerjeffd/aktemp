@@ -164,7 +164,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organization: 'manage/organization',
+      provider: 'manage/provider',
       series: 'manage/series',
       status: 'manage/seriesStatus'
     }),
@@ -179,7 +179,7 @@ export default {
     this.fetch()
   },
   watch: {
-    organization () {
+    provider () {
       this.fetch()
     },
     series () {

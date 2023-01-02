@@ -149,13 +149,13 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organization: 'manage/organization',
+      provider: 'manage/provider',
       stations: 'manage/stations',
       status: 'manage/stationsStatus'
     })
   },
   watch: {
-    organization () {
+    provider () {
       this.fetch()
     }
   },
@@ -210,7 +210,7 @@ export default {
     },
     download () {
       const body = writeStationsFile(this.stations)
-      this.$download(body, `AKTEMP-${this.organization.code}-stations.csv`)
+      this.$download(body, `AKTEMP-${this.provider.code}-stations.csv`)
     }
   }
 }

@@ -8,7 +8,7 @@
     <v-data-table
       ref="table"
       :headers="headers"
-      :items="organizations"
+      :items="providers"
       :loading="status.loading"
       :sort-by.sync="sort.by"
       :sort-desc.sync="sort.desc"
@@ -20,12 +20,12 @@
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title class="text-h6">Organizations</v-toolbar-title>
+          <v-toolbar-title class="text-h6">Providers</v-toolbar-title>
           <v-divider inset vertical class="mx-4"></v-divider>
           <v-text-field
             v-model="search"
             append-icon="mdi-magnify"
-            label="Search organizations"
+            label="Search providers"
             single-line
             hide-details
             clearable
@@ -33,14 +33,14 @@
           ></v-text-field>
           <v-spacer></v-spacer>
           <v-btn color="success" @click="create">
-            <v-icon left>mdi-plus</v-icon> New Organization
+            <v-icon left>mdi-plus</v-icon> New Provider
           </v-btn>
           <v-divider inset vertical class="ml-4"></v-divider>
-          <RefreshButton :loading="status.loading" @click="fetchOrganizations"></RefreshButton>
+          <RefreshButton :loading="status.loading" @click="fetchProviders"></RefreshButton>
         </v-toolbar>
         <div class="body-2 text--secondary mx-4 mb-2">
           <v-icon small>mdi-information-outline</v-icon>
-          Click on a row to edit an organization
+          Click on a row to edit an provider
         </div>
         <v-divider></v-divider>
       </template>
@@ -53,18 +53,18 @@
       </template>
     </v-data-table>
 
-    <AdminOrganizationDialog ref="organizationDialog"></AdminOrganizationDialog>
+    <AdminProviderDialog ref="providerDialog"></AdminProviderDialog>
   </div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
-import AdminOrganizationDialog from '@/views/admin/organizations/AdminOrganizationDialog'
+import AdminProviderDialog from '@/views/admin/providers/AdminProviderDialog'
 
 export default {
-  name: 'AdminOrganizations',
+  name: 'AdminProviders',
   components: {
-    AdminOrganizationDialog
+    AdminProviderDialog
   },
   data: () => ({
     search: '',
@@ -105,25 +105,30 @@ export default {
   }),
   computed: {
     ...mapGetters({
-      organizations: 'admin/organizations',
-      status: 'admin/organizationsStatus'
+      providers: 'admin/providers',
+      status: 'admin/providersStatus'
     })
   },
   mounted () {
-    this.fetchOrganizations()
+    this.fetchProviders()
   },
   methods: {
-    ...mapActions({ fetchOrganizations: 'admin/fetchOrganizations' }),
+    ...mapActions({
+      fetchOrganizations: 'admin/fetchOrganizations',
+      fetchProviders: 'admin/fetchProviders'
+    }),
     async select (row) {
-      const organization = await this.$refs.organizationDialog.open(row)
-      if (organization) {
-        return await this.fetchOrganizations()
+      const provider = await this.$refs.providerDialog.open(row)
+      if (provider) {
+        await this.fetchOrganizations()
+        return await this.fetchProviders()
       }
     },
     async create () {
-      const organization = await this.$refs.organizationDialog.open()
-      if (organization) {
+      const provider = await this.$refs.providerDialog.open()
+      if (provider) {
         await this.fetchOrganizations()
+        return await this.fetchProviders()
       }
     }
   }

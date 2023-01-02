@@ -7,7 +7,7 @@ router.get('/', function (req, res, next) {
 })
 
 router.use('/downloads', require('./downloads'))
-router.use('/organizations', require('./organizations'))
+router.use('/providers', require('./providers'))
 router.use('/profiles', require('./profiles'))
 router.use('/requests', require('./requests'))
 router.use('/series', require('./series'))

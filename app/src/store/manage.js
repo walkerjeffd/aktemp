@@ -7,11 +7,11 @@ export default {
   namespaced: true,
   state: () => ({
     status: {
-      organizations: {
+      providers: {
         loading: false,
         error: null
       },
-      organization: {
+      provider: {
         loading: false,
         error: null
       },
@@ -36,8 +36,8 @@ export default {
         error: null
       }
     },
-    organizations: [],
-    organization: null,
+    providers: [],
+    provider: null,
     stations: [],
     files: [],
     series: [],
@@ -45,14 +45,14 @@ export default {
     flagTypes: []
   }),
   getters: {
-    organizations: state => state.organizations,
-    organization: state => state.organization,
+    providers: state => state.providers,
+    provider: state => state.provider,
     stations: state => state.stations,
     files: state => state.files,
     series: state => state.series,
     profiles: state => state.profiles,
-    organizationStatus: state => state.status.organization,
-    organizationsStatus: state => state.status.organizations,
+    providerStatus: state => state.status.provider,
+    providersStatus: state => state.status.providers,
     stationsStatus: state => state.status.stations,
     filesStatus: state => state.status.files,
     seriesStatus: state => state.status.series,
@@ -60,11 +60,11 @@ export default {
     flagTypes: state => state.flagTypes
   },
   mutations: {
-    SET_ORGANIZATIONS (state, organizations) {
-      state.organizations = organizations
+    SET_PROVIDERSS (state, providers) {
+      state.providers = providers
     },
-    SET_ORGANIZATION (state, organization) {
-      state.organization = organization
+    SET_PROVIDERS (state, provider) {
+      state.provider = provider
     },
     SET_STATIONS (state, stations) {
       state.stations = stations
@@ -87,40 +87,40 @@ export default {
     }
   },
   actions: {
-    async setOrganization ({ commit, dispatch }, organization) {
-      commit('SET_ORGANIZATION', organization)
+    async setProvider ({ commit, dispatch }, provider) {
+      commit('SET_PROVIDERS', provider)
       dispatch('fetchStations')
     },
-    async setOrganizationById ({ commit, state, dispatch }, organizationId) {
-      commit('SET_STATUS', ['organization', true, null])
-      const organization = state.organizations.find(d => d.id === +organizationId)
-      if (!organization) {
-        commit('SET_STATUS', ['organization', false, new Error(`Organization (id=${organizationId}) not found`)])
-        dispatch('setOrganization', null)
+    async setProviderById ({ commit, state, dispatch }, providerId) {
+      commit('SET_STATUS', ['provider', true, null])
+      const provider = state.providers.find(d => d.id === +providerId)
+      if (!provider) {
+        commit('SET_STATUS', ['provider', false, new Error(`Provider (id=${providerId}) not found`)])
+        dispatch('setProvider', null)
       } else {
-        commit('SET_STATUS', ['organization', false, null])
-        dispatch('setOrganization', organization)
+        commit('SET_STATUS', ['provider', false, null])
+        dispatch('setProvider', provider)
       }
     },
-    async fetchOrganizations ({ commit, state }) {
-      commit('SET_STATUS', ['organizations', true, null])
+    async fetchProviders ({ commit, state }) {
+      commit('SET_STATUS', ['providers', true, null])
       try {
         const data = await restrictedApi
-          .get('/organizations')
+          .get('/providers')
           .then(d => d.data)
-        commit('SET_ORGANIZATIONS', data)
-        commit('SET_STATUS', ['organizations', false, null])
+        commit('SET_PROVIDERSS', data)
+        commit('SET_STATUS', ['providers', false, null])
         return data
       } catch (err) {
-        commit('SET_STATUS', ['organizations', false, err])
+        commit('SET_STATUS', ['providers', false, err])
       }
     },
     async fetchStations ({ commit, state }) {
-      if (!state.organization) return
+      if (!state.provider) return
       commit('SET_STATUS', ['stations', true, null])
       try {
         const data = await restrictedApi
-          .get(`/organizations/${state.organization.id}/stations`)
+          .get(`/providers/${state.provider.id}/stations`)
           .then(d => d.data)
         data.forEach(d => {
           d.series_count_days = countDays(d.series_start_datetime, d.series_end_datetime, d.timezone)
@@ -138,11 +138,11 @@ export default {
       commit('SET_STATIONS', stations)
     },
     async fetchFiles ({ commit, state }) {
-      if (!state.organization) return
+      if (!state.provider) return
       commit('SET_STATUS', ['files', true, null])
       try {
         const data = await restrictedApi
-          .get(`/organizations/${state.organization.id}/files`)
+          .get(`/providers/${state.provider.id}/files`)
           .then(d => d.data)
         commit('SET_FILES', data)
         commit('SET_STATUS', ['files', false, null])
@@ -156,11 +156,11 @@ export default {
       commit('SET_FILES', files)
     },
     async fetchSeries ({ commit, state }) {
-      if (!state.organization) return
+      if (!state.provider) return
       commit('SET_STATUS', ['series', true, null])
       try {
         const data = await restrictedApi
-          .get(`/organizations/${state.organization.id}/series`)
+          .get(`/providers/${state.provider.id}/series`)
           .then(d => d.data)
         commit('SET_SERIES', data)
         commit('SET_STATUS', ['series', false, null])
@@ -170,11 +170,11 @@ export default {
       }
     },
     async fetchProfiles ({ commit, state }) {
-      if (!state.organization) return
+      if (!state.provider) return
       commit('SET_STATUS', ['profiles', true, null])
       try {
         const data = await restrictedApi
-          .get(`/organizations/${state.organization.id}/profiles`)
+          .get(`/providers/${state.provider.id}/profiles`)
           .then(d => d.data)
         commit('SET_PROFILES', data)
         commit('SET_STATUS', ['profiles', false, null])

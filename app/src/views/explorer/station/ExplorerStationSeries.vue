@@ -155,7 +155,7 @@ export default {
         values
       }
       const body = writeSeriesRawFile([seriesValues])
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-${series.id}-raw.csv`
+      const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-series-${series.id}-raw.csv`
       this.$download(body, filename)
     },
     async downloadDaily (series) {
@@ -163,7 +163,7 @@ export default {
       if (!series) return
 
       const body = writeSeriesDailyDiscreteFile(series)
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-series-daily.csv`
+      const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-series-daily.csv`
       this.$download(body, filename)
     }
   }

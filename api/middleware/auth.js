@@ -91,15 +91,15 @@ const requireStationAccessOrAdmin = (req, res, next) => {
     return next()
   }
 
-  // auth user does not have access to requested organization
-  if (res.locals.user.organizations.map(d => d.id).includes(res.locals.station.organization_id)) {
+  // auth user does not have access to requested provider
+  if (res.locals.user.providers.map(d => d.id).includes(res.locals.station.provider_id)) {
     return next(createError(401, 'Unauthorized'))
   }
 
   next()
 }
 
-const requireOrganizationAccessOrAdmin = (req, res, next) => {
+const requireProviderAccessOrAdmin = (req, res, next) => {
   // no auth
   if (!req.auth) {
     return next(createError(401, 'Unauthorized'))
@@ -115,8 +115,8 @@ const requireOrganizationAccessOrAdmin = (req, res, next) => {
     return next()
   }
 
-  // auth user does not have access to requested organization
-  if (!res.locals.user.organizations.map(d => d.id).includes(+req.params.organizationId)) {
+  // auth user does not have access to requested provider
+  if (!res.locals.user.providers.map(d => d.id).includes(+req.params.providerId)) {
     return next(createError(401, 'Unauthorized'))
   }
 
@@ -128,5 +128,5 @@ module.exports = {
   requireAdmin,
   requireUserOrAdmin,
   requireStationAccessOrAdmin,
-  requireOrganizationAccessOrAdmin
+  requireProviderAccessOrAdmin
 }

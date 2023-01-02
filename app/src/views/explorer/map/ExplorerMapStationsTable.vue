@@ -51,6 +51,22 @@
               ></v-autocomplete>
             </td>
             <td>
+              <v-autocomplete
+                :items="providerCodeOptions"
+                v-model="filters.providerCodes"
+                label="Select"
+                multiple
+                clearable
+                dense
+                small-chips
+                deletable-chips
+                hide-details
+                single-line
+                :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
+                class="mt-4 mb-2"
+              ></v-autocomplete>
+            </td>
+            <td>
               <v-text-field
                 v-model="filters.code"
                 label="Search"
@@ -382,6 +398,7 @@ export default {
       selectedRows: [],
       filters: {
         organizationCodes: [],
+        providerCodes: [],
         code: '',
         waterbodyName: '',
         seriesCountDays: '',
@@ -423,7 +440,15 @@ export default {
           text: 'Organization',
           value: 'organization_code',
           filter: value => this.filters.organizationCodes.length === 0 ||
-            this.filters.organizationCodes.includes(value)
+            this.filters.organizationCodes.includes(value),
+          width: '200px'
+        },
+        {
+          text: 'Provider',
+          value: 'provider_code',
+          filter: value => this.filters.providerCodes.length === 0 ||
+            this.filters.providerCodes.includes(value),
+          width: '200px'
         },
         {
           text: 'Station',
@@ -501,6 +526,9 @@ export default {
     },
     organizationCodeOptions () {
       return [...new Set(this.stations.map(d => d.organization_code))]
+    },
+    providerCodeOptions () {
+      return [...new Set(this.stations.map(d => d.provider_code))]
     },
     advancedFilterCount () {
       return !!this.filters.advanced.active +

@@ -7,7 +7,7 @@ class User extends Base {
 
   static get relationMappings () {
     const Station = require('./Station')
-    const Organization = require('./Organization')
+    const provider = require('./Provider')
     return {
       stations: {
         relation: Base.HasManyRelation,
@@ -17,16 +17,16 @@ class User extends Base {
           to: 'stations.user_id'
         }
       },
-      organizations: {
+      providers: {
         relation: Base.ManyToManyRelation,
-        modelClass: Organization,
+        modelClass: provider,
         join: {
           from: 'users.id',
           through: {
-            from: 'users_organizations.user_id',
-            to: 'users_organizations.organization_id'
+            from: 'users_providers.user_id',
+            to: 'users_providers.provider_id'
           },
-          to: 'organizations.id'
+          to: 'providers.id'
         }
       }
     }

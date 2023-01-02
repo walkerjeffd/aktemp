@@ -10,7 +10,7 @@ const { validateFileConfig } = require('aktemp-utils/validators')
 
 const { s3 } = require('../aws')
 const { readLocalCsvFile } = require('./utils')
-const { findOrganizationByCode } = require('./organizations')
+const { findProviderByCode } = require('./providers')
 const { findStations } = require('./stations')
 
 async function readFileFromS3 (file, config) {
@@ -24,14 +24,14 @@ async function readFileFromS3 (file, config) {
   return { data: parsed.data, fields: parsed.meta.fields }
 }
 
-module.exports.findFiles = async function (organizationCode) {
-  const organization = await findOrganizationByCode(organizationCode)
+module.exports.findFiles = async function (providerCode) {
+  const provider = await findProviderByCode(providerCode)
   let query = File.query()
-  if (organizationCode) {
-    query = organization.$relatedQuery('files')
+  if (providerCode) {
+    query = provider.$relatedQuery('files')
   }
   return await query
-    .modify('organizationCode')
+    .modify('providerCode')
     .orderBy('id')
 }
 
@@ -91,11 +91,11 @@ exports.processFile = async function (id, { dryRun }) {
   debug('processFile(): add row numbers')
   data.forEach((d, i) => { d.$row = i + 1 })
 
-  debug('processFile(): get organization')
-  const organization = await file.$relatedQuery('organization')
+  debug('processFile(): get provider')
+  const provider = await file.$relatedQuery('provider')
 
   debug('processFile(): get stations')
-  const stations = await organization.$relatedQuery('stations')
+  const stations = await provider.$relatedQuery('stations')
 
   debug('processFile(): validate config ->')
   const config = await validateFileConfig(file.config, fields, stations)
@@ -161,11 +161,11 @@ exports.processFile = async function (id, { dryRun }) {
 
   return await File.query()
     .findById(file.id)
-    .modify('organizationCode')
+    .modify('providerCode')
     .withGraphFetched('[series, profiles]')
 }
 
-const uploadFile = exports.uploadFile = async function (file, filepath, organization, options) {
+const uploadFile = exports.uploadFile = async function (file, filepath, provider, options) {
   debug(`uploadFile(): filepath=${filepath}`)
 
   // check data file exists
@@ -175,7 +175,7 @@ const uploadFile = exports.uploadFile = async function (file, filepath, organiza
 
   // create file instance
   debug('uploadFile(): insert file')
-  const dbFile = await organization.$relatedQuery('files').insert({
+  const dbFile = await provider.$relatedQuery('files').insert({
     ...file,
     status: 'CREATED'
   }).returning('*')
@@ -202,8 +202,8 @@ const uploadFile = exports.uploadFile = async function (file, filepath, organiza
   return dbFile
 }
 
-const createFile = exports.createFile = async function (filepath, { filename, ...row }, organization) {
-  const stations = await findStations(organization.code)
+const createFile = exports.createFile = async function (filepath, { filename, ...row }, provider) {
+  const stations = await findStations(provider.code)
   const { data, fields } = await readLocalCsvFile(filepath, row.file_skip)
   if (data.length === 0) {
     throw new Error(`file is empty ('${filepath}')`)
@@ -216,12 +216,12 @@ const createFile = exports.createFile = async function (filepath, { filename, ..
   }
 }
 
-exports.importFiles = async function (organizationCode, filepath, { directory, ...options }) {
+exports.importFiles = async function (providerCode, filepath, { directory, ...options }) {
   debug('importFiles()')
 
-  // fetch organization
-  debug(`fetching organization: code=${organizationCode}`)
-  const organization = await findOrganizationByCode(organizationCode)
+  // fetch provider
+  debug(`fetching provider: code=${providerCode}`)
+  const provider = await findProviderByCode(providerCode)
 
   // read manifest file
   debug('loading manifest:', filepath)
@@ -236,7 +236,7 @@ exports.importFiles = async function (organizationCode, filepath, { directory, .
     debug(`preparing: ${filename} (${i + 1}/${rows.length})`)
     const filepath = path.join(directory, filename)
     try {
-      const file = await createFile(filepath, row, organization)
+      const file = await createFile(filepath, row, provider)
       files.push(file)
     } catch (err) {
       console.error(`Failed to create file (row=${i})`)
@@ -251,7 +251,7 @@ exports.importFiles = async function (organizationCode, filepath, { directory, .
 
     const filepath = path.join(directory, file.filename)
     try {
-      const result = await uploadFile(file, filepath, organization, options)
+      const result = await uploadFile(file, filepath, provider, options)
       results.push(result)
     } catch (err) {
       file.error = err.toString()

@@ -1,9 +1,9 @@
 import { restrictedApi, externalApi } from '@/plugins/axios'
 
-async function createFile (file, config, organizationId) {
+async function createFile (file, config, providerId) {
   if (!file) throw new Error('File not found')
   const filename = file.name
-  const response = await restrictedApi.post(`/organizations/${organizationId}/files`, {
+  const response = await restrictedApi.post(`/providers/${providerId}/files`, {
     filename,
     type: config.file_type,
     config
@@ -40,8 +40,8 @@ async function uploadFileToS3 (file, dbFile) {
   return await externalApi.post(dbFile.presignedUrl.url, formData)
 }
 
-export default async function (file, config, organizationId) {
-  const dbFile = await createFile(file, config, organizationId)
+export default async function (file, config, providerId) {
+  const dbFile = await createFile(file, config, providerId)
 
   try {
     await updateFile(dbFile, { status: 'UPLOADING' })

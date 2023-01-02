@@ -5,42 +5,42 @@ const { User } = require('aktemp-db/models')
 
 const userPoolId = process.env.USER_POOL_ID
 
-async function listOrganizationsForUser (id) {
-  return await User.relatedQuery('organizations')
+async function listProvidersForUser (id) {
+  return await User.relatedQuery('providers')
     .for(id)
 }
 
-async function setOrganizations (id, organizationIds) {
+async function setProviders (id, providerIds) {
   const user = await User.query().findById(id)
 
   if (!user) {
     await User.query().insert({ id })
   }
 
-  // clear existing organizations first
-  await User.relatedQuery('organizations')
+  // clear existing providers first
+  await User.relatedQuery('providers')
     .for(id)
     .unrelate()
 
-  if (organizationIds && organizationIds.length > 0) {
-    await User.relatedQuery('organizations')
+  if (providerIds && providerIds.length > 0) {
+    await User.relatedQuery('providers')
       .for(id)
-      .relate(organizationIds)
+      .relate(providerIds)
       .returning('*')
   }
-  return User.relatedQuery('organizations')
+  return User.relatedQuery('providers')
     .for(id)
 }
 
-async function removeFromOrganization (id, organizationId) {
-  console.log('removeFromOrganization', id, organizationId)
-  console.log(await User.relatedQuery('organizations').for(id))
-  await User.relatedQuery('organizations')
+async function removeFromProvider (id, providerId) {
+  console.log('removeFromProvider', id, providerId)
+  console.log(await User.relatedQuery('providers').for(id))
+  await User.relatedQuery('providers')
     .for(id)
     .unrelate()
-    .where('id', organizationId)
+    .where('id', providerId)
 
-  return User.relatedQuery('organizations')
+  return User.relatedQuery('providers')
     .for(id)
 }
 
@@ -48,7 +48,7 @@ async function attachAdminUser (req, res, next) {
   const user = await fetchUser(req.params.userId)
   if (!user) throw createError(404, `User (${req.params.userId}) not found`)
   const groups = await listGroupsForUser(user.Username)
-  const organizations = await listOrganizationsForUser(user.Username)
+  const providers = await listProvidersForUser(user.Username)
   res.locals.adminUser = {
     id: user.Username,
     attributes: transformUserAttributes(user.UserAttributes),
@@ -57,7 +57,7 @@ async function attachAdminUser (req, res, next) {
     enabled: user.Enabled,
     status: user.UserStatus,
     admin: groups.includes('admins'),
-    organizations
+    providers
   }
   return next()
 }
@@ -86,10 +86,10 @@ async function createCognitoUser (email, name) {
   return response.User
 }
 
-async function createDatabaseUser ({ id, organizationIds }) {
+async function createDatabaseUser ({ id, providerIds }) {
   const user = await User.query().insert({ id })
-  return await user.$relatedQuery('organizations')
-    .relate(organizationIds)
+  return await user.$relatedQuery('providers')
+    .relate(providerIds)
     .returning('*')
 }
 
@@ -112,7 +112,7 @@ async function deleteUser (req, res, next) {
 }
 
 async function postUsers (req, res, next) {
-  const { email, name, admin, organizationIds } = req.body // eslint-disable-line
+  const { email, name, admin, providerIds } = req.body // eslint-disable-line
 
   const cognitoUser = await createCognitoUser(email, name)
   if (admin) {
@@ -121,7 +121,7 @@ async function postUsers (req, res, next) {
 
   await createDatabaseUser({
     id: cognitoUser.Username,
-    organizationIds
+    providerIds
   })
 
   return res.status(201).json(cognitoUser)
@@ -297,10 +297,10 @@ async function putUser (req, res, next) {
     response = await removeUserFromGroup(res.locals.adminUser.id, 'admins')
   } else if (req.body.action === 'signOut') {
     response = await signOutUser(res.locals.adminUser)
-  } else if (req.body.action === 'setOrganizations') {
-    response = await setOrganizations(res.locals.adminUser.id, req.body.organizationIds)
-  } else if (req.body.action === 'removeFromOrganization') {
-    response = await removeFromOrganization(res.locals.adminUser.id, req.body.organizationId)
+  } else if (req.body.action === 'setProviders') {
+    response = await setProviders(res.locals.adminUser.id, req.body.providerIds)
+  } else if (req.body.action === 'removeFromProvider') {
+    response = await removeFromProvider(res.locals.adminUser.id, req.body.providerId)
   } else {
     throw createError(400, 'Invalid user action')
   }

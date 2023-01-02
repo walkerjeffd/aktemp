@@ -3,7 +3,7 @@ exports.seed = async knex => {
   await knex('stations').del()
   await knex('files').del()
   await knex('users').del()
-  await knex('organizations').del()
+  await knex('providers').del()
 
   await knex('flag_types').insert([
     { id: 'OTHER', description: 'Other' },
@@ -12,7 +12,7 @@ exports.seed = async knex => {
     { id: 'ERROR', description: 'Logger error' }
   ])
 
-  const organizations = await knex('organizations').insert([
+  const providers = await knex('providers').insert([
     { code: 'UAA', name: 'Univ. Alaska, Anchorage' },
     { code: 'NPS', name: 'National Park Service' }
   ]).returning('*')
@@ -21,27 +21,27 @@ exports.seed = async knex => {
     { id: 'abc-123' }
   ]).returning('*')
 
-  await knex('users_organizations').insert([
-    { user_id: users[0].id, organization_id: organizations[0].id }
+  await knex('users_providers').insert([
+    { user_id: users[0].id, provider_id: providers[0].id }
   ])
 
   const stations = await knex('stations').insert([
     {
-      organization_id: organizations[0].id,
+      provider_id: providers[0].id,
       code: 'SITE_01',
       longitude: 44,
       latitude: -70,
       timezone: 'US/Alaska',
       private: false
     }, {
-      organization_id: organizations[0].id,
+      provider_id: providers[0].id,
       code: 'SITE_02',
       longitude: 44,
       latitude: -70,
       timezone: 'US/Alaska',
       private: false
     }, {
-      organization_id: organizations[0].id,
+      provider_id: providers[0].id,
       code: 'UAA_001',
       longitude: 44,
       latitude: -70,
@@ -52,7 +52,7 @@ exports.seed = async knex => {
 
   const files = await knex('files').insert([
     {
-      organization_id: organizations[0].id,
+      provider_id: providers[0].id,
       filename: 'UAA_001.csv',
       type: 'SERIES',
       config: '{}'

@@ -150,13 +150,13 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organization: 'manage/organization'
+      provider: 'manage/provider'
     })
   },
   watch: {
-    organization () {
-      if (!this.station.data || !this.organization) return
-      if (this.station.data.organization_id !== this.organization.id) {
+    provider () {
+      if (!this.station.data || !this.provider) return
+      if (this.station.data.provider_id !== this.provider.id) {
         this.$router.push({
           name: 'manageStations'
         })

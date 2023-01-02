@@ -30,12 +30,12 @@
             class="mb-4 mt-0"
           ></v-checkbox>
           <v-select
-            v-model="organizationId.value"
-            :items="organizations"
-            :rules="organizationId.rules"
+            v-model="providerId.value"
+            :items="providers"
+            :rules="providerId.rules"
             item-text="code"
             item-value="id"
-            label="Organization"
+            label="Provider"
             validate-on-blur
             outlined
           ></v-select>
@@ -45,7 +45,7 @@
             label="Station Code"
             counter
             :maxlength="code.maxLength"
-            hint="A short name or site code for this station (e.g. Browns Brook or BB001). Must be unique within organization."
+            hint="A short name or site code for this station (e.g. Browns Brook or BB001). Must be unique within provider."
             persistent-hint
             validate-on-blur
             outlined
@@ -213,10 +213,10 @@ export default {
 
       station: null,
 
-      organizationId: {
+      providerId: {
         value: null,
         rules: [
-          v => !!v || 'Organization is required'
+          v => !!v || 'Provider is required'
         ]
       },
       code: {
@@ -305,8 +305,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organizations: 'manage/organizations',
-      organization: 'manage/organization'
+      providers: 'manage/providers',
+      provider: 'manage/provider'
     })
   },
   methods: {
@@ -331,7 +331,7 @@ export default {
 
       this.loading = true
       const value = {
-        organization_id: this.organizationId.value,
+        provider_id: this.providerId.value,
         code: this.code.value,
         latitude: this.latitude.value,
         longitude: this.longitude.value,
@@ -358,11 +358,11 @@ export default {
         let response
         if (this.station) {
           response = await this.$http.restricted
-            .put(`/organizations/${this.station.organization_id}/stations/${this.station.id}`, payload)
+            .put(`/providers/${this.station.provider_id}/stations/${this.station.id}`, payload)
           evt.$emit('notify', `Station (${payload.code}) has been updated`, 'success')
         } else {
           response = await this.$http.restricted
-            .post(`/organizations/${payload.organization_id}/stations`, payload)
+            .post(`/providers/${payload.provider_id}/stations`, payload)
           evt.$emit('notify', `Station (${payload.code}) has been saved`, 'success')
         }
 
@@ -385,7 +385,7 @@ export default {
       this.error = null
 
       if (this.station) {
-        this.organizationId.value = this.station.organization_id
+        this.providerId.value = this.station.provider_id
         this.code.value = this.station.code
         this.description.value = this.station.description
         this.latitude.value = this.station.latitude
@@ -399,7 +399,7 @@ export default {
         this.reference.value = this.station.reference
         this.private_.value = this.station.private
       } else {
-        this.organizationId.value = this.organization ? this.organization.id : null
+        this.providerId.value = this.provider ? this.provider.id : null
         this.code.value = null
         this.description.value = null
         this.latitude.value = null

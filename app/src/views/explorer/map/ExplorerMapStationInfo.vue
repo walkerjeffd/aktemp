@@ -4,9 +4,9 @@
       <tbody>
         <tr>
           <td class="text-right grey--text text--darken-2" style="width:140px">
-            Organization
+            Provider
           </td>
-          <td class="font-weight-bold">{{ station.organization_code }}</td>
+          <td class="font-weight-bold">{{ station.provider_code }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">

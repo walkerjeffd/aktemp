@@ -3,24 +3,24 @@ const { findFiles, deleteFile, importFiles, processFile } = require('../lib/file
 const { printTable } = require('../lib/utils')
 const { File } = require('aktemp-db/models')
 
-function printFiles (rows, columns = ['id', 'organization_code', 'filename', 'status']) {
+function printFiles (rows, columns = ['id', 'provider_code', 'filename', 'status']) {
   printTable(rows, columns)
 }
 
 program
-  .command('list [organizationCode]')
+  .command('list [providerCode]')
   .description('List files')
-  .action(async function (organizationCode) {
-    const rows = await findFiles(organizationCode)
+  .action(async function (providerCode) {
+    const rows = await findFiles(providerCode)
     printFiles(rows)
   })
 
 program
-  .command('import <organizationCode> <file>')
+  .command('import <providerCode> <file>')
   .requiredOption('-d, --directory <id>', 'Directory containing files')
   .description('Import data files from list')
-  .action(async function (organizationCode, filepath, options) {
-    const files = await importFiles(organizationCode, filepath, options)
+  .action(async function (providerCode, filepath, options) {
+    const files = await importFiles(providerCode, filepath, options)
     const importedFiles = files.filter(d => !d.error)
     const failedFiles = files.filter(d => !!d.error)
 

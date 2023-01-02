@@ -6,7 +6,7 @@ export default {
   namespaced: true,
   state: () => ({
     status: {
-      organizations: {
+      providers: {
         loading: false,
         error: null
       },
@@ -15,18 +15,18 @@ export default {
         error: null
       }
     },
-    organizations: [],
+    providers: [],
     stations: []
   }),
   getters: {
-    organizations: state => state.organizations,
+    providers: state => state.providers,
     stations: state => state.stations,
-    organizationsStatus: state => state.status.organizations,
+    providersStatus: state => state.status.providers,
     stationsStatus: state => state.status.stations
   },
   mutations: {
-    SET_ORGANIZATIONS (state, organizations) {
-      state.organizations = organizations
+    SET_PROVIDERS (state, providers) {
+      state.providers = providers
     },
     SET_STATIONS (state, stations) {
       state.stations = stations
@@ -37,16 +37,16 @@ export default {
     }
   },
   actions: {
-    async fetchOrganizations ({ commit, state }) {
-      commit('SET_STATUS', ['organizations', true, null])
+    async fetchProviders ({ commit, state }) {
+      commit('SET_STATUS', ['providers', true, null])
       try {
-        const response = await publicApi.get('/organizations')
+        const response = await publicApi.get('/providers')
         const data = response.data
-        commit('SET_ORGANIZATIONS', data)
-        commit('SET_STATUS', ['organizations', false, null])
+        commit('SET_PROVIDERS', data)
+        commit('SET_STATUS', ['providers', false, null])
         return data
       } catch (err) {
-        commit('SET_STATUS', ['organizations', false, err])
+        commit('SET_STATUS', ['providers', false, err])
       }
     },
     async fetchStations ({ commit, state }) {

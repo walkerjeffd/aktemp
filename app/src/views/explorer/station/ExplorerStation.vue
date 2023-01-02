@@ -123,7 +123,7 @@ export default {
     },
     async downloadStation () {
       const body = writeStationsFile([this.station])
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-station.csv`
+      const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-station.csv`
       this.$download(body, filename)
     }
   }

@@ -203,8 +203,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organizations: 'manage/organizations',
-      organization: 'manage/organization',
+      providers: 'manage/providers',
+      provider: 'manage/provider',
       stations: 'manage/stations'
     })
   },

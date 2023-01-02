@@ -853,27 +853,29 @@ export default {
         if (this.flag.id) {
           bands = bands.filter(d => d.id !== this.flag.id)
         }
-        let start = this.parseDatetime(this.flag.start_datetime, this.defaultTimezone)
-        let end = this.parseDatetime(this.flag.end_datetime, this.defaultTimezone)
-        const series = this.series[0]
-        if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
-          start = this.$luxon.DateTime.fromJSDate(start, { zone: this.defaultTimezone }).startOf('day').toJSDate()
-          end = this.$luxon.DateTime.fromJSDate(end, { zone: this.defaultTimezone }).startOf('day').toJSDate()
-        }
-        bands.push({
-          from: start.valueOf(),
-          to: end.valueOf(),
-          label: {
-            text: this.flag.id ? 'SELECTED' : 'NEW'
-          },
-          color: '#FEEEEE',
-          events: {
-            click: () => {
-              if (this.brush) return
-              this.$emit('select')
-            }
+        if (this.flag.start_datetime && this.flag.end_datetime) {
+          let start = this.parseDatetime(this.flag.start_datetime, this.defaultTimezone)
+          let end = this.parseDatetime(this.flag.end_datetime, this.defaultTimezone)
+          const series = this.series[0]
+          if (series.interval === 'CONTINUOUS' && this.mode === 'daily') {
+            start = this.$luxon.DateTime.fromJSDate(start, { zone: this.defaultTimezone }).startOf('day').toJSDate()
+            end = this.$luxon.DateTime.fromJSDate(end, { zone: this.defaultTimezone }).startOf('day').toJSDate()
           }
-        })
+          bands.push({
+            from: start.valueOf(),
+            to: end.valueOf(),
+            label: {
+              text: this.flag.id ? 'SELECTED' : 'NEW'
+            },
+            color: '#FEEEEE',
+            events: {
+              click: () => {
+                if (this.brush) return
+                this.$emit('select')
+              }
+            }
+          })
+        }
       }
       this.chart.xAxis[0].update({
         plotBands: bands

@@ -55,9 +55,9 @@ function databaseErrorHandler (err, req, res, next) {
       data: {}
     })
   } else if (err instanceof UniqueViolationError) {
-    if (err.constraint === 'stations_organization_id_code_unique') {
+    if (err.constraint === 'stations_provider_id_code_unique') {
       res.status(409).send({
-        message: `Station code ('${req.body.code}') already exists for this organization.`,
+        message: `Station code ('${req.body.code}') already exists for this provider.`,
         type: 'UniqueViolation',
         data: {
           columns: err.columns,

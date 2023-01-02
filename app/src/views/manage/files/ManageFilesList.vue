@@ -130,13 +130,13 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organization: 'manage/organization',
+      provider: 'manage/provider',
       files: 'manage/files',
       status: 'manage/filesStatus'
     })
   },
   watch: {
-    organization () {
+    provider () {
       this.fetch()
     }
   },

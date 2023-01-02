@@ -4,7 +4,7 @@ const basicAuth = require('express-basic-auth')
 const createError = require('http-errors')
 
 const { cognitoAuth } = require('../../middleware/auth')
-const { User, Organization } = require('aktemp-db/models/index')
+const { User, Provider } = require('aktemp-db/models/index')
 
 const router = express.Router()
 
@@ -49,7 +49,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 router.use(asyncHandler(async (req, res, next) => {
   const user = await User.query()
-    .withGraphFetched('organizations')
+    .withGraphFetched('providers')
     .findById(req.auth.id)
 
   if (!user) throw createError(404, `User (id=${req.auth.id}) not found`)
@@ -59,13 +59,13 @@ router.use(asyncHandler(async (req, res, next) => {
   next()
 }))
 
-const attachOrganization = async (req, res, next) => {
-  const row = await Organization.query()
-    .findById(req.params.organizationId)
+const attachProvider = async (req, res, next) => {
+  const row = await Provider.query()
+    .findById(req.params.providerId)
 
-  if (!row) throw createError(404, `Organization (id=${req.params.organizationId}) not found`)
+  if (!row) throw createError(404, `Provider (id=${req.params.providerId}) not found`)
 
-  res.locals.organization = row
+  res.locals.provider = row
   return next()
 }
 
@@ -73,8 +73,8 @@ router.route('/')
   .get((req, res, next) => res.status(200).json(res.locals.user))
 
 router.use('/flag-types', require('./flag-types'))
-router.use('/organizations', require('./organizations'))
-router.use('/organizations/:organizationId', asyncHandler(attachOrganization), require('./organization'))
+router.use('/providers', require('./providers'))
+router.use('/providers/:providerId', asyncHandler(attachProvider), require('./provider'))
 router.use('/files', require('./files'))
 router.use('/profiles', require('./profiles'))
 router.use('/series', require('./series'))

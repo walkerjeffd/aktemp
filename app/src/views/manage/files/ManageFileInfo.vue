@@ -17,9 +17,9 @@
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">
-              Organization
+              Provider
             </td>
-            <td class="font-weight-bold">{{ file.organization_code }}</td>
+            <td class="font-weight-bold">{{ file.provider_code }}</td>
           </tr>
           <tr>
             <td class="text-right grey--text text--darken-2">

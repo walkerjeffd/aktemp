@@ -83,7 +83,7 @@ export default {
       this.deleteStatus.loading = true
       this.deleteStatus.error = null
       try {
-        await this.$http.restricted.delete(`/organizations/${this.station.organization_id}/stations/${this.station.id}`)
+        await this.$http.restricted.delete(`/providers/${this.station.provider_id}/stations/${this.station.id}`)
         evt.$emit('notify', `Station (${this.station.code}) has been deleted`, 'success')
         this.$router.push({ name: 'manageStations' })
       } catch (err) {
@@ -99,7 +99,7 @@ export default {
         series_count_days: countDays(this.station.series_start_datetime, this.station.series_end_datetime, this.station.timezone)
       }
       const body = writeStationsFile([station])
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-station.csv`
+      const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-station.csv`
       this.$download(body, filename)
     }
   }

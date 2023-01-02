@@ -11,6 +11,7 @@ router.get('/', function (req, res, next) {
 })
 
 router.use('/organizations', require('./organizations'))
+router.use('/providers', require('./providers'))
 router.use('/requests', require('./requests'))
 router.use('/stations', require('./stations'))
 router.use('/users', require('./users'))

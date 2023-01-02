@@ -165,7 +165,7 @@ targets_demo <- list(
     dir.create("export/demo/stations/mock", recursive = TRUE, showWarnings = FALSE)
     x <- demo_stations %>%
       mutate(
-        organization_code = sample(c("USGS", "NPS", "UAA"), size = n(), replace = TRUE)
+        provider_code = sample(c("USGS", "NPS", "UAA"), size = n(), replace = TRUE)
       )
 
     tibble(

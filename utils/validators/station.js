@@ -2,7 +2,7 @@ const Joi = require('joi')
 const { constraints, stationTimezoneOptions, placementOptions, waterbodyTypeOptions } = require('../constants')
 
 const stationSchema = Joi.object({
-  organization_id: Joi.number()
+  provider_id: Joi.number()
     .integer()
     .empty('')
     .optional(),

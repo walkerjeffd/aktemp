@@ -65,16 +65,16 @@ source("_targets.R")
 tar_make()
 ```
 
-Load organizations, stations and files using cli
+Load providers, stations and files using cli
 
 ```sh
 # NPS
-aktemp organizations import r/export/nps/organization.csv
+aktemp providers import r/export/nps/provider.csv
 aktemp stations import -o NPS r/export/nps/stations.csv
 aktemp files import -o NPS -d r/export/nps/files -c r/export/nps/config.json r/export/nps/filelist.csv
 
 # UAA
-aktemp organizations import r/export/uaa/organization.csv
+aktemp providers import r/export/uaa/provider.csv
 aktemp stations import -o UAA r/export/uaa/stations.csv
 aktemp files import -o UAA -d r/export/uaa/files -c r/export/uaa/config.json r/export/uaa/filelist.csv
 ```

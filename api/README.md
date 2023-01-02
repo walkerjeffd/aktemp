@@ -36,32 +36,32 @@ GET /stations/:id/profiles   # fetch profiles for station
 Restricted endpoints are accessed within the `/restricted` root URL and require user authentication via cognito.
 
 ```text
-# user must belong to organization or be admin
-GET    /organizations/:id/stations                # fetch list of stations
-POST   /organizations/:id/stations                # create new station
-GET    /organizations/:id/stations/:id            # fetch single station
-PUT    /organizations/:id/stations/:id            # update single station
-DELETE /organizations/:id/stations/:id            # delete single station
+# user must belong to provider or be admin
+GET    /providers/:id/stations                # fetch list of stations
+POST   /providers/:id/stations                # create new station
+GET    /providers/:id/stations/:id            # fetch single station
+PUT    /providers/:id/stations/:id            # update single station
+DELETE /providers/:id/stations/:id            # delete single station
 
-POST   /organizations/:id/stations/:id/files      # upload data file
-PUT    /organizations/:id/stations/:id/files/:id  # update data file
-DELETE /organizations/:id/stations/:id/files/:id  # delete data file and associated series or profiles
-POST   /organizations/:id/stations/:id/files/:id/process # trigger batch processor
+POST   /providers/:id/stations/:id/files      # upload data file
+PUT    /providers/:id/stations/:id/files/:id  # update data file
+DELETE /providers/:id/stations/:id/files/:id  # delete data file and associated series or profiles
+POST   /providers/:id/stations/:id/files/:id/process # trigger batch processor
 ```
 
 ## File Upload Process
 
 ```
-app   -> POST /organizations/:id/files
+app   -> POST /providers/:id/files
            body = { filename, config } -> api
 api   -> insert { filename, config, status: 'CREATED' } into db://files (db adds uuid)
          create presignedUrl (s3://files/uuid)
          return { ...row, presignedUrl } -> app
 app   -> upload file to presignedUrl (s3://files/uuid)
-         PUT /organizations/:id/stations/:id/files/{file.id}
+         PUT /providers/:id/stations/:id/files/{file.id}
            body={ status: 'UPLOADED' }
 api   -> patch { status } in db://files/file.id
-app   -> POST /organizations/:id/stations/:id/files/{file.id}/process
+app   -> POST /providers/:id/stations/:id/files/{file.id}/process
            body=null
 api   -> submit batch job (file.id)
          patch { status: 'QUEUED' } in db://files/file.id

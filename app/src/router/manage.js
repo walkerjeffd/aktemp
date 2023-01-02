@@ -1,6 +1,6 @@
 import Manage from '@/views/manage/Manage.vue'
 
-import ManageOrganization from '@/views/manage/ManageOrganization.vue'
+import ManageProvider from '@/views/manage/ManageProvider.vue'
 
 import ManageStationsHome from '@/views/manage/stations/ManageStationsHome.vue'
 import ManageStationsList from '@/views/manage/stations/ManageStationsList.vue'
@@ -28,9 +28,9 @@ export default [
     },
     children: [
       {
-        path: '/manage/:organizationId',
-        name: 'manageOrganization',
-        component: ManageOrganization,
+        path: '/manage/:providerId',
+        name: 'manageProvider',
+        component: ManageProvider,
         redirect: { name: 'manageStations' },
         children: [
           {

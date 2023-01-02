@@ -37,7 +37,7 @@ targets_uaa <- list(
       write_json(filename, pretty = TRUE, auto_unbox = TRUE)
     filename
   }, format = "file"),
-  tar_target(uaa_organization_file, {
+  tar_target(uaa_provider_file, {
     filename <- file.path(uaa_root, "stations.csv")
     uaa_data$stations %>%
       rename(code = station_code) %>%
@@ -46,7 +46,7 @@ targets_uaa <- list(
     filename
   }, format = "file"),
   tar_target(uaa_stations_file, {
-    filename <- file.path(uaa_root, "organization.csv")
+    filename <- file.path(uaa_root, "provider.csv")
     tibble(
       id = "UAA",
       name = "Univ Alaska, Anchorage"

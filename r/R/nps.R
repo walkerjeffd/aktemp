@@ -41,8 +41,8 @@ targets_nps <- list(
       write_json(filename, pretty = TRUE, auto_unbox = TRUE)
     filename
   }, format = "file"),
-  tar_target(nps_organization_file, {
-    filename <- file.path(nps_root, "organization.csv")
+  tar_target(nps_provider_file, {
+    filename <- file.path(nps_root, "provider.csv")
     tibble(
       id = "NPS",
       name = "National Park Service"

@@ -8,8 +8,11 @@ class Station extends Base {
 
   static get modifiers () {
     return {
-      organizationCode (builder) {
-        builder.select('stations.*', 'organization.code as organization_code').joinRelated('organization')
+      providerCode (builder) {
+        builder
+          .select('stations.*', 'organizations.code as organization_code', 'provider.code as provider_code')
+          .joinRelated('provider')
+          .leftJoin('organizations', 'provider.organization_id', 'organizations.id')
       },
       seriesSummary (builder) {
         builder.select(
@@ -43,16 +46,16 @@ class Station extends Base {
   }
 
   static get relationMappings () {
-    const Organization = require('./Organization')
+    const Provider = require('./Provider')
     const Series = require('./Series')
     const Profile = require('./Profile')
     return {
-      organization: {
+      provider: {
         relation: Base.BelongsToOneRelation,
-        modelClass: Organization,
+        modelClass: Provider,
         join: {
-          from: 'stations.organization_id',
-          to: 'organizations.id'
+          from: 'stations.provider_id',
+          to: 'providers.id'
         }
       },
       series: {

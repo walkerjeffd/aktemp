@@ -1,20 +1,20 @@
 const createError = require('http-errors')
 
 const { batch, createPresignedPostPromise } = require('../aws')
-const { File, Organization } = require('aktemp-db/models')
+const { File, Provider } = require('aktemp-db/models')
 
 async function attachFile (req, res, next) {
   let query = null
-  if (res.locals.organization) {
-    query = res.locals.organization.$relatedQuery('files')
+  if (res.locals.provider) {
+    query = res.locals.provider.$relatedQuery('files')
       .findById(req.params.fileId)
   } else {
     query = File.query()
-      .withGraphFetched('series(stationOrganization,filename).flags')
-      .withGraphFetched('profiles(stationOrganization,valuesSummary,filename).values')
+      .withGraphFetched('series(stationProvider,filename).flags')
+      .withGraphFetched('profiles(stationProvider,valuesSummary,filename).values')
       .findById(req.params.fileId)
   }
-  const file = await query.modify('organizationCode')
+  const file = await query.modify('providerCode')
 
   if (!file) {
     throw createError(404, `File (id=${req.params.fileId}) not found`)
@@ -25,13 +25,13 @@ async function attachFile (req, res, next) {
 }
 
 async function getUserFiles (req, res, next) {
-  const files = await Organization.relatedQuery('files')
-    .for(res.locals.user.organizations.map(d => d.id))
+  const files = await Provider.relatedQuery('files')
+    .for(res.locals.user.providers.map(d => d.id))
   return res.status(200).json(files)
 }
 
-async function getOrganizationFiles (req, res, next) {
-  const rows = await res.locals.organization.$relatedQuery('files')
+async function getProviderFiles (req, res, next) {
+  const rows = await res.locals.provider.$relatedQuery('files')
   return res.status(200).json(rows)
 }
 
@@ -50,7 +50,7 @@ async function postFiles (req, res, next) {
     status: 'CREATED'
   }
 
-  let row = await res.locals.organization.$relatedQuery('files')
+  let row = await res.locals.provider.$relatedQuery('files')
     .insert(props)
     .returning('*')
 
@@ -132,7 +132,7 @@ async function processFile (req, res, next) {
 module.exports = {
   attachFile,
   getUserFiles,
-  getOrganizationFiles,
+  getProviderFiles,
   getAllFiles,
   postFiles,
   getFile,

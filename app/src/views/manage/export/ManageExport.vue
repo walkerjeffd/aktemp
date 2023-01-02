@@ -5,17 +5,25 @@
         <v-card-title primary-title>
           <div class="text-h6">Data Export</div>
         </v-card-title>
-        <v-card-text class="black--text">
-          <p>Use this form to request an export of all data for the selected organization. A zip file will be automatically generated and include the stations metadata, raw timeseries values (includes QAQC flags), and vertical profile data. When the file is ready, a download link will be emailed to you. If you do not receive an email within an hour, please check your spam folder and then contact us for help.</p>
+        <v-card-text class="black--text body-1">
+          <p>
+            Use this form to request an export of all data for the selected provider.
+          </p>
+          <p>
+            A zip file will be automatically generated and include the stations metadata, raw timeseries values (includes QAQC flags), and vertical profile data.
+          </p>
+          <p>
+             When the file is ready, a download link will be emailed to you. If you do not receive an email within an hour, please check your spam folder and then contact us for help.
+          </p>
           <v-form class="mt-4" ref="form" @submit="submit">
-            <div class="secondary--text">Select organization to export</div>
+            <div class="secondary--text">Select provider to export</div>
             <v-row>
               <v-col cols="12" md="6">
                 <v-select
-                  :items="organizations"
-                  v-model="organization.selected"
-                  :rules="organization.rules"
-                  label="Organization"
+                  :items="providers"
+                  v-model="provider.selected"
+                  :rules="provider.rules"
+                  label="Provider"
                   item-text="code"
                   item-value="id"
                   outlined
@@ -82,10 +90,10 @@ export default {
         response: null,
         siteKey: process.env.VUE_APP_RECAPTCHA_SITE_KEY
       },
-      organization: {
+      provider: {
         selected: null,
         rules: [
-          v => !!v || 'Organization is required'
+          v => !!v || 'Provider is required'
         ]
       },
       email: {
@@ -100,15 +108,15 @@ export default {
   computed: {
     ...mapGetters({
       user: 'user',
-      organizations: 'manage/organizations'
+      providers: 'manage/providers'
     })
   },
   mounted () {
     if (this.user && this.user.attributes && this.user.attributes.email) {
       this.email.value = this.user.attributes.email
     }
-    if (this.$store.getters['manage/organization']) {
-      this.organization.selected = this.$store.getters['manage/organization'].id
+    if (this.$store.getters['manage/provider']) {
+      this.provider.selected = this.$store.getters['manage/provider'].id
     }
   },
   methods: {
@@ -126,13 +134,13 @@ export default {
         const payload = {
           'g-recaptcha-response': this.recaptcha.response,
           email: this.email.value,
-          organizationId: this.organization.selected,
+          providerId: this.provider.selected,
           export: true
         }
         console.log(payload)
 
         await this.$http.public.post('/downloads', payload)
-        evt.$emit('notify', 'Export request has been submitted. Check your email for download link.', 'success')
+        evt.$emit('notify', 'Data export request has been submitted. Check your email in a few minutes.', 'success')
         this.$router.push({ name: 'manageStations' })
       } catch (err) {
         console.log(err)

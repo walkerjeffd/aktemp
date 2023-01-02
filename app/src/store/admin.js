@@ -9,23 +9,33 @@ export default {
         loading: false,
         error: null
       },
+      providers: {
+        loading: false,
+        error: null
+      },
       users: {
         loading: false,
         error: null
       }
     },
+    providers: [],
     organizations: [],
     users: []
   }),
   getters: {
+    providers: state => state.providers,
     organizations: state => state.organizations,
     users: state => state.users,
+    providersStatus: state => state.status.providers,
     organizationsStatus: state => state.status.organizations,
     usersStatus: state => state.status.users
   },
   mutations: {
     SET_ORGANIZATIONS (state, organizations) {
       state.organizations = organizations
+    },
+    SET_PROVIDERS (state, providers) {
+      state.providers = providers
     },
     SET_USERS (state, users) {
       state.users = users
@@ -45,6 +55,17 @@ export default {
         return data
       } catch (err) {
         commit('SET_STATUS', ['organizations', false, err])
+      }
+    },
+    async fetchProviders ({ commit }) {
+      commit('SET_STATUS', ['providers', true, null])
+      try {
+        const data = await adminApi.get('/providers').then(d => d.data)
+        commit('SET_PROVIDERS', data)
+        commit('SET_STATUS', ['providers', false, null])
+        return data
+      } catch (err) {
+        commit('SET_STATUS', ['providers', false, err])
       }
     },
     async fetchUsers ({ commit }) {

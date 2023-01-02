@@ -10,9 +10,9 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Organization
+            Provider
           </td>
-          <td class="font-weight-bold">{{ series.organization_code }}</td>
+          <td class="font-weight-bold">{{ series.provider_code }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -303,7 +303,7 @@ export default {
           values
         }
         const body = writeSeriesRawFile([seriesValues])
-        const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-raw.csv`
+        const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-raw.csv`
         this.$download(body, filename)
       } catch (err) {
         console.log(err)
@@ -318,7 +318,7 @@ export default {
 
       try {
         const body = writeSeriesDailyFile([this.series])
-        const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-daily.csv`
+        const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-daily.csv`
         this.$download(body, filename)
       } catch (err) {
         console.log(err)
@@ -333,7 +333,7 @@ export default {
 
       try {
         const body = writeSeriesDiscreteFile([this.series])
-        const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-discrete.csv`
+        const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-discrete.csv`
         this.$download(body, filename)
       } catch (err) {
         console.log(err)
@@ -348,7 +348,7 @@ export default {
 
       try {
         const body = writeSeriesFlagsFile([this.series])
-        const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-flags.csv`
+        const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-flags.csv`
         this.$download(body, filename)
       } catch (err) {
         console.log(err)

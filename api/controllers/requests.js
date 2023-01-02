@@ -8,12 +8,11 @@ function newRequestMessage (params) {
   const d = new Date()
   return `New account requested
 
-Created: ${d.toLocaleString('en-US', { timeZone: 'America/Anchorage', timeZoneName: 'short' })}
 Name: ${params.name}
 Email: ${params.email}
-Organization: ${params.organization}
-Abbreviation: ${params.abbreviation}
+Provider: ${params.provider_name} (${params.provider_code})
 Description: ${params.description}
+Submitted: ${d.toLocaleString('en-US', { timeZone: 'America/Anchorage', timeZoneName: 'short' })}
 `
 }
 
@@ -21,8 +20,8 @@ function resendPasswordMessage (params) {
   const d = new Date()
   return `New temporary password requested
 
-Created: ${d.toLocaleString('en-US', { timeZone: 'America/Anchorage', timeZoneName: 'short' })}
 Email: ${params.email}
+Submitted: ${d.toLocaleString('en-US', { timeZone: 'America/Anchorage', timeZoneName: 'short' })}
 `
 }
 

@@ -10,23 +10,23 @@ class File extends Base {
       done (builder) {
         builder.where('status', 'DONE')
       },
-      organizationCode (builder) {
-        builder.select('files.*', 'organization.code as organization_code').joinRelated('organization')
+      providerCode (builder) {
+        builder.select('files.*', 'provider.code as provider_code').joinRelated('provider')
       }
     }
   }
 
   static get relationMappings () {
-    const Organization = require('./Organization')
+    const Provider = require('./Provider')
     const Series = require('./Series')
     const Profile = require('./Profile')
     return {
-      organization: {
+      provider: {
         relation: Base.BelongsToOneRelation,
-        modelClass: Organization,
+        modelClass: Provider,
         join: {
-          from: 'files.organization_id',
-          to: 'organizations.id'
+          from: 'files.provider_id',
+          to: 'providers.id'
         }
       },
       series: {

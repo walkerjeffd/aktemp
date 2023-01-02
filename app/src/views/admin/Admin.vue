@@ -14,10 +14,10 @@
                 <v-icon left>mdi-account-plus</v-icon> Account Requests
               </v-tab>
               <v-tab :to="{ name: 'adminUsers' }">
-                <v-icon left>mdi-account-group</v-icon> Users
+                <v-icon left>mdi-account</v-icon> Users
               </v-tab>
-              <v-tab :to="{ name: 'adminOrganizations' }">
-                <v-icon left>mdi-map-marker</v-icon> Organizations
+              <v-tab :to="{ name: 'adminProviders' }">
+                <v-icon left>mdi-account-group</v-icon> Providers
               </v-tab>
             </v-tabs>
             <router-view></router-view>

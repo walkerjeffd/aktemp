@@ -5,7 +5,7 @@ const { Series, Profile } = require('aktemp-db/models')
 const { importStationsFromFile, findStations } = require('../lib/stations')
 const { importFiles, processFile } = require('../lib/files')
 
-const organization = { code: 'TEST', name: 'Test Organization' }
+const provider = { code: 'TEST', name: 'Test Provider' }
 
 jest.setTimeout(10000)
 
@@ -17,8 +17,8 @@ describe('files', () => {
   beforeAll(async () => {
     await knex.migrate.latest()
     await knex.seed.run()
-    await knex('organizations').insert([organization]).returning('*')
-    await importStationsFromFile(organization.code, path.join(__dirname, 'files/stations.csv'))
+    await knex('providers').insert([provider]).returning('*')
+    await importStationsFromFile(provider.code, path.join(__dirname, 'files/stations.csv'))
   })
 
   afterAll(async () => {
@@ -32,7 +32,7 @@ describe('files', () => {
       const filepath = path.join(__dirname, 'files/series/config-series.csv')
       const stations = await findStations('TEST')
 
-      const importedFiles = await importFiles(organization.code, filepath, options)
+      const importedFiles = await importFiles(provider.code, filepath, options)
       expect(importedFiles).toHaveLength(2)
 
       const expected = readJsonFile('files/series/json/series.json')
@@ -83,7 +83,7 @@ describe('files', () => {
       const filepath = path.join(__dirname, 'files/series/config-discrete.csv')
       const stations = await findStations('TEST')
 
-      const imported = await importFiles(organization.code, filepath, options)
+      const imported = await importFiles(provider.code, filepath, options)
       expect(imported).toHaveLength(1)
       const importedFile = imported[0]
       expect(importedFile).toHaveProperty('id')
@@ -133,7 +133,7 @@ describe('files', () => {
     const filepath = path.join(__dirname, 'files/profiles/config.csv')
     const stations = await findStations('TEST')
 
-    const imported = await importFiles(organization.code, filepath, options)
+    const imported = await importFiles(provider.code, filepath, options)
     expect(imported).toHaveLength(1)
     const importedFile = imported[0]
     expect(importedFile).toHaveProperty('id')

@@ -11,31 +11,40 @@
               <v-spacer></v-spacer>
               <div style="width:300px">
                 <v-select
-                  :items="organizations"
-                  v-model="organization"
-                  label="Organization"
+                  :items="providers"
+                  v-model="provider"
+                  label="Provider"
                   item-text="code"
                   dense
                   required
                   outlined
                   return-object
                   hide-details
-                  :disabled="organizationsStatus.loading"
+                  :disabled="providersStatus.loading"
                   style="z-index:2000"
                 ></v-select>
               </div>
             </v-toolbar>
 
-            <v-sheet v-if="organizationsStatus.loading" height="400">
+            <v-sheet v-if="providersStatus.loading" height="400">
               <Loading class="pt-8"/>
             </v-sheet>
-            <v-card-text v-else-if="organizationStatus.error">
+            <v-card-text v-else-if="providerStatus.error">
               <Alert
                 type="error"
-                title="Error Loading Organization"
+                title="Error Loading Provider"
                 class="mb-0"
               >
-                {{ organizationStatus.error }}
+                {{ providerStatus.error }}
+              </Alert>
+            </v-card-text>
+            <v-card-text v-else-if="providers.length === 0">
+              <Alert
+                type="error"
+                title="No Providers Found"
+                class="mb-0"
+              >
+                Your account is not associated with any data providers. Please contact us for assistance.
               </Alert>
             </v-card-text>
             <router-view v-else></router-view>
@@ -53,27 +62,27 @@ export default {
   name: 'Manage',
   computed: {
     ...mapGetters({
-      organizations: 'manage/organizations',
-      organizationsStatus: 'manage/organizationsStatus',
-      organizationStatus: 'manage/organizationStatus'
+      providers: 'manage/providers',
+      providersStatus: 'manage/providersStatus',
+      providerStatus: 'manage/providerStatus'
     }),
-    organization: {
+    provider: {
       get () {
-        return this.$store.state.manage.organization
+        return this.$store.state.manage.provider
       },
       set (value) {
-        if (this.$route.params.organizationId) {
+        if (this.$route.params.providerId) {
           this.$router.push({
             name: this.$route.name,
             params: {
-              organizationId: value.id
+              providerId: value.id
             }
           })
         } else {
           this.$router.push({
-            name: 'manageOrganization',
+            name: 'manageProvider',
             params: {
-              organizationId: value.id
+              providerId: value.id
             }
           })
         }
@@ -81,38 +90,38 @@ export default {
     }
   },
   mounted () {
-    this.$store.dispatch('manage/fetchOrganizations')
+    this.$store.dispatch('manage/fetchProviders')
     this.$store.dispatch('manage/fetchFlagTypes')
   },
   watch: {
-    '$route.params.organizationId' (value) {
+    '$route.params.providerId' (value) {
       if (value) {
-        this.setOrganizationFromRoute()
+        this.setProviderFromRoute()
       } else {
-        this.routeToOrganization()
+        this.routeToProvider()
       }
     },
-    organizations () {
-      this.routeToOrganization()
+    providers () {
+      this.routeToProvider()
     }
   },
   methods: {
-    routeToOrganization () {
-      if (this.organizationsStatus.loading || this.organizations.length === 0) return
-      if (!this.$route.params.organizationId) {
-        const organization = this.organization || this.organizations[0]
+    routeToProvider () {
+      if (this.providersStatus.loading || this.providers.length === 0) return
+      if (!this.$route.params.providerId) {
+        const provider = this.provider || this.providers[0]
         this.$router.push({
-          name: 'manageOrganization',
+          name: 'manageProvider',
           params: {
-            organizationId: organization.id
+            providerId: provider.id
           }
         })
       } else {
-        this.$store.dispatch('manage/setOrganizationById', this.$route.params.organizationId)
+        this.$store.dispatch('manage/setProviderById', this.$route.params.providerId)
       }
     },
-    setOrganizationFromRoute () {
-      this.$store.dispatch('manage/setOrganizationById', this.$route.params.organizationId)
+    setProviderFromRoute () {
+      this.$store.dispatch('manage/setProviderById', this.$route.params.providerId)
     }
   }
 }

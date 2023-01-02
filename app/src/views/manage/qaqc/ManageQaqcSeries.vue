@@ -421,7 +421,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organization: 'manage/organization',
+      provider: 'manage/provider',
       flagTypes: 'manage/flagTypes'
     }),
     selectedFlagArray () {
@@ -461,7 +461,7 @@ export default {
       try {
         const series = await this.$http.restricted.get(`/series/${this.$route.params.seriesId}`)
           .then(d => d.data)
-        if (series.organization_id !== this.organization.id) {
+        if (series.provider_id !== this.provider.id) {
           return this.$router.push({
             name: 'manageQaqc'
           })
@@ -668,7 +668,7 @@ export default {
     },
     download () {
       const body = writeSeriesFlagsFile([this.series])
-      const filename = `AKTEMP-${this.series.organization_code}-${this.series.station_code}-series-${this.series.id}-flags.csv`
+      const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-flags.csv`
       this.$download(body, filename)
     }
   }

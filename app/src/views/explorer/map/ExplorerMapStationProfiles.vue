@@ -122,7 +122,7 @@ export default {
       this.loading = false
     },
     download () {
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-profiles.csv`
+      const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-profiles.csv`
       const body = writeStationProfilesFile(this.station, this.profiles)
       this.$download(body, filename)
     }

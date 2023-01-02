@@ -76,6 +76,7 @@ export default {
           series: {
             gapSize: 2,
             animation: false,
+            showInLegend: false,
             states: {
               hover: {
                 enabled: false
@@ -217,7 +218,6 @@ export default {
             type: 'line',
             data: chunk.values.map(d => ([d.date.valueOf(), d.mean_temp_c])),
             visible: true,
-            showInNavigator: false,
             tooltip: {
               pointFormat: null
             },
@@ -228,21 +228,18 @@ export default {
               enabled: chunk.values.length === 1,
               radius: 2,
               symbol: 'circle'
-            },
-            showInLegend: false
+            }
           },
           {
             id: `daily-${i}-range`,
             type: 'arearange',
             data: chunk.values.map(d => ([d.date.valueOf(), d.min_temp_c, d.max_temp_c])),
             visible: true,
-            showInNavigator: false,
             tooltip: {
               pointFormat: null
             },
             linkedTo: chunk.flag ? 'flagged' : undefined,
-            flag: !!chunk.flag,
-            showInLegend: false
+            flag: !!chunk.flag
           }
         ]
       }).flat()
@@ -252,7 +249,6 @@ export default {
           id: `discrete-${i}`,
           type: 'line',
           data: chunk.values.map(d => ([new Date(d.datetime).valueOf(), d.temp_c])),
-          showInNavigator: false,
           tooltip: {
             pointFormat: null
           },
@@ -275,7 +271,6 @@ export default {
           data: [],
           visible: true,
           showInLegend: true,
-          showInNavigator: false,
           color: 'orangered'
         },
         {
@@ -292,7 +287,6 @@ export default {
             })),
           visible: true,
           showInLegend: false,
-          showInNavigator: false,
           turboThreshold: 0,
           tooltip: {
             pointFormat: 'Daily Mean: <b>{point.y}</b> °C'
@@ -322,7 +316,6 @@ export default {
             })),
           visible: true,
           showInLegend: false,
-          showInNavigator: false,
           turboThreshold: 0,
           tooltip: {
             pointFormat: 'Daily Mean: <b>{point.y}</b> °C<br />Flag: <b>{point.flag}</b>'
@@ -354,7 +347,6 @@ export default {
             })),
           visible: true,
           showInLegend: false,
-          showInNavigator: false,
           turboThreshold: 0,
           tooltip: {
             pointFormat: 'Discrete: <b>{point.y}</b> °C'
@@ -384,7 +376,6 @@ export default {
             })),
           visible: true,
           showInLegend: false,
-          showInNavigator: false,
           turboThreshold: 0,
           tooltip: {
             pointFormat: 'Discrete: <b>{point.y}</b> °C<br />Flag: <b>{point.flag}</b>'
@@ -407,13 +398,13 @@ export default {
       ]
     },
     async download () {
-      if (this.loading || this.values.length === 0) return
+      if (this.loading) return
 
       const series = await this.$http.public.get(`/stations/${this.station.id}/series`)
         .then(d => d.data)
 
-      const filename = `AKTEMP-${this.station.organization_code}-${this.station.code}-timeseries.csv`
-      const body = writeStationSeriesFile(this.station, series, this.values, this.discrete)
+      const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-timeseries.csv`
+      const body = writeStationSeriesFile(this.station, series, this.daily.values, this.discrete.values)
       this.$download(body, filename)
     }
   }

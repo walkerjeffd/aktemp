@@ -4,7 +4,7 @@ const { User } = require('aktemp-db/models')
 
 const attachUser = async (req, res, next) => {
   const row = await User.query()
-    .withGraphFetched('organizations')
+    .withGraphFetched('providers')
     .findById(req.params.userId)
 
   if (!row) throw createError(404, `User (id=${req.params.userId}) not found`)
@@ -15,7 +15,7 @@ const attachUser = async (req, res, next) => {
 
 const getUsers = async (req, res, next) => {
   const users = await User.query()
-    .withGraphFetched('organizations')
+    .withGraphFetched('providers')
   return res.status(200).json(users)
 }
 

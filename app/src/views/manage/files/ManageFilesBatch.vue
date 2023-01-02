@@ -56,7 +56,7 @@
 
           <div class="text-h6 mb-2">Files Table</div>
 
-          <p class="black--text"><strong>Need help getting started?</strong> Download the Excel template and follow the instructions on the README sheet. You can also download a list of existing stations for the selected Organization for reference.</p>
+          <p class="black--text"><strong>Need help getting started?</strong> Download the Excel template and follow the instructions on the README sheet. You can also download a list of existing stations for the selected Provider for reference.</p>
           <v-btn
             color="primary"
             outlined
@@ -167,7 +167,7 @@
                         <router-link :to="{
                           name: 'manageFile',
                           params: {
-                            orgnizationId: this.$route.params.organizationId,
+                            orgnizationId: this.$route.params.providerId,
                             fileId: table.selected.file.id
                           }
                         }">
@@ -522,8 +522,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organizations: 'manage/organizations',
-      organization: 'manage/organization',
+      providers: 'manage/providers',
+      provider: 'manage/provider',
       stations: 'manage/stations'
     }),
     profilesColumns () {
@@ -609,7 +609,7 @@ export default {
       this.error = null
       this.table.selected = null
 
-      // check form inputs (organization, files)
+      // check form inputs (provider, files)
       if (!this.$refs.form.validate()) {
         this.error = 'Check form errors above'
         return
@@ -810,7 +810,7 @@ export default {
     async uploadFile (row, i) {
       if (row.status === 'SUCCESS' || row.status === 'INVALID') return
 
-      const organizationId = this.organization.id
+      const providerId = this.provider.id
       const file = this.files.selected[row.file_index]
       const config = row.config
 
@@ -821,7 +821,7 @@ export default {
 
       try {
         this.message = `Uploading ${file.name}`
-        await uploader(file, config, organizationId)
+        await uploader(file, config, providerId)
         row.status = 'SUCCESS'
       } catch (err) {
         console.log(err)
@@ -836,7 +836,7 @@ export default {
     },
     downloadStations () {
       const body = writeStationsFile(this.stations)
-      this.$download(body, `AKTEMP-${this.organization.code}-stations.csv`)
+      this.$download(body, `AKTEMP-${this.provider.code}-stations.csv`)
     },
     async removeUploadedFiles () {
       this.loading = true

@@ -43,7 +43,7 @@
       >
         <l-tooltip>
           Station: <strong>{{s.code}}</strong><br/>
-          Provider: <strong>{{s.organization_code}}</strong>
+          Provider: <strong>{{s.provider_code}}</strong>
         </l-tooltip>
       </l-circle-marker>
       <l-circle-marker
@@ -55,7 +55,7 @@
       >
         <l-tooltip>
           Station: <strong>{{station.code}}</strong><br/>
-          Provider: <strong>{{station.organization_code}}</strong>
+          Provider: <strong>{{station.provider_code}}</strong>
         </l-tooltip>
       </l-circle-marker>
       <l-geo-json

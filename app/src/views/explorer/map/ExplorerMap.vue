@@ -80,7 +80,7 @@ export default {
     ...mapGetters({
       storeStations: 'explorer/stations',
       stationsStatus: 'explorer/stationsStatus',
-      organizationsStatus: 'explorer/organizationsStatus'
+      providersStatus: 'explorer/providersStatus'
     })
   },
   watch: {
@@ -92,7 +92,7 @@ export default {
     }
   },
   async created () {
-    this.$store.dispatch('explorer/fetchOrganizations')
+    this.$store.dispatch('explorer/fetchProviders')
     this.$store.dispatch('explorer/fetchStations')
     this.checkStationsError()
   },

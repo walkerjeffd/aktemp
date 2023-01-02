@@ -26,9 +26,9 @@ export async function getToken () {
   return session.getIdToken().getJwtToken()
 }
 
-export async function getOrganizations (userId) {
+export async function getProviders (userId) {
   try {
-    const response = await Vue.prototype.$http.restricted.get('/organizations')
+    const response = await Vue.prototype.$http.restricted.get('/providers')
     return response.data
   } catch (err) {
     return null
@@ -40,11 +40,11 @@ export async function getUser (force) {
   try {
     const user = await Auth.currentAuthenticatedUser({ bypassCache: !!force })
     if (user && user.signInUserSession) {
-      user.organizations = await getOrganizations(user.username)
+      user.providers = await getProviders(user.username)
       user.UserGroups = user.signInUserSession.accessToken.payload['cognito:groups'] || []
       user.isAdmin = user.UserGroups.includes('admins')
       store.dispatch('setUser', user)
-      store.dispatch('manage/fetchOrganizations')
+      store.dispatch('manage/fetchProviders')
       return user
     }
     return null

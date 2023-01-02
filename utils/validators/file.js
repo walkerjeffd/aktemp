@@ -26,7 +26,7 @@ const createFileSchema = (fields, stations) => {
   const validStationCodes = Joi.string()
     .valid(...stationCodes)
     .messages({
-      'any.only': '"station_code" must match an existing station code for this organization (case sensitive) or be blank if Station Column is specified'
+      'any.only': '"station_code" must match an existing station code for this provider (case sensitive) or be blank if Station Column is specified'
     })
   return Joi.object({
     file_skip: Joi.number()

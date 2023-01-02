@@ -8,22 +8,23 @@ exports.seed = async knex => {
   ])
 
   await knex('stations').del()
-  await knex('users_organizations').del()
+  await knex('users_providers').del()
   await knex('users').del()
-  await knex('organizations').del()
+  await knex('providers').del()
 
-  const organizations = await knex('organizations').insert([
+  const providers = await knex('providers').insert([
     { code: 'TEST', name: 'Test' },
-    { code: 'UAA', name: 'Univ. Alaska, Anchorage' }
+    { code: 'UAA', name: 'Univ. Alaska, Anchorage' },
+    { code: 'NPS_SWAN', name: 'National Park Service, Southwest Alaska Network' }
   ]).returning('*')
   const users = await knex('users').insert([
     { id: 'e31729fb-09dd-40ab-bea6-af098086eb57' }
   ]).returning('*')
-  await knex('users_organizations').insert([
-    { user_id: users[0].id, organization_id: organizations[0].id },
-    { user_id: users[0].id, organization_id: organizations[1].id }
+  await knex('users_providers').insert([
+    { user_id: users[0].id, provider_id: providers[0].id },
+    { user_id: users[0].id, provider_id: providers[1].id }
   ])
   await knex('stations').insert([
-    { organization_id: organizations[0].id, code: 'TEST_001', longitude: -152, latitude: 61, timezone: 'US/Alaska', private: false }
+    { provider_id: providers[0].id, code: 'TEST_001', longitude: -152, latitude: 61, timezone: 'US/Alaska', private: false }
   ])
 }

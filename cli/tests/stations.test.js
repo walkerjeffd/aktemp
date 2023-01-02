@@ -1,14 +1,14 @@
 /* eslint-env jest */
 const path = require('path')
 const knex = require('aktemp-db')
-const { findOrganizationByCode } = require('../lib/organizations')
+const { findProviderByCode } = require('../lib/providers')
 const { importStationsFromFile, findStations, deleteStation } = require('../lib/stations')
 
 describe('stations', () => {
   beforeAll(async () => {
     await knex.migrate.latest()
-    await knex('organizations').insert([
-      { code: 'TEST', name: 'Test Organization' }
+    await knex('providers').insert([
+      { code: 'TEST', name: 'Test Provider' }
     ]).returning('*')
   })
 
@@ -18,12 +18,12 @@ describe('stations', () => {
   })
 
   test('stations.csv', async () => {
-    const organization = await findOrganizationByCode('TEST')
+    const provider = await findProviderByCode('TEST')
     const imported = await importStationsFromFile('TEST', path.join(__dirname, 'stations/stations.csv'))
     expect(imported).toHaveLength(2)
     const station = imported[0]
     expect(station).toMatchObject({
-      organization_id: organization.id,
+      provider_id: provider.id,
       code: 'SITE_01',
       latitude: 65,
       longitude: -155,

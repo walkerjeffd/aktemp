@@ -8,14 +8,14 @@ class Profile extends Base {
 
   static get modifiers () {
     return {
-      stationOrganization (builder) {
+      stationProvider (builder) {
         builder.select(
           'profiles.*',
           'station.code as station_code',
           'station.timezone as station_timezone',
-          'station.organization_id as organization_id',
-          'station.organization_code as organization_code'
-        ).joinRelated('station(organizationCode)')
+          'station.provider_id as provider_id',
+          'station.provider_code as provider_code'
+        ).joinRelated('station(providerCode)')
       },
       filename (builder) {
         builder.select(

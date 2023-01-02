@@ -4,7 +4,7 @@ const path = require('path')
 const os = require('os')
 const fs = require('fs')
 const { zip } = require('zip-a-folder')
-const { Download, Station, Organization } = require('aktemp-db/models')
+const { Download, Station, Provider } = require('aktemp-db/models')
 const {
   writeStationsFile,
   writeSeriesRawFile,
@@ -62,27 +62,27 @@ exports.processDownload = async (id, { dryRun }) => {
 
   const config = download.config
 
-  let organization
+  let provider
   let stations
-  if (config.organizationId) {
-    debug(`processDownload(): fetching organization (id=${config.organizationId})`)
-    organization = await Organization.query()
-      .findById(config.organizationId)
+  if (config.providerId) {
+    debug(`processDownload(): fetching provider (id=${config.providerId})`)
+    provider = await Provider.query()
+      .findById(config.providerId)
       .throwIfNotFound({
-        message: `organization (id=${config.organizationId}) not found`,
+        message: `provider (id=${config.providerId}) not found`,
         type: 'NotFoundError'
       })
-    debug(`processDownload(): fetching stations for organization (${organization.code})`)
-    stations = await organization
+    debug(`processDownload(): fetching stations for provider (${provider.code})`)
+    stations = await provider
       .$relatedQuery('stations')
-      .modify('organizationCode')
+      .modify('providerCode')
       .modify('seriesSummary')
       .modify('profilesSummary')
   } else if (config.stationIds) {
     debug(`processDownload(): fetching stations by id (n=${config.stationIds.length})`)
     stations = await Station.query()
       .findByIds(config.stationIds)
-      .modify('organizationCode')
+      .modify('providerCode')
       .modify('seriesSummary')
       .modify('profilesSummary')
   }
@@ -103,7 +103,7 @@ exports.processDownload = async (id, { dryRun }) => {
   let key
   if (config.export) {
     console.log('export')
-    key = `downloads/${download.uuid}/AKTEMP-export-${organization.code}.zip`
+    key = `downloads/${download.uuid}/AKTEMP-export-${provider.code}.zip`
     for (const station of stations) {
       debug(`processDownload(): processing station (id=${station.id}, code=${station.code})`)
 
@@ -114,7 +114,7 @@ exports.processDownload = async (id, { dryRun }) => {
       debug(`processDownload(): fetching series (station_id=${station.id})`)
       const series = await station.$relatedQuery('series')
         .withGraphFetched('[flags]')
-        .modify('stationOrganization')
+        .modify('stationProvider')
 
       const seriesFilename = path.join(station.code, 'timeseries.csv')
       debug(`processDownload(): writing timeseries metadata file (${seriesFilename})`)
@@ -138,7 +138,7 @@ exports.processDownload = async (id, { dryRun }) => {
 
       debug(`processDownload(): fetching profiles (station_id=${station.id})`)
       const profiles = await station.$relatedQuery('profiles')
-        .modify('stationOrganization')
+        .modify('stationProvider')
         .withGraphFetched('values')
       profiles.forEach(d => {
         d.values.forEach(v => {
@@ -161,7 +161,7 @@ exports.processDownload = async (id, { dryRun }) => {
       let query = Station.relatedQuery('series')
         .for(stations)
         .where('interval', 'CONTINUOUS')
-        .modify('stationOrganization')
+        .modify('stationProvider')
         .withGraphFetched('[daily, flags]')
 
       if (config.period) {
@@ -203,7 +203,7 @@ exports.processDownload = async (id, { dryRun }) => {
       let query = Station.relatedQuery('series')
         .for(stations)
         .where('interval', 'DISCRETE')
-        .modify('stationOrganization')
+        .modify('stationProvider')
         .withGraphFetched('[values, flags]')
 
       if (config.period) {
@@ -244,7 +244,7 @@ exports.processDownload = async (id, { dryRun }) => {
       debug('processDownload(): getting profiles series')
       let query = Station.relatedQuery('profiles')
         .for(stations)
-        .modify('stationOrganization')
+        .modify('stationProvider')
         .withGraphFetched('values')
 
       if (config.period) {

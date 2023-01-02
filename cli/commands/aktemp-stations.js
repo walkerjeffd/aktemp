@@ -2,23 +2,23 @@ const program = require('commander')
 const { findStations, deleteStation, importStationsFromFile } = require('../lib/stations')
 const { printTable } = require('../lib/utils')
 
-function printStations (rows, columns = ['id', 'organization_code', 'code', 'latitude', 'longitude']) {
+function printStations (rows, columns = ['id', 'provider_code', 'code', 'latitude', 'longitude']) {
   printTable(rows, columns)
 }
 
 program
-  .command('list [organizationCode]')
+  .command('list [providerCode]')
   .description('List stations')
-  .action(async function (organizationCode) {
-    const rows = await findStations(organizationCode)
+  .action(async function (providerCode) {
+    const rows = await findStations(providerCode)
     printStations(rows)
   })
 
 program
-  .command('import <organizationCode> <file>')
+  .command('import <providerCode> <file>')
   .description('Import stations from csv file')
-  .action(async function (organizationCode, filepath) {
-    const rows = await importStationsFromFile(organizationCode, filepath)
+  .action(async function (providerCode, filepath) {
+    const rows = await importStationsFromFile(providerCode, filepath)
     printStations(rows, ['id', 'code', 'latitude', 'longitude'])
   })
 

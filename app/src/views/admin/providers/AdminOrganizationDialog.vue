@@ -54,11 +54,10 @@
             v-model="code.value"
             :rules="code.rules"
             label="Organization Code"
-            hint="Abbreviation of organization name (UAA or NPS_DENALI)"
+            hint="Abbreviation of organization name (NPS or USGS)"
             outlined
             counter
             validate-on-blur
-            @input="modified = true"
           ></v-text-field>
           <v-text-field
             v-model="name.value"
@@ -67,38 +66,39 @@
             outlined
             counter
             validate-on-blur
-            @input="modified = true"
           ></v-text-field>
-          <v-text-field
-            v-model="pocName.value"
-            :rules="pocName.rules"
-            label="POC Name"
-            outlined
-            validate-on-blur
-            @input="modified = true"
-          ></v-text-field>
-          <v-text-field
-            v-model="pocEmail.value"
-            :rules="pocEmail.rules"
-            label="POC Email"
-            outlined
-            validate-on-blur
-            @input="modified = true"
-          ></v-text-field>
-          <v-text-field
-            v-model="pocTel.value"
-            :rules="pocTel.rules"
-            label="POC Telephone"
-            outlined
-            validate-on-blur
-            @input="modified = true"
-            class="mb-0"
-          ></v-text-field>
-          <v-btn type="submit" class="hidden" :disabled="!modified">submit</v-btn>
-        </v-form>
 
-        <div v-if="organization" class="mb-8 mt-0 mx-4">
-          <div class="d-flex justify-start">
+          <v-divider class="my-4"></v-divider>
+
+          <div class="font-weight-bold body-1">Providers</div>
+          <v-autocomplete
+            v-if="dialog"
+            v-model="organizationProviders.selected"
+            :items="providers"
+            label="Select provider(s)"
+            item-text="code"
+            item-value="id"
+            multiple
+            chips
+            deletable-chips
+            outlined
+            clearable
+            hide-details
+            class="my-4"
+          >
+            <template v-slot:item="{ item }">
+              <v-list-item-icon><v-simple-checkbox :value="organizationProviders.selected && organizationProviders.selected.includes(item.id)"></v-simple-checkbox></v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-html="item.code"></v-list-item-title>
+                <v-list-item-subtitle v-html="item.name"></v-list-item-subtitle>
+              </v-list-item-content>
+            </template>
+          </v-autocomplete>
+
+          <v-divider class="my-4" v-if="organization"></v-divider>
+
+          <div v-if="organization" class="d-flex my-4">
+            <v-spacer></v-spacer>
             <v-btn
               color="error"
               outlined
@@ -110,55 +110,26 @@
               Delete Organization
             </v-btn>
           </div>
-
-          <v-divider class="mb-4 mt-6"></v-divider>
-
-          <div class="font-weight-bold body-1 mb-4">Organization Users</div>
-          <Loading v-if="usersStatus.loading" class="pb-4"></Loading>
-          <Alert v-else-if="organizationUsers.length === 0" type="info" title="No Users Found">
-            No users belong to this organization
-          </Alert>
-          <div v-else>
-            <v-divider></v-divider>
-            <v-simple-table>
-              <tbody>
-                <tr v-for="user in organizationUsers" :key="user.id">
-                  <td class="text-right">
-                    {{user.attributes.name}}
-                  </td>
-                  <td class="font-weight-bold">
-                    {{user.attributes.email}}
-                  </td>
-                  <td style="width:50px" class="text-right">
-                    <v-btn icon small color="error" title="Remove User" @click="removeUser(user)" :loading="removing === user.id"><v-icon x-small>mdi-close</v-icon></v-btn>
-                  </td>
-                </tr>
-              </tbody>
-            </v-simple-table>
-            <v-divider></v-divider>
-          </div>
-          <Alert v-if="usersStatus.error" type="error" title="Failed to Get Users" class="mt-4 mb-0">
-            {{ usersStatus.error }}
-          </Alert>
-        </div>
-
+          <v-btn type="submit" class="hidden">submit</v-btn>
+        </v-form>
       </v-card-text>
 
-      <v-divider></v-divider>
-
-      <Alert v-if="error" type="error" title="Server Error" class="mx-4 mt-4 mb-0">
+      <Alert v-if="error" type="error" title="Failed to Save Organization" class="mx-4 mb-0">
         {{ error }}
       </Alert>
+
+      <v-divider></v-divider>
 
       <v-card-actions class="px-4 py-4">
         <v-btn
           color="primary"
           class="mr-4"
           :loading="loading"
-          :disabled="loading || deleting || !modified"
+          :disabled="loading || deleting"
           @click="submit"
-        >Save Changes</v-btn>
+        >Submit</v-btn>
         <v-btn
+          v-if="!organization"
           text
           @click="clear"
           :disabled="loading || deleting"
@@ -172,7 +143,15 @@
     </v-card>
     <ConfirmDialog ref="confirmDelete">
       <Alert type="error" title="Are you sure?">
-        This organization <strong>and all of its data</strong> will be permanently deleted. This action cannot be undone.
+        <p>
+          This organization will be permanently deleted.
+        </p>
+        <p>
+          However, providers belonging to this organization will <strong>NOT</strong> be deleted.
+        </p>
+        <p class="mb-0">
+          This action cannot be undone.
+        </p>
       </Alert>
     </ConfirmDialog>
   </v-dialog>
@@ -184,7 +163,7 @@ import evt from '@/events'
 import { rules } from '@/lib/validators'
 
 export default {
-  name: 'AdminOrganizationCreateDialog',
+  name: 'AdminOrganizationDialog',
   data () {
     return {
       dialog: false,
@@ -194,11 +173,9 @@ export default {
       loading: false,
       deleting: false,
       removing: false,
-      modified: false,
       error: null,
 
       organization: null,
-      organizationUsers: [],
 
       code: {
         value: '',
@@ -208,50 +185,34 @@ export default {
         value: '',
         rules: rules.organization.name
       },
-      pocName: {
-        value: '',
-        rules: rules.organization.pocName
-      },
-      pocEmail: {
-        value: '',
-        rules: rules.organization.pocEmail
-      },
-      pocTel: {
-        value: '',
-        rules: rules.organization.pocName
+      organizationProviders: {
+        selected: []
       }
     }
   },
   computed: {
     ...mapGetters({
-      users: 'admin/users',
-      usersStatus: 'admin/usersStatus'
+      providers: 'admin/providers',
+      providersStatus: 'admin/providersStatus'
     })
   },
   methods: {
     async open (organization) {
       this.dialog = true
 
+      await this.$store.dispatch('admin/fetchProviders')
+
       if (organization) {
         this.organization = organization
         this.code.value = organization.code
         this.name.value = organization.name
-        this.pocName.value = organization.poc_name
-        this.pocEmail.value = organization.poc_email
-        this.pocTel.value = organization.poc_tel
-
-        this.getOrganizationsUsers(organization)
+        this.organizationProviders.selected = organization.providers.map(d => d.id)
       }
 
       return new Promise((resolve, reject) => {
         this.resolve = resolve
         this.reject = reject
       })
-    },
-    async getOrganizationsUsers (organization) {
-      const allUsers = await this.$store.dispatch('admin/fetchUsers')
-      const organizationUserIds = organization.users.map(d => d.id)
-      this.organizationUsers = allUsers.filter(d => organizationUserIds.includes(d.id))
     },
     async confirmDelete () {
       const ok = await this.$refs.confirmDelete.open(
@@ -286,9 +247,7 @@ export default {
       const payload = {
         code: this.code.value,
         name: this.name.value,
-        poc_name: this.pocName.value,
-        poc_email: this.pocEmail.value,
-        poc_tel: this.pocTel.value
+        providers: this.organizationProviders.selected
       }
 
       try {
@@ -320,19 +279,14 @@ export default {
     clear () {
       this.loading = false
       this.deleting = false
-      this.removing = false
-      this.modified = false
       this.error = null
       this.$refs.form.resetValidation()
 
       this.organization = null
-      this.organizationUsers = []
 
       this.code.value = ''
       this.name.value = ''
-      this.pocName.value = ''
-      this.pocEmail.value = ''
-      this.pocTel.value = ''
+      this.organizationProviders.selected = []
     },
     cancel () {
       this.resolve(false)
@@ -341,28 +295,6 @@ export default {
     close () {
       this.clear()
       this.dialog = false
-    },
-    async removeUser (user) {
-      this.removing = user.id
-      console.log('removeUser', user.id, this.organization)
-      try {
-        await this.$http.admin
-          .put(`/users/${user.id}`, {
-            action: 'removeFromOrganization',
-            organizationId: this.organization.id
-          })
-        evt.$emit('notify', `${user.attributes.email} has been removed from ${this.organization.code}`, 'success')
-        const index = this.organization.users.findIndex(d => d.id === user.id)
-        if (index >= 0) {
-          this.organization.users.splice(index, 1)
-        }
-        this.getOrganizationsUsers(this.organization)
-      } catch (err) {
-        console.error(err)
-        this.error = this.$errorMessage(err)
-      } finally {
-        this.removing = false
-      }
     }
   }
 }

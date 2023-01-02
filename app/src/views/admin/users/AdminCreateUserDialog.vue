@@ -19,12 +19,11 @@
         <v-form ref="form" @submit.prevent="submit" :disabled="loading">
           <div v-if="request">
             <div class="font-weight-bold body-1">User Request</div>
-            <pre class="d-block ml-4 mb-4">
+            <pre class="d-block mt-4 mb-4">
               Submitted: {{ request.created_at | timestamp('ff', 'local') }}
               Name: {{ request.name }}
               Email: {{ request.email }}
-              Organization: {{ request.organization }}
-              Abbreviation: {{ request.abbreviation }}
+              Provider: {{ request.provider_name }} ({{ request.provider_code }})
               Description: {{ request.description }}
             </pre>
             <div class="text-right">
@@ -66,68 +65,113 @@
 
           <v-divider class="mb-4"></v-divider>
 
-          <div class="font-weight-bold body-1 mb-4">User Organization(s)</div>
+          <div class="font-weight-bold body-1 mb-4">User Provider(s)</div>
 
           <v-autocomplete
-            v-model="organizations.selected"
-            :items="organizationsOptions"
-            item-text="name"
-            item-value="id"
-            :rules="organizations.rules"
-            label="Select existing organization(s)"
+            v-if="dialog"
+            v-model="providers.selected"
+            :items="providersOptions"
+            item-text="code"
+            :rules="providers.rules"
+            label="Select existing provider(s)"
             multiple
             chips
             deletable-chips
             outlined
-            required
+            return-object
             :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
-            :disabled="organization.new"
+            :disabled="provider.new"
             class="mt-4"
-          ></v-autocomplete>
+          >
+            <template v-slot:item="{ item }">
+              <v-list-item-content>
+                <v-list-item-title v-html="item.code"></v-list-item-title>
+                <v-list-item-subtitle v-html="item.name"></v-list-item-subtitle>
+              </v-list-item-content>
+            </template>
+          </v-autocomplete>
           <v-checkbox
-            v-model="organization.new"
-            label="Add to New Organization"
+            v-model="provider.new"
+            label="Add User to New Provider"
             class="mt-0"
           ></v-checkbox>
-          <div v-if="organization.new">
+          <div v-if="provider.new">
             <v-text-field
-              v-model="organization.code.value"
-              :rules="organization.code.rules"
-              label="Organization Code"
+              v-model="provider.code.value"
+              :rules="provider.code.rules"
+              label="Provider Code"
               hint="Abbreviation in UPPERCASE letters and underscores (UAA or NPS_DENALI)"
               outlined
               counter
               validate-on-blur
             ></v-text-field>
             <v-text-field
-              v-model="organization.name.value"
-              :rules="organization.name.rules"
-              label="Full Name of Organization"
+              v-model="provider.name.value"
+              :rules="provider.name.rules"
+              label="Full Name of Provider"
               outlined
               counter
               validate-on-blur
             ></v-text-field>
             <v-text-field
-              v-model="organization.pocName.value"
-              :rules="organization.pocName.rules"
+              v-model="provider.pocName.value"
+              :rules="provider.pocName.rules"
               label="POC Name"
               outlined
               validate-on-blur
             ></v-text-field>
             <v-text-field
-              v-model="organization.pocEmail.value"
-              :rules="organization.pocEmail.rules"
+              v-model="provider.pocEmail.value"
+              :rules="provider.pocEmail.rules"
               label="POC Email"
               outlined
               validate-on-blur
             ></v-text-field>
-            <v-text-field
-              v-model="organization.pocTel.value"
-              :rules="organization.pocTel.rules"
-              label="POC Telephone"
+
+            <v-autocomplete
+              v-if="dialog"
+              v-model="provider.organization.selected"
+              :items="organizations"
+              :rules="provider.organization.rules"
+              item-text="code"
+              item-value="id"
+              label="Select Organization"
               outlined
-              validate-on-blur
-            ></v-text-field>
+              clearable
+              :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
+              :disabled="provider.organization.new"
+            >
+              <template v-slot:item="{ item }">
+                <v-list-item-content>
+                  <v-list-item-title v-html="item.code"></v-list-item-title>
+                  <v-list-item-subtitle v-html="item.name"></v-list-item-subtitle>
+                </v-list-item-content>
+              </template>
+            </v-autocomplete>
+            <v-checkbox
+              v-model="provider.organization.new"
+              label="Add Provider to New Organization"
+              class="mt-0"
+            ></v-checkbox>
+            <div v-if="provider.organization.new">
+              <v-text-field
+                v-model="provider.organization.code.value"
+                :rules="provider.organization.code.rules"
+                label="Organization Code"
+                hint="Abbreviation in UPPERCASE letters and underscores (UAA or NPS)"
+                outlined
+                counter
+                validate-on-blur
+              ></v-text-field>
+              <v-text-field
+                v-model="provider.organization.name.value"
+                :rules="provider.organization.name.rules"
+                label="Full Name of Organization"
+                outlined
+                counter
+                validate-on-blur
+              ></v-text-field>
+            </div>
           </div>
 
           <v-btn type="submit" class="hidden">submit</v-btn>
@@ -193,43 +237,55 @@ export default {
       admin: {
         value: false
       },
-      organizations: {
+      providers: {
         selected: null,
         rules: []
       },
-      organization: {
+      provider: {
         new: false,
         code: {
           value: '',
-          rules: rules.organization.code
+          rules: rules.provider.code
         },
         name: {
           value: '',
-          rules: rules.organization.name
+          rules: rules.provider.name
         },
         pocName: {
           value: '',
-          rules: rules.organization.pocName
+          rules: rules.provider.pocName
         },
         pocEmail: {
           value: '',
-          rules: rules.organization.pocEmail
+          rules: rules.provider.pocEmail
         },
-        pocTel: {
-          value: '',
-          rules: rules.organization.pocName
+        organization: {
+          new: false,
+          selected: null,
+          rules: [],
+          code: {
+            value: '',
+            rules: rules.organization.code
+          },
+          name: {
+            value: '',
+            rules: rules.organization.name
+          }
         }
       }
     }
   },
   computed: {
-    ...mapGetters({ organizationsOptions: 'admin/organizations' })
+    ...mapGetters({
+      providersOptions: 'admin/providers',
+      organizations: 'admin/organizations'
+    })
   },
   async mounted () {
-    await this.fetchOrganizations()
+    await this.fetchProviders()
   },
   methods: {
-    ...mapActions({ fetchOrganizations: 'admin/fetchOrganizations' }),
+    ...mapActions({ fetchProviders: 'admin/fetchProviders' }),
     async ignoreRequest () {
       evt.$emit('notify', `Account request (${this.request.email}) has been ignored`, 'success')
       this.clear()
@@ -243,8 +299,17 @@ export default {
         this.request = request
         this.name.value = request.name
         this.email.value = request.email
-        this.organization.pocName.value = request.name
-        this.organization.pocEmail.value = request.email
+        if (request.provider_id) {
+          const provider = await this.$http.admin.get(`/providers/${request.provider_id}`)
+            .then(d => d.data)
+          if (provider) {
+            this.providers.selected = [provider]
+          }
+        }
+        this.provider.code.value = request.provider_code
+        this.provider.name.value = request.provider_name
+        this.provider.pocName.value = request.name
+        this.provider.pocEmail.value = request.email
       }
 
       return new Promise((resolve, reject) => {
@@ -259,25 +324,48 @@ export default {
 
       this.loading = true
 
-      let organizationIds = this.organizations.selected
-      if (this.organization.new) {
-        this.organization.code.value = this.organization.code.value.toUpperCase()
+      if (this.provider.new) {
+        if (this.provider.organization.new) {
+          this.provider.organization.code.value = this.provider.organization.code.value.toUpperCase()
+          const payload = {
+            code: this.provider.organization.code.value,
+            name: this.provider.organization.name.value
+          }
+          try {
+            const newOrganization = await this.$http.admin
+              .post('/organizations', payload)
+              .then(d => d.data)
+            await this.$store.dispatch('admin/fetchOrganizations')
+            this.provider.organization.selected = newOrganization.id
+            this.provider.organization.new = false
+          } catch (err) {
+            console.error(err)
+            if (err.response && err.response.data.type === 'UniqueViolation') {
+              this.error = `Organization code (${payload.code}) already exists`
+            } else {
+              this.error = this.$errorMessage(err)
+            }
+            this.loading = false
+            return
+          }
+        }
+        this.provider.code.value = this.provider.code.value.toUpperCase()
         const payload = {
-          code: this.organization.code.value,
-          name: this.organization.name.value,
-          poc_name: this.organization.pocName.value,
-          poc_email: this.organization.pocEmail.value,
-          poc_tel: this.organization.pocTel.value
+          code: this.provider.code.value,
+          name: this.provider.name.value,
+          poc_name: this.provider.pocName.value,
+          poc_email: this.provider.pocEmail.value,
+          organization_id: this.provider.organization.selected
         }
         try {
-          const organization = await this.$http.admin
-            .post('/organizations', payload)
+          const provider = await this.$http.admin
+            .post('/providers', payload)
             .then(d => d.data)
-          organizationIds = [organization.id]
+          this.providers.selected = [provider.id]
         } catch (err) {
           console.error(err)
           if (err.response && err.response.data.type === 'UniqueViolation') {
-            this.error = `Organization code (${payload.code}) already exists`
+            this.error = `Provider code (${payload.code}) already exists`
           } else {
             this.error = this.$errorMessage(err)
           }
@@ -291,7 +379,7 @@ export default {
           name: this.name.value,
           email: this.email.value,
           admin: this.admin.value,
-          organizationIds
+          providerIds: this.providers.selected
         }
 
         const user = await this.$http.admin
@@ -304,12 +392,6 @@ export default {
       } catch (err) {
         console.error(err)
         this.error = this.$errorMessage(err)
-
-        if (this.organization.new) {
-          // delete newly created organization since user was not created
-          await this.$http.admin
-            .delete(`/organizations/${organizationIds[0]}`)
-        }
       } finally {
         this.loading = false
       }
@@ -323,14 +405,13 @@ export default {
       this.email.value = ''
       this.admin.value = false
 
-      this.organizations.selected = null
+      this.providers.selected = null
 
-      this.organization.new = false
-      this.organization.code.value = ''
-      this.organization.name.value = ''
-      this.organization.pocName.value = ''
-      this.organization.pocEmail.value = ''
-      this.organization.pocTel.value = ''
+      this.provider.new = false
+      this.provider.code.value = ''
+      this.provider.name.value = ''
+      this.provider.pocName.value = ''
+      this.provider.pocEmail.value = ''
     },
     close () {
       this.clear()

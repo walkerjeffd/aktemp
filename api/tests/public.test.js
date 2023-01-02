@@ -20,8 +20,8 @@ describe('public api', () => {
     expect(response.statusCode).toBe(200)
   })
 
-  test('GET /organizations', async () => {
-    const response = await request(app).get('/public/organizations')
+  test('GET /providers', async () => {
+    const response = await request(app).get('/public/providers')
     expect(response.statusCode).toBe(200)
     expect(Array.isArray(response.body)).toBeTruthy()
     expect(response.body).toHaveLength(2)
@@ -78,7 +78,7 @@ describe('public api', () => {
     expect(response.statusCode).toBe(200)
     expect(response.body).toBeTruthy()
     expect(response.body.station_code).toBeTruthy()
-    expect(response.body.organization_code).toBeTruthy()
+    expect(response.body.provider_code).toBeTruthy()
     expect(response.body.values).toBeUndefined()
   })
 

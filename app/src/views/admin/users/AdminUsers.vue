@@ -1,6 +1,6 @@
 <template>
   <!-- eslint-disable vue/valid-v-slot -->
-  <div>
+  <div class="ma-4 elevation-2 mb-0">
     <Alert v-if="status.error" type="error" title="Server Error" class="ma-4 elevation-2">
       {{ status.error }}
     </Alert>

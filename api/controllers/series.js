@@ -5,7 +5,7 @@ const { Series, Station } = require('aktemp-db/models')
 async function attachSeries (req, res, next) {
   const series = await Series.query()
     .findById(req.params.seriesId)
-    .modify('stationOrganization')
+    .modify('stationProvider')
     .modify('filename')
     .withGraphFetched('flags')
 
@@ -50,10 +50,10 @@ async function getSeriesDaily (req, res, next) {
   return res.status(200).json(rows)
 }
 
-async function getOrganizationSeries (req, res, next) {
-  const stations = await res.locals.organization.$relatedQuery('stations')
+async function getProviderSeries (req, res, next) {
+  const stations = await res.locals.provider.$relatedQuery('stations')
   const rows = await Station.relatedQuery('series')
-    .for(stations).modify('stationOrganization')
+    .for(stations).modify('stationProvider')
   return res.status(200).json(rows)
 }
 
@@ -114,7 +114,7 @@ module.exports = {
   getSeriesValues,
   getSeriesDaily,
   getSeriesFlags,
-  getOrganizationSeries,
+  getProviderSeries,
   postSeriesFlags,
   putSeries,
   putSeriesFlag,

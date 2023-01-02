@@ -250,8 +250,8 @@ export default {
       },
       headers: [
         {
-          text: 'Organization',
-          value: 'organization_code'
+          text: 'Provider',
+          value: 'provider_code'
         },
         {
           text: 'Station',
@@ -347,7 +347,7 @@ export default {
         }
 
         await this.$http.public.post('/downloads', payload)
-        evt.$emit('notify', 'Download request has been submitted. Data will be emailed to you.', 'success')
+        evt.$emit('notify', 'Download request has been submitted. Check your email in a few minutes.', 'success')
         this.clearCart()
         this.close()
       } catch (err) {

@@ -1,6 +1,6 @@
 <template>
   <!-- eslint-disable vue/valid-v-slot -->
-  <div>
+  <div class="ma-4 elevation-2 mb-0">
     <Alert v-if="error" type="error" title="Server Error" class="ma-4 elevation-2">
       {{ error }}
     </Alert>
@@ -89,8 +89,8 @@ export default {
         value: 'email'
       },
       {
-        text: 'Organization',
-        value: 'organization'
+        text: 'Provider',
+        value: 'provider_code'
       },
       {
         text: 'Pending',

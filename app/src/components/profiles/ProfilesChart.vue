@@ -4,6 +4,9 @@
     <Alert v-else-if="error" type="error" title="Failed to Get Profile Data" class="mb-0">{{ error }}</Alert>
     <div v-show="!loading && !error">
       <highcharts :options="settings" ref="chart"></highcharts>
+      <div class="text--secondary caption ml-2">
+        <v-icon x-small>mdi-information</v-icon> Click+drag to zoom in, hold shift to pan.
+      </div>
     </div>
   </div>
 </template>
@@ -20,6 +23,12 @@ export default {
       error: null,
       settings: {
         chart: {
+          panKey: 'shift',
+          panning: {
+            enabled: true,
+            type: 'xy'
+          },
+          zoomType: 'xy',
           height: 500,
           marginLeft: 50,
           type: 'scatter',

@@ -27,16 +27,16 @@
       <v-spacer></v-spacer>
       <div style="width:300px">
         <v-select
-          :items="organizations"
-          v-model="organization"
-          label="Organization"
+          :items="providers"
+          v-model="provider"
+          label="Provider"
           item-text="code"
           dense
           required
           outlined
           return-object
           hide-details
-          :disabled="organizationsStatus.loading"
+          :disabled="providersStatus.loading"
           style="z-index:2000"
         ></v-select>
       </div>
@@ -64,46 +64,46 @@
 import { mapGetters } from 'vuex'
 
 export default {
-  name: 'ManageOrganization'
+  name: 'ManageProvider'
   // computed: {
   //   ...mapGetters({
-  //     organizations: 'manage/organizations',
-  //     organizationsStatus: 'manage/organizationsStatus'
+  //     providers: 'manage/providers',
+  //     providersStatus: 'manage/providersStatus'
   //   }),
-  //   organization: {
+  //   provider: {
   //     get () {
-  //       return this.$store.state.manage.organization
+  //       return this.$store.state.manage.provider
   //     },
   //     set (value) {
   //       console.log(this.$route)
   //       this.$router.push({
-  //         name: 'manageOrganization',
+  //         name: 'manageProvider',
   //         params: {
-  //           organizationId: value.id
+  //           providerId: value.id
   //         }
   //       })
   //     }
   //   }
   // },
   // watch: {
-  //   organization () {
-  //     console.log('ManageOrganization:watch(organization)', this.organization)
-  //     // if (!this.organization) return
-  //     // if (this.$route.params.organizationId === this.organization.id) return
-  //     // this.setOrganizationById(this.organization.id)
+  //   provider () {
+  //     console.log('ManageProvider:watch(provider)', this.provider)
+  //     // if (!this.provider) return
+  //     // if (this.$route.params.providerId === this.provider.id) return
+  //     // this.setProviderById(this.provider.id)
   //   },
-  //   organizations () {
-  //     console.log('ManageOrganization:watch(organizations)', this.organizations)
-  //     this.setOrganization()
+  //   providers () {
+  //     console.log('ManageProvider:watch(providers)', this.providers)
+  //     this.setProvider()
   //   }
   // },
   // mounted () {
-  //   console.log('ManageOrganization:mounted', this.$route.params.organizationId)
+  //   console.log('ManageProvider:mounted', this.$route.params.providerId)
   // },
   // methods: {
-  //   setOrganization () {
-  //     console.log('ManageOrganization:setOrganization()', this.$route.params.organizationId)
-  //     this.$store.dispatch('manage/setOrganizationById', this.$route.params.organizationId)
+  //   setProvider () {
+  //     console.log('ManageProvider:setProvider()', this.$route.params.providerId)
+  //     this.$store.dispatch('manage/setProviderById', this.$route.params.providerId)
   //   }
   // }
 }

@@ -74,7 +74,7 @@
                     <router-link :to="{
                       name: 'manageStation',
                       params: {
-                        orgnizationId: this.$route.params.organizationId,
+                        orgnizationId: this.$route.params.providerId,
                         stationId: table.selected.station.id
                       }
                     }">
@@ -322,8 +322,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      organizations: 'manage/organizations',
-      organization: 'manage/organization'
+      providers: 'manage/providers',
+      provider: 'manage/provider'
     })
   },
   mounted () {
@@ -352,7 +352,7 @@ export default {
       this.error = null
       this.table.selected = null
 
-      // check form inputs (organization)
+      // check form inputs (provider)
       if (!this.$refs.form.validate()) {
         this.error = 'Check form errors above'
         return
@@ -447,7 +447,7 @@ export default {
       // console.log('createStation()', i, row)
       if (row.status === 'SUCCESS') return
 
-      const organizationId = this.organization.id
+      const providerId = this.provider.id
 
       try {
         row = await this.validateRow(row, i)
@@ -464,7 +464,7 @@ export default {
       try {
         this.message = `Saving ${row.station.code}`
         const result = await this.$http.restricted
-          .post(`/organizations/${organizationId}/stations`, row.station)
+          .post(`/providers/${providerId}/stations`, row.station)
           .then(d => d.data)
         row.station.id = result.id
         row.status = 'SUCCESS'

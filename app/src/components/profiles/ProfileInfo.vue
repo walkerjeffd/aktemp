@@ -10,9 +10,9 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Organization
+            Provider
           </td>
-          <td class="font-weight-bold">{{ profile.organization_code }}</td>
+          <td class="font-weight-bold">{{ profile.provider_code }}</td>
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
@@ -188,7 +188,7 @@ export default {
         this.profile.values.forEach(d => {
           d.station_timezone = this.profile.station_timezone
         })
-        const filename = `AKTEMP-${station.organization_code}-${station.code}-profile-${this.profile.id}.csv`
+        const filename = `AKTEMP-${station.provider_code}-${station.code}-profile-${this.profile.id}.csv`
         const body = writeProfilesFile([this.profile], [station])
         this.$download(body, filename)
       } catch (err) {

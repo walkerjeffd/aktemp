@@ -10,7 +10,7 @@
           Use this form to request an account. An account is <strong>not required to view or download</strong> temperature data. It is only required to upload data.
         </p>
         <p>
-          Your name and email will be kept private, and will not be publicly displayed. However, your organization will be publicly displayed as the owner of your data.
+          Your name and email will be kept private, and will not be publicly displayed. However, your affiliation will be publicly displayed as the data provider.
         </p>
         <p>
           We may use your email to contact you if we have questions about your photos or data, but we will not share it with any third party.
@@ -38,30 +38,55 @@
           outlined
           validate-on-blur
         ></v-text-field>
+        <v-autocomplete
+          :items="provider.options"
+          :rules="provider.rules"
+          v-model="provider.selected"
+          label="Select your affiliation"
+          item-text="code"
+          outlined
+          clearable
+          return-object
+          :disabled="providerOther"
+        >
+          <template v-slot:item="data">
+            <v-list-item-content>
+              <v-list-item-title v-html="data.item.code"></v-list-item-title>
+              <v-list-item-subtitle v-html="data.item.name"></v-list-item-subtitle>
+            </v-list-item-content>
+          </template>
+        </v-autocomplete>
+        <v-checkbox
+          label="My affiliation is not listed"
+          v-model="providerOther"
+          class="mt-0"
+        ></v-checkbox>
         <v-text-field
-          v-model="organization.value"
-          :rules="organization.rules"
-          label="Organization"
+          v-if="providerOther"
+          v-model="providerCode.value"
+          :rules="providerCode.rules"
+          label="Affiliation Abbreviation"
           counter
           outlined
-          maxlength="128"
-          hint="Full name of your organization (e.g. University of Alaska, Anchorage). Please include branch or office if applicable."
+          maxlength="32"
+          hint="Short abbreviation for your affiliation (e.g. UAA). Please only use UPPERCASE letters and underscores."
           validate-on-blur
         ></v-text-field>
         <v-text-field
-          v-model="abbreviation.value"
-          :rules="abbreviation.rules"
-          label="Organization Abbreviation"
+          v-if="providerOther"
+          v-model="providerName.value"
+          :rules="providerName.rules"
+          label="Affiliation Full Name"
           counter
           outlined
-          maxlength="16"
-          hint="Short abbreviation for your organization (e.g. UAA). Please only use UPPERCASE letters and underscores."
+          maxlength="128"
+          hint="Full name of your affiliation (e.g. University of Alaska, Anchorage). Please include local branch, office or region if applicable."
           validate-on-blur
         ></v-text-field>
         <v-textarea
           v-model="description.value"
           :rules="description.rules"
-          label="Brief Description"
+          label="Brief Description of Your Data"
           counter
           outlined
           maxlength="500"
@@ -152,13 +177,26 @@ export default {
         value: '',
         rules: rules.request.email
       },
-      organization: {
-        value: '',
-        rules: rules.request.organization
+      provider: {
+        loading: true,
+        selected: null,
+        options: [],
+        rules: [
+          v => this.providerOther || !!v || 'Provider is required'
+        ]
       },
-      abbreviation: {
+      providerOther: false,
+      providerCode: {
         value: '',
-        rules: rules.request.abbreviation
+        rules: [
+          v => !this.providerOther || !!v || 'Provider code is required'
+        ]
+      },
+      providerName: {
+        value: '',
+        rules: [
+          v => !this.providerOther || !!v || 'Provider name is required'
+        ]
       },
       description: {
         value: '',
@@ -166,7 +204,19 @@ export default {
       }
     }
   },
+  mounted () {
+    this.init()
+  },
+  errorCaptured (err) {
+    this.error = this.$errorMessage(err)
+  },
   methods: {
+    async init () {
+      const providers = await this.$http.public.get('/providers')
+        .then(d => d.data)
+      this.provider.options = providers
+      this.provider.loading = false
+    },
     async submit () {
       this.error = null
       this.success = false
@@ -183,9 +233,15 @@ export default {
         'g-recaptcha-response': this.recaptcha.response,
         name: this.name.value,
         email: this.email.value,
-        organization: this.organization.value,
-        abbreviation: this.abbreviation.value,
         description: this.description.value
+      }
+      if (this.providerOther) {
+        payload.provider_code = this.providerCode.value
+        payload.provider_name = this.providerName.value
+      } else {
+        payload.provider_id = this.provider.selected.id
+        payload.provider_code = this.provider.selected.code
+        payload.provider_name = this.provider.selected.name
       }
 
       try {
@@ -206,8 +262,10 @@ export default {
 
       this.name.value = ''
       this.email.value = ''
-      this.organization.value = ''
-      this.abbreviation.value = ''
+      this.provider.selected = null
+      this.providerOther = false
+      this.providerCode.value = ''
+      this.providerName.value = ''
       this.description.value = ''
     },
     onVerifyRecaptcha (response) {

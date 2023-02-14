@@ -3,7 +3,10 @@ const { Station } = require('aktemp-db/models')
 
 const getStations = async (req, res, next) => {
   let query
-  if (res.locals.provider) {
+  if (res.locals.public) {
+    query = Station.query()
+      .where('private', false)
+  } else if (res.locals.provider) {
     query = res.locals.provider.$relatedQuery('stations')
   } else if (res.locals.user) {
     query = res.locals.user.$relatedQuery('providers.[stations]')

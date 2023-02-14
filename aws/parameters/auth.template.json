@@ -14,5 +14,13 @@
   {
     "ParameterKey": "lambdaTriggerArn",
     "ParameterValue": ""
+  },
+  {
+    "PamameterKey": "emailAddress",
+    "ParameterValue": ""
+  },
+  {
+    "PamameterKey": "emailAddressArn",
+    "ParameterValue": ""
   }
 ]

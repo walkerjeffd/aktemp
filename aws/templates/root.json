@@ -52,6 +52,10 @@
     "recaptchaSecretKey": {
       "Description": "reCAPTCHA secret key",
       "Type": "String"
+    },
+    "emailAddress": {
+      "Description": "Email address for download requests",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -60,8 +64,7 @@
       "Properties": {
         "TemplateURL": "./notify.json",
         "Parameters": {
-          "appName": { "Ref": "appName" },
-          "env": { "Ref": "env" }
+          "appName": { "Ref": "appName" }
         }
       }
     },
@@ -121,7 +124,8 @@
           "notifyTopicArn": {
             "Fn::GetAtt": [ "NotifyStack", "Outputs.TopicArn" ]
           },
-          "storageBucketName": { "Ref": "storageBucketName" }
+          "storageBucketName": { "Ref": "storageBucketName" },
+          "emailAddress": { "Ref": "emailAddress" }
         }
       }
     }

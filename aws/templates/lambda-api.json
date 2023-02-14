@@ -95,9 +95,6 @@
               {
                 "Ref": "appName"
               },
-              {
-                "Ref": "env"
-              },
               "lambda-api"
             ]
           ]
@@ -182,9 +179,6 @@
               {
                 "Ref": "appName"
               },
-              {
-                "Ref": "env"
-              },
               "lambda-api-role"
             ]
           ]
@@ -233,9 +227,6 @@
             [
               {
                 "Ref": "appName"
-              },
-              {
-                "Ref": "env"
               },
               "lambda-api-policy"
             ]

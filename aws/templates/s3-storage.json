@@ -55,7 +55,7 @@
               "Id": "DownloadsExpireIn30Days",
               "Status": "Enabled",
               "Prefix": "downloads/",
-              "ExpirationInDays": 1
+              "ExpirationInDays": 30
             }
           ]
         }

@@ -5,12 +5,17 @@
     "appName": {
       "Description": "Application name",
       "Type": "String",
-      "Default": "shedstemplate"
+      "Default": "app"
     },
     "env": {
       "Description": "Environment",
       "Type": "String",
       "Default": "dev"
+    },
+    "dbName": {
+      "Description": "Database Name",
+      "Type": "String",
+      "Default": "db"
     },
     "vpcId": {
       "Description": "VPC ID",
@@ -104,17 +109,7 @@
         "AutoMinorVersionUpgrade": true,
         "BackupRetentionPeriod": { "Ref": "backupRetentionPeriod" },
         "DBInstanceIdentifier": {
-          "Fn::Join": [
-            "-",
-            [
-              {
-                "Ref": "appName"
-              },
-              {
-                "Ref": "env"
-              }
-            ]
-          ]
+          "Ref": "dbName"
         },
         "DBSubnetGroupName": {
           "Ref": "DBSubnetGroup"

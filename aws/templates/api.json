@@ -30,7 +30,6 @@
             "-",
             [
               { "Ref": "appName" },
-              { "Ref": "env" },
               "restApi"
             ]
           ]
@@ -557,7 +556,6 @@
           "-",
           [
             { "Ref": "appName" },
-            { "Ref": "env" },
             "restApi"
           ]
         ]

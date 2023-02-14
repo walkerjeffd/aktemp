@@ -34,14 +34,9 @@ source .env.prod.local.sh
 ./create.sh parameters/root.${ENV}.local.json
 # aws cloudformation create-stack --stack-name ${STACK_NAME} --template-body file://root.local.json --parameters file://root-parameters/root.json --capabilities CAPABILITY_NAMED_IAM
 
-# create SNS subscriptions
-cp templates/subscriptions.template.json templates/subscriptions.${ENV}.local.json
-# edit templates/subscriptions.${ENV}.local.json
-./create-subscriptions.sh parameters/subscriptions.${ENV}.local.json
-
 # update (use packaged template)
 ./deploy.sh
-# aws cloudformation deploy --stack-name ${STACK_NAME} --template-file root.dev.local.json --capabilities CAPABILITY_NAMED_IAM
+# aws cloudformation deploy --stack-name ${STACK_NAME} --template-file root.dev.local.json --parameter-overrides KEY=VALUE --capabilities CAPABILITY_NAMED_IAM
 
 # repackage and deploy
 ./update-all.sh

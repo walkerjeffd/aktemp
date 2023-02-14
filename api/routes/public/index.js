@@ -2,6 +2,11 @@ const express = require('express')
 
 const router = express.Router()
 
+router.use((req, res, next) => {
+  res.locals.public = true
+  next()
+})
+
 router.get('/', function (req, res, next) {
   res.status(200).json({ api: 'public' })
 })

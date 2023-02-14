@@ -105,7 +105,8 @@ Docker deployment
 
 ```bash
 # load env (REGION, AWS_REPO)
-source .env.docker.local
+source .env.docker.dev.local
+source .env.docker.prod.local
 
 # log in
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${AWS_REPO}

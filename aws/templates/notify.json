@@ -6,11 +6,6 @@
       "Description": "Application name",
       "Type": "String",
       "Default": "shedstemplate"
-    },
-    "env": {
-      "Description": "Environment",
-      "Type": "String",
-      "Default": "dev"
     }
   },
   "Resources": {
@@ -21,8 +16,7 @@
           "Fn::Join": [
             "-",
             [
-              { "Ref": "appName" },
-              { "Ref": "env" }
+              { "Ref": "appName" }
             ]
           ]
         }

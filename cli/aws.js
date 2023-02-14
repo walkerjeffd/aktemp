@@ -43,7 +43,7 @@ File URL: ${download.url}
 
 This link will expire in 30 days.
 
-If you are unable to download a file of this size, please return to the Data Explorer (https://aktemp.uaa.alaska.edu/#explorer) to try fewer stations. For technical assistance, please email jeff@walkerenvres.com.
+If you are unable to download a file of this size, please return to the Data Explorer (https://aktemp.uaa.alaska.edu/#explorer) to try fewer stations. For technical assistance, please email ${process.env.AKTEMP_EMAIL}.
 `
   } else if (download.status === 'FAILED') {
     subject = `AKTEMP Download Failed (Job ${download.id})`
@@ -53,7 +53,7 @@ Job ID: ${download.id}
 Requested at: ${formatTimestamp(luxon.DateTime.fromJSDate(new Date(download.created_at)), 'D t ZZZZ', 'US/Alaska')}
 Error: ${download.error}
 
-For technical assistance, please email jeff@walkerenvres.com.
+For technical assistance, please email ${process.env.AKTEMP_EMAIL}.
 `
   } else {
     return null
@@ -75,7 +75,7 @@ For technical assistance, please email jeff@walkerenvres.com.
         Data: subject
       }
     },
-    Source: 'jeff@walkerenvres.com'
+    Source: process.env.AKTEMP_EMAIL
   }
   return ses.sendEmail(params).promise()
 }

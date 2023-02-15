@@ -2,20 +2,28 @@
   <v-app>
     <v-app-bar
       app
-      color="#00573d"
+      color="#00583D"
       dark
       clipped-left
       style="z-index:1000"
     >
-      <v-toolbar-title>AKTEMP</v-toolbar-title>
+      <v-toolbar-title>
+        <a href="https://accs.uaa.alaska.edu/">
+          <v-img src="@/assets/img/accs-logo.png" alt="ACCS logo" contain width="200" style="background-color:white"></v-img>
+        </a>
+      </v-toolbar-title>
+      <span class="text-h4 text-center ml-4">AKTEMP</span>
 
       <v-spacer></v-spacer>
 
-      <v-btn text exact :to="{ name: 'home' }">
+      <v-btn text exact class="mx-2" :to="{ name: 'home' }">
         <v-icon small left>mdi-home</v-icon>Home
       </v-btn>
-      <v-btn text exact :to="{ name: 'explorer' }">
-        <v-icon small left>mdi-earth</v-icon>Data Explorer
+      <v-btn text exact class="mx-2" :to="{ name: 'explorer' }">
+        <v-icon small left>mdi-chart-line</v-icon>Data Explorer
+      </v-btn>
+      <v-btn text exact class="mx-2" href="https://accscatalog.uaa.alaska.edu/dataset/aktemp-water-temperature-database" target="_blank">
+        <v-icon small left>mdi-book-outline</v-icon>User Guide
       </v-btn>
 
       <v-divider vertical class="mx-4"></v-divider>
@@ -70,7 +78,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item @click="logout" to="" class="pr-12">
+          <v-list-item :to="{ name: 'home' }" @click="logout" class="pr-12" exact active-class="">
             <v-list-item-icon>
               <v-icon>mdi-logout</v-icon>
             </v-list-item-icon>
@@ -103,9 +111,7 @@
       </v-menu>
     </v-app-bar>
 
-    <!-- <v-main> -->
     <router-view/>
-    <!-- </v-main> -->
 
     <v-snackbar v-model="snackbar.show" :timeout="snackbar.timeout" :color="snackbar.color" :top="true" elevation="12" light outlined text style="z-index:5000">
       <span class="font-weight-bold" v-html="snackbar.text"></span>
@@ -159,7 +165,7 @@ export default {
       try {
         await this.$Amplify.Auth.signOut()
         evt.$emit('notify', 'You have been logged out', 'success')
-        evt.$emit('authState', { state: 'signedOut', redirect: { name: 'home' } })
+        evt.$emit('authState', { state: 'signedOut' })
       } catch (err) {
         console.log(err)
         evt.$emit('notify', 'Failed to log out', 'error')

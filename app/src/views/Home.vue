@@ -3,7 +3,7 @@
     <v-container class="mt-4">
       <div class="text-h3 text-center mb-8">Welcome to AKTEMP</div>
       <v-img
-        src="@/assets/img/stream-pano.png"
+        src="@/assets/img/stream-pano.jpg"
         alt="Panoramic photograph of a shallow stream in Alaska"
         class="my-8 elevation-4"
         style="border-radius: 15px;"

@@ -44,14 +44,16 @@ program
           file_id: d.file_id,
           series_id: d.id,
           start_datetime: d.start_datetime,
-          end_datetime: d.end_datetime
+          end_datetime: d.end_datetime,
+          n_values: d.n_values
         }))
       } else if (file.profiles && file.profiles.length > 0) {
         rows = file.profiles.map(d => ({
           file_id: d.file_id,
           profile_id: d.id,
           station_id: d.station_id,
-          date: d.date
+          date: d.date,
+          n_values: d.n_values
         }))
       }
       printFiles([file])

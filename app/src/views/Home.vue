@@ -1,13 +1,48 @@
 <template>
   <v-main>
     <v-container class="mt-4">
-      <div class="text-h3 text-center mb-8">Welcome to AKTEMP</div>
-      <v-img
-        src="@/assets/img/stream-pano.jpg"
-        alt="Panoramic photograph of a shallow stream in Alaska"
-        class="my-8 elevation-4"
-        style="border-radius: 15px;"
-      ></v-img>
+      <v-parallax dark src="@/assets/img/stream-pano.jpg" style="border-radius: 15px;" class="mb-8">
+        <v-fade-transition>
+          <div class="mx-n4 pt-4 px-8 text-center" style="background:rgba(0,0,0,0.5)" v-if="showTitle">
+            <h1 class="display-2 font-weight-thin mb-4">Welcome to AKTEMP</h1>
+          </div>
+        </v-fade-transition>
+        <v-fade-transition>
+          <v-row align="end" justify="start" v-if="stats">
+            <v-col cols="6">
+              <div class="ml-n4 hero-background" style="display:inline-block">
+                <div class="text-h6 font-weight-light">Database Summary</div>
+                <v-list color="transparent" dark dense>
+                  <v-list-item>
+                    <v-list-item-icon>
+                      <v-icon>mdi-account-group</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content class="text-h6 font-weight-normal">
+                      {{ stats.providers.toLocaleString() }} Providers
+                    </v-list-item-content>
+                  </v-list-item>
+                  <v-list-item>
+                    <v-list-item-icon>
+                      <v-icon>mdi-map-marker-multiple</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content class="text-h6 font-weight-normal">
+                      {{ stats.stations.toLocaleString() }} Stations
+                    </v-list-item-content>
+                  </v-list-item>
+                  <v-list-item>
+                    <v-list-item-icon>
+                      <v-icon>mdi-thermometer-low</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content class="text-h6 font-weight-normal">
+                      {{ stats.values.toLocaleString() }} Measurements
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list>
+              </div>
+            </v-col>
+          </v-row>
+        </v-fade-transition>
+      </v-parallax>
       <v-row justify="center">
         <v-col cols="12" md="10" lg="8" xl="6" class="black--text body-1">
           <p class="mb-8" style="font-size:1.1em">
@@ -57,6 +92,33 @@
 <script>
 
 export default {
-  name: 'Home'
+  name: 'Home',
+  data: () => ({
+    stats: null,
+    showTitle: false
+  }),
+  mounted: function () {
+    this.fetchStats()
+  },
+  methods: {
+    async fetchStats () {
+      try {
+        this.stats = await this.$http.public.get('/stats')
+          .then(response => response.data)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        this.showTitle = true
+      }
+    }
+  }
 }
 </script>
+
+<style>
+/* class with opacity gradient */
+.hero-background {
+  background: linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.5), rgba(0,0,0,0));
+  padding: 10px 100px 10px 10px;
+}
+</style>

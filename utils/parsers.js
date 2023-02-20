@@ -252,6 +252,7 @@ function parseSeriesFile (rows, config, stations) {
     s.depth_category = config.depth_category
     s.start_datetime = datetimeExtent[0]
     s.end_datetime = datetimeExtent[1]
+    s.n_values = s.values.length
     s.interval = config.interval
     if (s.interval === 'CONTINUOUS') {
       debug(`parseSeriesFile(): done (n=${series.length})`)
@@ -321,6 +322,7 @@ function parseProfilesFile (rows, config, stations) {
         station_id: station.id,
         station_code: station.code,
         date: key,
+        n_values: value.length,
         accuracy: config.accuracy,
         reviewed: config.reviewed,
         values: value.map(({ date, station_code, ...d }) => d) // eslint-disable-line

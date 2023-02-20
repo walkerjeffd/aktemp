@@ -139,7 +139,6 @@
               outlined
               clearable
               :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
-              :disabled="provider.organization.new"
             >
               <template v-slot:item="{ item }">
                 <v-list-item-content>
@@ -148,30 +147,6 @@
                 </v-list-item-content>
               </template>
             </v-autocomplete>
-            <v-checkbox
-              v-model="provider.organization.new"
-              label="Add Provider to New Organization"
-              class="mt-0"
-            ></v-checkbox>
-            <div v-if="provider.organization.new">
-              <v-text-field
-                v-model="provider.organization.code.value"
-                :rules="provider.organization.code.rules"
-                label="Organization Code"
-                hint="Abbreviation in UPPERCASE letters and underscores (UAA or NPS)"
-                outlined
-                counter
-                validate-on-blur
-              ></v-text-field>
-              <v-text-field
-                v-model="provider.organization.name.value"
-                :rules="provider.organization.name.rules"
-                label="Full Name of Organization"
-                outlined
-                counter
-                validate-on-blur
-              ></v-text-field>
-            </div>
           </div>
 
           <v-btn type="submit" class="hidden">submit</v-btn>
@@ -260,17 +235,8 @@ export default {
           rules: rules.provider.pocEmail
         },
         organization: {
-          new: false,
           selected: null,
-          rules: [],
-          code: {
-            value: '',
-            rules: rules.organization.code
-          },
-          name: {
-            value: '',
-            rules: rules.organization.name
-          }
+          rules: []
         }
       }
     }
@@ -280,9 +246,6 @@ export default {
       providersOptions: 'admin/providers',
       organizations: 'admin/organizations'
     })
-  },
-  async mounted () {
-    await this.fetchProviders()
   },
   methods: {
     ...mapActions({ fetchProviders: 'admin/fetchProviders' }),
@@ -294,6 +257,7 @@ export default {
     },
     async open (request) {
       this.dialog = true
+      await this.fetchProviders()
 
       if (request) {
         this.request = request
@@ -325,30 +289,6 @@ export default {
       this.loading = true
 
       if (this.provider.new) {
-        if (this.provider.organization.new) {
-          this.provider.organization.code.value = this.provider.organization.code.value.toUpperCase()
-          const payload = {
-            code: this.provider.organization.code.value,
-            name: this.provider.organization.name.value
-          }
-          try {
-            const newOrganization = await this.$http.admin
-              .post('/organizations', payload)
-              .then(d => d.data)
-            await this.$store.dispatch('admin/fetchOrganizations')
-            this.provider.organization.selected = newOrganization.id
-            this.provider.organization.new = false
-          } catch (err) {
-            console.error(err)
-            if (err.response && err.response.data.type === 'UniqueViolation') {
-              this.error = `Organization code (${payload.code}) already exists`
-            } else {
-              this.error = this.$errorMessage(err)
-            }
-            this.loading = false
-            return
-          }
-        }
         this.provider.code.value = this.provider.code.value.toUpperCase()
         const payload = {
           code: this.provider.code.value,
@@ -412,6 +352,7 @@ export default {
       this.provider.name.value = ''
       this.provider.pocName.value = ''
       this.provider.pocEmail.value = ''
+      this.provider.organization.selected = null
     },
     close () {
       this.clear()

@@ -97,7 +97,6 @@
             outlined
             clearable
             :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
-            :disabled="organization.new"
             class="mt-4"
           >
             <template v-slot:item="{ item }">
@@ -107,31 +106,6 @@
               </v-list-item-content>
             </template>
           </v-autocomplete>
-          <v-checkbox
-            v-model="organization.new"
-            label="Add to New Organization"
-            class="mt-0"
-            hide-details
-          ></v-checkbox>
-          <div v-if="organization.new" class="mt-4">
-            <v-text-field
-              v-model="organization.code.value"
-              :rules="organization.code.rules"
-              label="Organization Code"
-              hint="Abbreviation in UPPERCASE letters and underscores (UAA or NPS)"
-              outlined
-              counter
-              validate-on-blur
-            ></v-text-field>
-            <v-text-field
-              v-model="organization.name.value"
-              :rules="organization.name.rules"
-              label="Full Name of Organization"
-              outlined
-              counter
-              validate-on-blur
-            ></v-text-field>
-          </div>
 
           <v-divider class="my-4"></v-divider>
 
@@ -256,17 +230,8 @@ export default {
         selected: []
       },
       organization: {
-        new: false,
         selected: null,
-        rules: [],
-        code: {
-          value: '',
-          rules: rules.organization.code
-        },
-        name: {
-          value: '',
-          rules: rules.organization.name
-        }
+        rules: []
       }
     }
   },
@@ -324,32 +289,6 @@ export default {
 
       if (!this.$refs.form.validate()) return
 
-      if (this.organization.new) {
-        this.organization.code.value = this.organization.code.value.toUpperCase()
-        const payload = {
-          code: this.organization.code.value,
-          name: this.organization.name.value
-        }
-        try {
-          const newOrganization = await this.$http.admin
-            .post('/organizations', payload)
-            .then(d => d.data)
-          await this.$store.dispatch('admin/fetchOrganizations')
-          this.organization.selected = newOrganization.id
-          this.organization.new = false
-          return newOrganization
-        } catch (err) {
-          console.error(err)
-          if (err.response && err.response.data.type === 'UniqueViolation') {
-            this.error = `Organization code (${payload.code}) already exists`
-          } else {
-            this.error = this.$errorMessage(err)
-          }
-          this.loading = false
-          return
-        }
-      }
-
       this.loading = true
 
       const payload = {
@@ -400,10 +339,7 @@ export default {
       this.pocName.value = ''
       this.pocEmail.value = ''
       this.users.selected = []
-      this.organization.new = false
       this.organization.selected = null
-      this.organization.code.value = ''
-      this.organization.name.value = ''
     },
     cancel () {
       this.resolve(false)

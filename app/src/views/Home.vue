@@ -9,8 +9,8 @@
         </v-fade-transition>
         <v-fade-transition>
           <v-row align="end" justify="start" v-if="stats">
-            <v-col cols="6">
-              <div class="ml-n4 hero-background" style="display:inline-block">
+            <v-col cols="12">
+              <div class="ml-n4 aktemp-db-stats">
                 <div class="text-h6 font-weight-light">Database Summary</div>
                 <v-list color="transparent" dark dense>
                   <v-list-item>
@@ -116,8 +116,8 @@ export default {
 </script>
 
 <style>
-/* class with opacity gradient */
-.hero-background {
+.aktemp-db-stats {
+  display:inline-block;
   background: linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.5), rgba(0,0,0,0));
   padding: 10px 100px 10px 10px;
 }

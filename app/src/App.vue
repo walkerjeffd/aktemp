@@ -60,7 +60,7 @@
             </v-list-item-content>
           </v-list-item>
           <v-divider></v-divider>
-          <v-list-item v-if="user && user.isAdmin" :to="{ name: 'admin' }" class="pr-12">
+          <v-list-item v-if="user && user.isAdmin" exact :to="{ name: 'admin' }" class="pr-12">
             <v-list-item-icon>
               <v-icon>mdi-badge-account</v-icon>
             </v-list-item-icon>
@@ -69,7 +69,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item :to="{ name: 'account' }" class="pr-12">
+          <v-list-item :to="{ name: 'account' }" exact class="pr-12">
             <v-list-item-icon>
               <v-icon>mdi-cogs</v-icon>
             </v-list-item-icon>
@@ -78,7 +78,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item :to="{ name: 'home' }" @click="logout" class="pr-12" exact active-class="">
+          <v-list-item @click="logout" class="pr-12" exact active-class="logout-active-class">
             <v-list-item-icon>
               <v-icon>mdi-logout</v-icon>
             </v-list-item-icon>
@@ -90,7 +90,7 @@
 
         <!-- NOT LOGGED IN -->
         <v-list v-else>
-          <v-list-item :to="{ name: 'request' }" class="pr-12">
+          <v-list-item :to="{ name: 'request' }" exact class="pr-12">
             <v-list-item-icon>
               <v-icon>mdi-account-plus</v-icon>
             </v-list-item-icon>
@@ -99,7 +99,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item :to="{ name: 'login' }" class="pr-12">
+          <v-list-item :to="{ name: 'login' }" exact class="pr-12">
             <v-list-item-icon>
               <v-icon>mdi-login</v-icon>
             </v-list-item-icon>
@@ -174,3 +174,9 @@ export default {
   }
 }
 </script>
+
+<style>
+.logout-active-class::before {
+  opacity: 0;
+}
+</style>

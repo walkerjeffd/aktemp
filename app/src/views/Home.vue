@@ -1,12 +1,10 @@
 <template>
   <v-main>
     <v-container class="mt-4">
-      <v-parallax dark src="@/assets/img/stream-pano.jpg" style="border-radius: 15px;" class="mb-8">
-        <v-fade-transition>
-          <div class="mx-n4 pt-4 px-8 text-center" style="background:rgba(0,0,0,0.5)" v-if="showTitle">
-            <h1 class="display-2 font-weight-thin mb-4">Welcome to AKTEMP</h1>
-          </div>
-        </v-fade-transition>
+      <v-parallax dark src="@/assets/img/stream-pano.jpg" style="border-radius: 15px;" class="mb-8 align-start aktemp-parallax">
+        <div class="mx-n4 pt-4 px-8 text-center" style="background:rgba(0,0,0,0.5)">
+          <h1 class="display-2 font-weight-thin mb-4">Welcome to AKTEMP</h1>
+        </div>
         <v-fade-transition>
           <v-row align="end" justify="start" v-if="stats">
             <v-col cols="12">
@@ -107,8 +105,6 @@ export default {
           .then(response => response.data)
       } catch (err) {
         console.error(err)
-      } finally {
-        this.showTitle = true
       }
     }
   }
@@ -120,5 +116,8 @@ export default {
   display:inline-block;
   background: linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.5), rgba(0,0,0,0));
   padding: 10px 100px 10px 10px;
+}
+.aktemp-parallax > .v-parallax__content {
+  justify-content: start !important;
 }
 </style>

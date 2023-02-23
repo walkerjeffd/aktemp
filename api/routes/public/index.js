@@ -13,8 +13,8 @@ router.get('/', function (req, res, next) {
 })
 
 router.use('/stats', async function (req, res, next) {
-  const providers = await db.raw('SELECT COUNT(*) FROM providers').then(d => +d.rows[0].count)
-  const stations = await db.raw('SELECT COUNT(*) FROM stations').then(d => +d.rows[0].count)
+  const providers = await db.raw('SELECT COUNT(p.*) FROM providers p WHERE p.id IN (SELECT DISTINCT s.provider_id FROM stations s WHERE NOT s.private)').then(d => +d.rows[0].count)
+  const stations = await db.raw('SELECT COUNT(*) FROM stations s WHERE NOT s.private').then(d => +d.rows[0].count)
   const seriesValues = await db.raw('SELECT SUM(n_values) as sum FROM series').then(d => +d.rows[0].sum)
   const profilesValues = await db.raw('SELECT SUM(n_values) as sum FROM profiles').then(d => +d.rows[0].sum)
   res.status(200).json({ providers, stations, values: seriesValues + profilesValues })

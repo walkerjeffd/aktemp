@@ -64,7 +64,7 @@ const getStationSeries = async (req, res, next) => {
 const getStationSeriesDaily = async (req, res, next) => {
   const values = await res.locals.station.$relatedQuery('series')
     .select('date')
-    .sum('n_values as n_values')
+    .sum('daily.n_values as n_values')
     .min('min_temp_c as min_temp_c')
     .max('max_temp_c as max_temp_c')
     .avg('mean_temp_c as mean_temp_c')

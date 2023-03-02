@@ -1,6 +1,7 @@
 <template>
   <v-app>
     <v-app-bar
+      v-if="$vuetify.breakpoint.mdAndUp"
       app
       color="#00583D"
       dark
@@ -90,6 +91,127 @@
 
         <!-- NOT LOGGED IN -->
         <v-list v-else>
+          <v-list-item :to="{ name: 'request' }" exact class="pr-12">
+            <v-list-item-icon>
+              <v-icon>mdi-account-plus</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Request Account</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item :to="{ name: 'login' }" exact class="pr-12">
+            <v-list-item-icon>
+              <v-icon>mdi-login</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Log In</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-app-bar>
+
+    <v-app-bar
+      v-else
+      app
+      color="#00583D"
+      dark
+      clipped-left
+      style="z-index:1000"
+    >
+      <v-toolbar-title>
+        <a href="https://accs.uaa.alaska.edu/">
+          <v-img src="@/assets/img/accs-logo.png" alt="ACCS logo" contain width="150" style="background-color:white"></v-img>
+        </a>
+      </v-toolbar-title>
+      <span class="text-h4 text-center ml-4">AKTEMP</span>
+
+      <v-spacer></v-spacer>
+
+      <v-menu offset-y>
+        <template v-slot:activator="{ on }">
+          <v-btn icon v-on="on">
+            <v-icon>mdi-menu</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item :to="{ name: 'home' }" exact>
+            <v-list-item-avatar>
+              <v-icon small left>mdi-home</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Home</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item :to="{ name: 'explorer' }" exact>
+            <v-list-item-avatar>
+              <v-icon small left>mdi-chart-line</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Data Explorer</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item href="https://accscatalog.uaa.alaska.edu/dataset/aktemp-water-temperature-database" target="_blank" exact>
+            <v-list-item-avatar>
+              <v-icon small left>mdi-book-outline</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>User Guide</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+
+        <!-- LOGGED IN -->
+        <v-list v-if="user">
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title class="text-left">
+                <span class="text--secondary text-caption mb-2">Logged In As</span><br>
+                {{user.attributes.name | truncate(40)}}
+              </v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item :to="{ name: 'manage' }" exact>
+            <v-list-item-icon>
+              <v-icon>mdi-table</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Manage Data</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item v-if="user && user.isAdmin" exact :to="{ name: 'admin' }">
+            <v-list-item-icon>
+              <v-icon>mdi-badge-account</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Admin</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item :to="{ name: 'account' }" exact>
+            <v-list-item-icon>
+              <v-icon>mdi-cogs</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Settings</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item @click="logout" exact active-class="logout-active-class">
+            <v-list-item-icon>
+              <v-icon>mdi-logout</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Log Out</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+
+        <!-- NOT LOGGED IN -->
+        <v-list v-else>
+          <v-divider></v-divider>
           <v-list-item :to="{ name: 'request' }" exact class="pr-12">
             <v-list-item-icon>
               <v-icon>mdi-account-plus</v-icon>

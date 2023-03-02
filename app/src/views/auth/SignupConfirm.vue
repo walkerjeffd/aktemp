@@ -71,7 +71,7 @@ import { required, email } from 'vuelidate/lib/validators'
 import evt from '@/events'
 
 export default {
-  name: 'SignUp',
+  name: 'SignupConfirm',
   mixins: [validationMixin],
   validations: {
     email: { required, email },

@@ -2,7 +2,6 @@ import Auth from '@/views/auth/Auth.vue'
 import Account from '@/views/auth/Account.vue'
 import Login from '@/views/auth/Login.vue'
 import Request from '@/views/auth/Request.vue'
-import Signup from '@/views/auth/Signup.vue'
 import SignupConfirm from '@/views/auth/SignupConfirm.vue'
 import ChangePassword from '@/views/auth/ChangePassword.vue'
 import ResetPassword from '@/views/auth/ResetPassword.vue'
@@ -27,11 +26,6 @@ export default {
       path: 'login',
       name: 'login',
       component: Login
-    },
-    {
-      path: 'signup',
-      name: 'signup',
-      component: Signup
     },
     {
       path: 'confirm',

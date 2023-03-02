@@ -13,7 +13,7 @@
           Your name and email will be kept private, and will not be publicly displayed. However, your affiliation will be publicly displayed as the data provider.
         </p>
         <p>
-          We may use your email to contact you if we have questions about your photos or data, but we will not share it with any third party.
+          We may use your email to contact you if we have questions about your data, but we will not share it with any third party.
         </p>
         <!-- <p class="mb-8">
           If you have questions or trouble requesting an account, contact us at <a href="mailto:gs-naar-lsc-ecosheds@doimspp.onmicrosoft.com">gs-naar-lsc-ecosheds@doimspp.onmicrosoft.com</a>.

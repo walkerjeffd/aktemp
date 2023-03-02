@@ -1,6 +1,10 @@
 <template>
   <v-main>
     <v-container class="mt-4">
+      <Alert prominent v-if="$vuetify.breakpoint.mdAndDown" type="error" title="Not Optimized for Mobile Devices">
+        AKTEMP is not optimized for mobile devices. Please use a desktop or laptop computer to access the database.
+      </Alert>
+
       <v-parallax dark src="@/assets/img/stream-pano.jpg" style="border-radius: 15px;" class="mb-8 align-start aktemp-parallax">
         <div class="mx-n4 pt-4 px-8 text-center" style="background:rgba(0,0,0,0.5)">
           <h1 class="display-2 font-weight-thin mb-4">Welcome to AKTEMP</h1>
@@ -65,9 +69,6 @@
               User Guide
             </v-btn>
           </div>
-          <Alert prominent v-if="$vuetify.breakpoint.mdAndDown" type="error" title="Not Optimized for Mobile Devices">
-            AKTEMP is not optimized for mobile devices. Please use a desktop or laptop computer to access the database.
-          </Alert>
           <v-divider class="my-4"></v-divider>
           <p>
             <strong>Need Help Getting Started?</strong> Information on how to use the database to upload, review, search, or download data can be found in the <a href="https://accscatalog.uaa.alaska.edu/dataset/aktemp-water-temperature-database">User Guide</a>.

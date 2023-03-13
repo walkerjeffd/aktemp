@@ -8,7 +8,8 @@
     "stage": "vue-cli-service build --mode staging",
     "lint": "vue-cli-service lint",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy:stage": "npm run stage && aws s3 sync dist/ s3://walkerenvres-aktemp-dev-website/ --delete"
+    "deploy:stage": "npm run stage && aws s3 sync dist/ s3://aktemp.walkerenvres.com/ --delete",
+    "deploy": "npm run build && aws s3 sync dist/ s3://aktemp.uaa.alaska.edu/ --delete"
   },
   "dependencies": {
     "@handsontable/vue": "^12.1.2",

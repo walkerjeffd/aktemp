@@ -12,7 +12,7 @@ async function postOrganizations (req, res, next) {
   const row = await Organization.query()
     .insert(req.body)
     .returning('*')
-  if (req.body.providers) {
+  if (req.body.providers && req.body.providers.length > 0) {
     await row.$relatedQuery('providers').relate(req.body.providers)
   }
   return res.status(201).json(row)

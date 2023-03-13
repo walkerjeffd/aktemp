@@ -2,7 +2,7 @@ export const passwordStrength = (value) => {
   // Minimum of 1 Uppercase Letter
   if (/[A-Z]/.test(value) === false) { return false }
 
-  // Minimum of 1 Uppercase Letter
+  // Minimum of 1 Lowercase Letter
   if (/[a-z]/.test(value) === false) { return false }
 
   // Minimum of 1 Number
@@ -48,8 +48,7 @@ export const rules = {
   provider: {
     code: [
       v => !!v || 'Provider code is required',
-      v => v.length <= 50 || 'Provider code cannot exceed 50 characters',
-      v => codeCharacters(v) || 'Provider code must only contain uppercase characters, numbers or underscores'
+      v => v.length <= 50 || 'Provider code cannot exceed 50 characters'
     ],
     name: [
       v => !!v || 'Provider name is required',
@@ -63,8 +62,7 @@ export const rules = {
   organization: {
     code: [
       v => !!v || 'Organization code is required',
-      v => v.length <= 50 || 'Organization code cannot exceed 50 characters',
-      v => codeCharacters(v) || 'Organization code must only contain uppercase characters, numbers or underscores'
+      v => v.length <= 50 || 'Organization code cannot exceed 50 characters'
     ],
     name: [
       v => !!v || 'Organization name is required',

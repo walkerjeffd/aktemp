@@ -69,7 +69,7 @@
           counter
           outlined
           maxlength="32"
-          hint="Short abbreviation for your affiliation (e.g. UAA). Please only use UPPERCASE letters and underscores."
+          hint="Short abbreviation for your affiliation (e.g. UAA). Please only use letters and underscores."
           validate-on-blur
         ></v-text-field>
         <v-text-field

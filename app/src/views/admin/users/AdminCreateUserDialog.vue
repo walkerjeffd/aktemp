@@ -100,7 +100,7 @@
               v-model="provider.code.value"
               :rules="provider.code.rules"
               label="Provider Code"
-              hint="Abbreviation in UPPERCASE letters and underscores (UAA or NPS_DENALI)"
+              hint="Abbreviation in letters and underscores (UAA or NPS_DENALI)"
               outlined
               counter
               validate-on-blur
@@ -289,7 +289,6 @@ export default {
       this.loading = true
 
       if (this.provider.new) {
-        this.provider.code.value = this.provider.code.value.toUpperCase()
         const payload = {
           code: this.provider.code.value,
           name: this.provider.name.value,

@@ -12,8 +12,7 @@ async function postProviders (req, res, next) {
   const row = await Provider.query()
     .insert(req.body)
     .returning('*')
-
-  if (req.body.users) {
+  if (req.body.users && req.body.users.length > 0) {
     await row.$relatedQuery('users').relate(req.body.users)
   }
   return res.status(201).json(row)

@@ -87,7 +87,9 @@
             class="my-4"
           >
             <template v-slot:item="{ item }">
-              <v-list-item-icon><v-simple-checkbox :value="organizationProviders.selected && organizationProviders.selected.includes(item.id)"></v-simple-checkbox></v-list-item-icon>
+              <v-list-item-icon>
+                  <v-simple-checkbox @input="toggleProvider(item.id)" :value="organizationProviders.selected && organizationProviders.selected.includes(item.id)"></v-simple-checkbox>
+                </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title v-html="item.code"></v-list-item-title>
                 <v-list-item-subtitle v-html="item.name"></v-list-item-subtitle>
@@ -295,6 +297,13 @@ export default {
     close () {
       this.clear()
       this.dialog = false
+    },
+    toggleProvider (providerId) {
+      if (this.organizationProviders.selected.includes(providerId)) {
+        this.organizationProviders.selected = this.organizationProviders.selected.filter(p => p !== providerId)
+      } else {
+        this.organizationProviders.selected.push(providerId)
+      }
     }
   }
 }

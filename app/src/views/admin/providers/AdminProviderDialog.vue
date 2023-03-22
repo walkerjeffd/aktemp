@@ -127,7 +127,9 @@
             class="my-4"
           >
             <template v-slot:item="{ item }">
-              <v-list-item-icon><v-simple-checkbox :value="users.selected && users.selected.includes(item.id)"></v-simple-checkbox></v-list-item-icon>
+              <v-list-item-icon>
+                <v-simple-checkbox @input="toggleUser(item.id)" :value="users.selected && users.selected.includes(item.id)"></v-simple-checkbox>
+              </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title v-html="item.attributes.name"></v-list-item-title>
                 <v-list-item-subtitle v-html="item.attributes.email"></v-list-item-subtitle>
@@ -348,6 +350,13 @@ export default {
     close () {
       this.clear()
       this.dialog = false
+    },
+    toggleUser (userId) {
+      if (this.users.selected.includes(userId)) {
+        this.users.selected = this.users.selected.filter(d => d !== userId)
+      } else {
+        this.users.selected.push(userId)
+      }
     }
   }
 }

@@ -71,19 +71,21 @@
             v-if="dialog"
             v-model="providers.selected"
             :items="providersOptions"
-            item-text="code"
             :rules="providers.rules"
+            item-text="code"
+            item-value="id"
             label="Select existing provider(s)"
             multiple
             chips
             deletable-chips
             outlined
-            return-object
-            :menu-props="{ closeOnClick: true, closeOnContentClick: true }"
             :disabled="provider.new"
             class="mt-4"
           >
             <template v-slot:item="{ item }">
+              <v-list-item-icon>
+                <v-simple-checkbox @input="toggleProvider(item.id)" :value="providers.selected && providers.selected.includes(item.id)"></v-simple-checkbox>
+              </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title v-html="item.code"></v-list-item-title>
                 <v-list-item-subtitle v-html="item.name"></v-list-item-subtitle>
@@ -264,11 +266,9 @@ export default {
         this.name.value = request.name
         this.email.value = request.email
         if (request.provider_id) {
-          const provider = await this.$http.admin.get(`/providers/${request.provider_id}`)
-            .then(d => d.data)
-          if (provider) {
-            this.providers.selected = [provider]
-          }
+          this.providers.selected = [request.provider_id]
+        } else {
+          this.providers.selected = []
         }
         this.provider.code.value = request.provider_code
         this.provider.name.value = request.provider_name
@@ -344,7 +344,7 @@ export default {
       this.email.value = ''
       this.admin.value = false
 
-      this.providers.selected = null
+      this.providers.selected = []
 
       this.provider.new = false
       this.provider.code.value = ''
@@ -357,6 +357,14 @@ export default {
       this.clear()
       this.resolve(false)
       this.dialog = false
+    },
+    toggleProvider (providerId) {
+      if (this.providers.selected.includes(providerId)) {
+        this.providers.selected = this.providers.selected.filter(p => p !== providerId)
+      } else {
+        this.providers.selected.push(providerId)
+      }
+      this.modified = true
     }
   }
 }

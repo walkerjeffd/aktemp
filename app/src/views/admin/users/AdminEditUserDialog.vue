@@ -118,7 +118,9 @@
               @input="modified = true"
             >
               <template v-slot:item="{ item }">
-                <v-list-item-icon><v-simple-checkbox :value="edit.providers && edit.providers.includes(item.id)"></v-simple-checkbox></v-list-item-icon>
+                <v-list-item-icon>
+                  <v-simple-checkbox @input="toggleProvider(item.id)" :value="edit.providers && edit.providers.includes(item.id)"></v-simple-checkbox>
+                </v-list-item-icon>
                 <v-list-item-content>
                   <v-list-item-title v-html="item.code"></v-list-item-title>
                   <v-list-item-subtitle v-html="item.name"></v-list-item-subtitle>
@@ -199,7 +201,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import evt from '@/events'
 import { getUser } from '@/lib/auth'
@@ -224,7 +226,7 @@ export default {
       error: false,
 
       loading: {
-        user: false,
+        user: true,
         enabled: false,
         admin: false,
         delete: false,
@@ -236,7 +238,8 @@ export default {
     ...mapGetters({ providersOptions: 'admin/providers' })
   },
   methods: {
-    open (id) {
+    ...mapActions({ fetchProviders: 'admin/fetchProviders' }),
+    async open (id) {
       this.dialog = true
       this.id = id
       this.modified = false
@@ -244,6 +247,8 @@ export default {
 
       this.edit.admin = false
       this.edit.providers = []
+
+      await this.fetchProviders()
 
       this.init()
 
@@ -289,7 +294,7 @@ export default {
       user.attributes.email_verified = user.attributes.email_verified === 'true'
 
       this.edit.admin = user.admin
-      this.edit.providers = user.providers
+      this.edit.providers = user.providers.map(p => p.id)
 
       return user
     },
@@ -359,6 +364,14 @@ export default {
       } finally {
         this.loading.update = false
       }
+    },
+    toggleProvider (providerId) {
+      if (this.edit.providers.includes(providerId)) {
+        this.edit.providers = this.edit.providers.filter(p => p !== providerId)
+      } else {
+        this.edit.providers.push(providerId)
+      }
+      this.modified = true
     }
   },
   close () {

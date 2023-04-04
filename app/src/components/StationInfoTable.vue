@@ -42,7 +42,7 @@
           class="text-right grey--text text--darken-2">
           Description
         </td>
-        <td class="font-weight-bold">{{ station.description | truncate(40) }}</td>
+        <td class="font-weight-bold">{{ station.description }}</td>
       </tr>
       <tr>
         <td

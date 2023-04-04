@@ -1,7 +1,9 @@
 <template>
   <div style="width:100%">
     <Loading v-if="loading" style="height:500px"></Loading>
-    <Alert v-else-if="error" type="error" title="Failed to Get Profile Data" class="mb-0">{{ error }}</Alert>
+    <Alert v-else-if="error" type="error" title="Failed to Get Profile Data" class="mb-0">
+      <div v-html="error"></div>
+    </Alert>
     <div v-show="!loading && !error">
       <highcharts :options="settings" ref="chart"></highcharts>
       <div class="text--secondary caption ml-2">
@@ -126,7 +128,6 @@ export default {
             }
           }
         })
-      console.log(series)
       series.forEach(d => this.chart.addSeries(d, false))
       this.chart.redraw()
     }

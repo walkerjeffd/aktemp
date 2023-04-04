@@ -1,7 +1,9 @@
 <template>
   <div style="width:100%">
     <Loading v-if="loading" style="height:500px"></Loading>
-    <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data" class="mb-0">{{ error }}</Alert>
+    <Alert v-else-if="error" type="error" title="Failed to Get Timeseries Data" class="mb-0">
+      <div v-html="error"></div>
+    </Alert>
     <div v-show="!loading && !error">
       <div class="text-h6 font-weight-bold">
         {{ mode === 'daily' ? 'Daily Mean and Range' : 'Instantaneous Measurements' }}
@@ -321,170 +323,175 @@ export default {
       console.log('init()')
       this.chart.showLoading('Loading data from the server...')
 
-      await Promise.all(this.series.map(async (s) => {
-        if (s.interval === 'CONTINUOUS') {
-          s.daily = s.daily || {}
-          if (!s.daily.values) {
-            const values = await this.fetchDailySeries(s)
-            s.daily.values = Object.freeze(assignFlags(values, s.flags, s.timezone, true))
-            s.daily.chunks = Object.freeze(getContinuousChunks(s.daily.values, 'date'))
-          }
-        } else if (s.interval === 'DISCRETE') {
-          if (!s.values) {
-            const values = await this.fetchDiscreteSeries(s)
-            s.values = Object.freeze(assignFlags(values, s.flags))
-            s.chunks = Object.freeze(getDiscreteChunks(s.values))
-          }
-        }
-
-        if (!this.chart.get(`${s.id}-root`)) {
-          this.chart.addSeries({
-            id: `${s.id}-root`,
-            name: `Series ${s.id}`,
-            seriesId: s.id,
-            root: true,
-            data: [],
-            visible: true,
-            showInNavigator: false
-          }, false)
-
+      try {
+        await Promise.all(this.series.map(async (s) => {
           if (s.interval === 'CONTINUOUS') {
-            this.chart.addSeries({
-              id: `${s.id}-daily-tip`,
-              seriesId: s.id,
-              mode: 'daily',
-              tip: true,
-              flag: false,
-              type: 'line',
-              data: s.daily.values.filter(d => !d.flag).map(d => ({
-                x: d.date.valueOf(),
-                y: d.mean_temp_c,
-                flag: d.flag
-              })),
-              visible: true,
-              showInLegend: false,
-              showInNavigator: false,
-              turboThreshold: 0,
-              tooltip: {
-                pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
-              },
-              lineWidth: 0,
-              linkedTo: `${s.id}-root`
-            }, false)
-            this.chart.addSeries({
-              id: `${s.id}-daily-tip-flag`,
-              seriesId: s.id,
-              mode: 'daily',
-              tip: true,
-              flag: true,
-              type: 'line',
-              data: s.daily.values.filter(d => d.flag).map(d => ({
-                x: d.date.valueOf(),
-                y: d.mean_temp_c,
-                flag: d.flag
-              })),
-              visible: true,
-              showInLegend: false,
-              showInNavigator: false,
-              turboThreshold: 0,
-              tooltip: {
-                pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (<b>{point.flag}</b>)`
-              },
-              lineWidth: 0,
-              color: 'orangered',
-              linkedTo: `${s.id}-root`
-            }, false)
-            this.chart.addSeries({
-              id: `${s.id}-raw-tip`,
-              seriesId: s.id,
-              mode: 'raw',
-              tip: true,
-              flag: false,
-              type: 'line',
-              data: [],
-              visible: false,
-              showInLegend: false,
-              showInNavigator: false,
-              turboThreshold: 0,
-              tooltip: {
-                pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
-              },
-              lineWidth: 0,
-              linkedTo: `${s.id}-root`
-            }, false)
-            this.chart.addSeries({
-              id: `${s.id}-raw-tip-flag`,
-              seriesId: s.id,
-              mode: 'raw',
-              tip: true,
-              flag: true,
-              type: 'line',
-              data: [],
-              visible: false,
-              showInLegend: false,
-              showInNavigator: false,
-              turboThreshold: 0,
-              tooltip: {
-                pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (<b>{point.flag}</b>)`
-              },
-              lineWidth: 0,
-              color: 'orangered',
-              linkedTo: `${s.id}-root`
-            }, false)
+            s.daily = s.daily || {}
+            if (!s.daily.values) {
+              const values = await this.fetchDailySeries(s)
+              s.daily.values = Object.freeze(assignFlags(values, s.flags, s.timezone, true))
+              s.daily.chunks = Object.freeze(getContinuousChunks(s.daily.values, 'date'))
+            }
           } else if (s.interval === 'DISCRETE') {
-            this.chart.addSeries({
-              id: `${s.id}-discrete-tip`,
-              seriesId: s.id,
-              mode: 'discrete',
-              tip: true,
-              flag: false,
-              type: 'line',
-              data: s.values.filter(d => !d.flag).map(d => ({
-                x: d.datetime.valueOf(),
-                y: d.temp_c,
-                flag: d.flag
-              })),
-              visible: true,
-              showInLegend: false,
-              showInNavigator: false,
-              turboThreshold: 0,
-              tooltip: {
-                pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
-              },
-              lineWidth: 0,
-              linkedTo: `${s.id}-root`
-            }, false)
-            this.chart.addSeries({
-              id: `${s.id}-discrete-tip-flag`,
-              seriesId: s.id,
-              mode: 'discrete',
-              tip: true,
-              flag: true,
-              type: 'line',
-              data: s.values.filter(d => d.flag).map(d => ({
-                x: d.datetime.valueOf(),
-                y: d.temp_c,
-                flag: d.flag
-              })),
-              visible: true,
-              showInLegend: false,
-              showInNavigator: false,
-              turboThreshold: 0,
-              tooltip: {
-                pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (<b>{point.flag}</b>)`
-              },
-              lineWidth: 0,
-              color: 'orangered',
-              linkedTo: `${s.id}-root`
-            }, false)
+            if (!s.values) {
+              const values = await this.fetchDiscreteSeries(s)
+              s.values = Object.freeze(assignFlags(values, s.flags))
+              s.chunks = Object.freeze(getDiscreteChunks(s.values))
+            }
           }
-        }
-      }))
 
-      this.updateNavigator()
-      this.render()
+          if (!this.chart.get(`${s.id}-root`)) {
+            this.chart.addSeries({
+              id: `${s.id}-root`,
+              name: `Series ${s.id}`,
+              seriesId: s.id,
+              root: true,
+              data: [],
+              visible: true,
+              showInNavigator: false
+            }, false)
 
-      this.chart.hideLoading()
+            if (s.interval === 'CONTINUOUS') {
+              this.chart.addSeries({
+                id: `${s.id}-daily-tip`,
+                seriesId: s.id,
+                mode: 'daily',
+                tip: true,
+                flag: false,
+                type: 'line',
+                data: s.daily.values.filter(d => !d.flag).map(d => ({
+                  x: d.date.valueOf(),
+                  y: d.mean_temp_c,
+                  flag: d.flag
+                })),
+                visible: true,
+                showInLegend: false,
+                showInNavigator: false,
+                turboThreshold: 0,
+                tooltip: {
+                  pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
+                },
+                lineWidth: 0,
+                linkedTo: `${s.id}-root`
+              }, false)
+              this.chart.addSeries({
+                id: `${s.id}-daily-tip-flag`,
+                seriesId: s.id,
+                mode: 'daily',
+                tip: true,
+                flag: true,
+                type: 'line',
+                data: s.daily.values.filter(d => d.flag).map(d => ({
+                  x: d.date.valueOf(),
+                  y: d.mean_temp_c,
+                  flag: d.flag
+                })),
+                visible: true,
+                showInLegend: false,
+                showInNavigator: false,
+                turboThreshold: 0,
+                tooltip: {
+                  pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (<b>{point.flag}</b>)`
+                },
+                lineWidth: 0,
+                color: 'orangered',
+                linkedTo: `${s.id}-root`
+              }, false)
+              this.chart.addSeries({
+                id: `${s.id}-raw-tip`,
+                seriesId: s.id,
+                mode: 'raw',
+                tip: true,
+                flag: false,
+                type: 'line',
+                data: [],
+                visible: false,
+                showInLegend: false,
+                showInNavigator: false,
+                turboThreshold: 0,
+                tooltip: {
+                  pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
+                },
+                lineWidth: 0,
+                linkedTo: `${s.id}-root`
+              }, false)
+              this.chart.addSeries({
+                id: `${s.id}-raw-tip-flag`,
+                seriesId: s.id,
+                mode: 'raw',
+                tip: true,
+                flag: true,
+                type: 'line',
+                data: [],
+                visible: false,
+                showInLegend: false,
+                showInNavigator: false,
+                turboThreshold: 0,
+                tooltip: {
+                  pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (<b>{point.flag}</b>)`
+                },
+                lineWidth: 0,
+                color: 'orangered',
+                linkedTo: `${s.id}-root`
+              }, false)
+            } else if (s.interval === 'DISCRETE') {
+              this.chart.addSeries({
+                id: `${s.id}-discrete-tip`,
+                seriesId: s.id,
+                mode: 'discrete',
+                tip: true,
+                flag: false,
+                type: 'line',
+                data: s.values.filter(d => !d.flag).map(d => ({
+                  x: d.datetime.valueOf(),
+                  y: d.temp_c,
+                  flag: d.flag
+                })),
+                visible: true,
+                showInLegend: false,
+                showInNavigator: false,
+                turboThreshold: 0,
+                tooltip: {
+                  pointFormat: `Series ${s.id}: <b>{point.y}</b> °C`
+                },
+                lineWidth: 0,
+                linkedTo: `${s.id}-root`
+              }, false)
+              this.chart.addSeries({
+                id: `${s.id}-discrete-tip-flag`,
+                seriesId: s.id,
+                mode: 'discrete',
+                tip: true,
+                flag: true,
+                type: 'line',
+                data: s.values.filter(d => d.flag).map(d => ({
+                  x: d.datetime.valueOf(),
+                  y: d.temp_c,
+                  flag: d.flag
+                })),
+                visible: true,
+                showInLegend: false,
+                showInNavigator: false,
+                turboThreshold: 0,
+                tooltip: {
+                  pointFormat: `Series ${s.id}: <b>{point.y}</b> °C (<b>{point.flag}</b>)`
+                },
+                lineWidth: 0,
+                color: 'orangered',
+                linkedTo: `${s.id}-root`
+              }, false)
+            }
+          }
+        }))
+
+        this.updateNavigator()
+        this.render()
+      } catch (e) {
+        console.error(e)
+        this.error = 'Failed to fetch data for this station, please try refreshing the page then let us know if the problem persists (<a href="mailto:uaa_aktemp@alaska.edu">uaa_aktemp@alaska.edu</a>).'
+      } finally {
+        this.chart.hideLoading()
+      }
     },
     async fetchDailySeries (series) {
       console.log(`fetchDailySeries(${series.id})`)

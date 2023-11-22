@@ -1,15 +1,15 @@
 {
   "name": "aktemp-app",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "stage": "vue-cli-service build --mode staging",
+    "build:stage": "vue-cli-service build --mode staging",
     "lint": "vue-cli-service lint",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy:stage": "npm run stage && aws s3 sync dist/ s3://aktemp.walkerenvres.com/ --delete",
-    "deploy": "npm run build && aws s3 sync dist/ s3://aktemp.uaa.alaska.edu/ --delete"
+    "deploy": "npm run build && aws s3 sync dist/ s3://aktemp.uaa.alaska.edu/ --delete",
+    "deploy:stage": "npm run stage && aws s3 sync dist/ s3://aktemp.walkerenvres.com/ --delete"
   },
   "dependencies": {
     "@handsontable/vue": "^12.1.2",

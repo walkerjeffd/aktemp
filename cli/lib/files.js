@@ -1,6 +1,6 @@
 const debug = require('../debug')
 const path = require('path')
-const { createReadStream, existsSync } = require('fs')
+const { createReadStream, readFileSync, existsSync, copyFileSync, mkdirSync } = require('fs')
 
 const { File } = require('aktemp-db/models')
 const db = require('aktemp-db')
@@ -21,6 +21,16 @@ async function readFileFromS3 (file, config) {
   debug('readFileFromS3(): parsing')
   const parsed = parseCsv(csv, config.file_skip)
   debug('readFileFromS3(): done')
+  return { data: parsed.data, fields: parsed.meta.fields }
+}
+
+async function readFileFromLocal (file, config) {
+  const filepath = file.url
+  debug(`readFileFromLocal(): ${filepath}`)
+  const csv = stripBom(readFileSync(filepath).toString())
+  debug('readFileFromLocal(): parsing')
+  const parsed = parseCsv(csv, config.skipLines)
+  debug('readFileFromLocal(): done')
   return { data: parsed.data, fields: parsed.meta.fields }
 }
 
@@ -79,9 +89,17 @@ exports.processFile = async function (id, { dryRun }) {
       error: null
     })
   }
-
-  debug(`processFile(): read file from s3 (bucket=${file.s3.Bucket} key=${file.s3.Key})`)
-  const { data, fields } = await readFileFromS3(file, file.config)
+  let data, fields
+  if (file.s3) {
+    debug(`processFile(): read file from s3 (bucket=${file.s3.Bucket} key=${file.s3.Key})`)
+    ;({ data, fields } = await readFileFromS3(file, file.config))
+  } else if (file.url) {
+    // assume url is path to local file
+    debug(`processFile(): read file from local filesystem (path=${file.url})`)
+    ;({ data, fields } = await readFileFromLocal(file, file.config))
+  } else {
+    throw new Error(`file has no 'url' or 's3' attributes (id=${id})`)
+  }
 
   if (data.length > 0) {
     debug('processFile(): first row ->')
@@ -181,23 +199,39 @@ const uploadFile = exports.uploadFile = async function (file, filepath, provider
   }).returning('*')
 
   // upload to s3
-  const stream = createReadStream(filepath)
-  const bucket = process.env.STORAGE_BUCKET
   const key = `files/${dbFile.uuid}/${dbFile.filename}`
-  debug(`uploadFile(): upload to s3 (bucket=${bucket}, key=${key})`)
-  const s3Response = await s3.upload({
-    Bucket: bucket,
-    Key: key,
-    Body: stream
-  }).promise()
-
-  // update s3 and status
-  debug('uploadFile(): set file.status=\'UPLOADED\'')
-  await dbFile.$query().patch({
-    s3: s3Response,
-    url: s3Response.Location,
-    status: 'UPLOADED'
-  })
+  if (process.env.STORAGE_BUCKET) {
+    const stream = createReadStream(filepath)
+    const bucket = process.env.STORAGE_BUCKET
+    debug(`uploadFile(): upload to s3 (bucket=${bucket}, key=${key})`)
+    const s3Response = await s3.upload({
+      Bucket: bucket,
+      Key: key,
+      Body: stream
+    }).promise()
+    debug('uploadFile(): set file.status=\'UPLOADED\'')
+    await dbFile.$query().patch({
+      s3: s3Response,
+      url: s3Response.Location,
+      status: 'UPLOADED'
+    })
+  } else if (process.env.STORAGE_PATH) {
+    const localPath = process.env.STORAGE_PATH
+    const dest = path.join(localPath, key)
+    if (!existsSync(path.dirname(dest))) {
+      debug(`uploadFile(): creating directory (${path.dirname(dest)})`)
+      mkdirSync(path.dirname(dest), { recursive: true })
+    }
+    debug(`uploadFile(): saving to local path (path=${dest})`)
+    copyFileSync(filepath, dest)
+    debug('uploadFile(): set file.status=\'UPLOADED\'')
+    await dbFile.$query().patch({
+      url: dest,
+      status: 'UPLOADED'
+    })
+  } else {
+    throw new Error('STORAGE_BUCKET or STORAGE_PATH must be set')
+  }
 
   return dbFile
 }

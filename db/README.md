@@ -5,7 +5,7 @@
 
 ## Dependencies
 
-Install global `knex` cli
+Install `knex` globally in order to utilize the CLI:
 
 ```bash
 npm install -g knex
@@ -19,13 +19,11 @@ npm install
 
 ## Configuration
 
-Define the database connection parameters in a `.env*` file based on the [`dotenv-flow`](https://www.npmjs.com/package/dotenv-flow) conventions (e.g. `.env.development.local` and `.env.production.local`).
-
-Required values are listed in `.env`.
+After creating a database instance (locally or in the cloud), set the database credentials in the `.env` files as described in the `Configuration` section of the main [README](../README.md) file.
 
 ## Migrations
 
-Export the appropriate node environment (defaults to `development` if not specified).
+First, export the appropriate node environment to work the corresponding database (defaults to `development` if not specified).
 
 ```bash
 export NODE_ENV=development
@@ -41,8 +39,8 @@ knex migrate:make migration_name
 knex migrate:status
 
 # migrate in batches
-knex migrate:latest
-knex migrate:rollback # last batch
+knex migrate:latest         # update schema to latest migration
+knex migrate:rollback       # last batch
 knex migrate:rollback --all # start fresh
 
 # step by step
@@ -58,9 +56,10 @@ Use the `knex` [Seed CLI](https://knexjs.org/#Seeds-CLI) to create, list and run
 
 ```bash
 knex seed:make seed_name # create new seed file
-knex seed:run # runs all seed files
+knex seed:run            # runs all seed files for current NODE_ENV
 ```
 
 ## ORM
 
 A database ORM is provided using [`objection.js`](https://vincit.github.io/objection.js/). Database models and relationships are defined in the `./models/` folder. See the [User Guide](https://vincit.github.io/objection.js/guide/) for help.
+

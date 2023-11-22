@@ -1,0 +1,4 @@
+station_code,filename,file_type,interval,datetime_column,datetime_format,timezone,temperature_column,temperature_units
+TEST1,TEST1-20431778.csv,SERIES,CONTINUOUS,datetime,ISO,LOCAL,temp_c,C
+TEST2,TEST2-20689995.csv,SERIES,CONTINUOUS,datetime,ISO,LOCAL,temp_c,C
+TEST3,TEST3-20431771.csv,SERIES,CONTINUOUS,datetime,ISO,LOCAL,temp_c,C

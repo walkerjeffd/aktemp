@@ -1,0 +1,8 @@
+{
+  "timestamp": {
+    "column": "datetime"
+  },
+  "temperature": {
+    "column": "temp_c"
+  }
+}

@@ -8,8 +8,8 @@
     "type": "git",
     "url": "git+https://github.com/walkerjeffd/aktemp.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Jeff Walker <jeff@walkerenvres.com> (https://walkerenvres.com)",
+  "license": "CC BY-NC-SA 4.0",
   "bugs": {
     "url": "https://github.com/walkerjeffd/aktemp/issues"
   },

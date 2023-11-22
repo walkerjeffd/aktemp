@@ -5,8 +5,8 @@ require('dotenv-flow').config({
 })
 
 const app = require('./app')
+const debug = require('./debug')
 const http = require('http')
-const debug = require('debug')('aktemp-api')
 
 debug('env:', process.env.NODE_ENV)
 const port = normalizePort(process.env.PORT || '3000')

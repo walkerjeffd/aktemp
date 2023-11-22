@@ -1,1 +1,1 @@
-module.exports = require('debug')('aktemp-db')
+module.exports = require('debug')('aktemp-api')

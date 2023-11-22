@@ -1,6 +1,6 @@
 {
   "name": "aktemp-api",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "AKTEMP API",
   "main": "index.js",
   "scripts": {

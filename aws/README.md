@@ -86,7 +86,7 @@ Note that the S3, database, and user auth resources are created independently fr
 
 Next, package the API lambda function, which uploads the `api/` source code to the deployment bucket and creates a local template (`lambda-api.local.json`) where the `Code` attribute points to the corresponding S3 bucket and key:
 
-```
+```sh
 ./package-lambda.sh api
 ```
 
@@ -106,7 +106,7 @@ Then validate, package, and create the remaining cloud infrastructure using the 
 
 Use the following scripts to update/deploy resources:
 
-```
+```sh
 # repackage lambda function and root stack, then deploy everything
 ./update-all.sh
 

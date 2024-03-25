@@ -48,7 +48,7 @@
       <v-row justify="center">
         <v-col cols="12" md="10" lg="8" xl="6" class="black--text body-1">
           <p class="mb-8" style="font-size:1.1em">
-            Welcome to the AKTEMP Water Temperature Database. This website is a portal for viewing, uploading, downloading, and managing stream and lake temperature data across Alaska. The database was created by <a href="https://walkerenvres.com" target="_blank">Walker Environment Research</a> in partnership with the <a href="https://accs.uaa.alaska.edu/" target="_blank">Alaska Center for Conservation Science (ACCS)</a> at the University of Alaska Anchorage and was funded through a grant from the U.S. Environmental Protection Agency.
+            Welcome to the AKTEMP Water Temperature Database. This website is a portal for viewing, uploading, downloading, and managing stream and lake temperature data across Alaska. The database was created by <a href="https://walkerenvres.com" target="_blank">Walker Environment Research</a> in collaboration with the <a href="https://accs.uaa.alaska.edu/" target="_blank">Alaska Center for Conservation Science (ACCS)</a> at the University of Alaska Anchorage and the <a href="https://www.usgs.gov/centers/eesc" target="_blank">U.S. Geological Survey (USGS) Eastern Ecological Science Center</a>. AKTEMP was funded by a grant from the U.S. Environmental Protection Agency.
           </p>
           <div class="d-flex justify-space-around mb-8">
             <v-btn

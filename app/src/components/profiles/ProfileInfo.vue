@@ -189,7 +189,8 @@ export default {
           d.station_timezone = this.profile.station_timezone
         })
         const filename = `AKTEMP-${station.provider_code}-${station.code}-profile-${this.profile.id}.csv`
-        const body = writeProfilesFile([this.profile], [station])
+        const providers = this.$store.state.explorer.providers.filter(d => d.id === station.provider_id)
+        const body = writeProfilesFile(providers, [this.profile])
         this.$download(body, filename)
       } catch (err) {
         console.log(err)

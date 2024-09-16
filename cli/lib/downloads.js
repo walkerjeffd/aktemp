@@ -62,7 +62,7 @@ exports.processDownload = async (id, { dryRun }) => {
 
   const config = download.config
 
-  let provider
+  let provider, providers
   let stations
   if (config.providerId) {
     debug(`processDownload(): fetching provider (id=${config.providerId})`)
@@ -72,6 +72,7 @@ exports.processDownload = async (id, { dryRun }) => {
         message: `provider (id=${config.providerId}) not found`,
         type: 'NotFoundError'
       })
+    providers = [provider]
     debug(`processDownload(): fetching stations for provider (${provider.code})`)
     stations = await provider
       .$relatedQuery('stations')
@@ -85,6 +86,10 @@ exports.processDownload = async (id, { dryRun }) => {
       .modify('providerCode')
       .modify('seriesSummary')
       .modify('profilesSummary')
+
+    const providerIds = stations.map(d => d.provider_id)
+    providers = await Provider.query()
+      .findByIds(providerIds)
   }
 
   if (stations.length === 0) {
@@ -95,7 +100,7 @@ exports.processDownload = async (id, { dryRun }) => {
   })
 
   debug(`processDownload(): create stations file (n=${stations.length})`)
-  const stationsFile = await writeStationsFile(stations)
+  const stationsFile = await writeStationsFile(providers, stations)
 
   debug('processDownload(): writing stations.csv')
   fs.writeFileSync(path.join(dir, 'stations.csv'), stationsFile)
@@ -118,7 +123,7 @@ exports.processDownload = async (id, { dryRun }) => {
 
       const seriesFilename = path.join(station.code, 'timeseries.csv')
       debug(`processDownload(): writing timeseries metadata file (${seriesFilename})`)
-      const seriesMetadataBody = writeSeriesMetadataFile(series)
+      const seriesMetadataBody = writeSeriesMetadataFile(providers, series)
       fs.writeFileSync(path.join(dir, seriesFilename), seriesMetadataBody)
 
       for (const s of series) {
@@ -132,7 +137,7 @@ exports.processDownload = async (id, { dryRun }) => {
 
         const seriesValuesFilename = path.join(station.code, 'timeseries', `timeseries-${s.id}.csv`)
         debug(`processDownload(): writing timeseries values file (${seriesValuesFilename})`)
-        const seriesValuesBody = writeSeriesRawFile([s])
+        const seriesValuesBody = writeSeriesRawFile(providers, [s])
         fs.writeFileSync(path.join(dir, seriesValuesFilename), seriesValuesBody)
       }
 
@@ -149,7 +154,7 @@ exports.processDownload = async (id, { dryRun }) => {
 
       const profilesFilename = `${station.code}/profiles.csv`
       debug(`processDownload(): writing profiles file (${profilesFilename})`)
-      const profilesBody = writeProfilesFile(profiles)
+      const profilesBody = writeProfilesFile(providers, profiles)
       fs.writeFileSync(path.join(dir, profilesFilename), profilesBody)
     }
   } else {
@@ -192,7 +197,7 @@ exports.processDownload = async (id, { dryRun }) => {
       })
 
       debug(`processDownload(): create continuous series file (n=${series.length})`)
-      const body = await writeSeriesDailyFile(series, config.period)
+      const body = await writeSeriesDailyFile(providers, series, config.period)
 
       debug('processDownload(): writing daily timeseries file (daily-timeseries.csv)')
       fs.writeFileSync(path.join(dir, 'daily-timeseries.csv'), body)
@@ -234,7 +239,7 @@ exports.processDownload = async (id, { dryRun }) => {
       })
 
       debug(`processDownload(): create discrete series file (n=${series.length})`)
-      const body = await writeSeriesDiscreteFile(series, config.period)
+      const body = await writeSeriesDiscreteFile(providers, series, config.period)
 
       debug('processDownload(): writing discrete timeseries file (discrete-timeseries.csv)')
       fs.writeFileSync(path.join(dir, 'discrete-timeseries.csv'), body)
@@ -264,7 +269,7 @@ exports.processDownload = async (id, { dryRun }) => {
       })
 
       debug(`processDownload(): create profiles series file (n=${profiles.length})`)
-      const body = await writeProfilesFile(profiles, config.period)
+      const body = await writeProfilesFile(providers, profiles, config.period)
 
       debug('processDownload(): writing profiles file (profiles.csv)')
       fs.writeFileSync(path.join(dir, 'profiles.csv'), body)

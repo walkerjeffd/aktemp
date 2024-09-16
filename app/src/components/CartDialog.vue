@@ -290,7 +290,8 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('cart', ['stations'])
+    ...mapGetters('cart', ['stations']),
+    ...mapGetters('explorer', ['providers'])
   },
 
   methods: {
@@ -370,7 +371,9 @@ export default {
       this.recaptcha.response = null
     },
     downloadStations () {
-      const body = writeStationsFile(this.stations)
+      const providerIds = new Set(this.stations.map(d => d.provider_id))
+      const providers = this.providers.filter(d => providerIds.has(d.id))
+      const body = writeStationsFile(providers, this.stations)
       this.$download(body, 'AKTEMP-explorer-stations.csv')
     }
   }

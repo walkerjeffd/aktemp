@@ -667,7 +667,8 @@ export default {
       this.end.show = false
     },
     download () {
-      const body = writeSeriesFlagsFile([this.series])
+      const providers = this.$store.state.manage.providers.filter(d => d.code === this.series.provider_code)
+      const body = writeSeriesFlagsFile(providers, [this.series])
       const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-flags.csv`
       this.$download(body, filename)
     }

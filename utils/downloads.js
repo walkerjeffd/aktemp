@@ -4,6 +4,10 @@ const { luxon, formatTimestamp } = require('./time')
 const hr = '# ------------------------------------------------------------------------------'
 
 const columnLabels = {
+  providers: {
+    code: 'Provider Code',
+    name: 'Provider Name'
+  },
   stations: {
     station_id: 'Station ID',
     provider_code: 'Provider Code',
@@ -98,23 +102,39 @@ function columnDescriptions (columns, defs) {
   return columns.map(d => `#     ${d}: ${defs[d]}`).join('\n')
 }
 
-function fileHeader (title, period) {
+function fileHeader (title, providers = []) {
   const now = luxon.DateTime.now()
-  let body = `# AKTEMP | Alaska Stream Temperature Database
+  const year = formatTimestamp(now, 'yyyy', 'US/Alaska')
+  const date = formatTimestamp(now, 'MMM dd, yyyy', 'US/Alaska')
+  let providerTitle = ''
+  if (providers.length === 1) {
+    providerTitle = ` collected by ${providers[0].name}`
+  } else if (providers.length > 1) {
+    const providersString = providers.slice(0, -1).map(d => d.name).join(', ') + ' and ' + providers[providers.length - 1].name
+    providerTitle = ` collected by ${providersString}`
+  }
+
+  return `# AKTEMP | Alaska Stream Temperature Database
 # https://aktemp.uaa.alaska.edu
 #
 # File Type: ${title}
-# Created: ${formatTimestamp(now, 'D t ZZZZ', 'US/Alaska')}`
-  if (period) {
-    if (period.start && !period.end) {
-      body += `\n# Period: ${period.start} or later`
-    } else if (period.end && !period.start) {
-      body += `\n# Period: ${period.end} or earlier`
-    } else if (period.start && period.end) {
-      body += `\n# Period: ${period.start} to ${period.end}`
-    }
-  }
-  return body
+# Created: ${formatTimestamp(now, 'D t ZZZZ', 'US/Alaska')}
+#
+# Suggested Citation (note: open this file in a text editor like Notepad if Excel does not display the citation correctly):
+#   "Alaska Water Temperature Database (AKTEMP) (${year}). Water temperature data${providerTitle}. Retrieved from https://aktemp.uaa.alaska.edu on ${date}."`
+}
+
+function providersTable (providers = [], columns = Object.keys(columnLabels.providers)) {
+  const rows = providers.map(d => {
+    const x = { ...d }
+    x.station_id = d.id
+    return x
+  })
+  const table = Papa.unparse(rows, { columns })
+  return `${hr}
+# Providers Table
+#
+${table || '# No Providers Found'}`
 }
 
 function stationsTable (stations = [], columns = Object.keys(columnLabels.stations)) {
@@ -328,15 +348,19 @@ ${descriptions}
 ${table || '# No Profile Values Found'}`
 }
 
-function writeStationsFile (stations) {
-  return `${fileHeader('Stations Metadata')}
+function writeStationsFile (providers, stations) {
+  return `${fileHeader('Stations Metadata', providers)}
+#
+${providersTable(providers)}
 #
 ${stationsTable(stations)}
   `
 }
 
-function writeStationSeriesFile (station, series, values, discrete) {
-  return `${fileHeader('Station Timeseries Data')}
+function writeStationSeriesFile (providers, station, series, values, discrete) {
+  return `${fileHeader('Station Timeseries Data', providers)}
+#
+${providersTable(providers)}
 #
 ${stationsTable([station])}
 #
@@ -348,13 +372,15 @@ ${seriesDiscreteValuesTable(discrete.map(d => ({ ...d, station_timezone: station
 `
 }
 
-function writeStationProfilesFile (station, profiles) {
+function writeStationProfilesFile (providers, station, profiles) {
   const rows = profiles.map(d => d.values.map(v => ({
     ...v,
     profiles_id: d.id,
     station_timezone: station.timezone
   }))).flat()
-  return `${fileHeader('Station Vertical Profiles Data')}
+  return `${fileHeader('Station Vertical Profiles Data', providers)}
+#
+${providersTable(providers)}
 #
 ${stationsTable([station])}
 #
@@ -364,16 +390,20 @@ ${profileValuesTable(rows)}
 `
 }
 
-function writeSeriesMetadataFile (series) {
-  return `${fileHeader('Timeseries Metadata')}
+function writeSeriesMetadataFile (providers, series) {
+  return `${fileHeader('Timeseries Metadata', providers)}
+#
+${providersTable(providers)}
 #
 ${seriesTable(series)}
 `
 }
 
-function writeSeriesDailyFile (series, period) {
+function writeSeriesDailyFile (providers, series) {
   const rows = series.map(d => d.daily.values.map(v => ({ series_id: d.id, ...v }))).flat()
-  return `${fileHeader('Continuous Timeseries Daily Values', period)}
+  return `${fileHeader('Continuous Timeseries Daily Values', providers)}
+#
+${providersTable(providers)}
 #
 ${seriesTable(series)}
 #
@@ -381,7 +411,7 @@ ${seriesDailyValuesTable(rows)}
 `
 }
 
-function writeSeriesDailyDiscreteFile (series) {
+function writeSeriesDailyDiscreteFile (providers, stations, series) {
   const dailyRows = series
     .filter(d => d.interval === 'CONTINUOUS')
     .map(d => d.daily.values.map(v => ({ series_id: d.id, station_timezone: d.station_timezone, ...v })))
@@ -390,7 +420,11 @@ function writeSeriesDailyDiscreteFile (series) {
     .filter(d => d.interval === 'DISCRETE')
     .map(d => d.values.map(v => ({ series_id: d.id, station_timezone: d.station_timezone, ...v })))
     .flat()
-  return `${fileHeader('Continuous Timeseries Daily Values and Discrete Values')}
+  return `${fileHeader('Continuous Timeseries Daily Values and Discrete Values', providers)}
+#
+${providersTable(providers)}
+#
+${stationsTable(stations)}
 #
 ${seriesTable(series)}
 #
@@ -400,13 +434,15 @@ ${seriesDiscreteValuesTable(discreteRows)}
 `
 }
 
-function writeSeriesRawFile (series) {
+function writeSeriesRawFile (providers, series) {
   const rows = series.map(d => d.values.map(v => ({
     series_id: d.id,
     station_timezone: d.station_timezone,
     ...v
   }))).flat()
-  return `${fileHeader('Raw Timeseries Values')}
+  return `${fileHeader('Raw Timeseries Values', providers)}
+#
+${providersTable(providers)}
 #
 ${seriesTable(series)}
 #
@@ -414,9 +450,11 @@ ${seriesRawValuesTable(rows)}
 `
 }
 
-function writeSeriesDiscreteFile (series, period) {
+function writeSeriesDiscreteFile (providers, series) {
   const rows = series.map(d => d.values.map(v => ({ series_id: d.id, station_timezone: d.station_timezone, ...v }))).flat()
-  return `${fileHeader('Discrete Timeseries', period)}
+  return `${fileHeader('Discrete Timeseries', providers)}
+#
+${providersTable(providers)}
 #
 ${seriesTable(series)}
 #
@@ -424,9 +462,11 @@ ${seriesDiscreteValuesTable(rows)}
 `
 }
 
-function writeSeriesFlagsFile (series) {
+function writeSeriesFlagsFile (providers, series) {
   const rows = series.map(d => d.flags.map(f => ({ ...f, station_timezone: d.station_timezone }))).flat()
-  return `${fileHeader('Timeseries Flags')}
+  return `${fileHeader('Timeseries Flags', providers)}
+#
+${providersTable(providers)}
 #
 ${seriesTable(series)}
 #
@@ -434,9 +474,11 @@ ${seriesFlagsTable(rows)}
 `
 }
 
-function writeProfilesFile (profiles, period) {
+function writeProfilesFile (providers, profiles) {
   const rows = profiles.map(d => d.values.map(v => ({ profile_id: d.id, ...v }))).flat()
-  return `${fileHeader('Vertical Profiles', period)}
+  return `${fileHeader('Vertical Profiles', providers)}
+#
+${providersTable(providers)}
 #
 ${profilesTable(profiles)}
 #

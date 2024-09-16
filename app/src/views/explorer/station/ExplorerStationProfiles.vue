@@ -180,7 +180,8 @@ export default {
           v.station_timezone = this.station.timezone
         })
       })
-      const body = writeProfilesFile(this.profiles)
+      const providers = this.$store.state.explorer.providers.filter(d => d.id === this.station.provider_id)
+      const body = writeProfilesFile(providers, this.profiles)
       this.$download(body, filename)
     }
   }

@@ -76,6 +76,7 @@ import StationsMap from '@/components/StationsMap'
 import StationInfoTable from '@/components/StationInfoTable'
 import ExplorerStationProfiles from '@/views/explorer/station/ExplorerStationProfiles'
 import ExplorerStationSeries from '@/views/explorer/station/ExplorerStationSeries'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ExplorerStation',
@@ -94,6 +95,9 @@ export default {
       },
       station: null
     }
+  },
+  computed: {
+    ...mapGetters('explorer', ['providers'])
   },
   watch: {
     '$route.params.stationId' () {
@@ -122,7 +126,8 @@ export default {
       }
     },
     async downloadStation () {
-      const body = writeStationsFile([this.station])
+      const providers = this.providers.filter(d => d.id === this.station.provider_id)
+      const body = writeStationsFile(providers, [this.station])
       const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-station.csv`
       this.$download(body, filename)
     }

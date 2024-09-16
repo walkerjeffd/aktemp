@@ -123,7 +123,8 @@ export default {
     },
     download () {
       const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-profiles.csv`
-      const body = writeStationProfilesFile(this.station, this.profiles)
+      const providers = this.$store.state.explorer.providers.filter(d => d.id === this.station.provider_id)
+      const body = writeStationProfilesFile(providers, this.station, this.profiles)
       this.$download(body, filename)
     }
   }

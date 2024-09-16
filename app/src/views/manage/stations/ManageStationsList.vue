@@ -149,6 +149,7 @@ export default {
   },
   computed: {
     ...mapGetters({
+      providers: 'manage/providers',
       provider: 'manage/provider',
       stations: 'manage/stations',
       status: 'manage/stationsStatus'
@@ -209,7 +210,9 @@ export default {
       this.selected = this.selected.filter(d => d.id !== id)
     },
     download () {
-      const body = writeStationsFile(this.stations)
+      const providerIds = new Set(this.stations.map(d => d.provider_id))
+      const providers = this.providers.filter(d => providerIds.has(d.id))
+      const body = writeStationsFile(providers, this.stations)
       this.$download(body, `AKTEMP-${this.provider.code}-stations.csv`)
     }
   }

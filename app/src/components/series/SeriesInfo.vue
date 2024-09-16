@@ -302,7 +302,8 @@ export default {
           ...this.series,
           values
         }
-        const body = writeSeriesRawFile([seriesValues])
+        const providers = this.$store.state.explorer.providers.filter(d => d.code === this.series.provider_code)
+        const body = writeSeriesRawFile(providers, [seriesValues])
         const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-raw.csv`
         this.$download(body, filename)
       } catch (err) {
@@ -317,7 +318,8 @@ export default {
       this.downloadStatus.error = null
 
       try {
-        const body = writeSeriesDailyFile([this.series])
+        const providers = this.$store.state.explorer.providers.filter(d => d.code === this.series.provider_code)
+        const body = writeSeriesDailyFile(providers, [this.series])
         const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-daily.csv`
         this.$download(body, filename)
       } catch (err) {
@@ -332,7 +334,8 @@ export default {
       this.downloadStatus.error = null
 
       try {
-        const body = writeSeriesDiscreteFile([this.series])
+        const providers = this.$store.state.explorer.providers.filter(d => d.code === this.series.provider_code)
+        const body = writeSeriesDiscreteFile(providers, [this.series])
         const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-discrete.csv`
         this.$download(body, filename)
       } catch (err) {
@@ -347,7 +350,8 @@ export default {
       this.downloadStatus.error = null
 
       try {
-        const body = writeSeriesFlagsFile([this.series])
+        const providers = this.$store.state.explorer.providers.filter(d => d.code === this.series.provider_code)
+        const body = writeSeriesFlagsFile(providers, [this.series])
         const filename = `AKTEMP-${this.series.provider_code}-${this.series.station_code}-series-${this.series.id}-flags.csv`
         this.$download(body, filename)
       } catch (err) {

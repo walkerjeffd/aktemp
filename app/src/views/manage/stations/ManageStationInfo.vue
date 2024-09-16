@@ -48,6 +48,7 @@ import evt from '@/events'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import ManageStationForm from '@/views/manage/stations/ManageStationForm'
 import StationInfoTable from '@/components/StationInfoTable'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ManageMetadata',
@@ -62,6 +63,11 @@ export default {
         error: null
       }
     }
+  },
+  computed: {
+    ...mapGetters({
+      providers: 'manage/providers'
+    })
   },
   methods: {
     async edit () {
@@ -98,7 +104,8 @@ export default {
         ...this.station,
         series_count_days: countDays(this.station.series_start_datetime, this.station.series_end_datetime, this.station.timezone)
       }
-      const body = writeStationsFile([station])
+      const providers = this.providers.filter(d => d.id === station.provider_id)
+      const body = writeStationsFile(providers, [station])
       const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-station.csv`
       this.$download(body, filename)
     }

@@ -39,6 +39,7 @@ import { ascending } from 'd3'
 import { assignFlags } from 'aktemp-utils/flags'
 import { writeStationSeriesFile } from 'aktemp-utils/downloads'
 import { getDiscreteChunks, getContinuousChunks } from '@/lib/utils'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ExplorerMapStationSeries',
@@ -165,6 +166,9 @@ export default {
         }
       }
     }
+  },
+  computed: {
+    ...mapGetters('explorer', ['providers'])
   },
   mounted () {
     this.fetch()
@@ -404,7 +408,8 @@ export default {
         .then(d => d.data)
 
       const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-timeseries.csv`
-      const body = writeStationSeriesFile(this.station, series, this.daily.values, this.discrete.values)
+      const providers = this.providers.filter(d => d.id === this.station.provider_id)
+      const body = writeStationSeriesFile(providers, this.station, series, this.daily.values, this.discrete.values)
       this.$download(body, filename)
     }
   }

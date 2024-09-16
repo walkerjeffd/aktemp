@@ -107,6 +107,7 @@ export default {
   },
   mounted () {
     this.fetch()
+    this.$store.dispatch('explorer/fetchProviders')
   },
   watch: {
     station () {
@@ -154,7 +155,8 @@ export default {
         ...series,
         values
       }
-      const body = writeSeriesRawFile([seriesValues])
+      const providers = this.$store.state.explorer.providers.filter(d => d.code === this.series.provider_code)
+      const body = writeSeriesRawFile(providers, [seriesValues])
       const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-series-${series.id}-raw.csv`
       this.$download(body, filename)
     },
@@ -162,7 +164,9 @@ export default {
       console.log('downloadDaily', series)
       if (!series) return
 
-      const body = writeSeriesDailyDiscreteFile(series)
+      const stations = [this.station]
+      const providers = this.$store.state.explorer.providers.filter(d => d.id === this.station.provider_id)
+      const body = writeSeriesDailyDiscreteFile(providers, stations, series)
       const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-series-daily.csv`
       this.$download(body, filename)
     }

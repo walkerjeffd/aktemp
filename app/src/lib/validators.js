@@ -61,12 +61,12 @@ export const rules = {
   },
   organization: {
     code: [
-      v => !!v || 'Organization code is required',
-      v => v.length <= 50 || 'Organization code cannot exceed 50 characters'
+      v => !!v || 'Group code is required',
+      v => v.length <= 50 || 'Group code cannot exceed 50 characters'
     ],
     name: [
-      v => !!v || 'Organization name is required',
-      v => v.length <= 128 || 'Organization name cannot exceed 128 characters'
+      v => !!v || 'Group name is required',
+      v => v.length <= 128 || 'Group name cannot exceed 128 characters'
     ]
   }
 }

@@ -9,8 +9,8 @@
     <v-card>
       <v-toolbar flat dense color="grey lighten-2">
         <v-toolbar-title class="text-h6">
-          <span v-if="!organization">Create Organization</span>
-          <span v-else>Edit Organization</span>
+          <span v-if="!organization">Create Provider Group</span>
+          <span v-else>Edit Provider Group</span>
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon small @click="cancel"><v-icon small>mdi-close</v-icon></v-btn>
@@ -53,8 +53,8 @@
           <v-text-field
             v-model="code.value"
             :rules="code.rules"
-            label="Organization Code"
-            hint="Abbreviation of organization name (NPS or USGS)"
+            label="Group Code"
+            hint="Abbreviation of group name (NPS or USGS)"
             outlined
             counter
             validate-on-blur
@@ -62,7 +62,7 @@
           <v-text-field
             v-model="name.value"
             :rules="name.rules"
-            label="Full Name of Organization"
+            label="Full Name of Group"
             outlined
             counter
             validate-on-blur
@@ -109,14 +109,14 @@
               :disabled="loading"
             >
               <v-icon left>mdi-delete</v-icon>
-              Delete Organization
+              Delete Group
             </v-btn>
           </div>
           <v-btn type="submit" class="hidden">submit</v-btn>
         </v-form>
       </v-card-text>
 
-      <Alert v-if="error" type="error" title="Failed to Save Organization" class="mx-4 mb-0">
+      <Alert v-if="error" type="error" title="Failed to Save Group" class="mx-4 mb-0">
         {{ error }}
       </Alert>
 
@@ -146,10 +146,10 @@
     <ConfirmDialog ref="confirmDelete">
       <Alert type="error" title="Are you sure?">
         <p>
-          This organization will be permanently deleted.
+          This group will be permanently deleted.
         </p>
         <p>
-          However, providers belonging to this organization will <strong>NOT</strong> be deleted.
+          However, providers belonging to this group will <strong>NOT</strong> be deleted.
         </p>
         <p class="mb-0">
           This action cannot be undone.
@@ -229,7 +229,7 @@ export default {
       this.deleting = true
       try {
         await this.$http.admin.delete(`/organizations/${this.organization.id}`)
-        evt.$emit('notify', `Organization (${this.organization.code}) has been deleted`, 'success')
+        evt.$emit('notify', `Group (${this.organization.code}) has been deleted`, 'success')
         this.resolve(true)
         this.close()
       } catch (err) {
@@ -258,19 +258,19 @@ export default {
           organization = await this.$http.admin
             .put(`/organizations/${this.organization.id}`, payload)
             .then(d => d.data)
-          evt.$emit('notify', `Organization (${organization.code}) has been updated`, 'success')
+          evt.$emit('notify', `Group (${organization.code}) has been updated`, 'success')
         } else {
           organization = await this.$http.admin
             .post('/organizations', payload)
             .then(d => d.data)
-          evt.$emit('notify', `Organization (${organization.code}) has been created`, 'success')
+          evt.$emit('notify', `Group (${organization.code}) has been created`, 'success')
         }
         this.resolve(organization)
         this.close()
       } catch (err) {
         console.error(err)
         if (err.response && err.response.data.type === 'UniqueViolation') {
-          this.error = `Organization code (${payload.code}) already exists`
+          this.error = `Group code (${payload.code}) already exists`
         } else {
           this.error = this.$errorMessage(err)
         }

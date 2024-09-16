@@ -10,7 +10,7 @@
         </tr>
         <tr>
           <td class="text-right grey--text text--darken-2">
-            Provider
+            Data Provider
           </td>
           <td class="font-weight-bold">{{ profile.provider_code }}</td>
         </tr>

@@ -84,7 +84,7 @@
 
           <v-divider class="my-4"></v-divider>
 
-          <div class="font-weight-bold body-1">Organization</div>
+          <div class="font-weight-bold body-1">Provider Group</div>
 
           <v-autocomplete
             v-if="dialog"
@@ -93,7 +93,7 @@
             :rules="organization.rules"
             item-text="code"
             item-value="id"
-            label="Select Organization"
+            label="Select Group"
             outlined
             clearable
             :menu-props="{ closeOnClick: true, closeOnContentClick: true }"

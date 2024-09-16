@@ -20,7 +20,7 @@
                       <v-icon>mdi-account-group</v-icon>
                     </v-list-item-icon>
                     <v-list-item-content class="text-h6 font-weight-normal">
-                      {{ stats.providers.toLocaleString() }} Providers
+                      {{ stats.providers.toLocaleString() }} Data Providers
                     </v-list-item-content>
                   </v-list-item>
                   <v-list-item>

@@ -437,14 +437,14 @@ export default {
       },
       headers: [
         {
-          text: 'Organization',
+          text: 'Provider Group',
           value: 'organization_code',
           filter: value => this.filters.organizationCodes.length === 0 ||
             this.filters.organizationCodes.includes(value),
           width: '200px'
         },
         {
-          text: 'Provider',
+          text: 'Data Provider',
           value: 'provider_code',
           filter: value => this.filters.providerCodes.length === 0 ||
             this.filters.providerCodes.includes(value),
@@ -525,10 +525,10 @@ export default {
       return this.selected ? [this.selected] : []
     },
     organizationCodeOptions () {
-      return [...new Set(this.stations.map(d => d.organization_code))]
+      return [...new Set(this.stations.map(d => d.organization_code))].sort()
     },
     providerCodeOptions () {
-      return [...new Set(this.stations.map(d => d.provider_code))]
+      return [...new Set(this.stations.map(d => d.provider_code))].sort()
     },
     advancedFilterCount () {
       return !!this.filters.advanced.active +

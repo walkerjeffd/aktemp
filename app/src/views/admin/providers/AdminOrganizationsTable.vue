@@ -20,12 +20,12 @@
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title class="text-h6">Organizations</v-toolbar-title>
+          <v-toolbar-title class="text-h6">Provider Groups</v-toolbar-title>
           <v-divider inset vertical class="mx-4"></v-divider>
           <v-text-field
             v-model="search"
             append-icon="mdi-magnify"
-            label="Search organizations"
+            label="Search groups"
             single-line
             hide-details
             clearable
@@ -33,14 +33,14 @@
           ></v-text-field>
           <v-spacer></v-spacer>
           <v-btn color="success" @click="create">
-            <v-icon left>mdi-plus</v-icon> New Organization
+            <v-icon left>mdi-plus</v-icon> New Group
           </v-btn>
           <v-divider inset vertical class="ml-4"></v-divider>
           <RefreshButton :loading="status.loading" @click="fetchOrganizations"></RefreshButton>
         </v-toolbar>
         <div class="body-2 text--secondary mx-4 mb-2">
           <v-icon small>mdi-information-outline</v-icon>
-          Click on a row to edit an organization
+          Click on a row to edit a group
         </div>
         <v-divider></v-divider>
       </template>

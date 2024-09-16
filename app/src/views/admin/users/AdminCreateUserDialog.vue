@@ -137,7 +137,7 @@
               :rules="provider.organization.rules"
               item-text="code"
               item-value="id"
-              label="Select Organization"
+              label="Select Provider Group"
               outlined
               clearable
               :menu-props="{ closeOnClick: true, closeOnContentClick: true }"

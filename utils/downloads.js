@@ -5,8 +5,8 @@ const hr = '# ------------------------------------------------------------------
 
 const columnLabels = {
   providers: {
-    code: 'Provider Code',
-    name: 'Provider Name'
+    provider_code: 'Provider Code',
+    provider_name: 'Provider Name'
   },
   stations: {
     station_id: 'Station ID',
@@ -126,9 +126,10 @@ function fileHeader (title, providers = []) {
 
 function providersTable (providers = [], columns = Object.keys(columnLabels.providers)) {
   const rows = providers.map(d => {
-    const x = { ...d }
-    x.station_id = d.id
-    return x
+    return {
+      provider_code: d.code,
+      provider_name: d.name
+    }
   })
   const table = Papa.unparse(rows, { columns })
   return `${hr}

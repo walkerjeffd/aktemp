@@ -18,12 +18,27 @@
     <v-container grid-list-xs v-else-if="station.data">
       <v-row>
         <v-col cols="12" lg="4">
-          <StationsMap
-            :stations="[station.data]"
-            :station="station.data"
-            style="height:300px"
-          ></StationsMap>
-          <ManageStationInfo :station="station.data" @refresh="fetchStation"></ManageStationInfo>
+          <v-card>
+            <StationsMap
+              :stations="[station.data]"
+              :station="station.data"
+              style="height:300px"
+            ></StationsMap>
+
+            <div>
+              <v-img v-if="station.data.photo_url" :src="station.data.photo_url" contain class="my-4 mx-auto elevation-2"></v-img>
+              <div v-else>
+                <div class="text-center my-4">
+                  <v-icon size="80" color="grey lighten-1">mdi-camera</v-icon>
+                  <div class="text-body-1 grey--text text--darken-1 mt-2">No Station Photo Available</div>
+                </div>
+              </div>
+            </div>
+
+            <v-divider></v-divider>
+
+            <ManageStationInfo :station="station.data" @refresh="fetchStation"></ManageStationInfo>
+          </v-card>
         </v-col>
         <v-col cols="12" lg="8">
           <v-sheet elevation="2">

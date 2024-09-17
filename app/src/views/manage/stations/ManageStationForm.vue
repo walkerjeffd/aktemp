@@ -182,6 +182,8 @@
             :prepend-icon="null"
             outlined
             class="mt-4"
+            hint="Selecting a new photo will replace the existing photo"
+            persistent-hint
           ></v-file-input>
         </v-form>
       </v-card-text>

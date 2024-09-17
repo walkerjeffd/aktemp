@@ -32,6 +32,18 @@
 
                       <v-divider></v-divider>
 
+                      <div>
+                        <v-img v-if="station.photo_url" :src="station.photo_url" contain class="my-4"></v-img>
+                        <div v-else>
+                          <div class="text-center my-4">
+                            <v-icon size="80" color="grey lighten-1">mdi-camera</v-icon>
+                            <div class="text-body-1 grey--text text--darken-1 mt-2">No Station Photo Available</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <v-divider></v-divider>
+
                       <div class="pa-4 text-right">
                         <DownloadButton block @click="downloadStation" text="Download Station Metadata"></DownloadButton>
                       </div>

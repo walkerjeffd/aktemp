@@ -77,7 +77,7 @@
             <strong>Interested in Contributing Your Data?</strong> User accounts are required to upload and manage data in the database. Please <router-link :to="{ name: 'request' }">request an account</router-link> if you have data that you would like to contribute.
           </p>
           <p>
-            <strong>How to cite this database?</strong> If you are using data from AKTEMP in a report or publication, please use the following recommended citation. Be sure to list the specific providers of the data being used to acknowledge their contributions.
+            <strong>How to cite this database?</strong> If you are using data from AKTEMP in a report or publication, please use the following recommended citation. Be sure to include a list of the specific providers for the data you are using as a way of acknowledging their contributions.
           </p>
           <blockquote class="blockquote text-body-1 my-4 py-0">
             Alaska Water Temperature Database (AKTEMP) ({{ (new Date()).getFullYear() }}). Water temperature data collected by [provider 1], [provider 2], etc. Retrieved from https://aktemp.uaa.alaska.edu on [date].

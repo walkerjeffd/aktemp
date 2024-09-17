@@ -164,6 +164,25 @@
             validate-on-blur
             outlined
           ></v-text-field>
+
+          <div v-if="station &&station.photo_url" class="my-4">
+            <div class="text-body-1 font-weight-bold">Station Photo</div>
+            <v-img :src="station.photo_url" contain></v-img>
+            <div class="text-caption text-center grey--text text--darken-1">{{ station.photo_url.split('/').pop() }}</div>
+            <div class="d-flex">
+              <v-spacer></v-spacer>
+              <v-btn text @click="confirmDelete" :disabled="loading" color="error">Delete Photo</v-btn>
+            </div>
+          </div>
+          <v-file-input
+            v-model="photo.file"
+            :label="station && station.photo_url ? 'Select new station photo' : 'Select station photo'"
+            accept="image/*"
+            prepend-inner-icon="mdi-camera"
+            :prepend-icon="null"
+            outlined
+            class="mt-4"
+          ></v-file-input>
         </v-form>
       </v-card-text>
 
@@ -183,6 +202,20 @@
         <v-btn text @click="close">cancel</v-btn>
       </v-card-actions>
     </v-card>
+    <ConfirmDialog ref="confirmDelete">
+      <v-alert
+        type="error"
+        text
+        colored-border
+        border="left"
+        class="body-2 mb-0"
+      >
+        <div class="font-weight-bold body-1">Are you sure?</div>
+        <div>
+          The station photo will be deleted. This action cannot be undone.
+        </div>
+      </v-alert>
+    </ConfirmDialog>
   </v-dialog>
 </template>
 
@@ -190,6 +223,7 @@
 import { mapGetters } from 'vuex'
 
 import evt from '@/events'
+import { uploadFileToS3 } from '@/lib/uploader'
 
 const {
   constraints,
@@ -300,6 +334,9 @@ export default {
       private_: {
         value: false,
         rules: []
+      },
+      photo: {
+        file: null
       }
     }
   },
@@ -355,19 +392,23 @@ export default {
       }
 
       try {
-        let response
+        let station
         if (this.station) {
-          response = await this.$http.restricted
+          // update existing station
+          const response = await this.$http.restricted
             .put(`/providers/${this.station.provider_id}/stations/${this.station.id}`, payload)
-          evt.$emit('notify', `Station (${payload.code}) has been updated`, 'success')
+          station = await this.uploadPhoto(response.data, this.photo.file)
+          evt.$emit('notify', `Station (${station.code}) has been updated`, 'success')
         } else {
-          response = await this.$http.restricted
+          // create new station
+          const response = await this.$http.restricted
             .post(`/providers/${payload.provider_id}/stations`, payload)
-          evt.$emit('notify', `Station (${payload.code}) has been saved`, 'success')
+          station = await this.uploadPhoto(response.data, this.photo.file)
+          evt.$emit('notify', `Station (${station.code}) has been saved`, 'success')
         }
 
         this.dialog = false
-        this.resolve(response.data)
+        this.resolve(station)
       } catch (err) {
         if (err.response && err.response.data.message) {
           this.error = err.response.data.message
@@ -398,6 +439,7 @@ export default {
         this.mixed.value = this.station.mixed
         this.reference.value = this.station.reference
         this.private_.value = this.station.private
+        this.photo.file = null
       } else {
         this.providerId.value = this.provider ? this.provider.id : null
         this.code.value = null
@@ -412,6 +454,43 @@ export default {
         this.mixed.value = null
         this.reference.value = null
         this.private_.value = false
+        this.photo.file = null
+      }
+    },
+    async uploadPhoto (station, file) {
+      if (!file) return station
+      const payload = {
+        filename: file.name
+      }
+      const response = await this.$http.restricted.post(`/providers/${station.provider_id}/stations/${station.id}/photo`, payload)
+      const updatedStation = response.data
+
+      await uploadFileToS3(file, updatedStation)
+      return updatedStation
+    },
+    async confirmDelete () {
+      const ok = await this.$refs.confirmDelete.open(
+        'Confirm Deletion',
+        { btnColor: 'error' }
+      )
+      if (ok) {
+        await this.deletePhoto()
+      }
+    },
+    async deletePhoto () {
+      this.error = null
+      this.loading = true
+
+      try {
+        const response = await this.$http.restricted.delete(`/providers/${this.station.provider_id}/stations/${this.station.id}/photo`)
+        const station = response.data
+        evt.$emit('notify', 'Station photo has been deleted', 'success')
+        this.station.photo_url = null
+      } catch (err) {
+        console.error(err)
+        this.error = err.message || err.toString()
+      } finally {
+        this.loading = false
       }
     },
     close () {

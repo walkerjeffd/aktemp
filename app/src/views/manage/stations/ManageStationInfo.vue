@@ -1,6 +1,19 @@
 <template>
   <v-card>
     <StationInfoTable :station="station"></StationInfoTable>
+
+    <v-divider></v-divider>
+
+    <div>
+      <v-img v-if="station.photo_url" :src="station.photo_url" contain class="my-4"></v-img>
+      <div v-else>
+        <div class="text-center my-4">
+          <v-icon size="80" color="grey lighten-1">mdi-camera</v-icon>
+          <div class="text-body-1 grey--text text--darken-1 mt-2">No Station Photo Available</div>
+        </div>
+      </div>
+    </div>
+
     <v-divider></v-divider>
     <div class="mx-2 pb-1">
       <v-btn outlined block class="my-2" color="primary" @click="downloadStation">
@@ -41,6 +54,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { writeStationsFile } from 'aktemp-utils/downloads'
 import { countDays } from 'aktemp-utils/time'
 
@@ -48,11 +62,14 @@ import evt from '@/events'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import ManageStationForm from '@/views/manage/stations/ManageStationForm'
 import StationInfoTable from '@/components/StationInfoTable'
-import { mapGetters } from 'vuex'
 
 export default {
   name: 'ManageMetadata',
-  components: { ConfirmDialog, ManageStationForm, StationInfoTable },
+  components: {
+    ConfirmDialog,
+    ManageStationForm,
+    StationInfoTable
+  },
   props: ['station'],
   data () {
     return {

@@ -30,7 +30,7 @@ async function deleteFile (file) {
   return await restrictedApi.delete(`/files/${file.id}`)
 }
 
-async function uploadFileToS3 (file, dbFile) {
+export async function uploadFileToS3 (file, dbFile) {
   const formData = new FormData()
   Object.keys(dbFile.presignedUrl.fields).forEach((key) => {
     formData.append(key, dbFile.presignedUrl.fields[key])

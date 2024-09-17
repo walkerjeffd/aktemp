@@ -8,7 +8,9 @@ const {
   attachStation,
   getStation,
   putStation,
-  deleteStation
+  deleteStation,
+  postStationPhoto,
+  deleteStationPhoto
 } = require('../../controllers/stations')
 const {
   attachFile,
@@ -38,6 +40,11 @@ router.route('/stations/:stationId')
   .get(asyncHandler(getStation))
   .put(asyncHandler(putStation))
   .delete(asyncHandler(deleteStation))
+
+router.route('/stations/:stationId/photo')
+  .all(asyncHandler(attachStation))
+  .post(asyncHandler(postStationPhoto))
+  .delete(asyncHandler(deleteStationPhoto))
 
 router.route('/files')
   .get(asyncHandler(getProviderFiles))

@@ -38,7 +38,9 @@ const putProvider = async (req, res, next) => {
     .patchAndFetch(req.body)
   if (req.body.users) {
     await res.locals.provider.$relatedQuery('users').unrelate()
-    await res.locals.provider.$relatedQuery('users').relate(req.body.users || [])
+    if (req.body.users.length > 0) {
+      await res.locals.provider.$relatedQuery('users').relate(req.body.users)
+    }
   }
   const row = await Provider.query()
     .withGraphFetched('users')

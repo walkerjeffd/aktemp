@@ -1,5 +1,7 @@
 const createError = require('http-errors')
 const { Station } = require('aktemp-db/models')
+const { createPresignedPostPromise } = require('../aws')
+const { v4: uuidv4 } = require('uuid')
 
 const getStations = async (req, res, next) => {
   let query
@@ -126,6 +128,35 @@ const deleteStation = async (req, res, next) => {
   return res.status(204).json()
 }
 
+async function deleteStationPhoto (req, res, next) {
+  const row = await res.locals.station.$query()
+    .patchAndFetch({ photo_url: null })
+  return res.status(200).json(row)
+}
+
+async function postStationPhoto (req, res, next) {
+  const { filename } = req.body
+  const uuid = uuidv4()
+
+  const presignedUrl = await createPresignedPostPromise({
+    Bucket: process.env.STORAGE_BUCKET,
+    Fields: {
+      key: `photos/${uuid}/${filename}`
+    },
+    Expires: 60 * 60 * 1 // one hour
+  })
+  console.log(presignedUrl)
+  const { bucket, key } = presignedUrl.fields
+  const url = `https://${bucket}.s3.amazonaws.com/${key}`
+  console.log(url)
+
+  const row = await res.locals.station.$query()
+    .patchAndFetch({ photo_url: url })
+  row.presignedUrl = presignedUrl
+
+  return res.status(201).json(row)
+}
+
 module.exports = {
   getStations,
   postStations,
@@ -138,5 +169,7 @@ module.exports = {
   getStationProfiles,
   getStationProfilesValues,
   putStation,
-  deleteStation
+  deleteStation,
+  postStationPhoto,
+  deleteStationPhoto
 }

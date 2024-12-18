@@ -33,7 +33,7 @@
                       <v-divider></v-divider>
 
                       <div>
-                        <v-img v-if="station.photo_url" :src="station.photo_url" contain class="my-4"></v-img>
+                        <v-img v-if="station.photo_url" :src="station.photo_url" contain max-height="300"></v-img>
                         <div v-else>
                           <div class="text-center my-4">
                             <v-icon size="80" color="grey lighten-1">mdi-camera</v-icon>

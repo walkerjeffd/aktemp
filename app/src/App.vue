@@ -13,15 +13,19 @@
           <v-img src="@/assets/img/accs-logo.png" alt="ACCS logo" contain width="200" style="background-color:white"></v-img>
         </a>
       </v-toolbar-title>
-      <span class="text-h4 text-center ml-4">AKTEMP</span>
+      <span class="text-h5 text-center ml-4" v-if="$vuetify.breakpoint.lgAndUp">AKTEMP Water Temperature Database</span>
+      <span class="text-h5 text-center ml-4" v-else>AKTEMP</span>
 
       <v-spacer></v-spacer>
 
       <v-btn text exact class="mx-2" :to="{ name: 'home' }">
         <v-icon small left>mdi-home</v-icon>Home
       </v-btn>
+      <v-btn text exact class="mx-2" href="https://aktemp.uaa.alaska.edu/viz/">
+        <v-icon small left>mdi-chart-line</v-icon>Data Viz
+      </v-btn>
       <v-btn text exact class="mx-2" :to="{ name: 'explorer' }">
-        <v-icon small left>mdi-chart-line</v-icon>Data Explorer
+        <v-icon small left>mdi-database</v-icon>Database Explorer
       </v-btn>
       <v-btn text exact class="mx-2" href="https://accscatalog.uaa.alaska.edu/dataset/aktemp-water-temperature-database" target="_blank">
         <v-icon small left>mdi-book-outline</v-icon>User Guide

@@ -26,7 +26,7 @@
             ></StationsMap>
 
             <div>
-              <v-img v-if="station.data.photo_url" :src="station.data.photo_url" contain class="my-4 mx-auto elevation-2"></v-img>
+              <v-img v-if="station.data.photo_url" :src="station.data.photo_url" contain class="my-4 mx-auto elevation-2" max-height="300"></v-img>
               <div v-else>
                 <div class="text-center my-4">
                   <v-icon size="80" color="grey lighten-1">mdi-camera</v-icon>

@@ -48,28 +48,71 @@
       <v-row justify="center">
         <v-col cols="12" md="10" lg="8" xl="6" class="black--text body-1">
           <p class="mb-8" style="font-size:1.1em">
-            Welcome to the AKTEMP Water Temperature Database. This website is a portal for viewing, uploading, downloading, and managing stream and lake temperature data across Alaska. The database was created by <a href="https://walkerenvres.com" target="_blank">Walker Environment Research</a> in collaboration with the <a href="https://accs.uaa.alaska.edu/" target="_blank">Alaska Center for Conservation Science (ACCS)</a> at the University of Alaska Anchorage and the <a href="https://www.usgs.gov/centers/eesc" target="_blank">U.S. Geological Survey (USGS) Eastern Ecological Science Center</a>. AKTEMP was funded by a grant from the U.S. Environmental Protection Agency.
+            Welcome to the AKTEMP Water Temperature Database. This website is a portal for viewing, uploading, downloading, and managing stream and lake temperature data across Alaska. The database was created by <a href="https://walkerenvres.com" target="_blank">Walker Environment Research</a> in collaboration with the <a href="https://accs.uaa.alaska.edu/" target="_blank">Alaska Center for Conservation Science (ACCS)</a> at the University of Alaska Anchorage and the <a href="https://www.usgs.gov/centers/eesc" target="_blank">U.S. Geological Survey (USGS) Eastern Ecological Science Center</a>.
           </p>
-          <div class="d-flex justify-space-around mb-8">
-            <v-btn
-              color="primary"
-              x-large
-              :to="{ name: 'explorer' }"
-            >
-              <v-icon left>mdi-chart-line</v-icon>
-              Data Explorer
-            </v-btn>
-            <v-btn
-              color="primary"
-              x-large
-              href="https://accscatalog.uaa.alaska.edu/dataset/aktemp-water-temperature-database"
-              target="_blank"
-            >
-              <v-icon left>mdi-book-outline</v-icon>
-              User Guide
-            </v-btn>
-          </div>
-          <v-divider class="my-4"></v-divider>
+          <v-row class="mb-8">
+            <v-col cols="12" md="6">
+              <v-card
+                href="https://aktemp.uaa.alaska.edu/viz"
+                hover
+                height="100%"
+                aria-label="Data Visualization"
+              >
+                <v-img
+                  src="@/assets/img/data-viz-screenshot.jpg"
+                  height="200"
+                  class="grey lighten-2"
+                >
+                  <template v-slot:placeholder>
+                    <v-row
+                      class="fill-height ma-0"
+                      align="center"
+                      justify="center"
+                    >
+                      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                    </v-row>
+                  </template>
+                </v-img>
+                <v-card-text class="text-center pa-4">
+                  <h2 class="text-h4 mb-4 black--text">Data Viz Tool</h2>
+                  <p class="text-body-1 mb-0 black--text">
+                    Use interactive data vizualizations to explore stream temperature patterns and dynamics with data from AKTEMP, NPS, and USGS
+                  </p>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-card
+                :to="{ name: 'explorer' }"
+                hover
+                height="100%"
+                aria-label="Database Explorer"
+              >
+                <v-img
+                  src="@/assets/img/database-screenshot.jpg"
+                  height="200"
+                  class="grey lighten-2"
+                >
+                  <template v-slot:placeholder>
+                    <v-row
+                      class="fill-height ma-0"
+                      align="center"
+                      justify="center"
+                    >
+                      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                    </v-row>
+                  </template>
+                </v-img>
+                <v-card-text class="text-center pa-4">
+                  <h2 class="text-h4 mb-4 black--text">Database Explorer</h2>
+                  <p class="text-body-1 mb-0 black--text">
+                    Search, filter, download, and explore water temperature data from stations in the AKTEMP database
+                  </p>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+          <v-divider class="my-8"></v-divider>
           <p>
             <strong>Need Help Getting Started?</strong> Information on how to use the database to upload, review, search, or download data can be found in the <a href="https://accscatalog.uaa.alaska.edu/dataset/aktemp-water-temperature-database">User Guide</a>.
           </p>
@@ -84,6 +127,9 @@
           </blockquote>
           <p>
             <strong>Questions?</strong> Please contact <a href="mailto:uaa_aktemp@alaska.edu">uaa_aktemp@alaska.edu</a> for support.
+          </p>
+          <p>
+            <strong>Funding:</strong> AKTEMP was funded by grants from the <a href="https://www.epa.gov/exchangenetwork/exchange-network-grant-program" target="_blank">U.S. Environmental Protection Agency (USEPA) Exchange Network</a> and the <a href="https://akcasc.org/" target="_blank">Alaska Climate Adaptation Science Center (AKCASC)</a>.
           </p>
           <p>
             <strong>Disclaimer:</strong> The database allows users to choose whether their data should be publically available. All public datasets can be downloaded through the Data Explorer. ACCS makes no guarantees about the accuracy or reliability of the data submitted to AKTEMP. Data downloaded from AKTEMP should be reviewed by the user prior to visualization, summary, or analysis.

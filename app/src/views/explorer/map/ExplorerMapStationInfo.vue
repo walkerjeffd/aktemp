@@ -1,17 +1,5 @@
 <template>
   <div>
-    <div>
-      <v-img v-if="station.photo_url" :src="station.photo_url" contain width="90%" class="my-4 mx-auto elevation-2"></v-img>
-      <div v-else>
-        <div class="text-center my-4">
-          <v-icon size="80" color="grey lighten-1">mdi-camera</v-icon>
-          <div class="text-body-1 grey--text text--darken-1 mt-2">No Station Photo Available</div>
-        </div>
-      </div>
-    </div>
-
-    <v-divider></v-divider>
-
     <v-simple-table dense>
       <tbody>
         <tr>
@@ -74,6 +62,18 @@
         </tr>
       </tbody>
     </v-simple-table>
+
+    <v-divider></v-divider>
+
+    <div>
+      <v-img v-if="station.photo_url" :src="station.photo_url" contain width="100%" class="elevation-2" max-height="200"></v-img>
+      <div v-else>
+        <div class="text-center my-4">
+          <v-icon size="80" color="grey lighten-1">mdi-camera</v-icon>
+          <div class="text-body-1 grey--text text--darken-1 mt-2">No Station Photo Available</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

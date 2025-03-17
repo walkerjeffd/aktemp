@@ -39,6 +39,11 @@
       "Type": "String",
       "Default": "db.t2.micro"
     },
+    "engineVersion": {
+      "Description": "Database engine version",
+      "Type": "String",
+      "Default": "12.7"
+    },
     "publiclyAccessible": {
       "Description": "Enable public access",
       "Type": "String",
@@ -99,13 +104,24 @@
         "TargetType": "AWS::RDS::DBInstance"
       }
     },
+    "DBParameterGroup": {
+        "Type": "AWS::RDS::DBParameterGroup",
+        "Properties": {
+            "Description": "Postgres16",
+            "Family": "postgres16",
+            "Parameters": {
+                "rds.force_ssl": 0
+            }
+        }
+    },
     "DBInstance": {
       "Type": "AWS::RDS::DBInstance",
       "Properties": {
+        "DBParameterGroupName": { "Ref": "DBParameterGroup" },
         "DeletionProtection": true,
         "AllocatedStorage": 20,
         "DBInstanceClass": { "Ref": "dbInstanceClass" },
-        "AllowMajorVersionUpgrade": false,
+        "AllowMajorVersionUpgrade": true,
         "AutoMinorVersionUpgrade": true,
         "BackupRetentionPeriod": { "Ref": "backupRetentionPeriod" },
         "DBInstanceIdentifier": {
@@ -115,7 +131,7 @@
           "Ref": "DBSubnetGroup"
         },
         "Engine": "postgres",
-        "EngineVersion": 12.7,
+        "EngineVersion": { "Ref": "engineVersion" },
         "MasterUsername": {
           "Fn::Join": [
             "",

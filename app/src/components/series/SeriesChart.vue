@@ -36,6 +36,7 @@
 import * as d3 from 'd3'
 import { assignFlags } from 'aktemp-utils/flags'
 import { getContinuousChunks, getDiscreteChunks } from '@/lib/utils'
+import { fetchSeriesValues } from '@/lib/series'
 
 export default {
   name: 'SeriesChart',
@@ -506,9 +507,10 @@ export default {
     },
     async fetchRawSeries (series, start, end) {
       console.log(`fetchRawSeries(${series.id})`)
-      const values = await this.$http.public
-        .get(`/series/${series.id}/values?start=${start.toISOString()}&end=${end.toISOString()}`)
-        .then(d => d.data)
+      const values = await fetchSeriesValues(this.$http.public, series.id, {
+        start: start.toISOString(),
+        end: end.toISOString()
+      })
       values.forEach(d => {
         d.datetime = this.parseDatetime(d.datetime, series.station_timezone)
       })
@@ -517,9 +519,7 @@ export default {
     },
     async fetchDiscreteSeries (series) {
       console.log(`fetchDiscreteSeries(${series.id})`)
-      const values = await this.$http.public
-        .get(`/series/${series.id}/values`)
-        .then(d => d.data)
+      const values = await fetchSeriesValues(this.$http.public, series.id)
       values.forEach(d => {
         d.datetime = this.parseDatetime(d.datetime, series.station_timezone)
       })

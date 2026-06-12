@@ -32,6 +32,20 @@ async function getSeriesValues (req, res, next) {
   if (req.query.end) {
     query = query.where('datetime', '<=', req.query.end)
   }
+  if (req.query.limit !== undefined) {
+    const limit = Number.parseInt(req.query.limit, 10)
+    if (!Number.isInteger(limit) || limit < 0) {
+      throw createError(400, 'Query parameter "limit" must be a non-negative integer')
+    }
+    query = query.limit(limit)
+    if (req.query.offset !== undefined) {
+      const offset = Number.parseInt(req.query.offset, 10)
+      if (!Number.isInteger(offset) || offset < 0) {
+        throw createError(400, 'Query parameter "offset" must be a non-negative integer')
+      }
+      query = query.offset(offset)
+    }
+  }
   const values = await query
   return res.status(200).json(values)
 }

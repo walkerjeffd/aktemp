@@ -227,6 +227,7 @@
 import { assignFlags } from 'aktemp-utils/flags'
 import { writeSeriesRawFile, writeSeriesDailyFile, writeSeriesDiscreteFile, writeSeriesFlagsFile } from 'aktemp-utils/downloads'
 
+import { fetchSeriesValues } from '@/lib/series'
 import ManageSeriesEditForm from '@/views/manage/series/ManageSeriesEditForm'
 
 export default {
@@ -284,9 +285,7 @@ export default {
       this.downloadStatus.error = null
 
       try {
-        let values = await this.$http.public
-          .get(`/series/${this.series.id}/values`)
-          .then(d => d.data)
+        let values = await fetchSeriesValues(this.$http.public, this.series.id)
         values.forEach(d => {
           d.datetime = new Date(d.datetime)
         })

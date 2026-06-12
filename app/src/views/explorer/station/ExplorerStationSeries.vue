@@ -64,6 +64,7 @@
 import SeriesChart from '@/components/series/SeriesChart.vue'
 import { assignFlags } from 'aktemp-utils/flags'
 import { writeSeriesDailyDiscreteFile, writeSeriesRawFile } from 'aktemp-utils/downloads'
+import { fetchSeriesValues } from '@/lib/series'
 
 export default {
   name: 'ExploreStationSeries',
@@ -143,9 +144,7 @@ export default {
       // console.log('downloadRaw', series)
       if (!series) return
 
-      let values = await this.$http.public
-        .get(`/series/${series.id}/values`)
-        .then(d => d.data)
+      let values = await fetchSeriesValues(this.$http.public, series.id)
       const flags = await this.$http.public
         .get(`/series/${series.id}/flags`)
         .then(d => d.data)

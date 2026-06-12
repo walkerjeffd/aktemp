@@ -89,6 +89,33 @@ describe('public api', () => {
     expect(Array.isArray(response.body)).toBeTruthy()
   })
 
+  test('GET /series/:id/values?limit=N', async () => {
+    const response = await request(app).get('/public/series/1/values?limit=1')
+    expect(response.statusCode).toBe(200)
+    expect(Array.isArray(response.body)).toBeTruthy()
+    expect(response.body).toHaveLength(1)
+    expect(response.body[0].temp_c).toBe(1.5)
+  })
+
+  test('GET /series/:id/values?limit=N&offset=M', async () => {
+    const response = await request(app).get('/public/series/1/values?limit=1&offset=1')
+    expect(response.statusCode).toBe(200)
+    expect(response.body).toHaveLength(1)
+    expect(response.body[0].temp_c).toBe(2.5)
+  })
+
+  test('GET /series/:id/values (invalid limit -> 400)', async () => {
+    const negative = await request(app).get('/public/series/1/values?limit=-1')
+    expect(negative.statusCode).toBe(400)
+    const nan = await request(app).get('/public/series/1/values?limit=abc')
+    expect(nan.statusCode).toBe(400)
+  })
+
+  test('GET /series/:id/values (invalid offset -> 400)', async () => {
+    const response = await request(app).get('/public/series/1/values?limit=1&offset=-1')
+    expect(response.statusCode).toBe(400)
+  })
+
   test('GET /series/:id/daily', async () => {
     const response = await request(app).get('/public/series/1/daily')
     expect(response.statusCode).toBe(200)

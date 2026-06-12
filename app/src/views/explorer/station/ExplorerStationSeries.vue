@@ -38,6 +38,7 @@
                 <v-btn
                   title="Download Raw Timeseries Data as CSV"
                   @click="downloadRaw(item)"
+                  :loading="downloadingRawSeries === item.id"
                   outlined
                   x-small
                 >
@@ -73,6 +74,7 @@ export default {
   data () {
     return {
       loading: true,
+      downloadingRawSeries: null,
       series: [],
       selected: [],
       table: {
@@ -144,20 +146,25 @@ export default {
       // console.log('downloadRaw', series)
       if (!series) return
 
-      let values = await fetchSeriesValues(this.$http.public, series.id)
-      const flags = await this.$http.public
-        .get(`/series/${series.id}/flags`)
-        .then(d => d.data)
+      this.downloadingRawSeries = series.id
+      try {
+        let values = await fetchSeriesValues(this.$http.public, series.id)
+        const flags = await this.$http.public
+          .get(`/series/${series.id}/flags`)
+          .then(d => d.data)
 
-      values = assignFlags(values, flags)
-      const seriesValues = {
-        ...series,
-        values
+        values = assignFlags(values, flags)
+        const seriesValues = {
+          ...series,
+          values
+        }
+        const providers = this.$store.state.explorer.providers.filter(d => d.code === this.series.provider_code)
+        const body = writeSeriesRawFile(providers, [seriesValues])
+        const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-series-${series.id}-raw.csv`
+        this.$download(body, filename)
+      } finally {
+        this.downloadingRawSeries = null
       }
-      const providers = this.$store.state.explorer.providers.filter(d => d.code === this.series.provider_code)
-      const body = writeSeriesRawFile(providers, [seriesValues])
-      const filename = `AKTEMP-${this.station.provider_code}-${this.station.code}-series-${series.id}-raw.csv`
-      this.$download(body, filename)
     },
     async downloadDaily (series) {
       console.log('downloadDaily', series)
